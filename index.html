@@ -1,10 +1,13 @@
 <!--
-This file is part of Agentprise™
+This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
 Last Modified: 2026-10-09
-Summary: Redirects visitors to the Agentprise repository on GitHub.
+Summary: The whole Agentprise web app in one file. Lets a person describe an AI
+         assistant once, then download it as an Agent Skill bundle (Gemini and
+         Claude), a Microsoft 365 Copilot .agent file, a Teams app package, or
+         copy-ready text for ChatGPT and Gemini Notebook. Nothing leaves the browser.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -24,14 +27,2293 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Zero-second delay: WCAG treats an immediate redirect as acceptable, but a timed one as a failure -->
-    <meta http-equiv="refresh" content="0; url=https://github.com/DepressionCenter/agentprise">
-    <link rel="canonical" href="https://github.com/DepressionCenter/agentprise">
+    <meta name="description" content="Make AI agents portable across Copilot, Gemini, Claude, and ChatGPT.">
     <title>Agentprise</title>
 </head>
 <body>
-<h1>Agentprise</h1>
-<!-- Fallback for browsers that block or ignore meta refresh -->
-<p>This page has moved to <a href="https://github.com/DepressionCenter/agentprise">the Agentprise repository on GitHub</a>.</p>
+<main id="main">
+    <h1>Agentprise</h1>
+    <p>Make AI agents portable across Copilot, Gemini, Claude, and ChatGPT.</p>
+</main>
+<script>
+"use strict";
+
+// ### Configuration ###
+// Limits come from the strictest vendor that must accept the value. Microsoft's
+// declarative agent schema caps name at 100, description at 1,000, instructions at
+// 8,000, and conversation starters at 12. The Agent Skills specification caps the
+// skill name at 64 characters. ZIP caps guard against decompression bombs.
+const LIMITS = Object.freeze({
+    name: 100,
+    skillName: 64,
+    description: 1000,
+    instructions: 8000,
+    welcome: 1000,
+    starters: 12,
+    starterText: 500,
+    sharepointLinks: 20,
+    sharepointLinkText: 2048,
+    creatorText: 2048,
+    copyrightText: 500,
+    licenseText: 200,
+    zipEntries: 200,
+    zipEntryBytes: 10 * 1024 * 1024,
+    zipTotalBytes: 50 * 1024 * 1024,
+    iconBytes: 2 * 1024 * 1024
+});
+
+const APP_VERSION = "1";
+const APP_REPOSITORY_URL = "https://github.com/DepressionCenter/agentprise";
+const APP_SITE_URL = "https://depressioncenter.github.io/agentprise/";
+const DEFAULT_LICENSE = "GPL-3.0-or-later";
+
+// License choices offered in the form. The URL is written into LICENSE.txt for
+// every choice except the default, which gets the full GPL text.
+const LICENSE_CHOICES = Object.freeze([
+    { id: "GPL-3.0-or-later", label: "GNU GPL v3 or later (default)", url: "https://www.gnu.org/licenses/gpl-3.0.html" },
+    { id: "MIT", label: "MIT", url: "https://opensource.org/license/mit" },
+    { id: "Apache-2.0", label: "Apache 2.0", url: "https://www.apache.org/licenses/LICENSE-2.0" },
+    { id: "CC-BY-4.0", label: "Creative Commons Attribution 4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
+    { id: "CC0-1.0", label: "Creative Commons Zero (public domain)", url: "https://creativecommons.org/publicdomain/zero/1.0/" },
+    { id: "Proprietary", label: "All rights reserved", url: "" }
+]);
+
+// Microsoft format constants. The manifest version and valid domains match what the
+// Copilot app itself exported on 2026-10-09, so sideloading is known to accept them.
+const MS_AGENT_SCHEMA_VERSION = "0.2.0";
+const TEAMS_MANIFEST_VERSION = "1.28";
+const TEAMS_MANIFEST_SCHEMA = "https://developer.microsoft.com/en-us/json-schemas/teams/v1.28/MicrosoftTeams.schema.json";
+const TEAMS_VALID_DOMAINS = Object.freeze([
+    "*.botframework.com",
+    "*.*.botframework.com",
+    "copilotstudio.microsoft.com",
+    "copilotstudio.preview.microsoft.com"
+]);
+const TEAMS_ACCENT_COLOR = "#E0F6FC";
+const TEAMS_SHORT_NAME_MAX = 30;
+const TEAMS_SHORT_DESCRIPTION_MAX = 80;
+const TEAMS_DEVELOPER_NAME_MAX = 32;
+const DECLARATIVE_AGENT_VERSION = "v1.8";
+
+// The Teams manifest requires a developer name and three https links. When the
+// creator leaves them blank, these reserved example.com addresses stand in, and the
+// export reports a warning so the person knows to fill them in.
+const CREATOR_PLACEHOLDERS = Object.freeze({
+    name: "Agent creator",
+    website: "https://example.com",
+    privacy: "https://example.com/privacy",
+    terms: "https://example.com/terms"
+});
+
+// Copilot capability names as the declarative agent schema spells them, in the
+// order the Copilot app writes them.
+const COPILOT_CAPABILITIES = Object.freeze([
+    { key: "webSearch", name: "WebSearch" },
+    { key: "teamsMessages", name: "TeamsMessages" },
+    { key: "meetings", name: "Meetings" },
+    { key: "codeInterpreter", name: "CodeInterpreter" },
+    { key: "imageGeneration", name: "GraphicArt" }
+]);
+
+// Metadata keys used inside SKILL.md frontmatter. Values are always strings because
+// the Agent Skills specification defines metadata as a string-to-string map.
+const META = Object.freeze({
+    version: "agentprise-version",
+    displayName: "display-name",
+    welcome: "welcome",
+    starters: "starters",
+    sharepoint: "sharepoint-sources",
+    webSearch: "copilot-web-search",
+    teamsMessages: "copilot-teams-messages",
+    meetings: "copilot-meetings",
+    codeInterpreter: "copilot-code-interpreter",
+    imageGeneration: "copilot-image-generation",
+    preferMyFiles: "copilot-prefer-my-files",
+    appId: "copilot-app-id",
+    creatorName: "creator-name",
+    creatorWebsite: "creator-website",
+    creatorPrivacy: "creator-privacy",
+    creatorTerms: "creator-terms",
+    copyright: "copyright"
+});
+
+const PNG_SIGNATURE = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+const PNG_DATA_URI_PREFIX = "data:image/png;base64,";
+
+// The full GNU GPL v3 text, written into LICENSE.txt inside every bundle that
+// keeps the default license. It is the repository LICENSE file, line by line.
+const GPL_TEXT = [
+    "                    GNU GENERAL PUBLIC LICENSE",
+    "                       Version 3, 29 June 2007",
+    "",
+    " Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>",
+    " Everyone is permitted to copy and distribute verbatim copies",
+    " of this license document, but changing it is not allowed.",
+    "",
+    "                            Preamble",
+    "",
+    "  The GNU General Public License is a free, copyleft license for",
+    "software and other kinds of works.",
+    "",
+    "  The licenses for most software and other practical works are designed",
+    "to take away your freedom to share and change the works.  By contrast,",
+    "the GNU General Public License is intended to guarantee your freedom to",
+    "share and change all versions of a program--to make sure it remains free",
+    "software for all its users.  We, the Free Software Foundation, use the",
+    "GNU General Public License for most of our software; it applies also to",
+    "any other work released this way by its authors.  You can apply it to",
+    "your programs, too.",
+    "",
+    "  When we speak of free software, we are referring to freedom, not",
+    "price.  Our General Public Licenses are designed to make sure that you",
+    "have the freedom to distribute copies of free software (and charge for",
+    "them if you wish), that you receive source code or can get it if you",
+    "want it, that you can change the software or use pieces of it in new",
+    "free programs, and that you know you can do these things.",
+    "",
+    "  To protect your rights, we need to prevent others from denying you",
+    "these rights or asking you to surrender the rights.  Therefore, you have",
+    "certain responsibilities if you distribute copies of the software, or if",
+    "you modify it: responsibilities to respect the freedom of others.",
+    "",
+    "  For example, if you distribute copies of such a program, whether",
+    "gratis or for a fee, you must pass on to the recipients the same",
+    "freedoms that you received.  You must make sure that they, too, receive",
+    "or can get the source code.  And you must show them these terms so they",
+    "know their rights.",
+    "",
+    "  Developers that use the GNU GPL protect your rights with two steps:",
+    "(1) assert copyright on the software, and (2) offer you this License",
+    "giving you legal permission to copy, distribute and/or modify it.",
+    "",
+    "  For the developers' and authors' protection, the GPL clearly explains",
+    "that there is no warranty for this free software.  For both users' and",
+    "authors' sake, the GPL requires that modified versions be marked as",
+    "changed, so that their problems will not be attributed erroneously to",
+    "authors of previous versions.",
+    "",
+    "  Some devices are designed to deny users access to install or run",
+    "modified versions of the software inside them, although the manufacturer",
+    "can do so.  This is fundamentally incompatible with the aim of",
+    "protecting users' freedom to change the software.  The systematic",
+    "pattern of such abuse occurs in the area of products for individuals to",
+    "use, which is precisely where it is most unacceptable.  Therefore, we",
+    "have designed this version of the GPL to prohibit the practice for those",
+    "products.  If such problems arise substantially in other domains, we",
+    "stand ready to extend this provision to those domains in future versions",
+    "of the GPL, as needed to protect the freedom of users.",
+    "",
+    "  Finally, every program is threatened constantly by software patents.",
+    "States should not allow patents to restrict development and use of",
+    "software on general-purpose computers, but in those that do, we wish to",
+    "avoid the special danger that patents applied to a free program could",
+    "make it effectively proprietary.  To prevent this, the GPL assures that",
+    "patents cannot be used to render the program non-free.",
+    "",
+    "  The precise terms and conditions for copying, distribution and",
+    "modification follow.",
+    "",
+    "                       TERMS AND CONDITIONS",
+    "",
+    "  0. Definitions.",
+    "",
+    "  \"This License\" refers to version 3 of the GNU General Public License.",
+    "",
+    "  \"Copyright\" also means copyright-like laws that apply to other kinds of",
+    "works, such as semiconductor masks.",
+    "",
+    "  \"The Program\" refers to any copyrightable work licensed under this",
+    "License.  Each licensee is addressed as \"you\".  \"Licensees\" and",
+    "\"recipients\" may be individuals or organizations.",
+    "",
+    "  To \"modify\" a work means to copy from or adapt all or part of the work",
+    "in a fashion requiring copyright permission, other than the making of an",
+    "exact copy.  The resulting work is called a \"modified version\" of the",
+    "earlier work or a work \"based on\" the earlier work.",
+    "",
+    "  A \"covered work\" means either the unmodified Program or a work based",
+    "on the Program.",
+    "",
+    "  To \"propagate\" a work means to do anything with it that, without",
+    "permission, would make you directly or secondarily liable for",
+    "infringement under applicable copyright law, except executing it on a",
+    "computer or modifying a private copy.  Propagation includes copying,",
+    "distribution (with or without modification), making available to the",
+    "public, and in some countries other activities as well.",
+    "",
+    "  To \"convey\" a work means any kind of propagation that enables other",
+    "parties to make or receive copies.  Mere interaction with a user through",
+    "a computer network, with no transfer of a copy, is not conveying.",
+    "",
+    "  An interactive user interface displays \"Appropriate Legal Notices\"",
+    "to the extent that it includes a convenient and prominently visible",
+    "feature that (1) displays an appropriate copyright notice, and (2)",
+    "tells the user that there is no warranty for the work (except to the",
+    "extent that warranties are provided), that licensees may convey the",
+    "work under this License, and how to view a copy of this License.  If",
+    "the interface presents a list of user commands or options, such as a",
+    "menu, a prominent item in the list meets this criterion.",
+    "",
+    "  1. Source Code.",
+    "",
+    "  The \"source code\" for a work means the preferred form of the work",
+    "for making modifications to it.  \"Object code\" means any non-source",
+    "form of a work.",
+    "",
+    "  A \"Standard Interface\" means an interface that either is an official",
+    "standard defined by a recognized standards body, or, in the case of",
+    "interfaces specified for a particular programming language, one that",
+    "is widely used among developers working in that language.",
+    "",
+    "  The \"System Libraries\" of an executable work include anything, other",
+    "than the work as a whole, that (a) is included in the normal form of",
+    "packaging a Major Component, but which is not part of that Major",
+    "Component, and (b) serves only to enable use of the work with that",
+    "Major Component, or to implement a Standard Interface for which an",
+    "implementation is available to the public in source code form.  A",
+    "\"Major Component\", in this context, means a major essential component",
+    "(kernel, window system, and so on) of the specific operating system",
+    "(if any) on which the executable work runs, or a compiler used to",
+    "produce the work, or an object code interpreter used to run it.",
+    "",
+    "  The \"Corresponding Source\" for a work in object code form means all",
+    "the source code needed to generate, install, and (for an executable",
+    "work) run the object code and to modify the work, including scripts to",
+    "control those activities.  However, it does not include the work's",
+    "System Libraries, or general-purpose tools or generally available free",
+    "programs which are used unmodified in performing those activities but",
+    "which are not part of the work.  For example, Corresponding Source",
+    "includes interface definition files associated with source files for",
+    "the work, and the source code for shared libraries and dynamically",
+    "linked subprograms that the work is specifically designed to require,",
+    "such as by intimate data communication or control flow between those",
+    "subprograms and other parts of the work.",
+    "",
+    "  The Corresponding Source need not include anything that users",
+    "can regenerate automatically from other parts of the Corresponding",
+    "Source.",
+    "",
+    "  The Corresponding Source for a work in source code form is that",
+    "same work.",
+    "",
+    "  2. Basic Permissions.",
+    "",
+    "  All rights granted under this License are granted for the term of",
+    "copyright on the Program, and are irrevocable provided the stated",
+    "conditions are met.  This License explicitly affirms your unlimited",
+    "permission to run the unmodified Program.  The output from running a",
+    "covered work is covered by this License only if the output, given its",
+    "content, constitutes a covered work.  This License acknowledges your",
+    "rights of fair use or other equivalent, as provided by copyright law.",
+    "",
+    "  You may make, run and propagate covered works that you do not",
+    "convey, without conditions so long as your license otherwise remains",
+    "in force.  You may convey covered works to others for the sole purpose",
+    "of having them make modifications exclusively for you, or provide you",
+    "with facilities for running those works, provided that you comply with",
+    "the terms of this License in conveying all material for which you do",
+    "not control copyright.  Those thus making or running the covered works",
+    "for you must do so exclusively on your behalf, under your direction",
+    "and control, on terms that prohibit them from making any copies of",
+    "your copyrighted material outside their relationship with you.",
+    "",
+    "  Conveying under any other circumstances is permitted solely under",
+    "the conditions stated below.  Sublicensing is not allowed; section 10",
+    "makes it unnecessary.",
+    "",
+    "  3. Protecting Users' Legal Rights From Anti-Circumvention Law.",
+    "",
+    "  No covered work shall be deemed part of an effective technological",
+    "measure under any applicable law fulfilling obligations under article",
+    "11 of the WIPO copyright treaty adopted on 20 December 1996, or",
+    "similar laws prohibiting or restricting circumvention of such",
+    "measures.",
+    "",
+    "  When you convey a covered work, you waive any legal power to forbid",
+    "circumvention of technological measures to the extent such circumvention",
+    "is effected by exercising rights under this License with respect to",
+    "the covered work, and you disclaim any intention to limit operation or",
+    "modification of the work as a means of enforcing, against the work's",
+    "users, your or third parties' legal rights to forbid circumvention of",
+    "technological measures.",
+    "",
+    "  4. Conveying Verbatim Copies.",
+    "",
+    "  You may convey verbatim copies of the Program's source code as you",
+    "receive it, in any medium, provided that you conspicuously and",
+    "appropriately publish on each copy an appropriate copyright notice;",
+    "keep intact all notices stating that this License and any",
+    "non-permissive terms added in accord with section 7 apply to the code;",
+    "keep intact all notices of the absence of any warranty; and give all",
+    "recipients a copy of this License along with the Program.",
+    "",
+    "  You may charge any price or no price for each copy that you convey,",
+    "and you may offer support or warranty protection for a fee.",
+    "",
+    "  5. Conveying Modified Source Versions.",
+    "",
+    "  You may convey a work based on the Program, or the modifications to",
+    "produce it from the Program, in the form of source code under the",
+    "terms of section 4, provided that you also meet all of these conditions:",
+    "",
+    "    a) The work must carry prominent notices stating that you modified",
+    "    it, and giving a relevant date.",
+    "",
+    "    b) The work must carry prominent notices stating that it is",
+    "    released under this License and any conditions added under section",
+    "    7.  This requirement modifies the requirement in section 4 to",
+    "    \"keep intact all notices\".",
+    "",
+    "    c) You must license the entire work, as a whole, under this",
+    "    License to anyone who comes into possession of a copy.  This",
+    "    License will therefore apply, along with any applicable section 7",
+    "    additional terms, to the whole of the work, and all its parts,",
+    "    regardless of how they are packaged.  This License gives no",
+    "    permission to license the work in any other way, but it does not",
+    "    invalidate such permission if you have separately received it.",
+    "",
+    "    d) If the work has interactive user interfaces, each must display",
+    "    Appropriate Legal Notices; however, if the Program has interactive",
+    "    interfaces that do not display Appropriate Legal Notices, your",
+    "    work need not make them do so.",
+    "",
+    "  A compilation of a covered work with other separate and independent",
+    "works, which are not by their nature extensions of the covered work,",
+    "and which are not combined with it such as to form a larger program,",
+    "in or on a volume of a storage or distribution medium, is called an",
+    "\"aggregate\" if the compilation and its resulting copyright are not",
+    "used to limit the access or legal rights of the compilation's users",
+    "beyond what the individual works permit.  Inclusion of a covered work",
+    "in an aggregate does not cause this License to apply to the other",
+    "parts of the aggregate.",
+    "",
+    "  6. Conveying Non-Source Forms.",
+    "",
+    "  You may convey a covered work in object code form under the terms",
+    "of sections 4 and 5, provided that you also convey the",
+    "machine-readable Corresponding Source under the terms of this License,",
+    "in one of these ways:",
+    "",
+    "    a) Convey the object code in, or embodied in, a physical product",
+    "    (including a physical distribution medium), accompanied by the",
+    "    Corresponding Source fixed on a durable physical medium",
+    "    customarily used for software interchange.",
+    "",
+    "    b) Convey the object code in, or embodied in, a physical product",
+    "    (including a physical distribution medium), accompanied by a",
+    "    written offer, valid for at least three years and valid for as",
+    "    long as you offer spare parts or customer support for that product",
+    "    model, to give anyone who possesses the object code either (1) a",
+    "    copy of the Corresponding Source for all the software in the",
+    "    product that is covered by this License, on a durable physical",
+    "    medium customarily used for software interchange, for a price no",
+    "    more than your reasonable cost of physically performing this",
+    "    conveying of source, or (2) access to copy the",
+    "    Corresponding Source from a network server at no charge.",
+    "",
+    "    c) Convey individual copies of the object code with a copy of the",
+    "    written offer to provide the Corresponding Source.  This",
+    "    alternative is allowed only occasionally and noncommercially, and",
+    "    only if you received the object code with such an offer, in accord",
+    "    with subsection 6b.",
+    "",
+    "    d) Convey the object code by offering access from a designated",
+    "    place (gratis or for a charge), and offer equivalent access to the",
+    "    Corresponding Source in the same way through the same place at no",
+    "    further charge.  You need not require recipients to copy the",
+    "    Corresponding Source along with the object code.  If the place to",
+    "    copy the object code is a network server, the Corresponding Source",
+    "    may be on a different server (operated by you or a third party)",
+    "    that supports equivalent copying facilities, provided you maintain",
+    "    clear directions next to the object code saying where to find the",
+    "    Corresponding Source.  Regardless of what server hosts the",
+    "    Corresponding Source, you remain obligated to ensure that it is",
+    "    available for as long as needed to satisfy these requirements.",
+    "",
+    "    e) Convey the object code using peer-to-peer transmission, provided",
+    "    you inform other peers where the object code and Corresponding",
+    "    Source of the work are being offered to the general public at no",
+    "    charge under subsection 6d.",
+    "",
+    "  A separable portion of the object code, whose source code is excluded",
+    "from the Corresponding Source as a System Library, need not be",
+    "included in conveying the object code work.",
+    "",
+    "  A \"User Product\" is either (1) a \"consumer product\", which means any",
+    "tangible personal property which is normally used for personal, family,",
+    "or household purposes, or (2) anything designed or sold for incorporation",
+    "into a dwelling.  In determining whether a product is a consumer product,",
+    "doubtful cases shall be resolved in favor of coverage.  For a particular",
+    "product received by a particular user, \"normally used\" refers to a",
+    "typical or common use of that class of product, regardless of the status",
+    "of the particular user or of the way in which the particular user",
+    "actually uses, or expects or is expected to use, the product.  A product",
+    "is a consumer product regardless of whether the product has substantial",
+    "commercial, industrial or non-consumer uses, unless such uses represent",
+    "the only significant mode of use of the product.",
+    "",
+    "  \"Installation Information\" for a User Product means any methods,",
+    "procedures, authorization keys, or other information required to install",
+    "and execute modified versions of a covered work in that User Product from",
+    "a modified version of its Corresponding Source.  The information must",
+    "suffice to ensure that the continued functioning of the modified object",
+    "code is in no case prevented or interfered with solely because",
+    "modification has been made.",
+    "",
+    "  If you convey an object code work under this section in, or with, or",
+    "specifically for use in, a User Product, and the conveying occurs as",
+    "part of a transaction in which the right of possession and use of the",
+    "User Product is transferred to the recipient in perpetuity or for a",
+    "fixed term (regardless of how the transaction is characterized), the",
+    "Corresponding Source conveyed under this section must be accompanied",
+    "by the Installation Information.  But this requirement does not apply",
+    "if neither you nor any third party retains the ability to install",
+    "modified object code on the User Product (for example, the work has",
+    "been installed in ROM).",
+    "",
+    "  The requirement to provide Installation Information does not include a",
+    "requirement to continue to provide support service, warranty, or updates",
+    "for a work that has been modified or installed by the recipient, or for",
+    "the User Product in which it has been modified or installed.  Access to a",
+    "network may be denied when the modification itself materially and",
+    "adversely affects the operation of the network or violates the rules and",
+    "protocols for communication across the network.",
+    "",
+    "  Corresponding Source conveyed, and Installation Information provided,",
+    "in accord with this section must be in a format that is publicly",
+    "documented (and with an implementation available to the public in",
+    "source code form), and must require no special password or key for",
+    "unpacking, reading or copying.",
+    "",
+    "  7. Additional Terms.",
+    "",
+    "  \"Additional permissions\" are terms that supplement the terms of this",
+    "License by making exceptions from one or more of its conditions.",
+    "Additional permissions that are applicable to the entire Program shall",
+    "be treated as though they were included in this License, to the extent",
+    "that they are valid under applicable law.  If additional permissions",
+    "apply only to part of the Program, that part may be used separately",
+    "under those permissions, but the entire Program remains governed by",
+    "this License without regard to the additional permissions.",
+    "",
+    "  When you convey a copy of a covered work, you may at your option",
+    "remove any additional permissions from that copy, or from any part of",
+    "it.  (Additional permissions may be written to require their own",
+    "removal in certain cases when you modify the work.)  You may place",
+    "additional permissions on material, added by you to a covered work,",
+    "for which you have or can give appropriate copyright permission.",
+    "",
+    "  Notwithstanding any other provision of this License, for material you",
+    "add to a covered work, you may (if authorized by the copyright holders of",
+    "that material) supplement the terms of this License with terms:",
+    "",
+    "    a) Disclaiming warranty or limiting liability differently from the",
+    "    terms of sections 15 and 16 of this License; or",
+    "",
+    "    b) Requiring preservation of specified reasonable legal notices or",
+    "    author attributions in that material or in the Appropriate Legal",
+    "    Notices displayed by works containing it; or",
+    "",
+    "    c) Prohibiting misrepresentation of the origin of that material, or",
+    "    requiring that modified versions of such material be marked in",
+    "    reasonable ways as different from the original version; or",
+    "",
+    "    d) Limiting the use for publicity purposes of names of licensors or",
+    "    authors of the material; or",
+    "",
+    "    e) Declining to grant rights under trademark law for use of some",
+    "    trade names, trademarks, or service marks; or",
+    "",
+    "    f) Requiring indemnification of licensors and authors of that",
+    "    material by anyone who conveys the material (or modified versions of",
+    "    it) with contractual assumptions of liability to the recipient, for",
+    "    any liability that these contractual assumptions directly impose on",
+    "    those licensors and authors.",
+    "",
+    "  All other non-permissive additional terms are considered \"further",
+    "restrictions\" within the meaning of section 10.  If the Program as you",
+    "received it, or any part of it, contains a notice stating that it is",
+    "governed by this License along with a term that is a further",
+    "restriction, you may remove that term.  If a license document contains",
+    "a further restriction but permits relicensing or conveying under this",
+    "License, you may add to a covered work material governed by the terms",
+    "of that license document, provided that the further restriction does",
+    "not survive such relicensing or conveying.",
+    "",
+    "  If you add terms to a covered work in accord with this section, you",
+    "must place, in the relevant source files, a statement of the",
+    "additional terms that apply to those files, or a notice indicating",
+    "where to find the applicable terms.",
+    "",
+    "  Additional terms, permissive or non-permissive, may be stated in the",
+    "form of a separately written license, or stated as exceptions;",
+    "the above requirements apply either way.",
+    "",
+    "  8. Termination.",
+    "",
+    "  You may not propagate or modify a covered work except as expressly",
+    "provided under this License.  Any attempt otherwise to propagate or",
+    "modify it is void, and will automatically terminate your rights under",
+    "this License (including any patent licenses granted under the third",
+    "paragraph of section 11).",
+    "",
+    "  However, if you cease all violation of this License, then your",
+    "license from a particular copyright holder is reinstated (a)",
+    "provisionally, unless and until the copyright holder explicitly and",
+    "finally terminates your license, and (b) permanently, if the copyright",
+    "holder fails to notify you of the violation by some reasonable means",
+    "prior to 60 days after the cessation.",
+    "",
+    "  Moreover, your license from a particular copyright holder is",
+    "reinstated permanently if the copyright holder notifies you of the",
+    "violation by some reasonable means, this is the first time you have",
+    "received notice of violation of this License (for any work) from that",
+    "copyright holder, and you cure the violation prior to 30 days after",
+    "your receipt of the notice.",
+    "",
+    "  Termination of your rights under this section does not terminate the",
+    "licenses of parties who have received copies or rights from you under",
+    "this License.  If your rights have been terminated and not permanently",
+    "reinstated, you do not qualify to receive new licenses for the same",
+    "material under section 10.",
+    "",
+    "  9. Acceptance Not Required for Having Copies.",
+    "",
+    "  You are not required to accept this License in order to receive or",
+    "run a copy of the Program.  Ancillary propagation of a covered work",
+    "occurring solely as a consequence of using peer-to-peer transmission",
+    "to receive a copy likewise does not require acceptance.  However,",
+    "nothing other than this License grants you permission to propagate or",
+    "modify any covered work.  These actions infringe copyright if you do",
+    "not accept this License.  Therefore, by modifying or propagating a",
+    "covered work, you indicate your acceptance of this License to do so.",
+    "",
+    "  10. Automatic Licensing of Downstream Recipients.",
+    "",
+    "  Each time you convey a covered work, the recipient automatically",
+    "receives a license from the original licensors, to run, modify and",
+    "propagate that work, subject to this License.  You are not responsible",
+    "for enforcing compliance by third parties with this License.",
+    "",
+    "  An \"entity transaction\" is a transaction transferring control of an",
+    "organization, or substantially all assets of one, or subdividing an",
+    "organization, or merging organizations.  If propagation of a covered",
+    "work results from an entity transaction, each party to that",
+    "transaction who receives a copy of the work also receives whatever",
+    "licenses to the work the party's predecessor in interest had or could",
+    "give under the previous paragraph, plus a right to possession of the",
+    "Corresponding Source of the work from the predecessor in interest, if",
+    "the predecessor has it or can get it with reasonable efforts.",
+    "",
+    "  You may not impose any further restrictions on the exercise of the",
+    "rights granted or affirmed under this License.  For example, you may",
+    "not impose a license fee, royalty, or other charge for exercise of",
+    "rights granted under this License, and you may not initiate litigation",
+    "(including a cross-claim or counterclaim in a lawsuit) alleging that",
+    "any patent claim is infringed by making, using, selling, offering for",
+    "sale, or importing the Program or any portion of it.",
+    "",
+    "  11. Patents.",
+    "",
+    "  A \"contributor\" is a copyright holder who authorizes use under this",
+    "License of the Program or a work on which the Program is based.  The",
+    "work thus licensed is called the contributor's \"contributor version\".",
+    "",
+    "  A contributor's \"essential patent claims\" are all patent claims",
+    "owned or controlled by the contributor, whether already acquired or",
+    "hereafter acquired, that would be infringed by some manner, permitted",
+    "by this License, of making, using, or selling its contributor version,",
+    "but do not include claims that would be infringed only as a",
+    "consequence of further modification of the contributor version.  For",
+    "purposes of this definition, \"control\" includes the right to grant",
+    "patent sublicenses in a manner consistent with the requirements of",
+    "this License.",
+    "",
+    "  Each contributor grants you a non-exclusive, worldwide, royalty-free",
+    "patent license under the contributor's essential patent claims, to",
+    "make, use, sell, offer for sale, import and otherwise run, modify and",
+    "propagate the contents of its contributor version.",
+    "",
+    "  In the following three paragraphs, a \"patent license\" is any express",
+    "agreement or commitment, however denominated, not to enforce a patent",
+    "(such as an express permission to practice a patent or covenant not to",
+    "sue for patent infringement).  To \"grant\" such a patent license to a",
+    "party means to make such an agreement or commitment not to enforce a",
+    "patent against the party.",
+    "",
+    "  If you convey a covered work, knowingly relying on a patent license,",
+    "and the Corresponding Source of the work is not available for anyone",
+    "to copy, free of charge and under the terms of this License, through a",
+    "publicly available network server or other readily accessible means,",
+    "then you must either (1) cause the Corresponding Source to be so",
+    "available, or (2) arrange to deprive yourself of the benefit of the",
+    "patent license for this particular work, or (3) arrange, in a manner",
+    "consistent with the requirements of this License, to extend the patent",
+    "license to downstream recipients.  \"Knowingly relying\" means you have",
+    "actual knowledge that, but for the patent license, your conveying the",
+    "covered work in a country, or your recipient's use of the covered work",
+    "in a country, would infringe one or more identifiable patents in that",
+    "country that you have reason to believe are valid.",
+    "",
+    "  If, pursuant to or in connection with a single transaction or",
+    "arrangement, you convey, or propagate by procuring conveyance of, a",
+    "covered work, and grant a patent license to some of the parties",
+    "receiving the covered work authorizing them to use, propagate, modify",
+    "or convey a specific copy of the covered work, then the patent license",
+    "you grant is automatically extended to all recipients of the covered",
+    "work and works based on it.",
+    "",
+    "  A patent license is \"discriminatory\" if it does not include within",
+    "the scope of its coverage, prohibits the exercise of, or is",
+    "conditioned on the non-exercise of one or more of the rights that are",
+    "specifically granted under this License.  You may not convey a covered",
+    "work if you are a party to an arrangement with a third party that is",
+    "in the business of distributing software, under which you make payment",
+    "to the third party based on the extent of your activity of conveying",
+    "the work, and under which the third party grants, to any of the",
+    "parties who would receive the covered work from you, a discriminatory",
+    "patent license (a) in connection with copies of the covered work",
+    "conveyed by you (or copies made from those copies), or (b) primarily",
+    "for and in connection with specific products or compilations that",
+    "contain the covered work, unless you entered into that arrangement,",
+    "or that patent license was granted, prior to 28 March 2007.",
+    "",
+    "  Nothing in this License shall be construed as excluding or limiting",
+    "any implied license or other defenses to infringement that may",
+    "otherwise be available to you under applicable patent law.",
+    "",
+    "  12. No Surrender of Others' Freedom.",
+    "",
+    "  If conditions are imposed on you (whether by court order, agreement or",
+    "otherwise) that contradict the conditions of this License, they do not",
+    "excuse you from the conditions of this License.  If you cannot convey a",
+    "covered work so as to satisfy simultaneously your obligations under this",
+    "License and any other pertinent obligations, then as a consequence you may",
+    "not convey it at all.  For example, if you agree to terms that obligate you",
+    "to collect a royalty for further conveying from those to whom you convey",
+    "the Program, the only way you could satisfy both those terms and this",
+    "License would be to refrain entirely from conveying the Program.",
+    "",
+    "  13. Use with the GNU Affero General Public License.",
+    "",
+    "  Notwithstanding any other provision of this License, you have",
+    "permission to link or combine any covered work with a work licensed",
+    "under version 3 of the GNU Affero General Public License into a single",
+    "combined work, and to convey the resulting work.  The terms of this",
+    "License will continue to apply to the part which is the covered work,",
+    "but the special requirements of the GNU Affero General Public License,",
+    "section 13, concerning interaction through a network will apply to the",
+    "combination as such.",
+    "",
+    "  14. Revised Versions of this License.",
+    "",
+    "  The Free Software Foundation may publish revised and/or new versions of",
+    "the GNU General Public License from time to time.  Such new versions will",
+    "be similar in spirit to the present version, but may differ in detail to",
+    "address new problems or concerns.",
+    "",
+    "  Each version is given a distinguishing version number.  If the",
+    "Program specifies that a certain numbered version of the GNU General",
+    "Public License \"or any later version\" applies to it, you have the",
+    "option of following the terms and conditions either of that numbered",
+    "version or of any later version published by the Free Software",
+    "Foundation.  If the Program does not specify a version number of the",
+    "GNU General Public License, you may choose any version ever published",
+    "by the Free Software Foundation.",
+    "",
+    "  If the Program specifies that a proxy can decide which future",
+    "versions of the GNU General Public License can be used, that proxy's",
+    "public statement of acceptance of a version permanently authorizes you",
+    "to choose that version for the Program.",
+    "",
+    "  Later license versions may give you additional or different",
+    "permissions.  However, no additional obligations are imposed on any",
+    "author or copyright holder as a result of your choosing to follow a",
+    "later version.",
+    "",
+    "  15. Disclaimer of Warranty.",
+    "",
+    "  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY",
+    "APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT",
+    "HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM \"AS IS\" WITHOUT WARRANTY",
+    "OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,",
+    "THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR",
+    "PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM",
+    "IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF",
+    "ALL NECESSARY SERVICING, REPAIR OR CORRECTION.",
+    "",
+    "  16. Limitation of Liability.",
+    "",
+    "  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING",
+    "WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS",
+    "THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY",
+    "GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE",
+    "USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF",
+    "DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD",
+    "PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),",
+    "EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF",
+    "SUCH DAMAGES.",
+    "",
+    "  17. Interpretation of Sections 15 and 16.",
+    "",
+    "  If the disclaimer of warranty and limitation of liability provided",
+    "above cannot be given local legal effect according to their terms,",
+    "reviewing courts shall apply local law that most closely approximates",
+    "an absolute waiver of all civil liability in connection with the",
+    "Program, unless a warranty or assumption of liability accompanies a",
+    "copy of the Program in return for a fee.",
+    "",
+    "                     END OF TERMS AND CONDITIONS",
+    "",
+    "            How to Apply These Terms to Your New Programs",
+    "",
+    "  If you develop a new program, and you want it to be of the greatest",
+    "possible use to the public, the best way to achieve this is to make it",
+    "free software which everyone can redistribute and change under these terms.",
+    "",
+    "  To do so, attach the following notices to the program.  It is safest",
+    "to attach them to the start of each source file to most effectively",
+    "state the exclusion of warranty; and each file should have at least",
+    "the \"copyright\" line and a pointer to where the full notice is found.",
+    "",
+    "    <one line to give the program's name and a brief idea of what it does.>",
+    "    Copyright (C) <year>  <name of author>",
+    "",
+    "    This program is free software: you can redistribute it and/or modify",
+    "    it under the terms of the GNU General Public License as published by",
+    "    the Free Software Foundation, either version 3 of the License, or",
+    "    (at your option) any later version.",
+    "",
+    "    This program is distributed in the hope that it will be useful,",
+    "    but WITHOUT ANY WARRANTY; without even the implied warranty of",
+    "    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the",
+    "    GNU General Public License for more details.",
+    "",
+    "    You should have received a copy of the GNU General Public License",
+    "    along with this program.  If not, see <https://www.gnu.org/licenses/>.",
+    "",
+    "Also add information on how to contact you by electronic and paper mail.",
+    "",
+    "  If the program does terminal interaction, make it output a short",
+    "notice like this when it starts in an interactive mode:",
+    "",
+    "    <program>  Copyright (C) <year>  <name of author>",
+    "    This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.",
+    "    This is free software, and you are welcome to redistribute it",
+    "    under certain conditions; type `show c' for details.",
+    "",
+    "The hypothetical commands `show w' and `show c' should show the appropriate",
+    "parts of the General Public License.  Of course, your program's commands",
+    "might be different; for a GUI interface, you would use an \"about box\".",
+    "",
+    "  You should also get your employer (if you work as a programmer) or school,",
+    "if any, to sign a \"copyright disclaimer\" for the program, if necessary.",
+    "For more information on this, and how to apply and follow the GNU GPL, see",
+    "<https://www.gnu.org/licenses/>.",
+    "",
+    "  The GNU General Public License does not permit incorporating your program",
+    "into proprietary programs.  If your program is a subroutine library, you",
+    "may consider it more useful to permit linking proprietary applications with",
+    "the library.  If this is what you want to do, use the GNU Lesser General",
+    "Public License instead of this License.  But first, please read",
+    "<https://www.gnu.org/licenses/why-not-lgpl.html>.",
+    ""
+].join("\n");
+
+// ### Shared helpers ###
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder("utf-8", { fatal: false });
+
+/** Encodes a string as UTF-8 bytes. */
+function toBytes(text) {
+    return textEncoder.encode(text);
+}
+
+/** Decodes UTF-8 bytes to a string, replacing invalid sequences. */
+function fromBytes(bytes) {
+    return textDecoder.decode(bytes);
+}
+
+/** Returns true when the value is a plain object (not null, not an array). */
+function isPlainObject(value) {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Coerces an untrusted value to a trimmed string no longer than max characters.
+ * Non-strings become empty. A truncation adds a notice naming the field.
+ */
+function asText(value, max, field, notices) {
+    if (typeof value !== "string") {
+        return "";
+    }
+    let text = value.replace(/\r\n?/g, "\n").trim();
+    if (text.length > max) {
+        text = text.slice(0, max).trim();
+        if (notices) {
+            notices.push("The " + field + " was longer than " + max + " characters and was shortened.");
+        }
+    }
+    return text;
+}
+
+/** Coerces an untrusted value to a boolean. Strings "true" and "false" are accepted. */
+function asBool(value, fallback) {
+    if (typeof value === "boolean") {
+        return value;
+    }
+    if (value === "true") {
+        return true;
+    }
+    if (value === "false") {
+        return false;
+    }
+    return fallback;
+}
+
+/** Returns true for an absolute https URL with no spaces. */
+function isHttpsUrl(value) {
+    return typeof value === "string" && /^https:\/\/[^\s]+$/i.test(value);
+}
+
+/** Converts bytes to base64 without building one huge argument list. */
+function bytesToBase64(bytes) {
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+}
+
+/** Converts base64 to bytes. Returns null when the text is not valid base64. */
+function base64ToBytes(text) {
+    try {
+        const binary = atob(text);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    } catch (error) {
+        return null;
+    }
+}
+
+/** Returns a copy of bytes so callers never share buffers with untrusted input. */
+function copyBytes(bytes) {
+    return new Uint8Array(bytes);
+}
+
+/** Returns true when two byte arrays have the same length and content. */
+function bytesEqual(a, b) {
+    if (!a || !b || a.length !== b.length) {
+        return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Builds a file name safe for every desktop operating system from a display
+ * name: letters, digits, spaces, dots, hyphens, and underscores only.
+ */
+function safeFileName(name, extension) {
+    let base = String(name || "").replace(/[^A-Za-z0-9 ._-]+/g, " ").replace(/\s+/g, " ").trim();
+    base = base.replace(/^[. ]+|[. ]+$/g, "");
+    if (!base) {
+        base = "agent";
+    }
+    return base.slice(0, 80) + extension;
+}
+
+/** Generates a random UUID with the platform CSPRNG. */
+function newUuid() {
+    return crypto.randomUUID();
+}
+
+// ### Agent model ###
+
+/**
+ * Creates an agent with every field at its default.
+ * @returns {object} a fresh agent
+ */
+function createAgent() {
+    return {
+        version: APP_VERSION,
+        name: "",
+        description: "",
+        welcome: "",
+        instructions: "",
+        starters: [],
+        icon: null,
+        sharepointLinks: [],
+        copilot: {
+            webSearch: true,
+            teamsMessages: true,
+            meetings: true,
+            codeInterpreter: true,
+            imageGeneration: true,
+            preferMyFiles: false,
+            appId: ""
+        },
+        creator: { name: "", website: "", privacy: "", terms: "" },
+        copyright: "",
+        license: DEFAULT_LICENSE
+    };
+}
+
+/**
+ * Derives the Agent Skills name from a display name: lowercase letters, digits,
+ * and single hyphens, 1 to 64 characters, never starting or ending with a hyphen.
+ * Accented letters lose their accents so "Cafe" and "Caf\u00e9" map to the same name.
+ * @param {string} displayName
+ * @returns {string} the skill name, or "agent" when nothing usable remains
+ */
+function toSkillName(displayName) {
+    let name = String(displayName || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+    name = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    name = name.slice(0, LIMITS.skillName).replace(/-+$/g, "");
+    return name || "agent";
+}
+
+/**
+ * Copies an untrusted agent-shaped value into a clean agent, trimming text,
+ * enforcing every limit, and dropping empty list items. Use it on anything read
+ * from a file or from storage before it reaches the form.
+ * @param {object} input any value
+ * @returns {{agent: object, notices: string[]}} the clean agent and plain-language notes
+ */
+function normalizeAgent(input) {
+    const notices = [];
+    const agent = createAgent();
+    const source = isPlainObject(input) ? input : {};
+
+    agent.name = asText(source.name, LIMITS.name, "name", notices);
+    agent.description = asText(source.description, LIMITS.description, "description", notices);
+    agent.welcome = asText(source.welcome, LIMITS.welcome, "welcome message", notices);
+    agent.instructions = asText(source.instructions, LIMITS.instructions, "instructions", notices);
+
+    const starters = Array.isArray(source.starters) ? source.starters : [];
+    agent.starters = starters
+        .map(function (item) { return asText(item, LIMITS.starterText, "conversation starter", notices); })
+        .filter(function (item) { return item.length > 0; });
+    if (agent.starters.length > LIMITS.starters) {
+        notices.push("Only the first " + LIMITS.starters + " conversation starters were kept.");
+        agent.starters = agent.starters.slice(0, LIMITS.starters);
+    }
+
+    const links = Array.isArray(source.sharepointLinks) ? source.sharepointLinks : [];
+    let droppedLinks = 0;
+    agent.sharepointLinks = links
+        .map(function (item) { return asText(item, LIMITS.sharepointLinkText, "SharePoint link", notices); })
+        .filter(function (item) {
+            if (!item) {
+                return false;
+            }
+            if (!isHttpsUrl(item)) {
+                droppedLinks += 1;
+                return false;
+            }
+            return true;
+        });
+    if (droppedLinks > 0) {
+        notices.push(droppedLinks + " SharePoint link(s) were removed because they were not https addresses.");
+    }
+    if (agent.sharepointLinks.length > LIMITS.sharepointLinks) {
+        notices.push("Only the first " + LIMITS.sharepointLinks + " SharePoint links were kept.");
+        agent.sharepointLinks = agent.sharepointLinks.slice(0, LIMITS.sharepointLinks);
+    }
+
+    if (isPlainObject(source.icon) && source.icon.bytes instanceof Uint8Array && source.icon.bytes.length > 0) {
+        if (source.icon.bytes.length > LIMITS.iconBytes) {
+            notices.push("The icon was larger than " + Math.round(LIMITS.iconBytes / 1024 / 1024) + " MB and was removed.");
+        } else if (!pngDimensions(source.icon.bytes)) {
+            notices.push("The icon was not a PNG image and was removed.");
+        } else {
+            agent.icon = { bytes: copyBytes(source.icon.bytes), mime: "image/png" };
+        }
+    }
+
+    const copilot = isPlainObject(source.copilot) ? source.copilot : {};
+    COPILOT_CAPABILITIES.forEach(function (cap) {
+        agent.copilot[cap.key] = asBool(copilot[cap.key], agent.copilot[cap.key]);
+    });
+    agent.copilot.preferMyFiles = asBool(copilot.preferMyFiles, false);
+    const appId = asText(copilot.appId, 64, "app id", notices);
+    agent.copilot.appId = /^[0-9a-f-]{36}$/i.test(appId) ? appId.toLowerCase() : "";
+
+    const creator = isPlainObject(source.creator) ? source.creator : {};
+    agent.creator.name = asText(creator.name, LIMITS.creatorText, "creator name", notices);
+    ["website", "privacy", "terms"].forEach(function (key) {
+        const value = asText(creator[key], LIMITS.creatorText, "creator " + key + " link", notices);
+        if (value && !isHttpsUrl(value)) {
+            notices.push("The creator " + key + " link was removed because it was not an https address.");
+            agent.creator[key] = "";
+        } else {
+            agent.creator[key] = value;
+        }
+    });
+
+    agent.copyright = asText(source.copyright, LIMITS.copyrightText, "copyright line", notices);
+    agent.license = asText(source.license, LIMITS.licenseText, "license", notices) || DEFAULT_LICENSE;
+
+    return { agent: agent, notices: notices };
+}
+
+/**
+ * Checks an agent for problems that block a download and warnings that only
+ * affect some formats. Messages are plain English for the Check screen.
+ * @param {object} agent a normalized agent
+ * @returns {{problems: Array<{field: string, message: string}>, warnings: Array<{field: string, message: string}>}}
+ */
+function validateAgent(agent) {
+    const problems = [];
+    const warnings = [];
+    if (!agent.name) {
+        problems.push({ field: "name", message: "Give your agent a name." });
+    }
+    if (!agent.description) {
+        problems.push({ field: "description", message: "Add a short description. Every product requires one." });
+    }
+    if (!agent.instructions) {
+        problems.push({ field: "instructions", message: "Add instructions so the agent knows how to behave." });
+    }
+    if (agent.welcome) {
+        warnings.push({ field: "welcome", message: "The Copilot app package can't carry a welcome message. The SharePoint file and the complete copy keep it." });
+    }
+    if (agent.copyright || agent.license !== DEFAULT_LICENSE) {
+        warnings.push({ field: "copyright", message: "The Copilot app package can't carry a copyright line or license name. The other downloads keep them." });
+    }
+    if (agent.sharepointLinks.length > 0) {
+        warnings.push({ field: "sharepointLinks", message: "SharePoint knowledge only works in Microsoft 365 Copilot. Other products ignore it." });
+    }
+    const missingCreator = ["name", "website", "privacy", "terms"].filter(function (key) { return !agent.creator[key]; });
+    if (missingCreator.length > 0) {
+        warnings.push({ field: "creator", message: "The Copilot app package needs a creator name and three links. Placeholder values will be used for the ones you left blank." });
+    }
+    if (!agent.icon) {
+        warnings.push({ field: "icon", message: "No icon yet. Downloads will use the default icon." });
+    }
+    return { problems: problems, warnings: warnings };
+}
+
+// ### YAML frontmatter (subset) ###
+// Only the syntax the bundle uses is supported: key: value scalars, quoted
+// scalars, one nested mapping level, and block scalars written with | or |-.
+// Everything else produces a warning and is skipped. Values are always strings.
+
+/** Removes surrounding quotes and resolves the escapes the writer produces. */
+function parseYamlScalar(raw) {
+    const text = raw.trim();
+    if (text.startsWith("\"") && text.endsWith("\"") && text.length >= 2) {
+        return text.slice(1, -1).replace(/\\(["\\nrt])/g, function (match, code) {
+            if (code === "n") { return "\n"; }
+            if (code === "r") { return "\r"; }
+            if (code === "t") { return "\t"; }
+            return code;
+        });
+    }
+    if (text.startsWith("'") && text.endsWith("'") && text.length >= 2) {
+        return text.slice(1, -1).replace(/''/g, "'");
+    }
+    // A hash starts a comment only when preceded by whitespace.
+    return text.replace(/\s+#.*$/, "").trim();
+}
+
+/** Returns the number of leading spaces on a line. */
+function indentOf(line) {
+    return line.length - line.replace(/^ +/, "").length;
+}
+
+/**
+ * Splits text into frontmatter data and body. Windows line endings are accepted.
+ * @param {string} text a SKILL.md file
+ * @returns {{data: object, body: string, warnings: string[]}}
+ */
+function parseFrontmatter(text) {
+    const warnings = [];
+    const normalized = String(text || "").replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+    const lines = normalized.split("\n");
+    if (lines[0] !== "---") {
+        return { data: {}, body: normalized, warnings: warnings };
+    }
+    let end = -1;
+    for (let i = 1; i < lines.length; i++) {
+        if (lines[i] === "---" || lines[i] === "...") {
+            end = i;
+            break;
+        }
+    }
+    if (end < 0) {
+        warnings.push("The frontmatter never closed, so the whole file was treated as instructions.");
+        return { data: {}, body: normalized, warnings: warnings };
+    }
+    const data = {};
+    const headerLines = lines.slice(1, end);
+    let i = 0;
+
+    function readBlock(keyIndent, keepTrailing) {
+        const collected = [];
+        const contentIndent = keyIndent + 2;
+        while (i < headerLines.length) {
+            const line = headerLines[i];
+            if (line.trim() === "") {
+                collected.push("");
+                i += 1;
+                continue;
+            }
+            if (indentOf(line) < contentIndent) {
+                break;
+            }
+            collected.push(line.slice(contentIndent));
+            i += 1;
+        }
+        // Blank lines at the end belong to the chomping rule, not the content.
+        while (collected.length > 0 && collected[collected.length - 1] === "") {
+            collected.pop();
+        }
+        const value = collected.join("\n");
+        return keepTrailing ? value + "\n" : value;
+    }
+
+    function readEntry(line, indent, target) {
+        const match = line.slice(indent).match(/^([A-Za-z0-9_.-]+):(?:\s(.*))?$/);
+        if (!match) {
+            warnings.push("Skipped a frontmatter line that is not a key and value: " + line.trim().slice(0, 60));
+            i += 1;
+            return;
+        }
+        const key = match[1];
+        const rest = (match[2] || "").trim();
+        i += 1;
+        if (rest === "|" || rest === "|-" || rest === "|+") {
+            target[key] = readBlock(indent, rest !== "|-");
+            return;
+        }
+        if (rest === ">" || rest === ">-") {
+            warnings.push("Folded text for \"" + key + "\" is not supported and was skipped.");
+            readBlock(indent, false);
+            return;
+        }
+        if (rest === "" && indent === 0) {
+            const nested = {};
+            while (i < headerLines.length) {
+                const next = headerLines[i];
+                if (next.trim() === "" || next.trim().startsWith("#")) {
+                    i += 1;
+                    continue;
+                }
+                const nextIndent = indentOf(next);
+                if (nextIndent === 0) {
+                    break;
+                }
+                if (next.trim().startsWith("- ")) {
+                    warnings.push("Lists under \"" + key + "\" are not supported and were skipped.");
+                    i += 1;
+                    continue;
+                }
+                readEntry(next, nextIndent, nested);
+            }
+            target[key] = nested;
+            return;
+        }
+        target[key] = parseYamlScalar(rest);
+    }
+
+    while (i < headerLines.length) {
+        const line = headerLines[i];
+        if (line.trim() === "" || line.trim().startsWith("#")) {
+            i += 1;
+            continue;
+        }
+        const indent = indentOf(line);
+        if (indent !== 0) {
+            warnings.push("Skipped an indented frontmatter line with no parent key.");
+            i += 1;
+            continue;
+        }
+        if (line.trim().startsWith("- ")) {
+            warnings.push("Top-level lists in frontmatter are not supported and were skipped.");
+            i += 1;
+            continue;
+        }
+        readEntry(line, 0, data);
+    }
+    const body = lines.slice(end + 1).join("\n");
+    return { data: data, body: body, warnings: warnings };
+}
+
+/** Quotes a scalar when YAML would otherwise misread it. */
+function formatYamlScalar(value) {
+    const text = String(value);
+    if (text === "") {
+        return "\"\"";
+    }
+    const looksSpecial = /^[-?:,\[\]{}#&*!|>'"%@`]/.test(text) ||
+        /: |\s#|#/.test(text) ||
+        /^\s|\s$/.test(text) ||
+        /^(true|false|yes|no|on|off|null|~)$/i.test(text) ||
+        /^[-+]?(\d[\d_]*\.?\d*([eE][-+]?\d+)?|\.\d+|0x[0-9a-fA-F]+|0o[0-7]+)$/.test(text) ||
+        /^\d{4}-\d{2}-\d{2}/.test(text) ||
+        text.endsWith(":");
+    if (!looksSpecial) {
+        return text;
+    }
+    return "\"" + text.replace(/\\/g, "\\\\").replace(/"/g, "\\\"").replace(/\t/g, "\\t").replace(/\r/g, "\\r") + "\"";
+}
+
+/** Writes one key, choosing a block scalar for multi-line values. */
+function formatYamlEntry(key, value, indent) {
+    const pad = " ".repeat(indent);
+    if (isPlainObject(value)) {
+        const lines = [pad + key + ":"];
+        Object.keys(value).forEach(function (childKey) {
+            lines.push(formatYamlEntry(childKey, value[childKey], indent + 2));
+        });
+        return lines.join("\n");
+    }
+    const text = String(value === null || value === undefined ? "" : value);
+    if (text.indexOf("\n") >= 0) {
+        const keepTrailing = text.endsWith("\n");
+        const content = keepTrailing ? text.slice(0, -1) : text;
+        const blockLines = content.split("\n").map(function (line) {
+            return line === "" ? "" : pad + "  " + line;
+        });
+        return pad + key + ": " + (keepTrailing ? "|" : "|-") + "\n" + blockLines.join("\n");
+    }
+    return pad + key + ": " + formatYamlScalar(text);
+}
+
+/**
+ * Writes frontmatter and a body as one Markdown document that the parser above
+ * and standard YAML readers both accept.
+ * @param {object} data string values or one level of nested string values
+ * @param {string} body Markdown body
+ * @returns {string}
+ */
+function stringifyFrontmatter(data, body) {
+    const lines = ["---"];
+    Object.keys(data).forEach(function (key) {
+        lines.push(formatYamlEntry(key, data[key], 0));
+    });
+    lines.push("---");
+    return lines.join("\n") + "\n" + String(body || "");
+}
+
+// ### PNG header check ###
+
+/**
+ * Reads the width and height from a PNG header without decoding the image.
+ * @param {Uint8Array} bytes
+ * @returns {{width: number, height: number}|null} null when the bytes are not a PNG
+ */
+function pngDimensions(bytes) {
+    if (!(bytes instanceof Uint8Array) || bytes.length < 24) {
+        return null;
+    }
+    for (let i = 0; i < PNG_SIGNATURE.length; i++) {
+        if (bytes[i] !== PNG_SIGNATURE[i]) {
+            return null;
+        }
+    }
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    if (fromBytes(bytes.subarray(12, 16)) !== "IHDR") {
+        return null;
+    }
+    const width = view.getUint32(16, false);
+    const height = view.getUint32(20, false);
+    if (width === 0 || height === 0) {
+        return null;
+    }
+    return { width: width, height: height };
+}
+
+// ### ZIP reader and writer ###
+// The writer stores entries uncompressed. The reader accepts stored and deflated
+// entries, treats every header field as untrusted, and refuses archives that
+// could escape a folder or exhaust memory.
+
+/** Error type for every ZIP problem the reader reports. */
+class ZipError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "ZipError";
+    }
+}
+
+const CRC_TABLE = (function () {
+    const table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) {
+            c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        }
+        table[n] = c >>> 0;
+    }
+    return table;
+})();
+
+/** Computes the CRC-32 of a byte array as an unsigned 32-bit number. */
+function crc32(bytes) {
+    let crc = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) {
+        crc = CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+/** Returns the DOS time and date fields for the current moment. */
+function dosDateTime() {
+    const now = new Date();
+    const year = Math.max(1980, now.getFullYear());
+    const time = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+    const date = ((year - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+    return { time: time, date: date };
+}
+
+/**
+ * Builds a ZIP archive with the store method.
+ * @param {Array<{name: string, bytes: Uint8Array}>} entries file names use forward slashes
+ * @returns {Uint8Array}
+ */
+function zipWrite(entries) {
+    const stamp = dosDateTime();
+    const localParts = [];
+    const centralParts = [];
+    let offset = 0;
+    entries.forEach(function (entry) {
+        const nameBytes = toBytes(entry.name);
+        const data = entry.bytes instanceof Uint8Array ? entry.bytes : toBytes(String(entry.bytes));
+        const crc = crc32(data);
+        const local = new Uint8Array(30 + nameBytes.length);
+        const lv = new DataView(local.buffer);
+        lv.setUint32(0, 0x04034B50, true);
+        lv.setUint16(4, 20, true);
+        lv.setUint16(6, 0x0800, true);
+        lv.setUint16(8, 0, true);
+        lv.setUint16(10, stamp.time, true);
+        lv.setUint16(12, stamp.date, true);
+        lv.setUint32(14, crc, true);
+        lv.setUint32(18, data.length, true);
+        lv.setUint32(22, data.length, true);
+        lv.setUint16(26, nameBytes.length, true);
+        lv.setUint16(28, 0, true);
+        local.set(nameBytes, 30);
+        localParts.push(local, data);
+
+        const central = new Uint8Array(46 + nameBytes.length);
+        const cv = new DataView(central.buffer);
+        cv.setUint32(0, 0x02014B50, true);
+        cv.setUint16(4, 20, true);
+        cv.setUint16(6, 20, true);
+        cv.setUint16(8, 0x0800, true);
+        cv.setUint16(10, 0, true);
+        cv.setUint16(12, stamp.time, true);
+        cv.setUint16(14, stamp.date, true);
+        cv.setUint32(16, crc, true);
+        cv.setUint32(20, data.length, true);
+        cv.setUint32(24, data.length, true);
+        cv.setUint16(28, nameBytes.length, true);
+        cv.setUint16(30, 0, true);
+        cv.setUint16(32, 0, true);
+        cv.setUint16(34, 0, true);
+        cv.setUint16(36, 0, true);
+        cv.setUint32(38, 0, true);
+        cv.setUint32(42, offset, true);
+        central.set(nameBytes, 46);
+        centralParts.push(central);
+        offset += local.length + data.length;
+    });
+    const centralSize = centralParts.reduce(function (sum, part) { return sum + part.length; }, 0);
+    const end = new Uint8Array(22);
+    const ev = new DataView(end.buffer);
+    ev.setUint32(0, 0x06054B50, true);
+    ev.setUint16(4, 0, true);
+    ev.setUint16(6, 0, true);
+    ev.setUint16(8, entries.length, true);
+    ev.setUint16(10, entries.length, true);
+    ev.setUint32(12, centralSize, true);
+    ev.setUint32(16, offset, true);
+    ev.setUint16(20, 0, true);
+    const total = offset + centralSize + end.length;
+    const out = new Uint8Array(total);
+    let cursor = 0;
+    localParts.concat(centralParts, [end]).forEach(function (part) {
+        out.set(part, cursor);
+        cursor += part.length;
+    });
+    return out;
+}
+
+/** Rejects entry names that could escape the target folder or confuse a reader. */
+function checkZipEntryName(name) {
+    if (!name || name.length > 512) {
+        throw new ZipError("The file contains an entry with an empty or very long name.");
+    }
+    if (name.indexOf("\\") >= 0 || name.startsWith("/") || /^[A-Za-z]:/.test(name) || name.indexOf("\u0000") >= 0) {
+        throw new ZipError("The file contains an entry with an unsafe path and was not opened.");
+    }
+    const parts = name.split("/");
+    if (parts.some(function (part) { return part === ".." || part === "."; })) {
+        throw new ZipError("The file contains an entry that points outside its folder and was not opened.");
+    }
+}
+
+/**
+ * Inflates raw deflate data, stopping as soon as the output passes the size the
+ * archive declared so a mislabeled bomb cannot fill memory.
+ */
+async function inflateRaw(bytes, expectedSize) {
+    if (typeof DecompressionStream === "undefined") {
+        throw new ZipError("This browser can't open compressed files. Try a current version of Chrome, Edge, Firefox, or Safari.");
+    }
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+    const reader = stream.getReader();
+    const chunks = [];
+    let total = 0;
+    try {
+        while (true) {
+            const step = await reader.read();
+            if (step.done) {
+                break;
+            }
+            total += step.value.length;
+            if (total > expectedSize) {
+                await reader.cancel();
+                throw new ZipError("An entry in the file is larger than it claims to be, so the file was not opened.");
+            }
+            chunks.push(step.value);
+        }
+    } catch (error) {
+        if (error instanceof ZipError) {
+            throw error;
+        }
+        throw new ZipError("An entry in the file could not be decompressed.");
+    }
+    const out = new Uint8Array(total);
+    let cursor = 0;
+    chunks.forEach(function (chunk) {
+        out.set(chunk, cursor);
+        cursor += chunk.length;
+    });
+    return out;
+}
+
+/**
+ * Reads a ZIP archive into a map of entry name to bytes. Directory entries are
+ * skipped. Throws ZipError for anything malformed, unsafe, or over the limits.
+ * @param {Uint8Array} bytes
+ * @returns {Promise<Map<string, Uint8Array>>}
+ */
+async function zipRead(bytes) {
+    if (!(bytes instanceof Uint8Array) || bytes.length < 22) {
+        throw new ZipError("This is not a ZIP file.");
+    }
+    if (bytes.length > LIMITS.zipTotalBytes) {
+        throw new ZipError("The file is larger than " + Math.round(LIMITS.zipTotalBytes / 1024 / 1024) + " MB, which is the most this app opens.");
+    }
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    let endOffset = -1;
+    const searchFloor = Math.max(0, bytes.length - 22 - 65535);
+    for (let i = bytes.length - 22; i >= searchFloor; i--) {
+        if (view.getUint32(i, true) === 0x06054B50) {
+            endOffset = i;
+            break;
+        }
+    }
+    if (endOffset < 0) {
+        throw new ZipError("This is not a ZIP file.");
+    }
+    const entryCount = view.getUint16(endOffset + 10, true);
+    const centralSize = view.getUint32(endOffset + 12, true);
+    const centralOffset = view.getUint32(endOffset + 16, true);
+    if (entryCount > LIMITS.zipEntries) {
+        throw new ZipError("The file holds more than " + LIMITS.zipEntries + " entries, which is more than this app opens.");
+    }
+    if (centralOffset + centralSize > endOffset) {
+        throw new ZipError("The file's directory is damaged.");
+    }
+    const entries = new Map();
+    let cursor = centralOffset;
+    let totalBytes = 0;
+    for (let n = 0; n < entryCount; n++) {
+        if (cursor + 46 > endOffset || view.getUint32(cursor, true) !== 0x02014B50) {
+            throw new ZipError("The file's directory is damaged.");
+        }
+        const flags = view.getUint16(cursor + 8, true);
+        const method = view.getUint16(cursor + 10, true);
+        const crc = view.getUint32(cursor + 16, true);
+        const compressedSize = view.getUint32(cursor + 20, true);
+        const uncompressedSize = view.getUint32(cursor + 24, true);
+        const nameLength = view.getUint16(cursor + 28, true);
+        const extraLength = view.getUint16(cursor + 30, true);
+        const commentLength = view.getUint16(cursor + 32, true);
+        const localOffset = view.getUint32(cursor + 42, true);
+        const name = fromBytes(bytes.subarray(cursor + 46, cursor + 46 + nameLength));
+        cursor += 46 + nameLength + extraLength + commentLength;
+
+        if (compressedSize === 0xFFFFFFFF || uncompressedSize === 0xFFFFFFFF || localOffset === 0xFFFFFFFF) {
+            throw new ZipError("64-bit ZIP files are not supported.");
+        }
+        if ((flags & 0x0001) !== 0) {
+            throw new ZipError("Encrypted ZIP files are not supported.");
+        }
+        checkZipEntryName(name);
+        if (name.endsWith("/")) {
+            continue;
+        }
+        if (uncompressedSize > LIMITS.zipEntryBytes) {
+            throw new ZipError("An entry in the file is larger than " + Math.round(LIMITS.zipEntryBytes / 1024 / 1024) + " MB, which is more than this app opens.");
+        }
+        totalBytes += uncompressedSize;
+        if (totalBytes > LIMITS.zipTotalBytes) {
+            throw new ZipError("The unpacked file would be larger than " + Math.round(LIMITS.zipTotalBytes / 1024 / 1024) + " MB, which is more than this app opens.");
+        }
+        if (localOffset + 30 > centralOffset || view.getUint32(localOffset, true) !== 0x04034B50) {
+            throw new ZipError("The file's directory is damaged.");
+        }
+        const localNameLength = view.getUint16(localOffset + 26, true);
+        const localExtraLength = view.getUint16(localOffset + 28, true);
+        const dataStart = localOffset + 30 + localNameLength + localExtraLength;
+        if (dataStart + compressedSize > centralOffset) {
+            throw new ZipError("The file's directory is damaged.");
+        }
+        const raw = bytes.subarray(dataStart, dataStart + compressedSize);
+        let data;
+        if (method === 0) {
+            if (compressedSize !== uncompressedSize) {
+                throw new ZipError("The file's directory is damaged.");
+            }
+            data = copyBytes(raw);
+        } else if (method === 8) {
+            data = await inflateRaw(raw, uncompressedSize);
+        } else {
+            throw new ZipError("The file uses a compression method this app does not support.");
+        }
+        if (data.length !== uncompressedSize || crc32(data) !== crc) {
+            throw new ZipError("An entry in the file is damaged (its checksum does not match).");
+        }
+        entries.set(name, data);
+    }
+    return entries;
+}
+
+// ### Format helpers ###
+
+/**
+ * One-line notice for files that tolerate an extra key. It names the creator's
+ * own copyright and license first, because the exported agent belongs to them,
+ * then the app that wrote the file.
+ */
+function licenseNotice(agent) {
+    const parts = [];
+    if (agent.copyright) {
+        parts.push(agent.copyright.replace(/\.?$/, "."));
+    }
+    parts.push("Licensed under " + agent.license + ".");
+    parts.push("Made with Agentprise, free software under the GNU GPL v3.0 or later: " + APP_REPOSITORY_URL);
+    return parts.join(" ");
+}
+
+/** Cuts text to max characters, recording a warning when something was lost. */
+function truncateWithWarning(text, max, label, warnings) {
+    if (text.length <= max) {
+        return text;
+    }
+    warnings.push("The " + label + " was shortened to " + max + " characters for this format.");
+    return text.slice(0, max).trim();
+}
+
+/** Reads a nested value safely from untrusted JSON. */
+function readPath(object, path) {
+    let current = object;
+    for (let i = 0; i < path.length; i++) {
+        if (!isPlainObject(current)) {
+            return undefined;
+        }
+        current = current[path[i]];
+    }
+    return current;
+}
+
+/** Turns a PNG data URI from an untrusted file into icon bytes, or null. */
+function iconFromDataUri(value, notices) {
+    if (typeof value !== "string" || value === "") {
+        return null;
+    }
+    if (!value.startsWith(PNG_DATA_URI_PREFIX)) {
+        notices.push("The icon in the file is not a PNG image and was left out.");
+        return null;
+    }
+    const bytes = base64ToBytes(value.slice(PNG_DATA_URI_PREFIX.length));
+    if (!bytes || !pngDimensions(bytes)) {
+        notices.push("The icon in the file could not be read and was left out.");
+        return null;
+    }
+    return { bytes: bytes, mime: "image/png" };
+}
+
+/** Turns PNG bytes from an archive into an icon, or null with a notice. */
+function iconFromBytes(bytes, notices) {
+    if (!bytes) {
+        return null;
+    }
+    if (!pngDimensions(bytes)) {
+        notices.push("The icon in the file is not a PNG image and was left out.");
+        return null;
+    }
+    return { bytes: copyBytes(bytes), mime: "image/png" };
+}
+
+/** Reads a ZIP for an importer, turning ZipError into a plain result. */
+async function readArchiveForImport(bytes) {
+    try {
+        return { entries: await zipRead(bytes) };
+    } catch (error) {
+        if (error instanceof ZipError) {
+            return { error: error.message };
+        }
+        throw error;
+    }
+}
+
+/** Parses JSON from an untrusted file into a plain object, or returns null. */
+function parseJsonObject(text) {
+    try {
+        const value = JSON.parse(text);
+        return isPlainObject(value) ? value : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+/** Makes a readable display name from a skill name such as "pdf-processing". */
+function humanizeSkillName(skillName) {
+    return String(skillName || "").split("-").filter(Boolean).map(function (word) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(" ");
+}
+
+// ### Format: Microsoft 365 Copilot .agent file (SharePoint and Teams chats) ###
+// Schema 0.2.0 is undocumented. The shape below matches a file exported by the
+// SharePoint agent builder on 2026-10-09. The reader ignores keys it does not
+// know, which is verified in a tenant, so two extra keys carry the license notice
+// and the fields the format itself lacks.
+
+/**
+ * Writes the .agent JSON for SharePoint libraries and Teams chats. Lossless.
+ * @param {object} agent a normalized agent
+ * @returns {{fileName: string, text: string, warnings: string[]}}
+ */
+function msAgentExport(agent) {
+    const warnings = [];
+    const starters = {
+        conversationStarterList: agent.starters.map(function (text) { return { text: text }; })
+    };
+    if (agent.welcome) {
+        starters.welcomeMessage = { text: agent.welcome };
+    }
+    const definition = {
+        name: agent.name,
+        description: agent.description,
+        instructions: agent.instructions,
+        capabilities: [
+            {
+                name: "OneDriveAndSharePoint",
+                items_by_sharepoint_ids: [],
+                items_by_url: agent.sharepointLinks.map(function (url) { return { url: url }; })
+            }
+        ],
+        behavior_overrides: {
+            special_instructions: { discourage_model_knowledge: agent.copilot.preferMyFiles === true }
+        }
+    };
+    const config = { conversationStarters: starters, gptDefinition: definition };
+    if (agent.icon) {
+        config.icon = PNG_DATA_URI_PREFIX + bytesToBase64(agent.icon.bytes);
+    }
+    const document = {
+        _license: licenseNotice(agent),
+        _agentprise: {
+            version: APP_VERSION,
+            display_name: agent.name,
+            copilot: {
+                web_search: agent.copilot.webSearch,
+                teams_messages: agent.copilot.teamsMessages,
+                meetings: agent.copilot.meetings,
+                code_interpreter: agent.copilot.codeInterpreter,
+                image_generation: agent.copilot.imageGeneration,
+                app_id: agent.copilot.appId
+            },
+            creator: {
+                name: agent.creator.name,
+                website: agent.creator.website,
+                privacy: agent.creator.privacy,
+                terms: agent.creator.terms
+            },
+            copyright: agent.copyright,
+            license: agent.license
+        },
+        schemaVersion: MS_AGENT_SCHEMA_VERSION,
+        customCopilotConfig: config
+    };
+    return { fileName: safeFileName(agent.name, ".agent"), text: JSON.stringify(document, null, 2), warnings: warnings };
+}
+
+/**
+ * Reads a .agent file. Files made in SharePoint lack the _agentprise key, so the
+ * Copilot options fall back to their defaults.
+ * @param {string} text file contents
+ * @returns {{agent: object, notices: string[]}|{error: string}}
+ */
+function msAgentImport(text) {
+    let parsed;
+    try {
+        parsed = JSON.parse(String(text));
+    } catch (error) {
+        return { error: "This file is not valid JSON, so it can't be opened as a Copilot agent." };
+    }
+    if (!isPlainObject(parsed) || !isPlainObject(parsed.customCopilotConfig)) {
+        return { error: "This doesn't look like a Copilot .agent file. It has no customCopilotConfig section." };
+    }
+    const notices = [];
+    const config = parsed.customCopilotConfig;
+    const definition = isPlainObject(config.gptDefinition) ? config.gptDefinition : {};
+    const starters = isPlainObject(config.conversationStarters) ? config.conversationStarters : {};
+    const raw = {
+        name: definition.name,
+        description: definition.description,
+        instructions: definition.instructions,
+        welcome: readPath(starters, ["welcomeMessage", "text"]),
+        starters: (Array.isArray(starters.conversationStarterList) ? starters.conversationStarterList : [])
+            .map(function (item) { return isPlainObject(item) ? item.text : ""; }),
+        sharepointLinks: [],
+        copilot: {
+            preferMyFiles: readPath(definition, ["behavior_overrides", "special_instructions", "discourage_model_knowledge"])
+        },
+        icon: iconFromDataUri(config.icon, notices)
+    };
+    let idOnlySources = 0;
+    (Array.isArray(definition.capabilities) ? definition.capabilities : []).forEach(function (capability) {
+        if (!isPlainObject(capability) || capability.name !== "OneDriveAndSharePoint") {
+            return;
+        }
+        (Array.isArray(capability.items_by_url) ? capability.items_by_url : []).forEach(function (item) {
+            if (isPlainObject(item)) {
+                raw.sharepointLinks.push(item.url);
+            }
+        });
+        idOnlySources += Array.isArray(capability.items_by_sharepoint_ids) ? capability.items_by_sharepoint_ids.length : 0;
+    });
+    if (idOnlySources > 0) {
+        notices.push(idOnlySources + " SharePoint source(s) were stored by ID, which this app can't carry. Add them again as links.");
+    }
+    const extra = isPlainObject(parsed._agentprise) ? parsed._agentprise : null;
+    if (extra) {
+        const copilot = isPlainObject(extra.copilot) ? extra.copilot : {};
+        raw.copilot.webSearch = copilot.web_search;
+        raw.copilot.teamsMessages = copilot.teams_messages;
+        raw.copilot.meetings = copilot.meetings;
+        raw.copilot.codeInterpreter = copilot.code_interpreter;
+        raw.copilot.imageGeneration = copilot.image_generation;
+        raw.copilot.appId = copilot.app_id;
+        raw.creator = extra.creator;
+        raw.copyright = extra.copyright;
+        raw.license = extra.license;
+    }
+    const result = normalizeAgent(raw);
+    return { agent: result.agent, notices: notices.concat(result.notices) };
+}
+
+// ### Format: Agentprise bundle (Agent Skill ZIP for Gemini and Claude) ###
+// The bundle is a valid Agent Skill folder inside a ZIP. Fields the skill
+// standard lacks live under metadata as flat strings, so standard readers keep
+// working and this app loses nothing on the way back.
+
+/** Frontmatter for SKILL.md. Every metadata value is a string by design. */
+function bundleFrontmatter(agent, skillName) {
+    const metadata = {};
+    metadata[META.version] = APP_VERSION;
+    metadata[META.displayName] = agent.name;
+    metadata[META.welcome] = agent.welcome;
+    metadata[META.starters] = agent.starters.join("\n");
+    metadata[META.sharepoint] = agent.sharepointLinks.join("\n");
+    metadata[META.webSearch] = String(agent.copilot.webSearch);
+    metadata[META.teamsMessages] = String(agent.copilot.teamsMessages);
+    metadata[META.meetings] = String(agent.copilot.meetings);
+    metadata[META.codeInterpreter] = String(agent.copilot.codeInterpreter);
+    metadata[META.imageGeneration] = String(agent.copilot.imageGeneration);
+    metadata[META.preferMyFiles] = String(agent.copilot.preferMyFiles);
+    metadata[META.appId] = agent.copilot.appId;
+    metadata[META.creatorName] = agent.creator.name;
+    metadata[META.creatorWebsite] = agent.creator.website;
+    metadata[META.creatorPrivacy] = agent.creator.privacy;
+    metadata[META.creatorTerms] = agent.creator.terms;
+    metadata[META.copyright] = agent.copyright;
+    return {
+        name: skillName,
+        description: agent.description || agent.name,
+        license: agent.license + ". See LICENSE.txt.",
+        metadata: metadata
+    };
+}
+
+/** The short README that travels inside the bundle. */
+function bundleReadme(agent) {
+    const lines = [
+        "<!--",
+        agent.name,
+        licenseNotice(agent),
+        "-->",
+        "",
+        "# " + agent.name,
+        "",
+        agent.description || "",
+        ""
+    ];
+    if (agent.creator.name) {
+        lines.push("Made by " + agent.creator.name + (agent.creator.website ? " (" + agent.creator.website + ")" : "") + ".", "");
+    }
+    lines.push(
+        "## How to use",
+        "",
+        "- Gemini: open Settings, then Skills, then Upload, and choose this ZIP file.",
+        "- Claude: open Settings, then Capabilities, then Skills, and upload this ZIP file.",
+        "- Microsoft 365 Copilot, ChatGPT, or to edit it: open this ZIP file at " + APP_SITE_URL,
+        "",
+        "SKILL.md holds the instructions. LICENSE.txt holds the license.",
+        ""
+    );
+    return lines.join("\n");
+}
+
+/** LICENSE.txt for the bundle: the full GPL for the default, a notice otherwise. */
+function bundleLicenseText(agent) {
+    const head = agent.copyright ? agent.copyright + "\n\n" : "";
+    if (agent.license === DEFAULT_LICENSE) {
+        return head + "This work is licensed under the GNU General Public License v3.0 or later. The full text follows.\n\n" + GPL_TEXT;
+    }
+    const choice = LICENSE_CHOICES.find(function (item) { return item.id === agent.license; });
+    const link = choice && choice.url ? " See " + choice.url : "";
+    return head + "This work is licensed under " + agent.license + "." + link + "\n";
+}
+
+/**
+ * Writes the bundle: a ZIP holding one skill folder with SKILL.md, icon.png,
+ * LICENSE.txt, and README.md. Uploads unchanged to Gemini and Claude.
+ * @param {object} agent a normalized agent
+ * @returns {Promise<{fileName: string, bytes: Uint8Array, warnings: string[], skillName: string}>}
+ */
+async function bundleExport(agent) {
+    const warnings = [];
+    const skillName = toSkillName(agent.name);
+    if (!agent.description) {
+        warnings.push("The description is empty, so the name is used as the description.");
+    }
+    const skillMd = stringifyFrontmatter(bundleFrontmatter(agent, skillName), "\n" + agent.instructions + "\n");
+    const entries = [{ name: skillName + "/SKILL.md", bytes: toBytes(skillMd) }];
+    if (agent.icon) {
+        entries.push({ name: skillName + "/icon.png", bytes: agent.icon.bytes });
+    }
+    entries.push({ name: skillName + "/LICENSE.txt", bytes: toBytes(bundleLicenseText(agent)) });
+    entries.push({ name: skillName + "/README.md", bytes: toBytes(bundleReadme(agent)) });
+    return { fileName: safeFileName(skillName, ".zip"), bytes: zipWrite(entries), warnings: warnings, skillName: skillName };
+}
+
+/**
+ * Reads a SKILL.md file, from this app or from any Agent Skill. Metadata keys
+ * this app does not know are ignored. Unknown top-level fields produce a notice.
+ * @param {string} text file contents
+ * @returns {{agent: object, notices: string[]}}
+ */
+function skillMdImport(text) {
+    const parsed = parseFrontmatter(text);
+    const notices = parsed.warnings.slice();
+    const data = parsed.data;
+    const meta = isPlainObject(data.metadata) ? data.metadata : {};
+    const knownFields = ["name", "description", "license", "compatibility", "metadata", "allowed-tools"];
+    Object.keys(data).forEach(function (key) {
+        if (knownFields.indexOf(key) < 0) {
+            notices.push("The frontmatter field \"" + key + "\" is not part of the Agent Skills standard and was ignored.");
+        }
+    });
+    const skillName = typeof data.name === "string" ? data.name.trim() : "";
+    if (!skillName) {
+        notices.push("The file has no name in its frontmatter, so you will need to add one.");
+    } else if (skillName !== toSkillName(skillName)) {
+        notices.push("The skill name \"" + skillName + "\" doesn't follow the Agent Skills rules. It will be saved as \"" + toSkillName(skillName) + "\".");
+    }
+    const splitLines = function (value) {
+        return typeof value === "string" ? value.split("\n") : [];
+    };
+    let license = typeof data.license === "string" ? data.license : "";
+    const licenseMatch = license.match(/^(.*?)\.\s+See LICENSE\.txt\.?$/);
+    if (licenseMatch) {
+        license = licenseMatch[1];
+    }
+    const raw = {
+        name: typeof meta[META.displayName] === "string" && meta[META.displayName] ? meta[META.displayName] : humanizeSkillName(skillName),
+        description: data.description,
+        instructions: parsed.body.replace(/^\n+/, "").replace(/\s+$/, ""),
+        welcome: meta[META.welcome],
+        starters: splitLines(meta[META.starters]),
+        sharepointLinks: splitLines(meta[META.sharepoint]),
+        copilot: {
+            webSearch: meta[META.webSearch],
+            teamsMessages: meta[META.teamsMessages],
+            meetings: meta[META.meetings],
+            codeInterpreter: meta[META.codeInterpreter],
+            imageGeneration: meta[META.imageGeneration],
+            preferMyFiles: meta[META.preferMyFiles],
+            appId: meta[META.appId]
+        },
+        creator: {
+            name: meta[META.creatorName],
+            website: meta[META.creatorWebsite],
+            privacy: meta[META.creatorPrivacy],
+            terms: meta[META.creatorTerms]
+        },
+        copyright: meta[META.copyright],
+        license: license
+    };
+    const result = normalizeAgent(raw);
+    return { agent: result.agent, notices: notices.concat(result.notices) };
+}
+
+/**
+ * Reads a bundle or any Agent Skill ZIP. SKILL.md may sit at the root or inside
+ * one folder; the shortest path wins when there are several.
+ * @param {Uint8Array} bytes
+ * @returns {Promise<{agent: object, notices: string[]}|{error: string}>}
+ */
+async function bundleImport(bytes) {
+    const archive = await readArchiveForImport(bytes);
+    if (archive.error) {
+        return { error: archive.error };
+    }
+    const entries = archive.entries;
+    const candidates = Array.from(entries.keys()).filter(function (name) {
+        return name === "SKILL.md" || name.endsWith("/SKILL.md");
+    }).sort(function (a, b) { return a.length - b.length; });
+    if (candidates.length === 0) {
+        return { error: "This ZIP has no SKILL.md inside, so it isn't an agent skill or an Agentprise bundle." };
+    }
+    const skillPath = candidates[0];
+    const folder = skillPath.slice(0, skillPath.length - "SKILL.md".length);
+    const result = skillMdImport(fromBytes(entries.get(skillPath)));
+    const notices = result.notices;
+    const agent = result.agent;
+    const iconBytes = entries.get(folder + "icon.png");
+    if (iconBytes) {
+        const normalized = normalizeAgent({ icon: iconFromBytes(iconBytes, notices) });
+        agent.icon = normalized.agent.icon;
+        notices.push.apply(notices, normalized.notices);
+    }
+    return { agent: agent, notices: notices };
+}
+
+// ### Format: Teams app package (the Copilot app) ###
+// A ZIP with manifest.json, declarativeAgent_0.json, color.png, and outline.png.
+// Both JSON files are schema-validated and reject unknown keys, so nothing extra
+// goes in them. The welcome message has no home here and is reported as lost.
+
+/** Builds the Teams manifest version. Later exports sort higher so updates install. */
+function teamsManifestVersion() {
+    const now = new Date();
+    const pad = function (n) { return String(n).padStart(2, "0"); };
+    const date = String(now.getUTCFullYear()) + pad(now.getUTCMonth() + 1) + pad(now.getUTCDate());
+    const time = pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + pad(now.getUTCSeconds());
+    return "1." + date + "." + time;
+}
+
+/**
+ * Writes the Teams app package. The caller supplies the two icon files already
+ * sized for Microsoft (192 by 192 color, 32 by 32 white-on-transparent outline).
+ * Side effect: when the agent has no app id yet, one is generated and stored on
+ * the agent so later exports update the same app instead of creating a new one.
+ * @param {object} agent a normalized agent
+ * @param {{color: Uint8Array, outline: Uint8Array}} icons PNG bytes
+ * @returns {Promise<{fileName: string, bytes: Uint8Array, warnings: string[], appId: string}>}
+ */
+async function teamsZipExport(agent, icons) {
+    const warnings = [];
+    if (!icons || !pngDimensions(icons.color) || !pngDimensions(icons.outline)) {
+        throw new Error("The Teams package needs a color icon and an outline icon as PNG bytes.");
+    }
+    const colorSize = pngDimensions(icons.color);
+    const outlineSize = pngDimensions(icons.outline);
+    if (colorSize.width !== 192 || colorSize.height !== 192 || outlineSize.width !== 32 || outlineSize.height !== 32) {
+        throw new Error("The Teams package needs a 192 by 192 color icon and a 32 by 32 outline icon.");
+    }
+    if (!agent.copilot.appId) {
+        agent.copilot.appId = newUuid();
+    }
+    const appId = agent.copilot.appId;
+    if (agent.welcome) {
+        warnings.push("The Copilot app package can't carry the welcome message, so it was left out.");
+    }
+    if (agent.copyright || agent.license !== DEFAULT_LICENSE) {
+        warnings.push("The Copilot app package can't carry the copyright line or license name, so they were left out.");
+    }
+    const creator = {};
+    const placeholdersUsed = [];
+    ["name", "website", "privacy", "terms"].forEach(function (key) {
+        if (agent.creator[key]) {
+            creator[key] = agent.creator[key];
+        } else {
+            creator[key] = CREATOR_PLACEHOLDERS[key];
+            placeholdersUsed.push(key);
+        }
+    });
+    if (placeholdersUsed.length > 0) {
+        warnings.push("Placeholder values were used for the creator " + placeholdersUsed.join(", ") + ". Fill in About you to replace them.");
+    }
+    const developerName = truncateWithWarning(creator.name, TEAMS_DEVELOPER_NAME_MAX, "creator name", warnings);
+    const shortName = truncateWithWarning(agent.name, TEAMS_SHORT_NAME_MAX, "name shown in the app list", warnings);
+    const shortDescription = agent.description.length > TEAMS_SHORT_DESCRIPTION_MAX
+        ? agent.description.slice(0, TEAMS_SHORT_DESCRIPTION_MAX).trim()
+        : agent.description;
+
+    const manifest = {
+        version: teamsManifestVersion(),
+        id: appId,
+        developer: {
+            name: developerName,
+            websiteUrl: creator.website,
+            privacyUrl: creator.privacy,
+            termsOfUseUrl: creator.terms
+        },
+        name: { short: shortName, full: agent.name },
+        description: { short: shortDescription, full: agent.description },
+        icons: { outline: "outline.png", color: "color.png" },
+        accentColor: TEAMS_ACCENT_COLOR,
+        validDomains: TEAMS_VALID_DOMAINS.slice(),
+        "$schema": TEAMS_MANIFEST_SCHEMA,
+        manifestVersion: TEAMS_MANIFEST_VERSION,
+        copilotAgents: {
+            declarativeAgents: [{ id: appId, file: "declarativeAgent_0.json" }]
+        }
+    };
+
+    const declarative = {
+        version: DECLARATIVE_AGENT_VERSION,
+        id: appId,
+        name: agent.name,
+        description: agent.description,
+        instructions: agent.instructions
+    };
+    if (agent.starters.length > 0) {
+        declarative.conversation_starters = agent.starters.map(function (text) { return { text: text }; });
+    }
+    const capabilities = [];
+    COPILOT_CAPABILITIES.forEach(function (cap) {
+        if (agent.copilot[cap.key]) {
+            capabilities.push({ name: cap.name });
+        }
+    });
+    if (agent.sharepointLinks.length > 0) {
+        capabilities.push({
+            name: "OneDriveAndSharePoint",
+            items_by_url: agent.sharepointLinks.map(function (url) { return { url: url }; })
+        });
+    }
+    if (capabilities.length > 0) {
+        declarative.capabilities = capabilities;
+    }
+    if (agent.copilot.preferMyFiles) {
+        declarative.behavior_overrides = { special_instructions: { discourage_model_knowledge: true } };
+    }
+
+    const entries = [
+        { name: "manifest.json", bytes: toBytes(JSON.stringify(manifest, null, 2)) },
+        { name: "declarativeAgent_0.json", bytes: toBytes(JSON.stringify(declarative, null, 2)) },
+        { name: "color.png", bytes: icons.color },
+        { name: "outline.png", bytes: icons.outline }
+    ];
+    return { fileName: safeFileName(agent.name + " Copilot app", ".zip"), bytes: zipWrite(entries), warnings: warnings, appId: appId };
+}
+
+/**
+ * Reads a Teams app package made by the Copilot app or by this app.
+ * @param {Uint8Array} bytes
+ * @returns {Promise<{agent: object, notices: string[]}|{error: string}>}
+ */
+async function teamsZipImport(bytes) {
+    const archive = await readArchiveForImport(bytes);
+    if (archive.error) {
+        return { error: archive.error };
+    }
+    const entries = archive.entries;
+    const notices = [];
+    const manifest = entries.has("manifest.json") ? parseJsonObject(fromBytes(entries.get("manifest.json"))) : null;
+    let declarativeFile = readPath(manifest || {}, ["copilotAgents", "declarativeAgents", "0", "file"]);
+    if (typeof declarativeFile !== "string" || !entries.has(declarativeFile)) {
+        declarativeFile = "declarativeAgent_0.json";
+    }
+    if (!entries.has(declarativeFile)) {
+        return { error: "This ZIP has no declarative agent file (declarativeAgent_0.json), so it isn't a Copilot app package." };
+    }
+    const declarative = parseJsonObject(fromBytes(entries.get(declarativeFile)));
+    if (!declarative) {
+        return { error: "The declarative agent file inside this ZIP is not valid JSON." };
+    }
+    const raw = {
+        name: declarative.name,
+        description: declarative.description,
+        instructions: declarative.instructions,
+        starters: (Array.isArray(declarative.conversation_starters) ? declarative.conversation_starters : [])
+            .map(function (item) { return isPlainObject(item) ? item.text : ""; }),
+        sharepointLinks: [],
+        copilot: {
+            webSearch: false,
+            teamsMessages: false,
+            meetings: false,
+            codeInterpreter: false,
+            imageGeneration: false,
+            preferMyFiles: readPath(declarative, ["behavior_overrides", "special_instructions", "discourage_model_knowledge"]),
+            appId: manifest ? manifest.id : ""
+        },
+        creator: {}
+    };
+    (Array.isArray(declarative.capabilities) ? declarative.capabilities : []).forEach(function (capability) {
+        if (!isPlainObject(capability)) {
+            return;
+        }
+        const known = COPILOT_CAPABILITIES.find(function (cap) { return cap.name === capability.name; });
+        if (known) {
+            raw.copilot[known.key] = true;
+        } else if (capability.name === "OneDriveAndSharePoint") {
+            (Array.isArray(capability.items_by_url) ? capability.items_by_url : []).forEach(function (item) {
+                if (isPlainObject(item)) {
+                    raw.sharepointLinks.push(item.url);
+                }
+            });
+        } else if (typeof capability.name === "string") {
+            notices.push("The capability \"" + capability.name + "\" is not one this app can carry and was left out.");
+        }
+    });
+    if (Array.isArray(declarative.actions) && declarative.actions.length > 0) {
+        notices.push("This package has " + declarative.actions.length + " action(s) (plugins) that this app can't carry. They were left out.");
+    }
+    const developer = manifest && isPlainObject(manifest.developer) ? manifest.developer : {};
+    const developerFields = { name: "name", website: "websiteUrl", privacy: "privacyUrl", terms: "termsOfUseUrl" };
+    Object.keys(developerFields).forEach(function (key) {
+        const value = developer[developerFields[key]];
+        raw.creator[key] = value === CREATOR_PLACEHOLDERS[key] ? "" : value;
+    });
+    const colorFile = readPath(manifest || {}, ["icons", "color"]);
+    const iconBytes = entries.get(typeof colorFile === "string" ? colorFile : "color.png");
+    raw.icon = iconFromBytes(iconBytes, notices);
+    notices.push("Copilot app packages don't carry a welcome message, so that field is empty.");
+    const result = normalizeAgent(raw);
+    return { agent: result.agent, notices: notices.concat(result.notices) };
+}
+
+// ### Format: copy-ready text (ChatGPT and Gemini Notebook) ###
+
+/**
+ * Returns the fields a person pastes into the GPT builder or Notebook settings,
+ * plus one Markdown document for adding to a notebook as a source.
+ * @param {object} agent a normalized agent
+ * @returns {{name: string, description: string, instructions: string, starters: string, markdown: string, fileName: string}}
+ */
+function copyTextExport(agent) {
+    const lines = ["# " + agent.name, ""];
+    if (agent.description) {
+        lines.push(agent.description, "");
+    }
+    lines.push("## Instructions", "", agent.instructions, "");
+    if (agent.starters.length > 0) {
+        lines.push("## Conversation starters", "");
+        agent.starters.forEach(function (text) { lines.push("- " + text); });
+        lines.push("");
+    }
+    return {
+        name: agent.name,
+        description: agent.description,
+        instructions: agent.instructions,
+        starters: agent.starters.join("\n"),
+        markdown: lines.join("\n"),
+        fileName: safeFileName(toSkillName(agent.name), ".md")
+    };
+}
+
+// ### Format detection ###
+
+/**
+ * Guesses which importer to use from the file name and the first bytes. The
+ * importer still validates everything; this only picks which one to try.
+ * @param {string} fileName
+ * @param {Uint8Array} bytes
+ * @returns {"bundle"|"skillMd"|"msAgent"|"teamsZip"|"unknown"}
+ */
+function detectFormat(fileName, bytes) {
+    const lower = String(fileName || "").toLowerCase();
+    const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(0);
+    if (lower.endsWith(".agent")) {
+        return "msAgent";
+    }
+    if (lower.endsWith(".md")) {
+        return "skillMd";
+    }
+    if (data.length > 4 && data[0] === 0x50 && data[1] === 0x4B && data[2] === 0x03 && data[3] === 0x04) {
+        const names = new TextDecoder("latin1").decode(data);
+        if (names.indexOf("SKILL.md") >= 0) {
+            return "bundle";
+        }
+        if (names.indexOf("manifest.json") >= 0 || names.indexOf("declarativeAgent") >= 0) {
+            return "teamsZip";
+        }
+        return "unknown";
+    }
+    if (lower.endsWith(".json") && data.length < LIMITS.zipEntryBytes) {
+        const text = fromBytes(data.subarray(0, 4096));
+        if (text.indexOf("customCopilotConfig") >= 0 || text.indexOf("schemaVersion") >= 0) {
+            return "msAgent";
+        }
+    }
+    return "unknown";
+}
+
+// ### Public engine namespace ###
+globalThis.Agentprise = {
+    LIMITS: LIMITS,
+    APP_VERSION: APP_VERSION,
+    APP_SITE_URL: APP_SITE_URL,
+    DEFAULT_LICENSE: DEFAULT_LICENSE,
+    LICENSE_CHOICES: LICENSE_CHOICES,
+    CREATOR_PLACEHOLDERS: CREATOR_PLACEHOLDERS,
+    META: META,
+    createAgent: createAgent,
+    normalizeAgent: normalizeAgent,
+    validateAgent: validateAgent,
+    toSkillName: toSkillName,
+    safeFileName: safeFileName,
+    detectFormat: detectFormat,
+    yaml: { parseFrontmatter: parseFrontmatter, stringifyFrontmatter: stringifyFrontmatter },
+    zip: { read: zipRead, write: zipWrite, ZipError: ZipError },
+    png: { dimensions: pngDimensions },
+    bytes: { toBase64: bytesToBase64, fromBase64: base64ToBytes, equal: bytesEqual, toText: fromBytes, fromText: toBytes },
+    formats: {
+        bundle: { export: bundleExport, import: bundleImport },
+        skillMd: { import: skillMdImport },
+        msAgent: { export: msAgentExport, import: msAgentImport },
+        teamsZip: { export: teamsZipExport, import: teamsZipImport },
+        copyText: { export: copyTextExport }
+    }
+};
+
+// ### Interface startup ###
+// The engine above has no DOM dependency so the test suite can load it in Node.
+// Everything that touches the page starts here and only in a browser.
+if (typeof document !== "undefined" && document.getElementById) {
+    // The interface is added in a later phase.
+}
+</script>
 </body>
 </html>
