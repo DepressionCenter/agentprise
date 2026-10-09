@@ -44,7 +44,7 @@ and the knowledge base article.
 - Take screenshots at 1280 pixels wide in light mode, from the app served locally
   with ZippyServe, using the Caveman library agent so no real names or links
   appear. Save them as PNG under `images/guides/` with descriptive file names such
-  as `build-tab-name-field.png`.
+  as `workspace-name-blank.png`.
 - Every screenshot gets alt text that says what the screen shows and what the
   reader should notice, per the accessibility skill. A screenshot never carries
   information that the surrounding text does not also give.

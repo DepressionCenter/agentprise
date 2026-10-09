@@ -33,10 +33,13 @@ phase's plan lists its tasks with the files, tests, and commands involved.
 2. [Phase 2: user interface](phase-2-user-interface.md). The six tabs, the build
    form, the check screen, the download cards, the help page, draft autosave, and
    the accessibility work that goes with them.
-3. [Phase 3: library and release](phase-3-library-and-release.md). The Caveman
+3. [Phase 2.5: interface redesign](phase-2-5-interface-redesign.md). The
+   sidebar workspace, the fill-in-the-sentence editor with a live preview, and
+   the Details view, replacing the tabbed U-M themed interface after review.
+4. [Phase 3: library and release](phase-3-library-and-release.md). The Caveman
    library entry, the catalog, the knowledge base pages, the README quick start,
    browser verification, and the pull request.
-4. [Phase 4: user guides with screenshots](phase-4-user-guides.md). Illustrated
+5. [Phase 4: user guides with screenshots](phase-4-user-guides.md). Illustrated
    step-by-step guides for each job a person comes to do, written last so the
    screenshots match the settled interface.
 
@@ -51,7 +54,8 @@ plan says so under a heading named "Changes from the design" and gives the reaso
 
 Each phase is built on its own branch, named after the phase
 (`feature/phase-1-core-engine`, `feature/phase-2-user-interface`,
-`feature/phase-3-library-and-release`), and merged through its own pull request.
+`feature/phase-2-5-interface-redesign`, `feature/phase-3-library-and-release`),
+and merged through its own pull request.
 The next phase starts only after the previous one has been reviewed and merged.
 
 ### Conclusion
