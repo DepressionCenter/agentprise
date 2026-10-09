@@ -28,13 +28,749 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Make AI agents portable across Copilot, Gemini, Claude, and ChatGPT.">
+    <meta name="color-scheme" content="light dark">
     <title>Agentprise</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2300274C'/%3E%3Ccircle cx='32' cy='32' r='20' fill='%23FFCB05'/%3E%3Ctext x='32' y='41' font-family='Arial,sans-serif' font-size='26' font-weight='bold' text-anchor='middle' fill='%2300274C'%3EA%3C/text%3E%3C/svg%3E">
+    <style>
+        /* ### Theme ### */
+        /* U-M Blue carries the header and primary buttons. Maize is an accent and the
+           focus ring on dark surfaces only; it is never text on white. Every pair below
+           meets WCAG 2.2 AA contrast; the ratios are recorded in docs/compliance.md. */
+        :root {
+            --um-blue: #00274C;
+            --um-maize: #FFCB05;
+            --arboretum-blue: #2F65A7;
+            --bg: #FFFFFF;
+            --surface: #F3F5F8;
+            --surface-strong: #E3E8EF;
+            --text: #1B1B1B;
+            --text-muted: #4A5560;
+            --border: #8A96A3;
+            --link: #2F65A7;
+            --focus: #2F65A7;
+            --header-bg: #00274C;
+            --header-text: #FFFFFF;
+            --primary-bg: #00274C;
+            --primary-text: #FFFFFF;
+            --secondary-bg: #FFFFFF;
+            --secondary-text: #00274C;
+            --secondary-border: #00274C;
+            --notice-bg: #FFF4CC;
+            --notice-border: #8A5B00;
+            --notice-text: #1B1B1B;
+            --error-text: #A4121C;
+            --error-border: #A4121C;
+            --ok-text: #1F6F3F;
+            --input-bg: #FFFFFF;
+            --code-bg: #F3F5F8;
+            --dropzone-bg: #F3F5F8;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #14171B;
+                --surface: #1E2329;
+                --surface-strong: #2A313A;
+                --text: #F2F4F6;
+                --text-muted: #B8C2CC;
+                --border: #7C8893;
+                --link: #9EC5F2;
+                --focus: #FFCB05;
+                --header-bg: #00274C;
+                --header-text: #FFFFFF;
+                --primary-bg: #FFCB05;
+                --primary-text: #00274C;
+                --secondary-bg: #1E2329;
+                --secondary-text: #F2F4F6;
+                --secondary-border: #B8C2CC;
+                --notice-bg: #3A2E00;
+                --notice-border: #FFCB05;
+                --notice-text: #F2F4F6;
+                --error-text: #FF9AA2;
+                --error-border: #FF9AA2;
+                --ok-text: #8FD9A8;
+                --input-bg: #14171B;
+                --code-bg: #1E2329;
+                --dropzone-bg: #1E2329;
+            }
+        }
+
+        /* ### Base ### */
+        * { box-sizing: border-box; }
+        html { font-size: 100%; }
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--text);
+            background: var(--bg);
+        }
+        p, li { max-width: 72ch; }
+        .cards > li, .starter-list > li, .steps > li, .tags > li { max-width: none; }
+        h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 0.5em; }
+        h1 { font-size: 1.5rem; }
+        h2 { font-size: 1.5rem; margin-top: 0; }
+        h3 { font-size: 1.2rem; }
+        a { color: var(--link); text-decoration: underline; }
+        a:hover { text-decoration-thickness: 2px; }
+        code, pre {
+            font-family: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.95em;
+        }
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem;
+            overflow: auto;
+            max-height: 24rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        :focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 2px;
+        }
+        .visually-hidden {
+            position: absolute !important;
+            width: 1px; height: 1px;
+            padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0, 0, 0, 0);
+            white-space: nowrap; border: 0;
+        }
+        [hidden] { display: none !important; }
+        @media (prefers-reduced-motion: no-preference) {
+            html { scroll-behavior: smooth; }
+        }
+
+        /* ### Header and navigation ### */
+        .skip-link {
+            position: absolute;
+            left: 0.5rem;
+            top: -4rem;
+            background: var(--um-maize);
+            color: var(--um-blue);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            z-index: 10;
+            font-weight: 600;
+        }
+        .skip-link:focus { top: 0.5rem; outline-color: var(--um-blue); }
+        .site-header {
+            background: var(--header-bg);
+            color: var(--header-text);
+            padding: 1rem;
+        }
+        .site-header .inner {
+            max-width: 64rem;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 0.5rem 1rem;
+        }
+        .site-header h1 { margin: 0; }
+        .site-header .tagline { margin: 0; color: var(--header-text); opacity: 0.95; }
+        .site-header :focus-visible { outline-color: var(--um-maize); }
+        .site-nav { background: var(--header-bg); border-bottom: 4px solid var(--um-maize); }
+        .tablist {
+            max-width: 64rem;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            padding: 0 0.5rem;
+        }
+        .tablist [role="tab"] {
+            min-height: 44px;
+            min-width: 44px;
+            padding: 0.6rem 1rem;
+            background: transparent;
+            color: var(--header-text);
+            border: 0;
+            border-bottom: 4px solid transparent;
+            margin-bottom: -4px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .tablist [role="tab"]:hover { background: rgba(255, 255, 255, 0.12); }
+        .tablist [role="tab"][aria-selected="true"] {
+            background: var(--bg);
+            color: var(--text);
+            border-bottom-color: var(--bg);
+        }
+        .tablist [role="tab"]:focus-visible { outline-color: var(--um-maize); outline-offset: -3px; }
+
+        /* ### Layout ### */
+        main { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem 6rem; }
+        [role="tabpanel"] { outline: none; }
+        .site-footer {
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+            padding: 1rem;
+            font-size: 0.95rem;
+        }
+        .site-footer .inner {
+            max-width: 64rem;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem 1.5rem;
+            align-items: center;
+        }
+        .site-footer p { margin: 0; }
+        .status-bar { min-height: 1.5rem; margin-bottom: 1rem; }
+        .status-bar p { margin: 0; padding: 0.5rem 0.75rem; border-left: 4px solid var(--arboretum-blue); background: var(--surface); }
+
+        /* ### Buttons ### */
+        button, .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            min-height: 44px;
+            min-width: 44px;
+            padding: 0.6rem 1.1rem;
+            border-radius: 6px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border: 2px solid var(--secondary-border);
+            background: var(--secondary-bg);
+            color: var(--secondary-text);
+        }
+        button:hover, .button:hover { background: var(--surface-strong); }
+        button.primary, .button.primary {
+            background: var(--primary-bg);
+            color: var(--primary-text);
+            border-color: var(--primary-bg);
+        }
+        button.primary:hover, .button.primary:hover { filter: brightness(1.15); }
+        button.quiet {
+            border-color: transparent;
+            background: transparent;
+            font-weight: 500;
+            text-decoration: underline;
+        }
+        button:disabled, button[aria-disabled="true"] {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+        button.big {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            text-align: left;
+            justify-content: flex-start;
+        }
+        .button-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1rem 0; }
+        .big-choices { display: grid; gap: 0.75rem; margin: 1.5rem 0; }
+        @media (min-width: 40rem) { .big-choices { grid-template-columns: repeat(3, 1fr); } }
+
+        /* ### Cards and notices ### */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0 0 1rem;
+        }
+        .card h3 { margin-top: 0; }
+        .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+        @media (min-width: 48rem) { .cards.two { grid-template-columns: 1fr 1fr; } }
+        .cards > li { margin: 0; }
+        .notice {
+            background: var(--notice-bg);
+            color: var(--notice-text);
+            border-left: 4px solid var(--notice-border);
+            padding: 0.6rem 0.9rem;
+            border-radius: 4px;
+            margin: 0.75rem 0;
+        }
+        .notice p, .notice ul { margin: 0.25rem 0; }
+        .error-text { color: var(--error-text); font-weight: 600; margin: 0.25rem 0 0; }
+        .ok-text { color: var(--ok-text); font-weight: 600; }
+        .muted { color: var(--text-muted); }
+        .steps { counter-reset: step; display: grid; gap: 0.75rem; padding: 0; margin: 1.5rem 0; list-style: none; }
+        @media (min-width: 40rem) { .steps { grid-template-columns: repeat(3, 1fr); } }
+        .steps li { background: var(--surface); border-radius: 8px; padding: 1rem; }
+        .steps li::before {
+            counter-increment: step;
+            content: "Step " counter(step);
+            display: block;
+            font-weight: 700;
+            color: var(--link);
+        }
+        details { margin: 0.75rem 0; }
+        summary {
+            cursor: pointer;
+            font-weight: 600;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0;
+        }
+        /* Flex layout drops the native marker, so draw one that flips when open. */
+        summary::before { content: "\25B8"; font-size: 1.2em; line-height: 1; }
+        details[open] > summary::before { content: "\25BE"; }
+        .tags { list-style: none; padding: 0; margin: 0.5rem 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .tags li { background: var(--surface-strong); border-radius: 999px; padding: 0.15rem 0.7rem; font-size: 0.9rem; }
+
+        /* ### Forms ### */
+        .field { margin: 0 0 1.5rem; }
+        .field label, .field legend, .field .label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+        .hint { margin: 0 0 0.4rem; color: var(--text-muted); }
+        input[type="text"], input[type="url"], textarea, select {
+            width: 100%;
+            max-width: 100%;
+            min-height: 44px;
+            padding: 0.6rem 0.75rem;
+            font: inherit;
+            color: var(--text);
+            background: var(--input-bg);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+        }
+        textarea { min-height: 8rem; resize: vertical; }
+        textarea.tall { min-height: 18rem; }
+        input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--error-border); }
+        input[readonly] { background: var(--surface); }
+        .counter { margin: 0.25rem 0 0; color: var(--text-muted); font-size: 0.95rem; }
+        .inline-fields { display: grid; gap: 0.75rem; }
+        @media (min-width: 40rem) { .inline-fields { grid-template-columns: 1fr 1fr; } }
+        .check-row { display: flex; align-items: flex-start; gap: 0.6rem; margin: 0.5rem 0; }
+        .check-row input { width: 24px; height: 24px; margin: 0.2rem 0 0; flex: none; }
+        .check-row label { font-weight: 500; }
+        .starter-list { list-style: none; padding: 0; margin: 0; }
+        .starter-list li { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+        .starter-list input { flex: 1 1 14rem; }
+        fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin: 0 0 1.5rem; }
+        fieldset legend { padding: 0 0.4rem; }
+        .icon-preview {
+            width: 96px; height: 96px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            object-fit: cover;
+            display: block;
+        }
+        .icon-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+        .dropzone {
+            border: 3px dashed var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            background: var(--dropzone-bg);
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .dropzone.active { border-color: var(--focus); border-style: solid; }
+        .dropzone p { margin: 0 auto 0.75rem; }
+        .build-footer {
+            position: sticky;
+            bottom: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 0.75rem 1rem;
+            margin: 1rem -1rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .build-footer p { margin: 0; }
+        .preview-card { display: flex; gap: 1rem; align-items: flex-start; }
+        .preview-card img { width: 64px; height: 64px; border-radius: 10px; flex: none; object-fit: cover; }
+        .copy-box { margin-bottom: 1rem; }
+        .copy-box textarea { min-height: 5rem; }
+        .copy-box .button-row { margin: 0.4rem 0 0; }
+        table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+        th, td { border: 1px solid var(--border); padding: 0.5rem 0.6rem; text-align: left; vertical-align: top; }
+        th { background: var(--surface); }
+        .table-wrap { overflow-x: auto; }
+        dialog {
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            max-width: 32rem;
+            color: var(--text);
+            background: var(--bg);
+        }
+        dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+        .problem-list a { font-weight: 600; }
+        .chooser fieldset { margin-bottom: 1rem; }
+        .chooser .check-row { margin: 0.25rem 1rem 0.25rem 0; display: inline-flex; }
+    </style>
 </head>
 <body>
-<main id="main">
-    <h1>Agentprise</h1>
-    <p>Make AI agents portable across Copilot, Gemini, Claude, and ChatGPT.</p>
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="site-header">
+    <div class="inner">
+        <h1>Agentprise</h1>
+        <p class="tagline">Make AI agents portable across Copilot, Gemini, Claude, and ChatGPT.</p>
+    </div>
+</header>
+<nav class="site-nav" aria-label="Sections">
+    <div class="tablist" role="tablist" aria-label="Sections">
+        <button type="button" role="tab" id="tab-home" aria-controls="panel-home" aria-selected="true">Home</button>
+        <button type="button" role="tab" id="tab-library" aria-controls="panel-library" aria-selected="false" tabindex="-1">Library</button>
+        <button type="button" role="tab" id="tab-build" aria-controls="panel-build" aria-selected="false" tabindex="-1">Build</button>
+        <button type="button" role="tab" id="tab-check" aria-controls="panel-check" aria-selected="false" tabindex="-1">Check</button>
+        <button type="button" role="tab" id="tab-download" aria-controls="panel-download" aria-selected="false" tabindex="-1">Download</button>
+        <button type="button" role="tab" id="tab-help" aria-controls="panel-help" aria-selected="false" tabindex="-1">Help</button>
+    </div>
+</nav>
+<main id="main" tabindex="-1">
+    <div class="status-bar" id="status" role="status" aria-live="polite"></div>
+
+    <!-- ### Home ### -->
+    <section id="panel-home" role="tabpanel" aria-labelledby="tab-home" tabindex="-1">
+        <h2>Describe your assistant once. Download it for every product.</h2>
+        <p>Fill in a short form, check it, and download it in the format each AI product wants. Nothing you type or upload leaves your browser.</p>
+        <div class="notice" id="draft-banner" hidden>
+            <p>You have unsaved work from before. <button type="button" class="quiet" id="draft-continue">Continue editing it</button> or <button type="button" class="quiet" id="draft-discard">start fresh</button>.</p>
+        </div>
+        <div class="big-choices">
+            <button type="button" class="big primary" id="home-new">Start a new agent</button>
+            <button type="button" class="big" id="home-open">Open an agent file</button>
+            <button type="button" class="big" id="home-library">Browse the library</button>
+        </div>
+        <div class="dropzone" id="dropzone">
+            <p id="dropzone-text">Drop an agent file here. Accepted: a <code>.agent</code> file from SharePoint, a <code>.zip</code> from the Copilot app or from Agentprise, or a <code>SKILL.md</code> file.</p>
+            <button type="button" id="browse-button">Browse for a file</button>
+            <label for="file-input" class="visually-hidden">Agent file to open</label>
+            <input type="file" id="file-input" class="visually-hidden" accept=".agent,.zip,.md,application/zip,application/json,text/markdown" aria-describedby="dropzone-text">
+        </div>
+        <ol class="steps">
+            <li><strong>Build.</strong> Give it a name, a description, and instructions.</li>
+            <li><strong>Check.</strong> Fix anything missing and see how it will look.</li>
+            <li><strong>Download.</strong> Pick the file for the product you use.</li>
+        </ol>
+    </section>
+
+    <!-- ### Library ### -->
+    <section id="panel-library" role="tabpanel" aria-labelledby="tab-library" tabindex="-1" hidden>
+        <h2>Library</h2>
+        <p>Ready-made agents you can try, change, and download. <a href="docs/how-to/add-to-library.md">Add yours</a> by sending a pull request.</p>
+        <div class="field">
+            <label for="library-search">Search the library</label>
+            <p class="hint" id="library-search-hint">Searches names, summaries, and tags.</p>
+            <input type="text" id="library-search" aria-describedby="library-search-hint" autocomplete="off">
+        </div>
+        <p id="library-status" class="muted"></p>
+        <ul class="cards two" id="library-list"></ul>
+    </section>
+
+    <!-- ### Build ### -->
+    <section id="panel-build" role="tabpanel" aria-labelledby="tab-build" tabindex="-1" hidden>
+        <h2>Build</h2>
+        <p>One agent, described once. Fields marked "Copilot only" matter only in Microsoft 365 Copilot.</p>
+        <form id="build-form" novalidate>
+            <div class="field">
+                <label for="f-name">Name</label>
+                <p class="hint" id="f-name-hint">What people will see in the agent list. Up to 100 characters.</p>
+                <input type="text" id="f-name" maxlength="100" aria-describedby="f-name-hint f-name-skill f-name-error" autocomplete="off">
+                <p class="counter" id="f-name-skill">Skill name, used for file and folder names: <code id="f-skill-name">agent</code></p>
+                <p class="error-text" id="f-name-error" hidden></p>
+            </div>
+            <div class="field">
+                <label for="f-description">Short description</label>
+                <p class="hint" id="f-description-hint">One sentence about what this agent does and when to use it. Up to 1,000 characters.</p>
+                <textarea id="f-description" maxlength="1000" rows="2" aria-describedby="f-description-hint f-description-error"></textarea>
+                <p class="error-text" id="f-description-error" hidden></p>
+            </div>
+            <div class="field">
+                <label for="f-welcome">Welcome message</label>
+                <p class="hint" id="f-welcome-hint">Optional. The first thing people see when they open it. Used by SharePoint and Teams chats.</p>
+                <textarea id="f-welcome" maxlength="1000" rows="2" aria-describedby="f-welcome-hint"></textarea>
+            </div>
+            <div class="field">
+                <label for="f-instructions">Instructions</label>
+                <p class="hint" id="f-instructions-hint">How the agent should behave, what to focus on, and what to avoid. Plain English is fine. Up to 8,000 characters.</p>
+                <textarea id="f-instructions" class="tall" maxlength="8000" aria-describedby="f-instructions-hint f-instructions-counter f-instructions-error"></textarea>
+                <p class="counter" id="f-instructions-counter">0 of 8,000 characters</p>
+                <p class="error-text" id="f-instructions-error" hidden></p>
+                <div class="button-row"><button type="button" id="instructions-template">Help me write this</button></div>
+            </div>
+            <fieldset class="field">
+                <legend>Conversation starters</legend>
+                <p class="hint" id="starters-hint">Example questions people can click. Up to 12.</p>
+                <ul class="starter-list" id="starters-list" aria-describedby="starters-hint"></ul>
+                <div class="button-row"><button type="button" id="starter-add">Add a starter</button></div>
+            </fieldset>
+            <fieldset class="field">
+                <legend>Icon</legend>
+                <p class="hint" id="icon-hint">A square PNG or JPG works best. It is resized to 192 by 192 pixels. Without one, a default icon with the first letter of the name is used.</p>
+                <div class="icon-row">
+                    <img class="icon-preview" id="icon-preview" alt="Current icon preview" src="">
+                    <div class="button-row">
+                        <label class="button" for="icon-input">Choose an image</label>
+                        <input type="file" id="icon-input" class="visually-hidden" accept="image/png,image/jpeg" aria-describedby="icon-hint">
+                        <button type="button" id="icon-remove">Use the default icon</button>
+                    </div>
+                </div>
+                <p class="error-text" id="icon-error" hidden></p>
+            </fieldset>
+            <div class="field">
+                <label for="f-sharepoint">Knowledge from SharePoint (Copilot only)</label>
+                <p class="hint" id="f-sharepoint-hint">Paste links to SharePoint sites, libraries, folders, or files, one per line. Up to 20. People still need permission to those files.</p>
+                <textarea id="f-sharepoint" rows="3" aria-describedby="f-sharepoint-hint f-sharepoint-error"></textarea>
+                <p class="error-text" id="f-sharepoint-error" hidden></p>
+            </div>
+            <details class="field">
+                <summary>Copilot options</summary>
+                <fieldset>
+                    <legend>What Copilot may use (Copilot app only)</legend>
+                    <div class="check-row"><input type="checkbox" id="c-webSearch"><label for="c-webSearch">Web search: look things up on the public web.</label></div>
+                    <div class="check-row"><input type="checkbox" id="c-teamsMessages"><label for="c-teamsMessages">Teams messages: read the chats and channels the person can see.</label></div>
+                    <div class="check-row"><input type="checkbox" id="c-meetings"><label for="c-meetings">Meetings: read meeting notes and transcripts the person can see.</label></div>
+                    <div class="check-row"><input type="checkbox" id="c-codeInterpreter"><label for="c-codeInterpreter">Code interpreter: run code to analyze data and make charts.</label></div>
+                    <div class="check-row"><input type="checkbox" id="c-imageGeneration"><label for="c-imageGeneration">Image generation: make pictures from text.</label></div>
+                </fieldset>
+                <fieldset>
+                    <legend>How Copilot answers</legend>
+                    <div class="check-row"><input type="checkbox" id="c-preferMyFiles"><label for="c-preferMyFiles">Prefer my files: answer from the sources above instead of general knowledge.</label></div>
+                </fieldset>
+            </details>
+            <details class="field">
+                <summary>About you</summary>
+                <p class="hint">Shown as the creator in the Copilot app. The three links must start with https. Leave blank to use placeholders.</p>
+                <div class="inline-fields">
+                    <div class="field"><label for="a-name">Your name</label><input type="text" id="a-name" maxlength="200"></div>
+                    <div class="field"><label for="a-website">Website</label><input type="url" id="a-website" placeholder="https://" aria-describedby="a-website-error"><p class="error-text" id="a-website-error" hidden></p></div>
+                    <div class="field"><label for="a-privacy">Privacy link</label><input type="url" id="a-privacy" placeholder="https://" aria-describedby="a-privacy-error"><p class="error-text" id="a-privacy-error" hidden></p></div>
+                    <div class="field"><label for="a-terms">Terms link</label><input type="url" id="a-terms" placeholder="https://" aria-describedby="a-terms-error"><p class="error-text" id="a-terms-error" hidden></p></div>
+                    <div class="field"><label for="a-copyright">Copyright line</label><input type="text" id="a-copyright" maxlength="500" placeholder="Copyright (C) 2026 Your Name"></div>
+                    <div class="field">
+                        <label for="a-license">License</label>
+                        <select id="a-license"></select>
+                        <div class="field" id="a-license-other-wrap" hidden>
+                            <label for="a-license-other">License name</label>
+                            <input type="text" id="a-license-other" maxlength="200">
+                        </div>
+                    </div>
+                </div>
+            </details>
+        </form>
+        <div class="build-footer">
+            <p id="build-status"></p>
+            <button type="button" class="primary" id="build-next">Next: Check</button>
+        </div>
+    </section>
+
+    <!-- ### Check ### -->
+    <section id="panel-check" role="tabpanel" aria-labelledby="tab-check" tabindex="-1" hidden>
+        <h2>Check</h2>
+        <div id="check-summary"></div>
+        <div id="check-problems"></div>
+        <div id="check-warnings"></div>
+        <h3>Preview</h3>
+        <div class="card preview-card">
+            <img id="preview-icon" alt="" src="">
+            <div>
+                <p><strong id="preview-name"></strong></p>
+                <p id="preview-description"></p>
+                <p class="muted" id="preview-creator"></p>
+            </div>
+        </div>
+        <details>
+            <summary>Show me the raw files</summary>
+            <p>These are the files the Download tab makes, shown as text.</p>
+            <h4>SKILL.md (bundle, Gemini, Claude)</h4>
+            <pre id="raw-skill"></pre>
+            <h4>.agent (SharePoint and Teams chats)</h4>
+            <pre id="raw-agent"></pre>
+            <h4>manifest.json (Copilot app)</h4>
+            <pre id="raw-manifest"></pre>
+            <h4>declarativeAgent_0.json (Copilot app)</h4>
+            <pre id="raw-declarative"></pre>
+        </details>
+        <div class="button-row">
+            <button type="button" id="check-back">Back to Build</button>
+            <button type="button" class="primary" id="check-next">Next: Download</button>
+        </div>
+    </section>
+
+    <!-- ### Download ### -->
+    <section id="panel-download" role="tabpanel" aria-labelledby="tab-download" tabindex="-1" hidden>
+        <h2>Download</h2>
+        <div id="download-blocked" class="notice" hidden>
+            <p>Downloads are off until the problems on the <a href="#check">Check tab</a> are fixed.</p>
+        </div>
+        <ul class="cards" id="download-cards">
+            <li class="card">
+                <h3>Keep everything (recommended)</h3>
+                <p><strong>File type:</strong> .zip (an Agent Skill)</p>
+                <p>The complete copy. Open it here again later, or upload it as-is to Gemini or Claude as a skill.</p>
+                <div class="notice" id="loss-bundle" hidden></div>
+                <div class="button-row"><button type="button" class="primary download-button" data-format="bundle">Download the complete copy</button></div>
+                <details>
+                    <summary>What to do next</summary>
+                    <p><strong>In Gemini:</strong></p>
+                    <ol>
+                        <li>Open Gemini and go to Settings, then Skills.</li>
+                        <li>Choose Upload and pick this .zip file.</li>
+                        <li>Gemini Skills may need a Google AI subscription.</li>
+                    </ol>
+                    <p><strong>In Claude:</strong></p>
+                    <ol>
+                        <li>Open Claude and go to Settings, then Capabilities, then Skills.</li>
+                        <li>Choose Upload and pick this .zip file.</li>
+                        <li>Turn the skill on. Skills need a paid plan with code execution on.</li>
+                    </ol>
+                    <p><strong>To edit it later:</strong> open this file on the Home tab.</p>
+                </details>
+            </li>
+            <li class="card">
+                <h3>For SharePoint and Teams chats</h3>
+                <p><strong>File type:</strong> .agent</p>
+                <p>For agents people add to a Teams group chat, channel, or meeting chat, or that live in a SharePoint library.</p>
+                <div class="notice" id="loss-msAgent" hidden></div>
+                <div class="button-row"><button type="button" class="primary download-button" data-format="msAgent">Download the .agent file</button></div>
+                <details>
+                    <summary>What to do next</summary>
+                    <ol>
+                        <li>Upload the file to a SharePoint document library.</li>
+                        <li>Open the file's menu and choose Copy link for Teams.</li>
+                        <li>Paste the link in a Teams chat.</li>
+                        <li>Choose Add to this chat. People in the chat need a Copilot license and permission to any linked files.</li>
+                    </ol>
+                </details>
+            </li>
+            <li class="card chooser">
+                <h3>Not sure which one?</h3>
+                <fieldset>
+                    <legend>Will people use it inside a Teams group chat, channel, or meeting?</legend>
+                    <div class="check-row"><input type="radio" name="q-teams" id="q-teams-yes" value="yes"><label for="q-teams-yes">Yes</label></div>
+                    <div class="check-row"><input type="radio" name="q-teams" id="q-teams-no" value="no"><label for="q-teams-no">No</label></div>
+                </fieldset>
+                <fieldset>
+                    <legend>Do people use Microsoft 365 Copilot at work?</legend>
+                    <div class="check-row"><input type="radio" name="q-copilot" id="q-copilot-yes" value="yes"><label for="q-copilot-yes">Yes</label></div>
+                    <div class="check-row"><input type="radio" name="q-copilot" id="q-copilot-no" value="no"><label for="q-copilot-no">No</label></div>
+                </fieldset>
+                <fieldset>
+                    <legend>Do you want a copy you can edit here later?</legend>
+                    <div class="check-row"><input type="radio" name="q-keep" id="q-keep-yes" value="yes"><label for="q-keep-yes">Yes</label></div>
+                    <div class="check-row"><input type="radio" name="q-keep" id="q-keep-no" value="no"><label for="q-keep-no">No</label></div>
+                </fieldset>
+                <p id="chooser-answer" aria-live="polite"></p>
+            </li>
+            <li class="card">
+                <h3>For the Copilot app</h3>
+                <p><strong>File type:</strong> .zip (a Teams app package)</p>
+                <p>For the Agents list in the Microsoft 365 Copilot app. It will not work in Teams group chats.</p>
+                <div class="notice" id="loss-teamsZip" hidden></div>
+                <div class="button-row"><button type="button" class="primary download-button" data-format="teamsZip">Download the Copilot app package</button></div>
+                <details>
+                    <summary>What to do next</summary>
+                    <ol>
+                        <li>Open the Microsoft 365 Copilot app and choose Agents.</li>
+                        <li>Choose Upload, or Create, then Upload, and pick this .zip file.</li>
+                        <li>Choose Share to give it to other people. Your admin may need to allow custom agents.</li>
+                    </ol>
+                </details>
+            </li>
+            <li class="card">
+                <h3>Copy for ChatGPT or Gemini Notebook</h3>
+                <p><strong>File type:</strong> none. Copy and paste.</p>
+                <p>ChatGPT custom GPTs and Gemini Notebook have no file to upload, so copy each box into the matching field.</p>
+                <div class="copy-box">
+                    <label for="copy-name">Name</label>
+                    <textarea id="copy-name" readonly rows="1"></textarea>
+                    <div class="button-row"><button type="button" class="copy-button" data-copy="copy-name">Copy the name</button></div>
+                </div>
+                <div class="copy-box">
+                    <label for="copy-description">Description</label>
+                    <textarea id="copy-description" readonly rows="2"></textarea>
+                    <div class="button-row"><button type="button" class="copy-button" data-copy="copy-description">Copy the description</button></div>
+                </div>
+                <div class="copy-box">
+                    <label for="copy-instructions">Instructions</label>
+                    <textarea id="copy-instructions" readonly rows="6"></textarea>
+                    <div class="button-row"><button type="button" class="copy-button" data-copy="copy-instructions">Copy the instructions</button></div>
+                </div>
+                <div class="copy-box">
+                    <label for="copy-starters">Conversation starters</label>
+                    <textarea id="copy-starters" readonly rows="3"></textarea>
+                    <div class="button-row"><button type="button" class="copy-button" data-copy="copy-starters">Copy the starters</button></div>
+                </div>
+                <div class="button-row"><button type="button" class="download-button" data-format="markdown">Download as .md</button></div>
+                <details>
+                    <summary>What to do next</summary>
+                    <p><strong>In ChatGPT:</strong></p>
+                    <ol>
+                        <li>Open Explore GPTs, then Create.</li>
+                        <li>Open the Configure tab.</li>
+                        <li>Paste each box into the matching field. Starters go in Conversation starters.</li>
+                    </ol>
+                    <p><strong>In Gemini Notebook:</strong></p>
+                    <ol>
+                        <li>Open the notebook, then More, then Notebook settings.</li>
+                        <li>Paste the instructions into the instructions field.</li>
+                        <li>Or add the .md download as a source.</li>
+                    </ol>
+                </details>
+            </li>
+        </ul>
+    </section>
+
+    <!-- ### Help ### -->
+    <section id="panel-help" role="tabpanel" aria-labelledby="tab-help" tabindex="-1" hidden>
+        <h2>Help</h2>
+        <h3>Why are there so many formats?</h3>
+        <p>Each AI product stores agents its own way. Microsoft uses two different files, Gemini and Claude share one open standard, and ChatGPT has no file at all. Agentprise keeps one description and writes each format for you.</p>
+        <h3>Which one do I need?</h3>
+        <p>Keep the complete copy. It also uploads to Gemini and Claude. Add the .agent file for Teams chats, or the Copilot app package for the Agents list in the Copilot app. Use the copy panel for ChatGPT and Gemini Notebook.</p>
+        <h3>Who can use my agent?</h3>
+        <p>In Microsoft 365, people need a Copilot license and permission to any files you linked. Guests cannot use it in Teams chats. Gemini Skills may need a Google AI subscription, and Claude skills need a paid plan.</p>
+        <h3>How do I update an agent people already have?</h3>
+        <p>Open the file you downloaded before on the Home tab, make your changes, and download it again. For the Copilot app, keep the same file so the app id stays the same and the upload replaces the old version.</p>
+        <h3>Why does my agent not answer in a Teams chat?</h3>
+        <p>Agents from the Copilot app do not work in group chats, channels, or meeting chats. Use the .agent file in a SharePoint library and add it to the chat with Copy link for Teams.</p>
+        <h3>Is anything uploaded anywhere?</h3>
+        <p>No. Everything happens in your browser. The only thing the page loads from the internet is its own library of ready-made agents. Your draft is kept in this browser only, and you can clear it from the footer.</p>
+        <h3>How do I add my agent to the library?</h3>
+        <p>Download the complete copy, unzip it into the library folder, add one line to the catalog, and open a pull request. The <a href="docs/how-to/add-to-library.md">add to the library</a> page has the steps.</p>
+        <h3>What is a SKILL.md file?</h3>
+        <p>It is the open Agent Skills format: a Markdown file with a short header and the instructions underneath. Gemini and Claude both read it. See <a href="https://agentskills.io/specification">the Agent Skills specification</a>.</p>
+        <h3>At a glance</h3>
+        <div class="table-wrap">
+            <table>
+                <caption>Which download works in which product</caption>
+                <thead>
+                    <tr><th scope="col">Download</th><th scope="col">Copilot app</th><th scope="col">Teams chats</th><th scope="col">Gemini</th><th scope="col">Claude</th><th scope="col">ChatGPT</th></tr>
+                </thead>
+                <tbody>
+                    <tr><th scope="row">Keep everything (.zip)</th><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+                    <tr><th scope="row">SharePoint and Teams chats (.agent)</th><td>No</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+                    <tr><th scope="row">Copilot app (.zip)</th><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+                    <tr><th scope="row">Copy and paste</th><td>No</td><td>No</td><td>Notebook only</td><td>No</td><td>Yes</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 </main>
+<footer class="site-footer">
+    <div class="inner">
+        <p>Your draft is saved in this browser only.</p>
+        <button type="button" class="quiet" id="clear-draft">Clear my draft</button>
+        <p id="storage-note" class="muted" hidden>Storage is blocked in this browser, so the draft will not be kept after you close the page.</p>
+        <p><a href="docs/README.md">Documentation</a> and <a href="https://github.com/DepressionCenter/agentprise">source code</a>. Free software from the Eisenberg Family Depression Center, University of Michigan.</p>
+    </div>
+</footer>
+<dialog id="confirm-dialog" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">Replace your current work?</h2>
+    <p id="confirm-message"></p>
+    <div class="button-row">
+        <button type="button" id="confirm-cancel">Keep my work</button>
+        <button type="button" class="primary" id="confirm-ok">Replace it</button>
+    </div>
+</dialog>
+<canvas id="icon-canvas" class="visually-hidden" width="192" height="192" aria-hidden="true"></canvas>
 <script>
 "use strict";
 
@@ -64,7 +800,13 @@ const LIMITS = Object.freeze({
 
 const APP_VERSION = "1";
 const APP_REPOSITORY_URL = "https://github.com/DepressionCenter/agentprise";
-const APP_SITE_URL = "https://depressioncenter.github.io/agentprise/";
+const APP_SITE_URL = "https://code.depressioncenter.org/agentprise/";
+
+// Google Analytics loads only on the production host. Local copies, forks, and
+// GitHub Pages previews never contact Google, so nothing a person does there is
+// measured. The measurement id is the EFDC property shared with sibling projects.
+const ANALYTICS_HOST = "code.depressioncenter.org";
+const ANALYTICS_ID = "G-3Q455XWS5F";
 const DEFAULT_LICENSE = "GPL-3.0-or-later";
 
 // License choices offered in the form. The URL is written into LICENSE.txt for
@@ -2308,11 +3050,1084 @@ globalThis.Agentprise = {
     }
 };
 
-// ### Interface startup ###
+// ### Interface: configuration ###
+const STORAGE_KEY = "agentprise-draft-v1";
+const TAB_NAMES = ["home", "library", "build", "check", "download", "help"];
+const INSTRUCTIONS_TEMPLATE = [
+    "# Purpose",
+    "Describe in one or two sentences what this agent is for and who uses it.",
+    "",
+    "# How to respond",
+    "- Tone: friendly and clear.",
+    "- Keep answers short unless asked for detail.",
+    "- Ask a question when the request is unclear.",
+    "",
+    "# Focus on",
+    "- The topics or tasks this agent should handle.",
+    "",
+    "# Avoid",
+    "- Topics or actions this agent should not do.",
+    "- Guessing. Say when you do not know.",
+    "",
+    "# Example",
+    "User: (a typical request)",
+    "Agent: (the kind of answer you want)"
+].join("\n");
+
+// ### Interface: state ###
+const ui = {
+    agent: createAgent(),
+    tab: "home",
+    storageOk: true,
+    catalog: [],
+    problems: [],
+    warnings: [],
+    saveTimer: null,
+    pendingConfirm: null
+};
+
+// ### Interface: helpers ###
+function $(id) {
+    return document.getElementById(id);
+}
+
+/** Replaces an element's children with plain text. Never interprets markup. */
+function setText(element, text) {
+    element.textContent = text;
+}
+
+function clearChildren(element) {
+    while (element.firstChild) {
+        element.removeChild(element.firstChild);
+    }
+}
+
+/** Builds an element with attributes and text or child nodes. */
+function el(tag, attributes, children) {
+    const node = document.createElement(tag);
+    Object.keys(attributes || {}).forEach(function (key) {
+        if (key === "text") {
+            node.textContent = attributes[key];
+        } else if (key === "className") {
+            node.className = attributes[key];
+        } else {
+            node.setAttribute(key, attributes[key]);
+        }
+    });
+    (children || []).forEach(function (child) {
+        node.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+    });
+    return node;
+}
+
+/** Puts a message in the polite live region. Empty text clears it. */
+function announce(message) {
+    const status = $("status");
+    clearChildren(status);
+    if (message) {
+        status.appendChild(el("p", { text: message }));
+    }
+}
+
+/** Starts a browser download of bytes under the given name. */
+function downloadBytes(fileName, bytes, mime) {
+    const blob = new Blob([bytes], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const link = el("a", { href: url, download: fileName });
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+}
+
+/** Reads a File into bytes, rejecting anything over the archive cap. */
+function readFileBytes(file) {
+    return new Promise(function (resolve, reject) {
+        if (file.size > LIMITS.zipTotalBytes) {
+            reject(new Error("That file is larger than " + Math.round(LIMITS.zipTotalBytes / 1024 / 1024) + " MB, which is the most this app opens."));
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function () { resolve(new Uint8Array(reader.result)); };
+        reader.onerror = function () { reject(new Error("The file could not be read.")); };
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+// ### Interface: tabs ###
+function showTab(name, moveFocus) {
+    if (TAB_NAMES.indexOf(name) < 0) {
+        name = "home";
+    }
+    ui.tab = name;
+    TAB_NAMES.forEach(function (tab) {
+        const button = $("tab-" + tab);
+        const panel = $("panel-" + tab);
+        const selected = tab === name;
+        button.setAttribute("aria-selected", selected ? "true" : "false");
+        button.tabIndex = selected ? 0 : -1;
+        panel.hidden = !selected;
+    });
+    if (location.hash !== "#" + name) {
+        history.pushState(null, "", "#" + name);
+    }
+    if (name === "check") {
+        renderCheck();
+    } else if (name === "download") {
+        renderDownload();
+    } else if (name === "library") {
+        renderLibrary();
+    }
+    if (moveFocus) {
+        $("panel-" + name).focus();
+    }
+}
+
+function setupTabs() {
+    const tabs = TAB_NAMES.map(function (tab) { return $("tab-" + tab); });
+    tabs.forEach(function (button, index) {
+        button.addEventListener("click", function () { showTab(TAB_NAMES[index], true); });
+        button.addEventListener("keydown", function (event) {
+            let next = -1;
+            if (event.key === "ArrowRight") { next = (index + 1) % tabs.length; }
+            if (event.key === "ArrowLeft") { next = (index - 1 + tabs.length) % tabs.length; }
+            if (event.key === "Home") { next = 0; }
+            if (event.key === "End") { next = tabs.length - 1; }
+            if (next >= 0) {
+                event.preventDefault();
+                showTab(TAB_NAMES[next], false);
+                tabs[next].focus();
+            }
+        });
+    });
+    window.addEventListener("popstate", function () {
+        showTab(location.hash.replace("#", "") || "home", false);
+    });
+    document.addEventListener("click", function (event) {
+        const link = event.target.closest("a[href^='#']");
+        if (link && TAB_NAMES.indexOf(link.getAttribute("href").slice(1)) >= 0) {
+            event.preventDefault();
+            showTab(link.getAttribute("href").slice(1), true);
+        }
+    });
+}
+
+// ### Interface: draft storage ###
+function saveDraftNow() {
+    if (!ui.storageOk) {
+        return;
+    }
+    try {
+        const copy = Object.assign({}, ui.agent, {
+            icon: ui.agent.icon ? bytesToBase64(ui.agent.icon.bytes) : null
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(copy));
+    } catch (error) {
+        ui.storageOk = false;
+        $("storage-note").hidden = false;
+    }
+}
+
+function saveDraft() {
+    clearTimeout(ui.saveTimer);
+    ui.saveTimer = setTimeout(saveDraftNow, 300);
+}
+
+/** Loads the draft from storage through normalizeAgent, so stored data is never trusted. */
+function loadDraft() {
+    try {
+        const text = localStorage.getItem(STORAGE_KEY);
+        if (!text) {
+            return null;
+        }
+        const parsed = JSON.parse(text);
+        if (!isPlainObject(parsed)) {
+            return null;
+        }
+        if (typeof parsed.icon === "string") {
+            const bytes = base64ToBytes(parsed.icon);
+            parsed.icon = bytes ? { bytes: bytes, mime: "image/png" } : null;
+        }
+        return normalizeAgent(parsed).agent;
+    } catch (error) {
+        ui.storageOk = false;
+        $("storage-note").hidden = false;
+        return null;
+    }
+}
+
+function clearDraft() {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+        ui.storageOk = false;
+    }
+}
+
+function agentHasContent(agent) {
+    return Boolean(agent.name || agent.description || agent.instructions || agent.starters.length || agent.icon);
+}
+
+/** Replaces the working agent, saves it, and refreshes the form. */
+function setAgent(agent) {
+    ui.agent = agent;
+    renderForm();
+    saveDraft();
+}
+
+/** Asks before replacing a draft that has content. Calls proceed() on yes. */
+function confirmReplace(message, proceed) {
+    if (!agentHasContent(ui.agent)) {
+        proceed();
+        return;
+    }
+    const dialog = $("confirm-dialog");
+    setText($("confirm-message"), message);
+    ui.pendingConfirm = proceed;
+    dialog.showModal();
+}
+
+// ### Interface: icons (canvas) ###
+/** Loads image bytes into an Image element. Resolves null when the browser cannot decode them. */
+function loadImage(bytes, mime) {
+    return new Promise(function (resolve) {
+        const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+        const image = new Image();
+        image.onload = function () { URL.revokeObjectURL(url); resolve(image); };
+        image.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+        image.src = url;
+    });
+}
+
+/** Returns the PNG bytes of a canvas. */
+function canvasToPng(canvas) {
+    return base64ToBytes(canvas.toDataURL("image/png").slice(PNG_DATA_URI_PREFIX.length));
+}
+
+/** Draws an image center-cropped to a square of the given size. Strips any embedded content. */
+function drawSquare(image, size) {
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext("2d");
+    const side = Math.min(image.naturalWidth, image.naturalHeight);
+    const sx = (image.naturalWidth - side) / 2;
+    const sy = (image.naturalHeight - side) / 2;
+    context.drawImage(image, sx, sy, side, side, 0, 0, size, size);
+    return canvas;
+}
+
+/** The default icon: the first letter of the name in U-M Blue on a Maize circle over a blue square. */
+function drawDefaultIcon(name, size) {
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#00274C";
+    context.fillRect(0, 0, size, size);
+    context.fillStyle = "#FFCB05";
+    context.beginPath();
+    context.arc(size / 2, size / 2, size * 0.36, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#00274C";
+    context.font = "bold " + Math.round(size * 0.42) + "px system-ui, Arial, sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    const letter = (name || "A").trim().charAt(0).toUpperCase() || "A";
+    context.fillText(letter, size / 2, size / 2 + size * 0.02);
+    return canvas;
+}
+
+/** A white silhouette of the icon at 32 by 32 for the Teams outline icon. */
+function drawOutline(image) {
+    const canvas = image ? drawSquare(image, 32) : drawDefaultIcon("", 32);
+    const context = canvas.getContext("2d");
+    const pixels = context.getImageData(0, 0, 32, 32);
+    const data = pixels.data;
+    let anyTransparent = false;
+    for (let i = 3; i < data.length; i += 4) {
+        if (data[i] < 250) {
+            anyTransparent = true;
+            break;
+        }
+    }
+    for (let i = 0; i < data.length; i += 4) {
+        if (!anyTransparent) {
+            // An opaque icon has no shape to trace, so keep the dark parts as the mark.
+            const luminance = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            data[i + 3] = luminance < 140 ? 255 : 0;
+        }
+        data[i] = 255;
+        data[i + 1] = 255;
+        data[i + 2] = 255;
+    }
+    context.putImageData(pixels, 0, 0);
+    return canvas;
+}
+
+/** Produces the color and outline PNGs the Teams package needs, from the agent icon or the default. */
+async function prepareTeamsIcons(agent) {
+    let image = null;
+    if (agent.icon) {
+        image = await loadImage(agent.icon.bytes, agent.icon.mime);
+    }
+    const colorCanvas = image ? drawSquare(image, 192) : drawDefaultIcon(agent.name, 192);
+    return { color: canvasToPng(colorCanvas), outline: canvasToPng(drawOutline(image)) };
+}
+
+/** Turns an uploaded PNG or JPG into a 192 by 192 PNG icon through the canvas. */
+async function iconFromUpload(file) {
+    if (file.size > LIMITS.iconBytes) {
+        throw new Error("The image is larger than " + Math.round(LIMITS.iconBytes / 1024 / 1024) + " MB. Please choose a smaller one.");
+    }
+    if (file.type !== "image/png" && file.type !== "image/jpeg") {
+        throw new Error("Please choose a PNG or JPG image.");
+    }
+    const bytes = await readFileBytes(file);
+    const image = await loadImage(bytes, file.type);
+    if (!image) {
+        throw new Error("That image could not be read. Please try another one.");
+    }
+    return { bytes: canvasToPng(drawSquare(image, 192)), mime: "image/png" };
+}
+
+/** Returns a data URI for showing the current icon, or the default drawn for the name. */
+function iconPreviewUri(agent) {
+    if (agent.icon) {
+        return PNG_DATA_URI_PREFIX + bytesToBase64(agent.icon.bytes);
+    }
+    return drawDefaultIcon(agent.name, 96).toDataURL("image/png");
+}
+
+// ### Interface: opening files ###
+async function importBytes(fileName, bytes) {
+    const format = detectFormat(fileName, bytes);
+    let result;
+    if (format === "msAgent") {
+        result = msAgentImport(fromBytes(bytes));
+    } else if (format === "skillMd") {
+        result = skillMdImport(fromBytes(bytes));
+    } else if (format === "bundle") {
+        result = await bundleImport(bytes);
+    } else if (format === "teamsZip") {
+        result = await teamsZipImport(bytes);
+    } else {
+        result = { error: "This file type is not one Agentprise can open. Try a .agent file, a .zip from the Copilot app or from Agentprise, or a SKILL.md file." };
+    }
+    return result;
+}
+
+async function openFile(file) {
+    announce("Opening " + file.name + "...");
+    let bytes;
+    try {
+        bytes = await readFileBytes(file);
+    } catch (error) {
+        announce(error.message);
+        return;
+    }
+    const result = await importBytes(file.name, bytes);
+    if (result.error) {
+        announce(result.error);
+        return;
+    }
+    confirmReplace("Opening " + file.name + " will replace the agent you are working on.", function () {
+        setAgent(result.agent);
+        const notes = result.notices.length ? " " + result.notices.join(" ") : "";
+        announce("Opened " + file.name + "." + notes);
+        showTab("build", true);
+    });
+}
+
+function setupFileOpening() {
+    const zone = $("dropzone");
+    const input = $("file-input");
+    $("browse-button").addEventListener("click", function () { input.click(); });
+    $("home-open").addEventListener("click", function () { input.click(); });
+    input.addEventListener("change", function () {
+        if (input.files && input.files[0]) {
+            openFile(input.files[0]);
+            input.value = "";
+        }
+    });
+    ["dragenter", "dragover"].forEach(function (name) {
+        zone.addEventListener(name, function (event) {
+            event.preventDefault();
+            zone.classList.add("active");
+        });
+    });
+    ["dragleave", "drop"].forEach(function (name) {
+        zone.addEventListener(name, function (event) {
+            event.preventDefault();
+            zone.classList.remove("active");
+        });
+    });
+    zone.addEventListener("drop", function (event) {
+        const files = event.dataTransfer && event.dataTransfer.files;
+        if (files && files[0]) {
+            openFile(files[0]);
+        }
+    });
+    document.addEventListener("dragover", function (event) { event.preventDefault(); });
+    document.addEventListener("drop", function (event) { event.preventDefault(); });
+}
+
+// ### Interface: Build form ###
+const TEXT_FIELDS = [
+    { id: "f-name", get: function (a) { return a.name; }, set: function (a, v) { a.name = v; } },
+    { id: "f-description", get: function (a) { return a.description; }, set: function (a, v) { a.description = v; } },
+    { id: "f-welcome", get: function (a) { return a.welcome; }, set: function (a, v) { a.welcome = v; } },
+    { id: "f-instructions", get: function (a) { return a.instructions; }, set: function (a, v) { a.instructions = v; } },
+    { id: "a-name", get: function (a) { return a.creator.name; }, set: function (a, v) { a.creator.name = v; } },
+    { id: "a-website", get: function (a) { return a.creator.website; }, set: function (a, v) { a.creator.website = v; } },
+    { id: "a-privacy", get: function (a) { return a.creator.privacy; }, set: function (a, v) { a.creator.privacy = v; } },
+    { id: "a-terms", get: function (a) { return a.creator.terms; }, set: function (a, v) { a.creator.terms = v; } },
+    { id: "a-copyright", get: function (a) { return a.copyright; }, set: function (a, v) { a.copyright = v; } }
+];
+const CHECKBOX_KEYS = ["webSearch", "teamsMessages", "meetings", "codeInterpreter", "imageGeneration", "preferMyFiles"];
+
+function showFieldError(id, message) {
+    const error = $(id + "-error");
+    const input = $(id);
+    if (!error) {
+        return;
+    }
+    if (message) {
+        setText(error, message);
+        error.hidden = false;
+        if (input) { input.setAttribute("aria-invalid", "true"); }
+    } else {
+        setText(error, "");
+        error.hidden = true;
+        if (input) { input.removeAttribute("aria-invalid"); }
+    }
+}
+
+function updateDerived() {
+    setText($("f-skill-name"), toSkillName(ui.agent.name));
+    const count = ui.agent.instructions.length;
+    setText($("f-instructions-counter"), count.toLocaleString() + " of " + LIMITS.instructions.toLocaleString() + " characters");
+    $("icon-preview").src = iconPreviewUri(ui.agent);
+    const result = validateAgent(ui.agent);
+    ui.problems = result.problems;
+    ui.warnings = result.warnings;
+    const status = $("build-status");
+    if (result.problems.length === 0) {
+        setText(status, "Ready to check.");
+        status.className = "ok-text";
+    } else {
+        setText(status, result.problems.length + " thing(s) still needed before download.");
+        status.className = "";
+    }
+}
+
+/** Renders the starters list from state. Keeps focus on the control named by focusIndex and focusKind. */
+function renderStarters(focusIndex, focusKind) {
+    const list = $("starters-list");
+    clearChildren(list);
+    ui.agent.starters.forEach(function (text, index) {
+        const inputId = "starter-" + index;
+        const input = el("input", { type: "text", id: inputId, maxlength: String(LIMITS.starterText), value: text, "aria-label": "Starter " + (index + 1) });
+        input.value = text;
+        input.addEventListener("input", function () {
+            ui.agent.starters[index] = input.value;
+            saveDraft();
+        });
+        const up = el("button", { type: "button", text: "Move up", "aria-label": "Move up starter " + (index + 1) });
+        up.disabled = index === 0;
+        up.addEventListener("click", function () {
+            const starters = ui.agent.starters;
+            const item = starters.splice(index, 1)[0];
+            starters.splice(index - 1, 0, item);
+            renderStarters(index - 1, "up");
+            saveDraft();
+        });
+        const down = el("button", { type: "button", text: "Move down", "aria-label": "Move down starter " + (index + 1) });
+        down.disabled = index === ui.agent.starters.length - 1;
+        down.addEventListener("click", function () {
+            const starters = ui.agent.starters;
+            const item = starters.splice(index, 1)[0];
+            starters.splice(index + 1, 0, item);
+            renderStarters(index + 1, "down");
+            saveDraft();
+        });
+        const remove = el("button", { type: "button", text: "Remove", "aria-label": "Remove starter " + (index + 1) });
+        remove.addEventListener("click", function () {
+            ui.agent.starters.splice(index, 1);
+            renderStarters(Math.min(index, ui.agent.starters.length - 1), "input");
+            saveDraft();
+            announce("Starter removed.");
+        });
+        list.appendChild(el("li", {}, [input, up, down, remove]));
+    });
+    $("starter-add").disabled = ui.agent.starters.length >= LIMITS.starters;
+    if (focusIndex !== undefined && focusIndex >= 0 && focusIndex < ui.agent.starters.length) {
+        const row = list.children[focusIndex];
+        const buttons = row.querySelectorAll("button");
+        let target = row.querySelector("input");
+        if (focusKind === "up" && !buttons[0].disabled) { target = buttons[0]; }
+        if (focusKind === "down" && !buttons[1].disabled) { target = buttons[1]; }
+        if (focusKind === "up" && buttons[0].disabled) { target = buttons[1]; }
+        if (focusKind === "down" && buttons[1].disabled) { target = buttons[0]; }
+        target.focus();
+    }
+}
+
+/** Writes state into every form control. */
+function renderForm() {
+    TEXT_FIELDS.forEach(function (field) {
+        $(field.id).value = field.get(ui.agent);
+    });
+    CHECKBOX_KEYS.forEach(function (key) {
+        $("c-" + key).checked = ui.agent.copilot[key] === true;
+    });
+    $("f-sharepoint").value = ui.agent.sharepointLinks.join("\n");
+    const select = $("a-license");
+    const known = LICENSE_CHOICES.some(function (choice) { return choice.id === ui.agent.license; });
+    select.value = known ? ui.agent.license : "other";
+    $("a-license-other-wrap").hidden = known;
+    $("a-license-other").value = known ? "" : ui.agent.license;
+    renderStarters();
+    ["f-name", "f-description", "f-instructions", "f-sharepoint", "a-website", "a-privacy", "a-terms", "icon"].forEach(function (id) {
+        showFieldError(id, "");
+    });
+    updateDerived();
+}
+
+function validateLinkField(id, value) {
+    if (value && !isHttpsUrl(value)) {
+        showFieldError(id, "This link must start with https://");
+        return false;
+    }
+    showFieldError(id, "");
+    return true;
+}
+
+function readSharepointField() {
+    const lines = $("f-sharepoint").value.split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
+    const bad = lines.filter(function (line) { return !isHttpsUrl(line); });
+    ui.agent.sharepointLinks = lines.filter(isHttpsUrl).slice(0, LIMITS.sharepointLinks);
+    if (bad.length > 0) {
+        showFieldError("f-sharepoint", bad.length + " line(s) are not https links and will be left out.");
+    } else if (lines.length > LIMITS.sharepointLinks) {
+        showFieldError("f-sharepoint", "Only the first " + LIMITS.sharepointLinks + " links are kept.");
+    } else {
+        showFieldError("f-sharepoint", "");
+    }
+}
+
+/** Shows inline errors for the required fields. Returns true when none. */
+function showRequiredErrors() {
+    const messages = {};
+    ui.problems.forEach(function (problem) { messages[problem.field] = problem.message; });
+    showFieldError("f-name", messages.name || "");
+    showFieldError("f-description", messages.description || "");
+    showFieldError("f-instructions", messages.instructions || "");
+    return ui.problems.length === 0;
+}
+
+function setupBuildForm() {
+    TEXT_FIELDS.forEach(function (field) {
+        const input = $(field.id);
+        input.addEventListener("input", function () {
+            field.set(ui.agent, input.value);
+            updateDerived();
+            saveDraft();
+        });
+        input.addEventListener("blur", function () {
+            if (field.id === "a-website" || field.id === "a-privacy" || field.id === "a-terms") {
+                validateLinkField(field.id, input.value.trim());
+            }
+            if (field.id === "f-name" || field.id === "f-description" || field.id === "f-instructions") {
+                const key = field.id.slice(2);
+                const problem = ui.problems.find(function (p) { return p.field === key; });
+                showFieldError(field.id, problem ? problem.message : "");
+            }
+        });
+    });
+    CHECKBOX_KEYS.forEach(function (key) {
+        $("c-" + key).addEventListener("change", function (event) {
+            ui.agent.copilot[key] = event.target.checked;
+            updateDerived();
+            saveDraft();
+        });
+    });
+    $("f-sharepoint").addEventListener("input", function () {
+        readSharepointField();
+        updateDerived();
+        saveDraft();
+    });
+    const select = $("a-license");
+    LICENSE_CHOICES.forEach(function (choice) {
+        select.appendChild(el("option", { value: choice.id, text: choice.label }));
+    });
+    select.appendChild(el("option", { value: "other", text: "Other" }));
+    select.addEventListener("change", function () {
+        const other = select.value === "other";
+        $("a-license-other-wrap").hidden = !other;
+        ui.agent.license = other ? ($("a-license-other").value.trim() || DEFAULT_LICENSE) : select.value;
+        if (other) {
+            $("a-license-other").focus();
+        }
+        updateDerived();
+        saveDraft();
+    });
+    $("a-license-other").addEventListener("input", function () {
+        ui.agent.license = $("a-license-other").value.trim().slice(0, LIMITS.licenseText) || DEFAULT_LICENSE;
+        saveDraft();
+    });
+    $("starter-add").addEventListener("click", function () {
+        if (ui.agent.starters.length >= LIMITS.starters) {
+            return;
+        }
+        ui.agent.starters.push("");
+        renderStarters(ui.agent.starters.length - 1, "input");
+        saveDraft();
+    });
+    $("instructions-template").addEventListener("click", function () {
+        const area = $("f-instructions");
+        const insert = function () {
+            area.value = INSTRUCTIONS_TEMPLATE;
+            ui.agent.instructions = INSTRUCTIONS_TEMPLATE;
+            updateDerived();
+            saveDraft();
+            area.focus();
+            announce("A template was added to the instructions. Replace each line with your own words.");
+        };
+        if (area.value.trim()) {
+            const dialog = $("confirm-dialog");
+            setText($("confirm-message"), "The template will replace the instructions you already wrote.");
+            ui.pendingConfirm = insert;
+            dialog.showModal();
+        } else {
+            insert();
+        }
+    });
+    $("icon-input").addEventListener("change", async function (event) {
+        const file = event.target.files && event.target.files[0];
+        event.target.value = "";
+        if (!file) {
+            return;
+        }
+        try {
+            ui.agent.icon = await iconFromUpload(file);
+            showFieldError("icon", "");
+            updateDerived();
+            saveDraft();
+            announce("Icon updated.");
+        } catch (error) {
+            showFieldError("icon", error.message);
+        }
+    });
+    $("icon-remove").addEventListener("click", function () {
+        ui.agent.icon = null;
+        showFieldError("icon", "");
+        updateDerived();
+        saveDraft();
+        announce("The default icon will be used.");
+    });
+    $("build-next").addEventListener("click", function () {
+        updateDerived();
+        const ok = showRequiredErrors();
+        if (!ok) {
+            announce(ui.problems.length + " thing(s) still needed. The Check tab lists them.");
+        }
+        showTab("check", true);
+    });
+}
+
+// ### Interface: Check ###
+async function renderCheck() {
+    updateDerived();
+    const agent = ui.agent;
+    const summary = $("check-summary");
+    clearChildren(summary);
+    const problems = $("check-problems");
+    clearChildren(problems);
+    const warnings = $("check-warnings");
+    clearChildren(warnings);
+    const fieldIds = { name: "f-name", description: "f-description", instructions: "f-instructions", welcome: "f-welcome", sharepointLinks: "f-sharepoint", creator: "a-name", icon: "icon-input", copyright: "a-copyright" };
+    const makeList = function (items, heading, container) {
+        if (items.length === 0) {
+            return;
+        }
+        container.appendChild(el("h3", { text: heading }));
+        const list = el("ul", { className: "problem-list" });
+        items.forEach(function (item) {
+            const link = el("a", { href: "#build", text: item.message });
+            link.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                showTab("build", false);
+                const target = $(fieldIds[item.field]);
+                if (target) {
+                    const details = target.closest("details");
+                    if (details) { details.open = true; }
+                    target.focus();
+                }
+            });
+            list.appendChild(el("li", {}, [link]));
+        });
+        container.appendChild(list);
+    };
+    if (ui.problems.length === 0) {
+        summary.appendChild(el("p", { className: "ok-text", text: "Nothing is missing. You can download this agent." }));
+    } else {
+        summary.appendChild(el("p", { className: "error-text", text: ui.problems.length + " thing(s) still needed before download. Each line below takes you to the field." }));
+    }
+    makeList(ui.problems, "Problems", problems);
+    makeList(ui.warnings, "Good to know", warnings);
+    $("preview-icon").src = iconPreviewUri(agent);
+    setText($("preview-name"), agent.name || "(no name yet)");
+    setText($("preview-description"), agent.description || "(no description yet)");
+    setText($("preview-creator"), agent.creator.name ? "By " + agent.creator.name : "");
+    showRequiredErrors();
+
+    const skillText = stringifyFrontmatter(bundleFrontmatter(agent, toSkillName(agent.name)), "\n" + agent.instructions + "\n");
+    setText($("raw-skill"), skillText);
+    setText($("raw-agent"), msAgentExport(agent).text.replace(/"icon": "data:image\/png;base64,[^"]*"/, "\"icon\": \"data:image/png;base64,(icon bytes)\""));
+    try {
+        const icons = await prepareTeamsIcons(agent);
+        const saved = agent.copilot.appId;
+        const pkg = await teamsZipExport(agent, icons);
+        if (!saved) {
+            saveDraft();
+        }
+        const entries = await zipRead(pkg.bytes);
+        setText($("raw-manifest"), fromBytes(entries.get("manifest.json")));
+        setText($("raw-declarative"), fromBytes(entries.get("declarativeAgent_0.json")));
+    } catch (error) {
+        setText($("raw-manifest"), "Could not build the package: " + error.message);
+        setText($("raw-declarative"), "");
+    }
+}
+
+// ### Interface: Download ###
+function lossNotice(id, items) {
+    const box = $(id);
+    clearChildren(box);
+    if (items.length === 0) {
+        box.hidden = true;
+        return;
+    }
+    box.hidden = false;
+    box.appendChild(el("p", { text: "This format leaves out:" }));
+    const list = el("ul");
+    items.forEach(function (item) { list.appendChild(el("li", { text: item })); });
+    box.appendChild(list);
+}
+
+function renderDownload() {
+    updateDerived();
+    const agent = ui.agent;
+    const blocked = ui.problems.length > 0;
+    $("download-blocked").hidden = !blocked;
+    document.querySelectorAll(".download-button").forEach(function (button) {
+        button.disabled = blocked;
+    });
+    const teamsLoss = [];
+    if (agent.welcome) { teamsLoss.push("the welcome message"); }
+    if (agent.copyright || agent.license !== DEFAULT_LICENSE) { teamsLoss.push("the copyright line and license name"); }
+    const missingCreator = ["name", "website", "privacy", "terms"].filter(function (key) { return !agent.creator[key]; });
+    if (missingCreator.length > 0) { teamsLoss.push("your creator details (placeholders are used for " + missingCreator.join(", ") + ")"); }
+    lossNotice("loss-teamsZip", teamsLoss);
+    lossNotice("loss-msAgent", []);
+    lossNotice("loss-bundle", []);
+    const copy = copyTextExport(agent);
+    $("copy-name").value = copy.name;
+    $("copy-description").value = copy.description;
+    $("copy-instructions").value = copy.instructions;
+    $("copy-starters").value = copy.starters;
+}
+
+async function runDownload(format) {
+    const agent = ui.agent;
+    try {
+        if (format === "bundle") {
+            const result = await bundleExport(agent);
+            downloadBytes(result.fileName, result.bytes, "application/zip");
+            announce("Downloaded " + result.fileName + ".");
+        } else if (format === "msAgent") {
+            const result = msAgentExport(agent);
+            downloadBytes(result.fileName, toBytes(result.text), "application/json");
+            announce("Downloaded " + result.fileName + ".");
+        } else if (format === "teamsZip") {
+            const icons = await prepareTeamsIcons(agent);
+            const result = await teamsZipExport(agent, icons);
+            saveDraft();
+            downloadBytes(result.fileName, result.bytes, "application/zip");
+            announce("Downloaded " + result.fileName + "." + (result.warnings.length ? " " + result.warnings.join(" ") : ""));
+        } else if (format === "markdown") {
+            const result = copyTextExport(agent);
+            downloadBytes(result.fileName, toBytes(result.markdown), "text/markdown");
+            announce("Downloaded " + result.fileName + ".");
+        }
+    } catch (error) {
+        announce("The download could not be made: " + error.message);
+    }
+}
+
+function updateChooser() {
+    const value = function (name) {
+        const checked = document.querySelector("input[name='" + name + "']:checked");
+        return checked ? checked.value : "";
+    };
+    const teams = value("q-teams");
+    const copilot = value("q-copilot");
+    const keep = value("q-keep");
+    const picks = [];
+    if (teams === "yes") { picks.push("the .agent file for SharePoint and Teams chats"); }
+    if (copilot === "yes" && teams !== "yes") { picks.push("the Copilot app package"); }
+    if (keep === "yes" || (copilot === "no" && teams === "no")) { picks.push("the complete copy, which also works in Gemini and Claude"); }
+    let answer = "";
+    if (teams || copilot || keep) {
+        answer = picks.length ? "Our suggestion: " + picks.join(", and ") + "." : "Answer the questions above and a suggestion appears here.";
+    }
+    setText($("chooser-answer"), answer);
+}
+
+function setupDownload() {
+    document.querySelectorAll(".download-button").forEach(function (button) {
+        button.addEventListener("click", function () { runDownload(button.getAttribute("data-format")); });
+    });
+    document.querySelectorAll(".copy-button").forEach(function (button) {
+        button.addEventListener("click", async function () {
+            const area = $(button.getAttribute("data-copy"));
+            try {
+                await navigator.clipboard.writeText(area.value);
+                announce("Copied.");
+            } catch (error) {
+                area.focus();
+                area.select();
+                announce("Copying is blocked here. The text is selected, so press Ctrl+C or Command+C to copy it.");
+            }
+        });
+    });
+    document.querySelectorAll(".chooser input[type='radio']").forEach(function (radio) {
+        radio.addEventListener("change", updateChooser);
+    });
+}
+
+// ### Interface: Library ###
+/** Library entries embedded in the page, so the demo works without a server. */
+function embeddedLibrary() {
+    const entries = [];
+    document.querySelectorAll("script[type='text/plain'][data-library-skill]").forEach(function (node) {
+        const result = skillMdImport(node.textContent);
+        entries.push({
+            folder: node.getAttribute("data-library-skill"),
+            name: result.agent.name,
+            summary: result.agent.description,
+            tags: (node.getAttribute("data-tags") || "").split(",").map(function (t) { return t.trim(); }).filter(Boolean),
+            author: result.agent.creator.name,
+            license: result.agent.license,
+            agent: result.agent
+        });
+    });
+    return entries;
+}
+
+/** Reads the catalog from the library folder when served over HTTP. Entries are untrusted data. */
+async function fetchCatalog() {
+    if (location.protocol !== "http:" && location.protocol !== "https:") {
+        return null;
+    }
+    try {
+        const response = await fetch("library/catalog.json", { cache: "no-cache" });
+        if (!response.ok) {
+            return null;
+        }
+        const catalog = await response.json();
+        if (!isPlainObject(catalog) || !Array.isArray(catalog.agents)) {
+            return null;
+        }
+        return catalog.agents.filter(isPlainObject).slice(0, 200).map(function (entry) {
+            const folder = typeof entry.folder === "string" ? entry.folder : "";
+            return {
+                folder: folder === toSkillName(folder) ? folder : "",
+                name: asText(entry.name, LIMITS.name),
+                summary: asText(entry.summary, LIMITS.description),
+                tags: (Array.isArray(entry.tags) ? entry.tags : []).map(function (t) { return asText(t, 40); }).filter(Boolean).slice(0, 10),
+                author: asText(entry.author, 200),
+                license: asText(entry.license, LIMITS.licenseText),
+                agent: null
+            };
+        }).filter(function (entry) { return entry.folder && entry.name; });
+    } catch (error) {
+        return null;
+    }
+}
+
+/** Loads a catalog entry's bundle files from the library folder. */
+async function loadLibraryAgent(entry) {
+    if (entry.agent && entry.agent.icon) {
+        return entry.agent;
+    }
+    const base = "library/" + entry.folder + "/";
+    let agent = entry.agent;
+    if (!agent) {
+        const response = await fetch(base + "SKILL.md", { cache: "no-cache" });
+        if (!response.ok) {
+            throw new Error("The library entry could not be loaded.");
+        }
+        agent = skillMdImport(await response.text()).agent;
+    }
+    if (location.protocol === "http:" || location.protocol === "https:") {
+        try {
+            const iconResponse = await fetch(base + "icon.png", { cache: "no-cache" });
+            if (iconResponse.ok) {
+                const bytes = new Uint8Array(await iconResponse.arrayBuffer());
+                agent = normalizeAgent(Object.assign({}, agent, { icon: { bytes: bytes, mime: "image/png" } })).agent;
+            }
+        } catch (error) {
+            // The icon is optional, so a missing one leaves the entry usable.
+        }
+    }
+    entry.agent = agent;
+    return agent;
+}
+
+let libraryLoaded = false;
+async function renderLibrary() {
+    const list = $("library-list");
+    const status = $("library-status");
+    if (!libraryLoaded) {
+        libraryLoaded = true;
+        setText(status, "Loading the library...");
+        const fetched = await fetchCatalog();
+        const embedded = embeddedLibrary();
+        ui.catalog = fetched || embedded;
+        if (fetched) {
+            embedded.forEach(function (entry) {
+                const match = ui.catalog.find(function (item) { return item.folder === entry.folder; });
+                if (match) { match.agent = entry.agent; }
+            });
+        }
+    }
+    const query = $("library-search").value.trim().toLowerCase();
+    const matches = ui.catalog.filter(function (entry) {
+        if (!query) {
+            return true;
+        }
+        const haystack = (entry.name + " " + entry.summary + " " + entry.tags.join(" ")).toLowerCase();
+        return haystack.indexOf(query) >= 0;
+    });
+    clearChildren(list);
+    setText(status, matches.length === 0 ? "No agents match." : matches.length + " agent(s).");
+    matches.forEach(function (entry) {
+        const icon = el("img", { className: "icon-preview", alt: "", src: "" });
+        icon.src = entry.agent && entry.agent.icon ? iconPreviewUri(entry.agent) : "library/" + entry.folder + "/icon.png";
+        icon.addEventListener("error", function () { icon.src = drawDefaultIcon(entry.name, 96).toDataURL("image/png"); });
+        const tags = el("ul", { className: "tags", "aria-label": "Tags" });
+        entry.tags.forEach(function (tag) { tags.appendChild(el("li", { text: tag })); });
+        const tryButton = el("button", { type: "button", className: "primary", text: "Try it" });
+        const downloadButton = el("button", { type: "button", text: "Download" });
+        const load = async function (then) {
+            try {
+                const agent = await loadLibraryAgent(entry);
+                confirmReplace("Loading " + entry.name + " will replace the agent you are working on.", function () {
+                    setAgent(normalizeAgent(JSON.parse(JSON.stringify(Object.assign({}, agent, { icon: null })))).agent);
+                    ui.agent.icon = agent.icon ? { bytes: copyBytes(agent.icon.bytes), mime: "image/png" } : null;
+                    renderForm();
+                    saveDraft();
+                    announce("Loaded " + entry.name + ".");
+                    showTab(then, true);
+                });
+            } catch (error) {
+                announce(error.message);
+            }
+        };
+        tryButton.addEventListener("click", function () { load("build"); });
+        downloadButton.addEventListener("click", function () { load("download"); });
+        const meta = el("p", { className: "muted", text: (entry.author ? "By " + entry.author + ". " : "") + (entry.license ? "License: " + entry.license + "." : "") });
+        list.appendChild(el("li", { className: "card" }, [
+            el("div", { className: "preview-card" }, [icon, el("div", {}, [el("h3", { text: entry.name }), el("p", { text: entry.summary }), tags, meta])]),
+            el("div", { className: "button-row" }, [tryButton, downloadButton])
+        ]));
+    });
+}
+
+// ### Interface: analytics ###
+/** Loads the Google Analytics tag, and only on the production host. */
+function loadAnalyticsIfProduction() {
+    if (location.hostname !== ANALYTICS_HOST) {
+        return;
+    }
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag("js", new Date());
+    window.gtag("config", ANALYTICS_ID);
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(ANALYTICS_ID);
+    document.head.appendChild(script);
+}
+
+// ### Interface: startup ###
+function initApp() {
+    loadAnalyticsIfProduction();
+    setupTabs();
+    setupFileOpening();
+    setupBuildForm();
+    setupDownload();
+    $("library-search").addEventListener("input", function () { renderLibrary(); });
+    $("home-new").addEventListener("click", function () {
+        confirmReplace("Starting a new agent will replace the one you are working on.", function () {
+            setAgent(createAgent());
+            clearDraft();
+            announce("Started a new agent.");
+            showTab("build", true);
+            $("f-name").focus();
+        });
+    });
+    $("home-library").addEventListener("click", function () { showTab("library", true); });
+    $("check-back").addEventListener("click", function () { showTab("build", true); });
+    $("check-next").addEventListener("click", function () { showTab("download", true); });
+    $("clear-draft").addEventListener("click", function () {
+        confirmReplace("Clearing the draft removes the agent you are working on from this browser.", function () {
+            clearDraft();
+            setAgent(createAgent());
+            $("draft-banner").hidden = true;
+            announce("Draft cleared.");
+        });
+    });
+    const dialog = $("confirm-dialog");
+    $("confirm-cancel").addEventListener("click", function () { dialog.close(); });
+    $("confirm-ok").addEventListener("click", function () {
+        dialog.close();
+        const proceed = ui.pendingConfirm;
+        ui.pendingConfirm = null;
+        if (proceed) { proceed(); }
+    });
+    dialog.addEventListener("close", function () { ui.pendingConfirm = null; });
+    $("draft-continue").addEventListener("click", function () {
+        $("draft-banner").hidden = true;
+        showTab("build", true);
+    });
+    $("draft-discard").addEventListener("click", function () {
+        clearDraft();
+        setAgent(createAgent());
+        $("draft-banner").hidden = true;
+        announce("Started fresh.");
+    });
+
+    const draft = loadDraft();
+    if (draft && agentHasContent(draft)) {
+        ui.agent = draft;
+        $("draft-banner").hidden = false;
+    }
+    renderForm();
+    showTab(location.hash.replace("#", "") || "home", false);
+}
+
 // The engine above has no DOM dependency so the test suite can load it in Node.
 // Everything that touches the page starts here and only in a browser.
 if (typeof document !== "undefined" && document.getElementById) {
-    // The interface is added in a later phase.
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initApp);
+    } else {
+        initApp();
+    }
 }
 </script>
 </body>

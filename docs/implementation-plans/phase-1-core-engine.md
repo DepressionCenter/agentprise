@@ -166,27 +166,27 @@ Files: create `index.html` (replace the redirect page), `tests/load-engine.mjs`,
 `tests/engine.test.mjs`, and `package.json` with only a `test` script and no
 dependencies.
 
-- [ ] Write `tests/load-engine.mjs`. It reads `index.html`, finds the single
+- [x] Write `tests/load-engine.mjs`. It reads `index.html`, finds the single
       script block, builds a `vm` context whose globals are `TextEncoder`,
       `TextDecoder`, `Uint8Array`, `DecompressionStream`, `CompressionStream`,
       `crypto`, `atob`, `btoa`, `console`, `setTimeout`, `Blob`, and `Response`,
       runs the script, and exports the `Agentprise` object from that context.
-- [ ] Write the first test: `Agentprise.LIMITS.starters === 12` and
+- [x] Write the first test: `Agentprise.LIMITS.starters === 12` and
       `createAgent().name === ""`.
-- [ ] Run `node --test tests/` and confirm it fails because `index.html` has no
+- [x] Run `node --test tests/` and confirm it fails because `index.html` has no
       engine.
-- [ ] Replace `index.html` with the license header, the doctype, a `<main>`
+- [x] Replace `index.html` with the license header, the doctype, a `<main>`
       placeholder, and a script holding the configuration section, `LIMITS`,
       `createAgent`, and `globalThis.Agentprise = { LIMITS, createAgent }`.
       Guard UI startup with `if (typeof document !== "undefined") { ... }`.
-- [ ] Run `node --test tests/` and confirm it passes.
-- [ ] Commit: "Add engine scaffold and Node test loader".
+- [x] Run `node --test tests/` and confirm it passes.
+- [x] Commit: "Add engine scaffold and Node test loader".
 
 ### Task 2: normalize and validate
 
 Files: modify `index.html`; add tests.
 
-- [ ] Tests: a 150 character name is cut to 100 with a notice; 15 starters are cut
+- [x] Tests: a 150 character name is cut to 100 with a notice; 15 starters are cut
       to 12 with a notice; an empty starter is removed; a SharePoint link that is
       not `https://` is removed with a notice; `validateAgent` reports a problem
       for an empty name and an empty instructions field; it reports a warning
@@ -194,8 +194,8 @@ Files: modify `index.html`; add tests.
       `toSkillName("My Agent!!")` returns `"my-agent"` and never starts or ends
       with a hyphen or contains two hyphens in a row; a 100 character name yields
       a 64 character skill name.
-- [ ] Implement `normalizeAgent`, `validateAgent`, and `toSkillName`.
-- [ ] Run tests, commit: "Add agent normalization and validation".
+- [x] Implement `normalizeAgent`, `validateAgent`, and `toSkillName`.
+- [x] Run tests, commit: "Add agent normalization and validation".
 
 ### Task 3: YAML frontmatter subset
 
@@ -206,43 +206,43 @@ backslash escapes for the quote and the backslash, one nested mapping level, and
 block scalars (`|`) whose lines are indented two spaces more than the key. Nothing
 else. Unknown constructs produce a warning and are skipped.
 
-- [ ] Tests: parse the Caveman frontmatter shown in `docs/formats.md`; parse the
+- [x] Tests: parse the Caveman frontmatter shown in `docs/formats.md`; parse the
       same text with Windows line endings and get equal output; a value containing
       a colon and space inside quotes stays whole; `stringifyFrontmatter` then
       `parseFrontmatter` returns equal data for a mapping holding a block string
       with three lines; a top-level key the bundle does not use is preserved in
       `data` and does not raise an error; text without a frontmatter fence returns
       an empty `data` object and the whole text as `body`.
-- [ ] Implement `yaml.parseFrontmatter` and `yaml.stringifyFrontmatter`. The
+- [x] Implement `yaml.parseFrontmatter` and `yaml.stringifyFrontmatter`. The
       writer always quotes scalars that contain a colon, a hash, leading or
       trailing spaces, or that look like booleans or numbers, and uses block
       scalars for any value containing a newline.
-- [ ] Run tests, commit: "Add YAML frontmatter reader and writer".
+- [x] Run tests, commit: "Add YAML frontmatter reader and writer".
 
 ### Task 4: ZIP read and write, PNG dimensions
 
 Files: modify `index.html`; add tests.
 
-- [ ] Tests: `zip.write` of two stored entries then `zip.read` returns both with
+- [x] Tests: `zip.write` of two stored entries then `zip.read` returns both with
       equal bytes; an archive produced with deflate (method 8) inflates
       correctly; an entry named `../evil` is rejected with `ZipError`; an entry
       name with a backslash or a leading slash is rejected; an archive with 201
       entries is rejected; a header whose declared uncompressed size exceeds
       `zipEntryBytes` is rejected before inflating; a PNG header from a 192 by
       192 image returns `{ width: 192, height: 192 }`; random bytes return `null`.
-- [ ] Implement a CRC-32 table, `zip.write` (local headers, central directory,
+- [x] Implement a CRC-32 table, `zip.write` (local headers, central directory,
       end record, store method only, UTF-8 names with the UTF-8 flag set),
       `zip.read` (walks the central directory from the end record, checks the
       signature, caps entry count and sizes, inflates method 8 with
       `DecompressionStream`, verifies CRC-32), and `png.dimensions` (checks the
       8 byte signature and reads the IHDR chunk).
-- [ ] Run tests, commit: "Add ZIP reader and writer and PNG header check".
+- [x] Run tests, commit: "Add ZIP reader and writer and PNG header check".
 
 ### Task 5: Microsoft `.agent` import and export
 
 Files: modify `index.html`; add tests.
 
-- [ ] Tests: exporting a Caveman agent produces JSON whose first key is
+- [x] Tests: exporting a Caveman agent produces JSON whose first key is
       `_license`, second `_agentprise`, then `schemaVersion: "0.2.0"` and
       `customCopilotConfig` with the shape in `docs/formats.md`; importing that
       text gives an agent equal to the original on every field; importing a
@@ -252,14 +252,14 @@ Files: modify `index.html`; add tests.
       10,000 character name is cut to 100 with a notice; `preferMyFiles` round
       trips through `behavior_overrides.special_instructions.discourage_model_knowledge`;
       an icon round trips through the `data:image/png;base64,` URI.
-- [ ] Implement `formats.msAgent.export` and `formats.msAgent.import`.
-- [ ] Run tests, commit: "Add Microsoft .agent import and export".
+- [x] Implement `formats.msAgent.export` and `formats.msAgent.import`.
+- [x] Run tests, commit: "Add Microsoft .agent import and export".
 
 ### Task 6: bundle (Agent Skill) import and export
 
 Files: modify `index.html`; add tests.
 
-- [ ] Tests: export writes `<skill>/SKILL.md`, `<skill>/icon.png` when an icon
+- [x] Tests: export writes `<skill>/SKILL.md`, `<skill>/icon.png` when an icon
       exists, `<skill>/LICENSE.txt`, and `<skill>/README.md`; `SKILL.md` starts
       with `---` on the first byte; frontmatter `name` equals `toSkillName(name)`;
       `metadata` values are all strings; import of the exported bytes returns an
@@ -268,19 +268,19 @@ Files: modify `index.html`; add tests.
       frontmatter field loads with a warning; `formats.skillMd.import` works on
       bare text; a bundle whose `name` has uppercase letters loads with a notice
       and a corrected skill name.
-- [ ] Implement `formats.bundle.export`, `formats.bundle.import`, and
+- [x] Implement `formats.bundle.export`, `formats.bundle.import`, and
       `formats.skillMd.import`. The README inside the bundle is a short page with
       the hidden license comment, the agent name, description, author, and a
       one-paragraph "how to use" note. `LICENSE.txt` is the full GPL-3.0-or-later
       text for the default license, or a one-line notice naming the chosen license
       otherwise.
-- [ ] Run tests, commit: "Add Agent Skill bundle import and export".
+- [x] Run tests, commit: "Add Agent Skill bundle import and export".
 
 ### Task 7: Teams package import and export
 
 Files: modify `index.html`; add tests.
 
-- [ ] Tests: export produces `manifest.json`, `declarativeAgent_0.json`,
+- [x] Tests: export produces `manifest.json`, `declarativeAgent_0.json`,
       `color.png`, and `outline.png`; `manifest.json` has no `_license` key and
       no key outside the 1.28 schema; `declarativeAgent_0.json` has `version:
       "v1.8"`, the capability names in the order `WebSearch`, `TeamsMessages`,
@@ -292,36 +292,36 @@ Files: modify `index.html`; add tests.
       creator fields become the documented placeholders; import of the exported
       bytes returns an equal agent on every field except `welcome`; import of a
       package missing `declarativeAgent_0.json` is rejected with a message.
-- [ ] Implement `formats.teamsZip.export(agent, icons)` where `icons` is
+- [x] Implement `formats.teamsZip.export(agent, icons)` where `icons` is
       `{ color: Uint8Array, outline: Uint8Array }` prepared by the caller (the UI
       resizes with a canvas; tests pass fixture PNG bytes). Implement
       `formats.teamsZip.import`.
-- [ ] Run tests, commit: "Add Teams app package import and export".
+- [x] Run tests, commit: "Add Teams app package import and export".
 
 ### Task 8: copy text, format detection, and round trips
 
 Files: modify `index.html`; add tests.
 
-- [ ] Tests: `copyText.export` returns the four fields and a Markdown document
+- [x] Tests: `copyText.export` returns the four fields and a Markdown document
       that starts with the name as a heading; `detectFormat` returns `msAgent`
       for `.agent`, `skillMd` for `SKILL.md`, `teamsZip` for a ZIP containing
       `manifest.json`, `bundle` for a ZIP containing a `SKILL.md`, and `unknown`
       otherwise; a full round trip bundle to `.agent` to bundle to Teams package
       to bundle leaves every field equal except `welcome` after the Teams step.
-- [ ] Implement `formats.copyText.export` and `detectFormat`.
-- [ ] Run tests, commit: "Add copy text export and format detection".
+- [x] Implement `formats.copyText.export` and `detectFormat`.
+- [x] Run tests, commit: "Add copy text export and format detection".
 
 ### Task 9: documentation for this phase
 
 Files: `skills/project-preferences/SKILL.md`, `docs/formats.md`, `docs/README.md`.
 
-- [ ] Fill in the project preferences: single file, zero dependencies, bundle
+- [x] Fill in the project preferences: single file, zero dependencies, bundle
       format, metadata key names, the four download cards, test command.
-- [ ] Write `docs/formats.md` with the verified facts, their source links and
+- [x] Write `docs/formats.md` with the verified facts, their source links and
       check dates, the field mapping tables, and the open test on the Teams
       package extra file.
-- [ ] Add both pages to the docs index.
-- [ ] Commit: "Document formats and project preferences".
+- [x] Add both pages to the docs index.
+- [x] Commit: "Document formats and project preferences".
 
 ### Verification
 

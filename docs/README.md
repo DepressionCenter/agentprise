@@ -29,6 +29,8 @@ needs to understand how the app works and why it is built the way it is.
 - [Formats](formats.md): every file the app opens or downloads, what each one
   carries, the vendor facts behind them with check dates, and the tests that still
   need a real account.
+- [Compliance](compliance.md): the security, privacy, and accessibility
+  controls in place, with the evidence behind each and the known gaps.
 - [Implementation plans](implementation-plans/README.md): the phased build plan
   for the app, for anyone picking up a phase cold.
 
