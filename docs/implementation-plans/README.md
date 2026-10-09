@@ -44,11 +44,18 @@ The design document that shaped this plan lives outside the repository. The
 the date each one was checked. Where this plan departs from that design, the phase
 plan says so under a heading named "Changes from the design" and gives the reason.
 
+### Branches and review
+
+Each phase is built on its own branch, named after the phase
+(`feature/phase-1-core-engine`, `feature/phase-2-user-interface`,
+`feature/phase-3-library-and-release`), and merged through its own pull request.
+The next phase starts only after the previous one has been reviewed and merged.
+
 ### Conclusion
 
 Start with Phase 1. Do not begin a later phase until the earlier phase's
-verification steps pass, because each phase builds on the interfaces the previous
-one defined.
+verification steps pass and its pull request is merged, because each phase builds
+on the interfaces the previous one defined.
 
 ### Additional resources
 
