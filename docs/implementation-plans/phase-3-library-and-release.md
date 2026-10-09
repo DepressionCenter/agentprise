@@ -28,13 +28,15 @@ the code, and a pull request is open.
 ### Goal
 
 A `library/` folder with Caveman as an Agent Skill bundle, a catalog the app
-fetches, the Library tab, the knowledge base pages, and a verified pull request.
+fetches, the Library view, the knowledge base pages, and a verified pull request.
 
 ### Task 1: Caveman library entry
 
 - [ ] Create `library/caveman/SKILL.md`, `icon.png`, `LICENSE.txt`, and
       `README.md` from the Caveman exports using the Phase 1 exporter, with the
-      creator links replaced by the project's own links.
+      creator links replaced by the project's own links and without the starter
+      "What's new today at Michigan Medicine?", which only makes sense inside
+      the university.
 - [ ] Create `library/catalog.json` with a leading `_license` key and one entry:
       folder, display name, summary, tags, author, license.
 - [ ] Embed the Caveman `SKILL.md` text in `index.html` so the demo works from a
@@ -42,16 +44,16 @@ fetches, the Library tab, the knowledge base pages, and a verified pull request.
 - [ ] Add a test that imports `library/caveman/SKILL.md` and checks the fields.
 - [ ] Commit: "Add Caveman to the library".
 
-### Task 2: Library tab
+### Task 2: Library view
 
 - [ ] Fetch `library/catalog.json` when served over HTTP; fall back to the
-      embedded entry otherwise. One card per entry with Try it and Download
+      embedded entry otherwise. One card per entry with Try it and See the files
       buttons, a search box over name, summary, and tags, and an "Add yours" link.
-- [ ] Commit: "Add Library tab".
+- [ ] Commit: "Add Library view".
 
 ### Task 3: knowledge base pages
 
-- [ ] Write `docs/usage.md`, `docs/faq.md` (mirrors the Help tab),
+- [ ] Write `docs/usage.md`, `docs/faq.md` (mirrors the Help view),
       `docs/how-to/add-to-library.md`, and `docs/compliance.md` (accessibility and
       privacy evidence only, including the note that no secrets or configuration
       files exist).
