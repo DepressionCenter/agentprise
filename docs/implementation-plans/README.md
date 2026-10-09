@@ -36,6 +36,9 @@ phase's plan lists its tasks with the files, tests, and commands involved.
 3. [Phase 3: library and release](phase-3-library-and-release.md). The Caveman
    library entry, the catalog, the knowledge base pages, the README quick start,
    browser verification, and the pull request.
+4. [Phase 4: user guides with screenshots](phase-4-user-guides.md). Illustrated
+   step-by-step guides for each job a person comes to do, written last so the
+   screenshots match the settled interface.
 
 ### How these plans relate to the original design
 
