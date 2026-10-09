@@ -30,6 +30,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
     <meta name="description" content="Make AI agents portable across Copilot, Gemini, Claude, and ChatGPT.">
     <meta name="color-scheme" content="light dark">
     <title>Agentprise</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2300274C'/%3E%3Ccircle cx='32' cy='32' r='20' fill='%23FFCB05'/%3E%3Ctext x='32' y='41' font-family='Arial,sans-serif' font-size='26' font-weight='bold' text-anchor='middle' fill='%2300274C'%3EA%3C/text%3E%3C/svg%3E">
     <style>
         /* ### Theme ### */
         /* U-M Blue carries the header and primary buttons. Maize is an accent and the
@@ -105,6 +106,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             background: var(--bg);
         }
         p, li { max-width: 72ch; }
+        .cards > li, .starter-list > li, .steps > li, .tags > li { max-width: none; }
         h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 0.5em; }
         h1 { font-size: 1.5rem; }
         h2 { font-size: 1.5rem; margin-top: 0; }
@@ -308,8 +310,12 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             min-height: 44px;
             display: flex;
             align-items: center;
+            gap: 0.5rem;
             padding: 0.4rem 0;
         }
+        /* Flex layout drops the native marker, so draw one that flips when open. */
+        summary::before { content: "\25B8"; font-size: 1.2em; line-height: 1; }
+        details[open] > summary::before { content: "\25BE"; }
         .tags { list-style: none; padding: 0; margin: 0.5rem 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
         .tags li { background: var(--surface-strong); border-radius: 999px; padding: 0.15rem 0.7rem; font-size: 0.9rem; }
 
@@ -435,6 +441,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         <div class="dropzone" id="dropzone">
             <p id="dropzone-text">Drop an agent file here. Accepted: a <code>.agent</code> file from SharePoint, a <code>.zip</code> from the Copilot app or from Agentprise, or a <code>SKILL.md</code> file.</p>
             <button type="button" id="browse-button">Browse for a file</button>
+            <label for="file-input" class="visually-hidden">Agent file to open</label>
             <input type="file" id="file-input" class="visually-hidden" accept=".agent,.zip,.md,application/zip,application/json,text/markdown" aria-describedby="dropzone-text">
         </div>
         <ol class="steps">
@@ -466,7 +473,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                 <label for="f-name">Name</label>
                 <p class="hint" id="f-name-hint">What people will see in the agent list. Up to 100 characters.</p>
                 <input type="text" id="f-name" maxlength="100" aria-describedby="f-name-hint f-name-skill f-name-error" autocomplete="off">
-                <p class="counter" id="f-name-skill">File name: <code id="f-skill-name">agent</code></p>
+                <p class="counter" id="f-name-skill">Skill name, used for file and folder names: <code id="f-skill-name">agent</code></p>
                 <p class="error-text" id="f-name-error" hidden></p>
             </div>
             <div class="field">
@@ -793,7 +800,13 @@ const LIMITS = Object.freeze({
 
 const APP_VERSION = "1";
 const APP_REPOSITORY_URL = "https://github.com/DepressionCenter/agentprise";
-const APP_SITE_URL = "https://depressioncenter.github.io/agentprise/";
+const APP_SITE_URL = "https://code.depressioncenter.org/agentprise/";
+
+// Google Analytics loads only on the production host. Local copies, forks, and
+// GitHub Pages previews never contact Google, so nothing a person does there is
+// measured. The measurement id is the EFDC property shared with sibling projects.
+const ANALYTICS_HOST = "code.depressioncenter.org";
+const ANALYTICS_ID = "G-3Q455XWS5F";
 const DEFAULT_LICENSE = "GPL-3.0-or-later";
 
 // License choices offered in the form. The URL is written into LICENSE.txt for
@@ -3520,7 +3533,7 @@ function renderStarters(focusIndex, focusKind) {
             ui.agent.starters[index] = input.value;
             saveDraft();
         });
-        const up = el("button", { type: "button", text: "Move up", "aria-label": "Move starter " + (index + 1) + " up" });
+        const up = el("button", { type: "button", text: "Move up", "aria-label": "Move up starter " + (index + 1) });
         up.disabled = index === 0;
         up.addEventListener("click", function () {
             const starters = ui.agent.starters;
@@ -3529,7 +3542,7 @@ function renderStarters(focusIndex, focusKind) {
             renderStarters(index - 1, "up");
             saveDraft();
         });
-        const down = el("button", { type: "button", text: "Move down", "aria-label": "Move starter " + (index + 1) + " down" });
+        const down = el("button", { type: "button", text: "Move down", "aria-label": "Move down starter " + (index + 1) });
         down.disabled = index === ui.agent.starters.length - 1;
         down.addEventListener("click", function () {
             const starters = ui.agent.starters;
@@ -4034,8 +4047,25 @@ async function renderLibrary() {
     });
 }
 
+// ### Interface: analytics ###
+/** Loads the Google Analytics tag, and only on the production host. */
+function loadAnalyticsIfProduction() {
+    if (location.hostname !== ANALYTICS_HOST) {
+        return;
+    }
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag("js", new Date());
+    window.gtag("config", ANALYTICS_ID);
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(ANALYTICS_ID);
+    document.head.appendChild(script);
+}
+
 // ### Interface: startup ###
 function initApp() {
+    loadAnalyticsIfProduction();
     setupTabs();
     setupFileOpening();
     setupBuildForm();

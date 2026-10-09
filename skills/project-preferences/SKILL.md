@@ -39,8 +39,12 @@ served by GitHub Pages from the root of the main branch.
 ### Environment and structure
 
 - The whole app is one file, `index.html`, with one `<style>` block and one
-  `<script>` block. There is no build step, no framework, no CDN, no web font, and
-  no analytics. The page should stay under 250 KB.
+  `<script>` block. There is no build step, no framework, no CDN, and no web font.
+  The page should stay under 250 KB.
+- Google Analytics loads only when the page is served from
+  `code.depressioncenter.org`, the production host. Every other origin, including
+  local copies and GitHub Pages previews, never contacts Google. The host name and
+  measurement id are constants at the top of the script.
 - The script has two parts. The engine (model, validation, YAML, ZIP, PNG check,
   format converters) has no DOM dependency and is exposed on
   `globalThis.Agentprise`. The interface code comes after it and only runs when a

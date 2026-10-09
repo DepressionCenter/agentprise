@@ -68,72 +68,72 @@ Same as Phase 1, plus:
 
 ### Task 1: shell, tabs, theme, and focus management
 
-- [ ] Add the skip link, header, tablist, six empty panels, footer with "Clear my
+- [x] Add the skip link, header, tablist, six empty panels, footer with "Clear my
       draft", and the CSS custom properties for light and dark modes.
-- [ ] Implement the tablist: Left and Right arrows move between tabs, Home and
+- [x] Implement the tablist: Left and Right arrows move between tabs, Home and
       End jump, `aria-selected` and `tabindex` roving, and hash routing so the
       browser Back button works.
-- [ ] Check contrast of every color pair in both modes and record the ratios in
+- [x] Check contrast of every color pair in both modes and record the ratios in
       `docs/compliance.md` (Phase 3 finishes that page).
-- [ ] Commit: "Add app shell, tabs, and theme".
+- [x] Commit: "Add app shell, tabs, and theme".
 
 ### Task 2: Home tab and file opening
 
-- [ ] Headline, one-sentence subtitle, three large buttons, three-step strip, and
+- [x] Headline, one-sentence subtitle, three large buttons, three-step strip, and
       the unsaved-work banner.
-- [ ] A drop zone with a visible Browse button and a file input that accepts
+- [x] A drop zone with a visible Browse button and a file input that accepts
       `.agent`, `.zip`, and `.md`. On file: read bytes, cap at
       `LIMITS.zipTotalBytes`, call `detectFormat`, then the matching importer, show
       notices in the live region, load the agent into state, and move to Build.
-- [ ] Commit: "Add Home tab and file import".
+- [x] Commit: "Add Home tab and file import".
 
 ### Task 3: Build tab
 
-- [ ] One fieldset per row from the design: Name (with the read-only derived
+- [x] One fieldset per row from the design: Name (with the read-only derived
       skill name underneath), Short description, Welcome message, Instructions
       with a counter and a "Help me write this" template button, Conversation
       starters with Add, Remove, Move up, and Move down buttons, Icon with
       preview, Remove, and Use the default icon, Knowledge from SharePoint,
       Copilot options in a collapsed details element, About you in a collapsed
       details element with a license dropdown.
-- [ ] Every input has a visible label, a hint joined through `aria-describedby`,
+- [x] Every input has a visible label, a hint joined through `aria-describedby`,
       and an inline error element announced politely.
-- [ ] Autosave to `localStorage` on every change, debounced to 300 ms. The icon
+- [x] Autosave to `localStorage` on every change, debounced to 300 ms. The icon
       is stored as a base64 string.
-- [ ] Commit: "Add Build tab".
+- [x] Commit: "Add Build tab".
 
 ### Task 4: Check tab
 
-- [ ] Run `validateAgent` on entry. List problems and warnings as links that move
+- [x] Run `validateAgent` on entry. List problems and warnings as links that move
       focus to the field. Show a preview card with icon, name, and description.
       Put the raw-files view in a closed details element with one tab per format.
-- [ ] Commit: "Add Check tab".
+- [x] Commit: "Add Check tab".
 
 ### Task 5: Download tab
 
-- [ ] Four cards in the order from the design, each with a file type line, one
+- [x] Four cards in the order from the design, each with a file type line, one
       sentence on who it is for, a Download button, a yellow notice for fields the
       format drops, and a numbered "What to do next" list in a details element.
-- [ ] The "Not sure which one?" chooser with three yes or no questions between
+- [x] The "Not sure which one?" chooser with three yes or no questions between
       cards 2 and 3.
-- [ ] Card 4 holds four read-only text boxes with Copy buttons and a "Download
+- [x] Card 4 holds four read-only text boxes with Copy buttons and a "Download
       as .md" button.
-- [ ] Commit: "Add Download tab".
+- [x] Commit: "Add Download tab".
 
 ### Task 6: Help tab
 
-- [ ] The FAQ from the design and the "At a glance" table with text alternatives
+- [x] The FAQ from the design and the "At a glance" table with text alternatives
       for every symbol.
-- [ ] Commit: "Add Help tab".
+- [x] Commit: "Add Help tab".
 
 ### Task 7: keyboard and screen reader walkthrough
 
-- [ ] Walk every screen with the keyboard only and fix anything unreachable.
-- [ ] Run an automated scan (Lighthouse or axe through the browser tools) and fix
+- [x] Walk every screen with the keyboard only and fix anything unreachable.
+- [x] Run an automated scan (Lighthouse or axe through the browser tools) and fix
       what it reports.
-- [ ] Record what was tested and what still needs a human under the Accessibility
+- [x] Record what was tested and what still needs a human under the Accessibility
       heading of the response.
-- [ ] Commit: "Fix accessibility findings".
+- [x] Commit: "Fix accessibility findings".
 
 ### Verification
 
