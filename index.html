@@ -27,70 +27,68 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Make AI agents portable across Copilot, Gemini, Claude, and ChatGPT.">
+    <meta name="description" content="Describe an AI assistant once and download it for Microsoft 365 Copilot, Gemini, Claude, and ChatGPT.">
     <meta name="color-scheme" content="light dark">
     <title>Agentprise</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2300274C'/%3E%3Ccircle cx='32' cy='32' r='20' fill='%23FFCB05'/%3E%3Ctext x='32' y='41' font-family='Arial,sans-serif' font-size='26' font-weight='bold' text-anchor='middle' fill='%2300274C'%3EA%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="images/agentprise-mark.png" type="image/png">
     <style>
         /* ### Theme ### */
-        /* U-M Blue carries the header and primary buttons. Maize is an accent and the
-           focus ring on dark surfaces only; it is never text on white. Every pair below
-           meets WCAG 2.2 AA contrast; the ratios are recorded in docs/compliance.md. */
+        /* One accent blue carries links, blanks, and primary buttons. The page names
+           IBM Plex first so it is used where installed, and never loads a web font,
+           because a font request would contact a third party from every visitor's
+           browser. Every pair below meets WCAG 2.2 AA; see docs/compliance.md. */
         :root {
-            --um-blue: #00274C;
-            --um-maize: #FFCB05;
-            --arboretum-blue: #2F65A7;
-            --bg: #FFFFFF;
-            --surface: #F3F5F8;
-            --surface-strong: #E3E8EF;
-            --text: #1B1B1B;
-            --text-muted: #4A5560;
-            --border: #8A96A3;
-            --link: #2F65A7;
-            --focus: #2F65A7;
-            --header-bg: #00274C;
-            --header-text: #FFFFFF;
-            --primary-bg: #00274C;
-            --primary-text: #FFFFFF;
-            --secondary-bg: #FFFFFF;
-            --secondary-text: #00274C;
-            --secondary-border: #00274C;
+            --page: #E9ECF0;
+            --shell: #F4F5F7;
+            --panel: #FFFFFF;
+            --panel-alt: #F4F5F7;
+            --nav-active: #EEF1F5;
+            --text: #1B2430;
+            --muted: #5B6572;
+            --accent: #2B4C7E;
+            --accent-hover: #1D3558;
+            --accent-text: #2B4C7E;
+            --on-accent: #FFFFFF;
+            --dot: #B8470A;
+            --border: #DDE1E6;
+            --border-soft: #E3E6EA;
+            --input-border: #7F8A96;
+            --focus: #2B4C7E;
+            --mark-bg: #EEF1F5;
+            --mark-text: #2B4C7E;
+            --error: #A4121C;
+            --ok: #1F6F3F;
             --notice-bg: #FFF4CC;
             --notice-border: #8A5B00;
-            --notice-text: #1B1B1B;
-            --error-text: #A4121C;
-            --error-border: #A4121C;
-            --ok-text: #1F6F3F;
-            --input-bg: #FFFFFF;
-            --code-bg: #F3F5F8;
-            --dropzone-bg: #F3F5F8;
+            --code-bg: #FFFFFF;
+            --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+            --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", Menlo, monospace;
         }
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg: #14171B;
-                --surface: #1E2329;
-                --surface-strong: #2A313A;
-                --text: #F2F4F6;
-                --text-muted: #B8C2CC;
-                --border: #7C8893;
-                --link: #9EC5F2;
-                --focus: #FFCB05;
-                --header-bg: #00274C;
-                --header-text: #FFFFFF;
-                --primary-bg: #FFCB05;
-                --primary-text: #00274C;
-                --secondary-bg: #1E2329;
-                --secondary-text: #F2F4F6;
-                --secondary-border: #B8C2CC;
+                --page: #0F1216;
+                --shell: #161A1F;
+                --panel: #1C2127;
+                --panel-alt: #161A1F;
+                --nav-active: #2A313A;
+                --text: #ECEFF2;
+                --muted: #AAB4BE;
+                --accent: #2B4C7E;
+                --accent-hover: #3A62A0;
+                --accent-text: #9DBDF0;
+                --on-accent: #FFFFFF;
+                --dot: #F08A4B;
+                --border: #2E353E;
+                --border-soft: #2E353E;
+                --input-border: #7C8893;
+                --focus: #9DBDF0;
+                --mark-bg: #2A313A;
+                --mark-text: #9DBDF0;
+                --error: #FF9AA2;
+                --ok: #8FD9A8;
                 --notice-bg: #3A2E00;
-                --notice-border: #FFCB05;
-                --notice-text: #F2F4F6;
-                --error-text: #FF9AA2;
-                --error-border: #FF9AA2;
-                --ok-text: #8FD9A8;
-                --input-bg: #14171B;
-                --code-bg: #1E2329;
-                --dropzone-bg: #1E2329;
+                --notice-border: #F2C94C;
+                --code-bg: #14171B;
             }
         }
 
@@ -99,38 +97,19 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         html { font-size: 100%; }
         body {
             margin: 0;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+            padding: 14px;
+            font-family: var(--font);
             font-size: 1rem;
             line-height: 1.5;
             color: var(--text);
-            background: var(--bg);
+            background: var(--page);
         }
-        p, li { max-width: 72ch; }
-        .cards > li, .starter-list > li, .steps > li, .tags > li { max-width: none; }
-        h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 0.5em; }
-        h1 { font-size: 1.5rem; }
-        h2 { font-size: 1.5rem; margin-top: 0; }
-        h3 { font-size: 1.2rem; }
-        a { color: var(--link); text-decoration: underline; }
+        h1, h2, h3 { line-height: 1.25; margin: 0; }
+        p { margin: 0 0 0.75rem; }
+        a { color: var(--accent-text); text-decoration: underline; }
         a:hover { text-decoration-thickness: 2px; }
-        code, pre {
-            font-family: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", Menlo, monospace;
-            font-size: 0.95em;
-        }
-        pre {
-            background: var(--code-bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 0.75rem;
-            overflow: auto;
-            max-height: 24rem;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-        :focus-visible {
-            outline: 3px solid var(--focus);
-            outline-offset: 2px;
-        }
+        code { font-family: var(--mono); font-size: 0.9em; }
+        :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
         .visually-hidden {
             position: absolute !important;
             width: 1px; height: 1px;
@@ -139,629 +118,827 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             white-space: nowrap; border: 0;
         }
         [hidden] { display: none !important; }
+        .muted { color: var(--muted); }
+        .small { font-size: 0.875rem; }
+        .error-text { color: var(--error); font-weight: 600; margin: 0.25rem 0 0; }
+        .ok-text { color: var(--ok); font-weight: 600; }
+        svg { flex: none; }
         @media (prefers-reduced-motion: no-preference) {
             html { scroll-behavior: smooth; }
         }
 
-        /* ### Header and navigation ### */
+        /* ### Shell and sidebar ### */
         .skip-link {
             position: absolute;
-            left: 0.5rem;
+            left: 1rem;
             top: -4rem;
-            background: var(--um-maize);
-            color: var(--um-blue);
+            background: var(--accent);
+            color: var(--on-accent);
             padding: 0.75rem 1rem;
-            border-radius: 6px;
+            border-radius: 10px;
             z-index: 10;
             font-weight: 600;
         }
-        .skip-link:focus { top: 0.5rem; outline-color: var(--um-blue); }
-        .site-header {
-            background: var(--header-bg);
-            color: var(--header-text);
-            padding: 1rem;
-        }
-        .site-header .inner {
-            max-width: 64rem;
-            margin: 0 auto;
+        .skip-link:focus { top: 1rem; }
+        .shell {
+            min-height: calc(100vh - 28px);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: var(--shell);
+            overflow: hidden;
             display: flex;
             flex-wrap: wrap;
-            align-items: baseline;
-            gap: 0.5rem 1rem;
+            align-items: stretch;
         }
-        .site-header h1 { margin: 0; }
-        .site-header .tagline { margin: 0; color: var(--header-text); opacity: 0.95; }
-        .site-header :focus-visible { outline-color: var(--um-maize); }
-        .site-nav { background: var(--header-bg); border-bottom: 4px solid var(--um-maize); }
-        .tablist {
-            max-width: 64rem;
-            margin: 0 auto;
+        .sidebar {
+            flex: 0 1 220px;
+            min-width: 0;
+            background: var(--panel);
+            border-right: 1px solid var(--border-soft);
+            padding: 24px 16px;
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.25rem;
-            padding: 0 0.5rem;
+            flex-direction: column;
+            gap: 28px;
         }
-        .tablist [role="tab"] {
-            min-height: 44px;
-            min-width: 44px;
-            padding: 0.6rem 1rem;
-            background: transparent;
-            color: var(--header-text);
-            border: 0;
-            border-bottom: 4px solid transparent;
-            margin-bottom: -4px;
-            font: inherit;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .tablist [role="tab"]:hover { background: rgba(255, 255, 255, 0.12); }
-        .tablist [role="tab"][aria-selected="true"] {
-            background: var(--bg);
-            color: var(--text);
-            border-bottom-color: var(--bg);
-        }
-        .tablist [role="tab"]:focus-visible { outline-color: var(--um-maize); outline-offset: -3px; }
-
-        /* ### Layout ### */
-        main { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem 6rem; }
-        [role="tabpanel"] { outline: none; }
-        .site-footer {
-            border-top: 1px solid var(--border);
-            background: var(--surface);
-            padding: 1rem;
-            font-size: 0.95rem;
-        }
-        .site-footer .inner {
-            max-width: 64rem;
-            margin: 0 auto;
+        .brand {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem 1.5rem;
             align-items: center;
+            gap: 10px;
+            min-height: 44px;
+            padding: 4px 8px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: 10px;
+        }
+        .brand img { width: 36px; height: 36px; object-fit: contain; }
+        .nav-group { display: flex; flex-direction: column; gap: 10px; }
+        .nav-label {
+            margin: 0;
+            padding: 0 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        .nav-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+        .nav-list a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 44px;
+            padding: 0 12px;
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 0.9375rem;
+            text-decoration: none;
+        }
+        .nav-list a:hover { background: var(--nav-active); }
+        .nav-list a[aria-current="page"] { background: var(--nav-active); font-weight: 500; }
+        .sidebar-note { margin-top: auto; padding: 0 8px; font-size: 0.8125rem; color: var(--muted); }
+        .sidebar-note .note-title { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 500; margin: 0 0 4px; }
+        .sidebar-note p { margin: 0; }
+        .content { flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; }
+        .topbar {
+            min-height: 64px;
+            padding: 8px 40px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border-soft);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px 12px;
+        }
+        .breadcrumb { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.9375rem; color: var(--muted); }
+        .breadcrumb li + li::before { content: "/"; margin-right: 6px; color: var(--muted); }
+        .breadcrumb a { color: var(--muted); text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .breadcrumb [aria-current="page"] { color: var(--text); }
+        .topbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .github-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; color: var(--text); font-size: 0.9375rem; text-decoration: none; border-radius: 10px; }
+        .github-link:hover { text-decoration: underline; }
+        main { width: 100%; max-width: 1100px; padding: 36px 40px 48px; }
+        .status-bar:empty { display: none; }
+        .status-bar p {
+            margin: 0 0 1.25rem;
+            padding: 10px 14px;
+            border-left: 3px solid var(--accent-text);
+            background: var(--panel);
+            border-radius: 0 10px 10px 0;
+        }
+        .site-footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border-soft);
+            padding: 18px 40px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px 24px;
+            font-size: 0.8125rem;
+            color: var(--muted);
         }
         .site-footer p { margin: 0; }
-        .status-bar { min-height: 1.5rem; margin-bottom: 1rem; }
-        .status-bar p { margin: 0; padding: 0.5rem 0.75rem; border-left: 4px solid var(--arboretum-blue); background: var(--surface); }
+        @media (max-width: 52rem) {
+            body { padding: 8px; }
+            .shell { min-height: calc(100vh - 16px); }
+            .sidebar {
+                flex: 1 1 100%;
+                border-right: 0;
+                border-bottom: 1px solid var(--border-soft);
+                padding: 12px 16px;
+                gap: 12px;
+            }
+            .nav-group { gap: 6px; }
+            .nav-list { flex-direction: row; flex-wrap: wrap; }
+            .sidebar-note { margin-top: 0; padding: 0; }
+            .topbar { padding: 8px 16px; }
+            main { padding: 20px 16px 32px; }
+            .site-footer { padding: 16px; }
+        }
+
+        /* ### Headings and cards ### */
+        .page-title { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+        .page-hint { margin: 4px 0 0; color: var(--muted); font-size: 0.9375rem; }
+        .page-head { margin-bottom: 24px; }
+        .card-title { font-size: 1rem; font-weight: 600; margin: 0 0 14px; }
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .eyebrow {
+            margin: 0 0 8px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        .hero-title { font-size: 2.125rem; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 8px; }
+        .hero-dot { color: var(--dot); }
+        .hero-text { margin: 0 0 28px; color: var(--muted); }
+        .notice {
+            background: var(--notice-bg);
+            color: var(--text);
+            border-left: 4px solid var(--notice-border);
+            padding: 10px 14px;
+            border-radius: 4px 10px 10px 4px;
+            margin: 0 0 16px;
+            font-size: 0.9375rem;
+        }
+        .notice p, .notice ul { margin: 0.25rem 0; }
+        .notice ul { padding-left: 1.25rem; }
 
         /* ### Buttons ### */
         button, .button {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 0.4rem;
+            gap: 8px;
             min-height: 44px;
             min-width: 44px;
-            padding: 0.6rem 1.1rem;
-            border-radius: 6px;
+            padding: 0 14px;
+            border-radius: 10px;
+            border: 1px solid var(--input-border);
+            background: var(--panel);
+            color: var(--text);
             font: inherit;
-            font-weight: 600;
+            font-size: 0.9375rem;
             cursor: pointer;
             text-decoration: none;
-            border: 2px solid var(--secondary-border);
-            background: var(--secondary-bg);
-            color: var(--secondary-text);
         }
-        button:hover, .button:hover { background: var(--surface-strong); }
-        button.primary, .button.primary {
-            background: var(--primary-bg);
-            color: var(--primary-text);
-            border-color: var(--primary-bg);
+        button:hover, .button:hover { background: var(--nav-active); }
+        .primary, button.primary {
+            min-height: 48px;
+            padding: 0 18px;
+            background: var(--accent);
+            color: var(--on-accent);
+            border-color: var(--accent);
+            font-weight: 500;
         }
-        button.primary:hover, .button.primary:hover { filter: brightness(1.15); }
-        button.quiet {
-            border-color: transparent;
+        .primary:hover, button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+        .link-button, button.link-button {
+            min-width: 0;
+            padding: 0 4px;
+            border: 0;
             background: transparent;
+            color: var(--accent-text);
             font-weight: 500;
             text-decoration: underline;
         }
-        button:disabled, button[aria-disabled="true"] {
-            opacity: 0.55;
-            cursor: not-allowed;
-        }
-        button.big {
-            width: 100%;
-            padding: 1rem;
-            font-size: 1.1rem;
-            text-align: left;
-            justify-content: flex-start;
-        }
-        .button-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1rem 0; }
-        .big-choices { display: grid; gap: 0.75rem; margin: 1.5rem 0; }
-        @media (min-width: 40rem) { .big-choices { grid-template-columns: repeat(3, 1fr); } }
+        .link-button:hover, button.link-button:hover { background: transparent; text-decoration-thickness: 2px; }
+        button:disabled { opacity: 0.55; cursor: not-allowed; }
+        .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
-        /* ### Cards and notices ### */
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 0 0 1rem;
+        /* ### Start page ### */
+        .start-grid { display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; }
+        .dropzone {
+            flex: 999 1 420px;
+            min-width: 0;
+            min-height: 260px;
+            padding: 36px 32px;
+            border: 2px dashed var(--accent-text);
+            border-radius: 16px;
+            background: var(--panel);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            text-align: center;
         }
-        .card h3 { margin-top: 0; }
-        .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
-        @media (min-width: 48rem) { .cards.two { grid-template-columns: 1fr 1fr; } }
-        .cards > li { margin: 0; }
-        .notice {
-            background: var(--notice-bg);
-            color: var(--notice-text);
-            border-left: 4px solid var(--notice-border);
-            padding: 0.6rem 0.9rem;
-            border-radius: 4px;
-            margin: 0.75rem 0;
+        .dropzone.active { border-style: solid; background: var(--nav-active); }
+        .dropzone p { margin: 0; }
+        .dropzone-title { font-size: 1.25rem; font-weight: 600; }
+        .dropzone svg { color: var(--accent-text); }
+        .start-cards { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+        .start-card {
+            flex: 1 1 auto;
+            min-height: 120px;
+            padding: 24px;
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 6px;
+            text-align: left;
+            font-size: 1rem;
         }
-        .notice p, .notice ul { margin: 0.25rem 0; }
-        .error-text { color: var(--error-text); font-weight: 600; margin: 0.25rem 0 0; }
-        .ok-text { color: var(--ok-text); font-weight: 600; }
-        .muted { color: var(--text-muted); }
-        .steps { counter-reset: step; display: grid; gap: 0.75rem; padding: 0; margin: 1.5rem 0; list-style: none; }
-        @media (min-width: 40rem) { .steps { grid-template-columns: repeat(3, 1fr); } }
-        .steps li { background: var(--surface); border-radius: 8px; padding: 1rem; }
-        .steps li::before {
-            counter-increment: step;
-            content: "Step " counter(step);
-            display: block;
-            font-weight: 700;
-            color: var(--link);
+        .start-card-title { display: flex; align-items: center; gap: 10px; font-size: 1.125rem; font-weight: 600; }
+        .start-card-title svg { color: var(--accent-text); }
+        .start-card-text { font-size: 0.875rem; color: var(--muted); }
+
+        /* ### Editor ### */
+        .editor-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin-bottom: 24px; }
+        .editor-grid { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+        .editor-card { flex: 999 1 460px; min-width: 0; padding: 32px 36px 28px; }
+        .editor-side { flex: 1 1 320px; min-width: 0; max-width: 380px; display: flex; flex-direction: column; gap: 20px; }
+        .sentence { margin: 0 0 32px; font-size: 1.625rem; line-height: 1.7; max-width: 34ch; }
+        .sentence.secondary { font-size: 1.25rem; max-width: 36ch; }
+        .nowrap { white-space: nowrap; }
+        /* Outweighs the generic input rule further down, so the blank look wins. */
+        .sentence input.blank, .sentence textarea.blank {
+            font: inherit;
+            color: var(--accent-text);
+            border: 0;
+            border-bottom: 2px solid var(--accent-text);
+            border-radius: 0;
+            background: transparent;
+            padding: 0 4px;
+            min-height: 44px;
+            width: auto;
+            max-width: 100%;
         }
-        details { margin: 0.75rem 0; }
-        summary {
+        .blank::placeholder { color: var(--muted); opacity: 1; }
+        .sentence input.blank-wide, .sentence textarea.blank-wide { display: block; width: 100%; }
+        .sentence textarea.blank { resize: none; overflow-y: auto; line-height: 1.5; margin-top: 8px; max-height: 20rem; }
+        .sentence-actions { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: -16px 0 24px; }
+        .more { border-top: 1px solid var(--border-soft); padding-top: 8px; }
+        details > summary {
             cursor: pointer;
-            font-weight: 600;
             min-height: 44px;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.4rem 0;
+            gap: 8px;
+            padding: 4px 0;
+            color: var(--accent-text);
+            font-weight: 500;
+            font-size: 0.9375rem;
         }
         /* Flex layout drops the native marker, so draw one that flips when open. */
-        summary::before { content: "\25B8"; font-size: 1.2em; line-height: 1; }
+        details > summary::before { content: "\25B8"; font-size: 1.2em; line-height: 1; }
         details[open] > summary::before { content: "\25BE"; }
-        .tags { list-style: none; padding: 0; margin: 0.5rem 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
-        .tags li { background: var(--surface-strong); border-radius: 999px; padding: 0.15rem 0.7rem; font-size: 0.9rem; }
+        details.sub { margin: 0 0 16px; }
+
+        /* ### Preview and destinations ### */
+        .preview-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .preview-head img { width: 44px; height: 44px; border-radius: 12px; flex: none; object-fit: cover; }
+        .preview-name { margin: 0; font-weight: 600; }
+        .preview-description { margin: 0; font-size: 0.8125rem; color: var(--muted); }
+        .bubble {
+            margin: 0 0 16px;
+            padding: 10px 12px;
+            background: var(--panel-alt);
+            border-radius: 12px;
+            font-size: 0.875rem;
+            overflow-wrap: anywhere;
+        }
+        .preview-starters { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+        .preview-starters li {
+            min-height: 44px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            overflow-wrap: anywhere;
+        }
+        .ask-pill { margin: 0 0 12px; padding: 10px 14px; border: 1px solid var(--border-soft); border-radius: 999px; color: var(--muted); font-size: 0.875rem; }
+        .preview-note { margin: 0; font-size: 0.75rem; color: var(--muted); text-align: center; }
+        .readiness { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--panel-alt); font-size: 0.9375rem; }
+        .readiness p { margin: 0 0 4px; font-weight: 500; }
+        .readiness ul { margin: 0; padding-left: 1.25rem; }
+        .destination-list { list-style: none; margin: 0 0 14px; padding: 0; }
+        .destination-list li {
+            padding: 12px 0;
+            border-top: 1px solid var(--border-soft);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px 12px;
+        }
+        .destination-list li:last-child { border-bottom: 1px solid var(--border-soft); }
+        .destination-name { font-weight: 500; font-size: 0.875rem; }
+        .destination-note { flex-basis: 100%; margin: 0; font-size: 0.8125rem; color: var(--muted); }
+        .destinations .primary { width: 100%; margin-bottom: 8px; }
 
         /* ### Forms ### */
-        .field { margin: 0 0 1.5rem; }
-        .field label, .field legend, .field .label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
-        .hint { margin: 0 0 0.4rem; color: var(--text-muted); }
+        .field { margin: 0 0 20px; }
+        .field label, .field legend { display: block; font-weight: 500; font-size: 0.875rem; margin-bottom: 6px; }
+        .hint { margin: 0 0 6px; font-size: 0.875rem; color: var(--muted); }
+        .counter { margin: 4px 0 0; font-size: 0.8125rem; color: var(--muted); }
         input[type="text"], input[type="url"], textarea, select {
             width: 100%;
             max-width: 100%;
             min-height: 44px;
-            padding: 0.6rem 0.75rem;
+            padding: 10px 12px;
             font: inherit;
             color: var(--text);
-            background: var(--input-bg);
-            border: 2px solid var(--border);
-            border-radius: 6px;
-        }
-        textarea { min-height: 8rem; resize: vertical; }
-        textarea.tall { min-height: 18rem; }
-        input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--error-border); }
-        input[readonly] { background: var(--surface); }
-        .counter { margin: 0.25rem 0 0; color: var(--text-muted); font-size: 0.95rem; }
-        .inline-fields { display: grid; gap: 0.75rem; }
-        @media (min-width: 40rem) { .inline-fields { grid-template-columns: 1fr 1fr; } }
-        .check-row { display: flex; align-items: flex-start; gap: 0.6rem; margin: 0.5rem 0; }
-        .check-row input { width: 24px; height: 24px; margin: 0.2rem 0 0; flex: none; }
-        .check-row label { font-weight: 500; }
-        .starter-list { list-style: none; padding: 0; margin: 0; }
-        .starter-list li { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
-        .starter-list input { flex: 1 1 14rem; }
-        fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin: 0 0 1.5rem; }
-        fieldset legend { padding: 0 0.4rem; }
-        .icon-preview {
-            width: 96px; height: 96px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            object-fit: cover;
-            display: block;
-        }
-        .icon-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
-        .dropzone {
-            border: 3px dashed var(--border);
+            background: var(--panel);
+            border: 1px solid var(--input-border);
             border-radius: 10px;
-            padding: 1.5rem;
-            background: var(--dropzone-bg);
-            text-align: center;
-            margin: 1rem 0;
         }
-        .dropzone.active { border-color: var(--focus); border-style: solid; }
-        .dropzone p { margin: 0 auto 0.75rem; }
-        .build-footer {
-            position: sticky;
-            bottom: 0;
-            background: var(--surface);
-            border-top: 1px solid var(--border);
-            padding: 0.75rem 1rem;
-            margin: 1rem -1rem 0;
+        textarea { resize: vertical; line-height: 1.55; }
+        input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--error); border-width: 2px; }
+        fieldset { border: 1px solid var(--border-soft); border-radius: 12px; padding: 12px 16px 4px; margin: 0 0 16px; }
+        fieldset legend { padding: 0 6px; }
+        .check-row { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 10px; }
+        .check-row input { width: 24px; height: 24px; margin: 2px 0 0; flex: none; }
+        .check-row label { font-weight: 400; font-size: 0.9375rem; margin: 0; }
+        .inline-fields { display: grid; gap: 12px; }
+        @media (min-width: 40rem) { .inline-fields { grid-template-columns: 1fr 1fr; } }
+        .icon-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+        .icon-preview { width: 64px; height: 64px; border-radius: 12px; border: 1px solid var(--border-soft); object-fit: cover; display: block; }
+
+        /* ### Details view ### */
+        .details-grid { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+        .details-form { flex: 1 1 380px; min-width: 0; }
+        .details-files { flex: 1.3 1 460px; min-width: 0; }
+        .product-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; }
+        .product-tabs [role="tab"] { font-weight: 400; }
+        .product-tabs [role="tab"][aria-selected="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 500; }
+        .file-view {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.75rem;
-            align-items: center;
-            justify-content: space-between;
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--panel-alt);
+            margin: 0 0 16px;
         }
-        .build-footer p { margin: 0; }
-        .preview-card { display: flex; gap: 1rem; align-items: flex-start; }
-        .preview-card img { width: 64px; height: 64px; border-radius: 10px; flex: none; object-fit: cover; }
-        .copy-box { margin-bottom: 1rem; }
-        .copy-box textarea { min-height: 5rem; }
-        .copy-box .button-row { margin: 0.4rem 0 0; }
-        table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
-        th, td { border: 1px solid var(--border); padding: 0.5rem 0.6rem; text-align: left; vertical-align: top; }
-        th { background: var(--surface); }
+        .file-tree {
+            list-style: none;
+            margin: 0;
+            padding: 10px 0;
+            flex: 1 1 180px;
+            max-width: 100%;
+            font-family: var(--mono);
+            font-size: 0.8125rem;
+        }
+        .file-root { padding: 6px 16px; color: var(--muted); }
+        .file-tree button {
+            width: 100%;
+            min-height: 36px;
+            padding: 6px 16px 6px 30px;
+            justify-content: flex-start;
+            border: 0;
+            border-left: 3px solid transparent;
+            border-radius: 0;
+            background: transparent;
+            font: inherit;
+            text-align: left;
+            overflow-wrap: anywhere;
+        }
+        .file-tree button:hover { background: var(--nav-active); }
+        .file-tree button[aria-current="true"] { background: var(--panel); border-left-color: var(--accent-text); }
+        .file-body { flex: 999 1 280px; min-width: 0; background: var(--code-bg); border-left: 1px solid var(--border-soft); }
+        .file-text {
+            margin: 0;
+            padding: 16px 20px;
+            max-height: 32rem;
+            overflow: auto;
+            font-family: var(--mono);
+            font-size: 0.8125rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        mark { background: var(--mark-bg); color: var(--mark-text); }
+        .file-image-wrap { padding: 20px; display: flex; justify-content: center; }
+        .file-image { max-width: 192px; max-height: 192px; border: 1px solid var(--border-soft); background: var(--panel-alt); }
+        .copy-boxes { padding: 16px 20px; }
+        .copy-box { margin: 0 0 16px; }
+        .copy-box textarea { margin-bottom: 6px; }
+        .download-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin: 0 0 16px; }
+        .download-row p { margin: 0; max-width: 44ch; }
+        .after { border-top: 1px solid var(--border-soft); padding-top: 14px; font-size: 0.875rem; }
+        .after .label { margin: 0 0 4px; font-weight: 500; }
+        .after ol { margin: 0 0 8px; padding-left: 20px; }
+
+        /* ### Library and help ### */
+        .library-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+        @media (min-width: 48rem) { .library-list { grid-template-columns: 1fr 1fr; } }
+        .library-card .preview-head { align-items: flex-start; }
+        .library-card .preview-head img { width: 64px; height: 64px; }
+        .library-card h3 { font-size: 1rem; margin: 0 0 4px; }
+        .tags { list-style: none; padding: 0; margin: 6px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+        .tags li { background: var(--panel-alt); border: 1px solid var(--border-soft); border-radius: 999px; padding: 2px 10px; font-size: 0.8125rem; }
+        .help-card h2 { font-size: 1.0625rem; margin: 20px 0 6px; }
+        .help-card h2:first-of-type { margin-top: 0; }
+        .help-card p, .help-card li { max-width: 72ch; }
+        table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.9375rem; }
+        caption { text-align: left; font-weight: 500; margin-bottom: 6px; }
+        th, td { border: 1px solid var(--border-soft); padding: 8px 10px; text-align: left; vertical-align: top; }
+        th { background: var(--panel-alt); }
         .table-wrap { overflow-x: auto; }
         dialog {
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            padding: 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
             max-width: 32rem;
             color: var(--text);
-            background: var(--bg);
+            background: var(--panel);
         }
+        dialog h2 { font-size: 1.125rem; margin-bottom: 8px; }
         dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
-        .problem-list a { font-weight: 600; }
-        .chooser fieldset { margin-bottom: 1rem; }
-        .chooser .check-row { margin: 0.25rem 1rem 0.25rem 0; display: inline-flex; }
     </style>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
-<header class="site-header">
-    <div class="inner">
-        <h1>Agentprise</h1>
-        <p class="tagline">Make AI agents portable across Copilot, Gemini, Claude, and ChatGPT.</p>
-    </div>
-</header>
-<nav class="site-nav" aria-label="Sections">
-    <div class="tablist" role="tablist" aria-label="Sections">
-        <button type="button" role="tab" id="tab-home" aria-controls="panel-home" aria-selected="true">Home</button>
-        <button type="button" role="tab" id="tab-library" aria-controls="panel-library" aria-selected="false" tabindex="-1">Library</button>
-        <button type="button" role="tab" id="tab-build" aria-controls="panel-build" aria-selected="false" tabindex="-1">Build</button>
-        <button type="button" role="tab" id="tab-check" aria-controls="panel-check" aria-selected="false" tabindex="-1">Check</button>
-        <button type="button" role="tab" id="tab-download" aria-controls="panel-download" aria-selected="false" tabindex="-1">Download</button>
-        <button type="button" role="tab" id="tab-help" aria-controls="panel-help" aria-selected="false" tabindex="-1">Help</button>
-    </div>
-</nav>
-<main id="main" tabindex="-1">
-    <div class="status-bar" id="status" role="status" aria-live="polite"></div>
+<div class="shell">
+    <nav class="sidebar" aria-label="Main">
+        <a class="brand" href="#workspace"><img src="images/agentprise-mark.png" alt=""><span>Agentprise</span></a>
+        <div class="nav-group">
+            <p class="nav-label">Menu</p>
+            <ul class="nav-list">
+                <li><a href="#workspace" id="nav-workspace" aria-current="page">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+                    Workspace</a></li>
+                <li><a href="#library" id="nav-library">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4v16"/><path d="M9 4v16"/><path d="M14 4v16"/><path d="M17 5l3 15"/></svg>
+                    Library</a></li>
+                <li><a href="#details" id="nav-details">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5"/><path d="m16 7 5 5-5 5"/><path d="m14 4-4 16"/></svg>
+                    Details</a></li>
+                <li><a href="#help" id="nav-help">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>
+                    Help</a></li>
+            </ul>
+        </div>
+        <div class="sidebar-note">
+            <p class="note-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6Z"/><path d="m9 12 2 2 4-4"/></svg>
+                Browser only
+            </p>
+            <p id="storage-note-ok">Nothing you type leaves this browser.</p>
+            <p id="storage-note" hidden>Storage is blocked in this browser, so your draft will not be kept after you close the page.</p>
+        </div>
+    </nav>
+    <div class="content">
+        <header class="topbar">
+            <nav aria-label="Breadcrumb"><ol class="breadcrumb" id="breadcrumb"></ol></nav>
+            <div class="topbar-actions">
+                <a class="button" href="#workspace" id="details-back" hidden>Back to the simple view</a>
+                <a class="github-link" href="https://github.com/DepressionCenter/agentprise">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-4.5 1.4-4.5-2.5-6-3"/><path d="M15 21v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>
+                    GitHub
+                </a>
+            </div>
+        </header>
+        <main id="main" tabindex="-1">
+            <div class="status-bar" id="status" role="status" aria-live="polite"></div>
+            <label for="file-input" class="visually-hidden">Agent file to open: a .agent, .zip, or SKILL.md file</label>
+            <input type="file" id="file-input" class="visually-hidden" accept=".agent,.zip,.md,application/zip,application/json,text/markdown">
 
-    <!-- ### Home ### -->
-    <section id="panel-home" role="tabpanel" aria-labelledby="tab-home" tabindex="-1">
-        <h2>Describe your assistant once. Download it for every product.</h2>
-        <p>Fill in a short form, check it, and download it in the format each AI product wants. Nothing you type or upload leaves your browser.</p>
-        <div class="notice" id="draft-banner" hidden>
-            <p>You have unsaved work from before. <button type="button" class="quiet" id="draft-continue">Continue editing it</button> or <button type="button" class="quiet" id="draft-discard">start fresh</button>.</p>
-        </div>
-        <div class="big-choices">
-            <button type="button" class="big primary" id="home-new">Start a new agent</button>
-            <button type="button" class="big" id="home-open">Open an agent file</button>
-            <button type="button" class="big" id="home-library">Browse the library</button>
-        </div>
-        <div class="dropzone" id="dropzone">
-            <p id="dropzone-text">Drop an agent file here. Accepted: a <code>.agent</code> file from SharePoint, a <code>.zip</code> from the Copilot app or from Agentprise, or a <code>SKILL.md</code> file.</p>
-            <button type="button" id="browse-button">Browse for a file</button>
-            <label for="file-input" class="visually-hidden">Agent file to open</label>
-            <input type="file" id="file-input" class="visually-hidden" accept=".agent,.zip,.md,application/zip,application/json,text/markdown" aria-describedby="dropzone-text">
-        </div>
-        <ol class="steps">
-            <li><strong>Build.</strong> Give it a name, a description, and instructions.</li>
-            <li><strong>Check.</strong> Fix anything missing and see how it will look.</li>
-            <li><strong>Download.</strong> Pick the file for the product you use.</li>
-        </ol>
-    </section>
-
-    <!-- ### Library ### -->
-    <section id="panel-library" role="tabpanel" aria-labelledby="tab-library" tabindex="-1" hidden>
-        <h2>Library</h2>
-        <p>Ready-made agents you can try, change, and download. <a href="docs/how-to/add-to-library.md">Add yours</a> by sending a pull request.</p>
-        <div class="field">
-            <label for="library-search">Search the library</label>
-            <p class="hint" id="library-search-hint">Searches names, summaries, and tags.</p>
-            <input type="text" id="library-search" aria-describedby="library-search-hint" autocomplete="off">
-        </div>
-        <p id="library-status" class="muted"></p>
-        <ul class="cards two" id="library-list"></ul>
-    </section>
-
-    <!-- ### Build ### -->
-    <section id="panel-build" role="tabpanel" aria-labelledby="tab-build" tabindex="-1" hidden>
-        <h2>Build</h2>
-        <p>One agent, described once. Fields marked "Copilot only" matter only in Microsoft 365 Copilot.</p>
-        <form id="build-form" novalidate>
-            <div class="field">
-                <label for="f-name">Name</label>
-                <p class="hint" id="f-name-hint">What people will see in the agent list. Up to 100 characters.</p>
-                <input type="text" id="f-name" maxlength="100" aria-describedby="f-name-hint f-name-skill f-name-error" autocomplete="off">
-                <p class="counter" id="f-name-skill">Skill name, used for file and folder names: <code id="f-skill-name">agent</code></p>
-                <p class="error-text" id="f-name-error" hidden></p>
-            </div>
-            <div class="field">
-                <label for="f-description">Short description</label>
-                <p class="hint" id="f-description-hint">One sentence about what this agent does and when to use it. Up to 1,000 characters.</p>
-                <textarea id="f-description" maxlength="1000" rows="2" aria-describedby="f-description-hint f-description-error"></textarea>
-                <p class="error-text" id="f-description-error" hidden></p>
-            </div>
-            <div class="field">
-                <label for="f-welcome">Welcome message</label>
-                <p class="hint" id="f-welcome-hint">Optional. The first thing people see when they open it. Used by SharePoint and Teams chats.</p>
-                <textarea id="f-welcome" maxlength="1000" rows="2" aria-describedby="f-welcome-hint"></textarea>
-            </div>
-            <div class="field">
-                <label for="f-instructions">Instructions</label>
-                <p class="hint" id="f-instructions-hint">How the agent should behave, what to focus on, and what to avoid. Plain English is fine. Up to 8,000 characters.</p>
-                <textarea id="f-instructions" class="tall" maxlength="8000" aria-describedby="f-instructions-hint f-instructions-counter f-instructions-error"></textarea>
-                <p class="counter" id="f-instructions-counter">0 of 8,000 characters</p>
-                <p class="error-text" id="f-instructions-error" hidden></p>
-                <div class="button-row"><button type="button" id="instructions-template">Help me write this</button></div>
-            </div>
-            <fieldset class="field">
-                <legend>Conversation starters</legend>
-                <p class="hint" id="starters-hint">Example questions people can click. Up to 12.</p>
-                <ul class="starter-list" id="starters-list" aria-describedby="starters-hint"></ul>
-                <div class="button-row"><button type="button" id="starter-add">Add a starter</button></div>
-            </fieldset>
-            <fieldset class="field">
-                <legend>Icon</legend>
-                <p class="hint" id="icon-hint">A square PNG or JPG works best. It is resized to 192 by 192 pixels. Without one, a default icon with the first letter of the name is used.</p>
-                <div class="icon-row">
-                    <img class="icon-preview" id="icon-preview" alt="Current icon preview" src="">
-                    <div class="button-row">
-                        <label class="button" for="icon-input">Choose an image</label>
-                        <input type="file" id="icon-input" class="visually-hidden" accept="image/png,image/jpeg" aria-describedby="icon-hint">
-                        <button type="button" id="icon-remove">Use the default icon</button>
-                    </div>
-                </div>
-                <p class="error-text" id="icon-error" hidden></p>
-            </fieldset>
-            <div class="field">
-                <label for="f-sharepoint">Knowledge from SharePoint (Copilot only)</label>
-                <p class="hint" id="f-sharepoint-hint">Paste links to SharePoint sites, libraries, folders, or files, one per line. Up to 20. People still need permission to those files.</p>
-                <textarea id="f-sharepoint" rows="3" aria-describedby="f-sharepoint-hint f-sharepoint-error"></textarea>
-                <p class="error-text" id="f-sharepoint-error" hidden></p>
-            </div>
-            <details class="field">
-                <summary>Copilot options</summary>
-                <fieldset>
-                    <legend>What Copilot may use (Copilot app only)</legend>
-                    <div class="check-row"><input type="checkbox" id="c-webSearch"><label for="c-webSearch">Web search: look things up on the public web.</label></div>
-                    <div class="check-row"><input type="checkbox" id="c-teamsMessages"><label for="c-teamsMessages">Teams messages: read the chats and channels the person can see.</label></div>
-                    <div class="check-row"><input type="checkbox" id="c-meetings"><label for="c-meetings">Meetings: read meeting notes and transcripts the person can see.</label></div>
-                    <div class="check-row"><input type="checkbox" id="c-codeInterpreter"><label for="c-codeInterpreter">Code interpreter: run code to analyze data and make charts.</label></div>
-                    <div class="check-row"><input type="checkbox" id="c-imageGeneration"><label for="c-imageGeneration">Image generation: make pictures from text.</label></div>
-                </fieldset>
-                <fieldset>
-                    <legend>How Copilot answers</legend>
-                    <div class="check-row"><input type="checkbox" id="c-preferMyFiles"><label for="c-preferMyFiles">Prefer my files: answer from the sources above instead of general knowledge.</label></div>
-                </fieldset>
-            </details>
-            <details class="field">
-                <summary>About you</summary>
-                <p class="hint">Shown as the creator in the Copilot app. The three links must start with https. Leave blank to use placeholders.</p>
-                <div class="inline-fields">
-                    <div class="field"><label for="a-name">Your name</label><input type="text" id="a-name" maxlength="200"></div>
-                    <div class="field"><label for="a-website">Website</label><input type="url" id="a-website" placeholder="https://" aria-describedby="a-website-error"><p class="error-text" id="a-website-error" hidden></p></div>
-                    <div class="field"><label for="a-privacy">Privacy link</label><input type="url" id="a-privacy" placeholder="https://" aria-describedby="a-privacy-error"><p class="error-text" id="a-privacy-error" hidden></p></div>
-                    <div class="field"><label for="a-terms">Terms link</label><input type="url" id="a-terms" placeholder="https://" aria-describedby="a-terms-error"><p class="error-text" id="a-terms-error" hidden></p></div>
-                    <div class="field"><label for="a-copyright">Copyright line</label><input type="text" id="a-copyright" maxlength="500" placeholder="Copyright (C) 2026 Your Name"></div>
-                    <div class="field">
-                        <label for="a-license">License</label>
-                        <select id="a-license"></select>
-                        <div class="field" id="a-license-other-wrap" hidden>
-                            <label for="a-license-other">License name</label>
-                            <input type="text" id="a-license-other" maxlength="200">
+            <!-- ### Workspace ### -->
+            <section id="view-workspace" class="view" aria-labelledby="workspace-heading">
+                <div id="start">
+                    <p class="eyebrow">Portable agents and skills</p>
+                    <h1 id="workspace-heading" class="hero-title" tabindex="-1">Your assistant, anywhere<span class="hero-dot">.</span></h1>
+                    <p class="hero-text">Start with your own idea, a file, or a sample.</p>
+                    <div class="start-grid">
+                        <div class="dropzone" id="dropzone">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+                            <p class="dropzone-title">Drop an agent or skill file here</p>
+                            <p class="muted" id="dropzone-text">Accepts a <code>.agent</code> file, a <code>.zip</code> from the Copilot app or from Agentprise, or a <code>SKILL.md</code> file.</p>
+                            <button type="button" id="browse-button">Choose a file</button>
+                        </div>
+                        <div class="start-cards">
+                            <button type="button" class="start-card" id="start-new">
+                                <span class="start-card-title">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                    Create new
+                                </span>
+                                <span class="start-card-text">Fill in a few lines. Takes about two minutes.</span>
+                            </button>
+                            <button type="button" class="start-card" id="start-sample">
+                                <span class="start-card-title">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4v16"/><path d="M9 4v16"/><path d="M14 4v16"/><path d="M17 5l3 15"/></svg>
+                                    Use a sample
+                                </span>
+                                <span class="start-card-text">Pick one from the library and change what you like.</span>
+                            </button>
                         </div>
                     </div>
                 </div>
-            </details>
-        </form>
-        <div class="build-footer">
-            <p id="build-status"></p>
-            <button type="button" class="primary" id="build-next">Next: Check</button>
-        </div>
-    </section>
 
-    <!-- ### Check ### -->
-    <section id="panel-check" role="tabpanel" aria-labelledby="tab-check" tabindex="-1" hidden>
-        <h2>Check</h2>
-        <div id="check-summary"></div>
-        <div id="check-problems"></div>
-        <div id="check-warnings"></div>
-        <h3>Preview</h3>
-        <div class="card preview-card">
-            <img id="preview-icon" alt="" src="">
-            <div>
-                <p><strong id="preview-name"></strong></p>
-                <p id="preview-description"></p>
-                <p class="muted" id="preview-creator"></p>
-            </div>
-        </div>
-        <details>
-            <summary>Show me the raw files</summary>
-            <p>These are the files the Download tab makes, shown as text.</p>
-            <h4>SKILL.md (bundle, Gemini, Claude)</h4>
-            <pre id="raw-skill"></pre>
-            <h4>.agent (SharePoint and Teams chats)</h4>
-            <pre id="raw-agent"></pre>
-            <h4>manifest.json (Copilot app)</h4>
-            <pre id="raw-manifest"></pre>
-            <h4>declarativeAgent_0.json (Copilot app)</h4>
-            <pre id="raw-declarative"></pre>
-        </details>
-        <div class="button-row">
-            <button type="button" id="check-back">Back to Build</button>
-            <button type="button" class="primary" id="check-next">Next: Download</button>
-        </div>
-    </section>
+                <div id="editor" hidden>
+                    <div class="editor-head">
+                        <div>
+                            <h1 id="editor-heading" class="page-title" tabindex="-1">Describe your assistant</h1>
+                            <p class="page-hint" id="editor-hint">Fill in the lines. The preview updates as you type.</p>
+                        </div>
+                        <div class="button-row">
+                            <button type="button" id="open-file">Open a file</button>
+                            <button type="button" id="start-over">Start over</button>
+                        </div>
+                    </div>
+                    <div class="editor-grid">
+                        <section class="card editor-card" aria-labelledby="sentence-heading">
+                            <h2 id="sentence-heading" class="visually-hidden">Your assistant in a few lines</h2>
+                            <p class="sentence">
+                                My assistant is called <span class="nowrap"><input type="text" id="s-name" class="blank" maxlength="100" aria-label="Name" placeholder="Lab Helper" autocomplete="off">.</span>
+                                In one line, it <input type="text" id="s-description" class="blank blank-wide" maxlength="1000" aria-label="What it does, in one line" placeholder="answers questions about lab procedures and safety" autocomplete="off">
+                                It should always <textarea id="s-instructions" class="blank blank-wide" rows="1" maxlength="8000" aria-label="How it should always behave" placeholder="explain steps in order and point to the safety sheet first"></textarea>
+                            </p>
+                            <div class="sentence-actions">
+                                <button type="button" class="link-button instructions-template">Help me write how it should behave</button>
+                            </div>
+                            <p class="sentence secondary">
+                                People might open by asking <span id="s-starters"></span>
+                            </p>
+                            <div class="sentence-actions">
+                                <button type="button" class="link-button" id="starter-add">Add another question</button>
+                            </div>
+                            <details class="more" id="more">
+                                <summary>More: a welcome message, a picture, Copilot settings, and your name</summary>
+                                <div id="extras-simple">
+                                    <div id="extras">
+                                        <div class="field">
+                                            <label for="f-welcome">Welcome message</label>
+                                            <p class="hint" id="f-welcome-hint">Optional. The first thing people see when they open it. Used by SharePoint and Teams chats.</p>
+                                            <textarea id="f-welcome" maxlength="1000" rows="2" aria-describedby="f-welcome-hint"></textarea>
+                                        </div>
+                                        <fieldset class="field">
+                                            <legend>Picture</legend>
+                                            <p class="hint" id="icon-hint">A square PNG or JPG works best. It is resized to 192 by 192 pixels. Without one, the first letter of the name is used.</p>
+                                            <div class="icon-row">
+                                                <img class="icon-preview" id="icon-preview" alt="Current icon preview" src="">
+                                                <div class="button-row">
+                                                    <label class="button" for="icon-input">Choose an image</label>
+                                                    <input type="file" id="icon-input" class="visually-hidden" accept="image/png,image/jpeg" aria-describedby="icon-hint">
+                                                    <button type="button" id="icon-remove">Use the default</button>
+                                                </div>
+                                            </div>
+                                            <p class="error-text" id="icon-error" hidden></p>
+                                        </fieldset>
+                                        <details class="sub">
+                                            <summary>Microsoft 365 Copilot settings: SharePoint files and what Copilot may use</summary>
+                                            <div class="field">
+                                                <label for="f-sharepoint">Knowledge from SharePoint</label>
+                                                <p class="hint" id="f-sharepoint-hint">Paste links to SharePoint sites, libraries, folders, or files, one per line. Up to 20. People still need permission to those files.</p>
+                                                <textarea id="f-sharepoint" rows="3" aria-describedby="f-sharepoint-hint f-sharepoint-error"></textarea>
+                                                <p class="error-text" id="f-sharepoint-error" hidden></p>
+                                            </div>
+                                            <fieldset>
+                                                <legend>What Copilot may use (Copilot app only)</legend>
+                                                <div class="check-row"><input type="checkbox" id="c-webSearch"><label for="c-webSearch">Web search: look things up on the public web.</label></div>
+                                                <div class="check-row"><input type="checkbox" id="c-teamsMessages"><label for="c-teamsMessages">Teams messages: read the chats and channels the person can see.</label></div>
+                                                <div class="check-row"><input type="checkbox" id="c-meetings"><label for="c-meetings">Meetings: read meeting notes and transcripts the person can see.</label></div>
+                                                <div class="check-row"><input type="checkbox" id="c-codeInterpreter"><label for="c-codeInterpreter">Code interpreter: run code to analyze data and make charts.</label></div>
+                                                <div class="check-row"><input type="checkbox" id="c-imageGeneration"><label for="c-imageGeneration">Image generation: make pictures from text.</label></div>
+                                            </fieldset>
+                                            <fieldset>
+                                                <legend>How Copilot answers</legend>
+                                                <div class="check-row"><input type="checkbox" id="c-preferMyFiles"><label for="c-preferMyFiles">Prefer my files: answer from the sources above instead of general knowledge.</label></div>
+                                            </fieldset>
+                                        </details>
+                                        <details class="sub">
+                                            <summary>About you: your name, copyright, and license</summary>
+                                            <p class="hint">Shown as the creator in the Copilot app. The three links must start with https. Leave blank to use placeholders.</p>
+                                            <div class="inline-fields">
+                                                <div class="field"><label for="a-name">Your name</label><input type="text" id="a-name" maxlength="200"></div>
+                                                <div class="field"><label for="a-website">Website</label><input type="url" id="a-website" placeholder="https://" aria-describedby="a-website-error"><p class="error-text" id="a-website-error" hidden></p></div>
+                                                <div class="field"><label for="a-privacy">Privacy link</label><input type="url" id="a-privacy" placeholder="https://" aria-describedby="a-privacy-error"><p class="error-text" id="a-privacy-error" hidden></p></div>
+                                                <div class="field"><label for="a-terms">Terms link</label><input type="url" id="a-terms" placeholder="https://" aria-describedby="a-terms-error"><p class="error-text" id="a-terms-error" hidden></p></div>
+                                                <div class="field"><label for="a-copyright">Copyright line</label><input type="text" id="a-copyright" maxlength="500" placeholder="Copyright (C) 2026 Your Name"></div>
+                                                <div class="field">
+                                                    <label for="a-license">License</label>
+                                                    <select id="a-license"></select>
+                                                    <div class="field" id="a-license-other-wrap" hidden>
+                                                        <label for="a-license-other">License name</label>
+                                                        <input type="text" id="a-license-other" maxlength="200">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </details>
+                                    </div>
+                                </div>
+                            </details>
+                        </section>
+                        <aside class="editor-side" aria-label="Preview and where it can go">
+                            <section class="card preview" aria-labelledby="preview-heading">
+                                <h2 id="preview-heading" class="visually-hidden">Preview</h2>
+                                <div class="preview-head">
+                                    <img id="preview-icon" alt="" src="">
+                                    <div>
+                                        <p class="preview-name" id="preview-name"></p>
+                                        <p class="preview-description" id="preview-description"></p>
+                                    </div>
+                                </div>
+                                <p class="bubble" id="preview-welcome" hidden></p>
+                                <ul class="preview-starters" id="preview-starters" aria-label="Opening questions" hidden></ul>
+                                <p class="ask-pill" aria-hidden="true">Ask anything</p>
+                                <p class="preview-note">Preview. Appearance varies by product.</p>
+                            </section>
+                            <section class="card destinations" aria-labelledby="where-heading">
+                                <h2 id="where-heading" class="card-title">Where it can go</h2>
+                                <div class="readiness" id="readiness" hidden>
+                                    <p>Before it can travel, fill in:</p>
+                                    <ul id="readiness-list"></ul>
+                                </div>
+                                <ul class="destination-list">
+                                    <li>
+                                        <span class="destination-name">Microsoft 365 Copilot</span>
+                                        <div class="button-row">
+                                            <button type="button" class="download-button" data-format="msAgent">Teams chats (.agent)</button>
+                                            <button type="button" class="download-button" data-format="teamsZip">Copilot app (.zip)</button>
+                                        </div>
+                                        <p class="destination-note" id="copilot-loss" hidden></p>
+                                    </li>
+                                    <li>
+                                        <span class="destination-name">Gemini</span>
+                                        <button type="button" class="download-button" data-format="bundle">Download skill</button>
+                                    </li>
+                                    <li>
+                                        <span class="destination-name">Claude</span>
+                                        <button type="button" class="download-button" data-format="bundle">Download skill</button>
+                                    </li>
+                                    <li>
+                                        <span class="destination-name">ChatGPT</span>
+                                        <button type="button" id="chatgpt-copy">Copy text</button>
+                                    </li>
+                                </ul>
+                                <button type="button" class="primary download-button" data-format="bundle" id="keep-copy">Keep a copy I can edit later</button>
+                                <p class="small muted">A small .zip you can open here any time. <a href="#details">See the files each product receives.</a></p>
+                            </section>
+                        </aside>
+                    </div>
+                </div>
+            </section>
 
-    <!-- ### Download ### -->
-    <section id="panel-download" role="tabpanel" aria-labelledby="tab-download" tabindex="-1" hidden>
-        <h2>Download</h2>
-        <div id="download-blocked" class="notice" hidden>
-            <p>Downloads are off until the problems on the <a href="#check">Check tab</a> are fixed.</p>
-        </div>
-        <ul class="cards" id="download-cards">
-            <li class="card">
-                <h3>Keep everything (recommended)</h3>
-                <p><strong>File type:</strong> .zip (an Agent Skill)</p>
-                <p>The complete copy. Open it here again later, or upload it as-is to Gemini or Claude as a skill.</p>
-                <div class="notice" id="loss-bundle" hidden></div>
-                <div class="button-row"><button type="button" class="primary download-button" data-format="bundle">Download the complete copy</button></div>
-                <details>
-                    <summary>What to do next</summary>
-                    <p><strong>In Gemini:</strong></p>
-                    <ol>
-                        <li>Open Gemini and go to Settings, then Skills.</li>
-                        <li>Choose Upload and pick this .zip file.</li>
-                        <li>Gemini Skills may need a Google AI subscription.</li>
-                    </ol>
-                    <p><strong>In Claude:</strong></p>
-                    <ol>
-                        <li>Open Claude and go to Settings, then Capabilities, then Skills.</li>
-                        <li>Choose Upload and pick this .zip file.</li>
-                        <li>Turn the skill on. Skills need a paid plan with code execution on.</li>
-                    </ol>
-                    <p><strong>To edit it later:</strong> open this file on the Home tab.</p>
-                </details>
-            </li>
-            <li class="card">
-                <h3>For SharePoint and Teams chats</h3>
-                <p><strong>File type:</strong> .agent</p>
-                <p>For agents people add to a Teams group chat, channel, or meeting chat, or that live in a SharePoint library.</p>
-                <div class="notice" id="loss-msAgent" hidden></div>
-                <div class="button-row"><button type="button" class="primary download-button" data-format="msAgent">Download the .agent file</button></div>
-                <details>
-                    <summary>What to do next</summary>
-                    <ol>
-                        <li>Upload the file to a SharePoint document library.</li>
-                        <li>Open the file's menu and choose Copy link for Teams.</li>
-                        <li>Paste the link in a Teams chat.</li>
-                        <li>Choose Add to this chat. People in the chat need a Copilot license and permission to any linked files.</li>
-                    </ol>
-                </details>
-            </li>
-            <li class="card chooser">
-                <h3>Not sure which one?</h3>
-                <fieldset>
-                    <legend>Will people use it inside a Teams group chat, channel, or meeting?</legend>
-                    <div class="check-row"><input type="radio" name="q-teams" id="q-teams-yes" value="yes"><label for="q-teams-yes">Yes</label></div>
-                    <div class="check-row"><input type="radio" name="q-teams" id="q-teams-no" value="no"><label for="q-teams-no">No</label></div>
-                </fieldset>
-                <fieldset>
-                    <legend>Do people use Microsoft 365 Copilot at work?</legend>
-                    <div class="check-row"><input type="radio" name="q-copilot" id="q-copilot-yes" value="yes"><label for="q-copilot-yes">Yes</label></div>
-                    <div class="check-row"><input type="radio" name="q-copilot" id="q-copilot-no" value="no"><label for="q-copilot-no">No</label></div>
-                </fieldset>
-                <fieldset>
-                    <legend>Do you want a copy you can edit here later?</legend>
-                    <div class="check-row"><input type="radio" name="q-keep" id="q-keep-yes" value="yes"><label for="q-keep-yes">Yes</label></div>
-                    <div class="check-row"><input type="radio" name="q-keep" id="q-keep-no" value="no"><label for="q-keep-no">No</label></div>
-                </fieldset>
-                <p id="chooser-answer" aria-live="polite"></p>
-            </li>
-            <li class="card">
-                <h3>For the Copilot app</h3>
-                <p><strong>File type:</strong> .zip (a Teams app package)</p>
-                <p>For the Agents list in the Microsoft 365 Copilot app. It will not work in Teams group chats.</p>
-                <div class="notice" id="loss-teamsZip" hidden></div>
-                <div class="button-row"><button type="button" class="primary download-button" data-format="teamsZip">Download the Copilot app package</button></div>
-                <details>
-                    <summary>What to do next</summary>
-                    <ol>
-                        <li>Open the Microsoft 365 Copilot app and choose Agents.</li>
-                        <li>Choose Upload, or Create, then Upload, and pick this .zip file.</li>
-                        <li>Choose Share to give it to other people. Your admin may need to allow custom agents.</li>
-                    </ol>
-                </details>
-            </li>
-            <li class="card">
-                <h3>Copy for ChatGPT or Gemini Notebook</h3>
-                <p><strong>File type:</strong> none. Copy and paste.</p>
-                <p>ChatGPT custom GPTs and Gemini Notebook have no file to upload, so copy each box into the matching field.</p>
-                <div class="copy-box">
-                    <label for="copy-name">Name</label>
-                    <textarea id="copy-name" readonly rows="1"></textarea>
-                    <div class="button-row"><button type="button" class="copy-button" data-copy="copy-name">Copy the name</button></div>
+            <!-- ### Library ### -->
+            <section id="view-library" class="view" aria-labelledby="library-heading" hidden>
+                <div class="page-head">
+                    <h1 id="library-heading" class="page-title" tabindex="-1">Library</h1>
+                    <p class="page-hint">Ready-made assistants you can try, change, and download. <a href="docs/how-to/add-to-library.md">Add yours</a> by sending a pull request.</p>
                 </div>
-                <div class="copy-box">
-                    <label for="copy-description">Description</label>
-                    <textarea id="copy-description" readonly rows="2"></textarea>
-                    <div class="button-row"><button type="button" class="copy-button" data-copy="copy-description">Copy the description</button></div>
+                <div class="field">
+                    <label for="library-search">Search the library</label>
+                    <p class="hint" id="library-search-hint">Searches names, summaries, and tags.</p>
+                    <input type="text" id="library-search" aria-describedby="library-search-hint" autocomplete="off">
                 </div>
-                <div class="copy-box">
-                    <label for="copy-instructions">Instructions</label>
-                    <textarea id="copy-instructions" readonly rows="6"></textarea>
-                    <div class="button-row"><button type="button" class="copy-button" data-copy="copy-instructions">Copy the instructions</button></div>
-                </div>
-                <div class="copy-box">
-                    <label for="copy-starters">Conversation starters</label>
-                    <textarea id="copy-starters" readonly rows="3"></textarea>
-                    <div class="button-row"><button type="button" class="copy-button" data-copy="copy-starters">Copy the starters</button></div>
-                </div>
-                <div class="button-row"><button type="button" class="download-button" data-format="markdown">Download as .md</button></div>
-                <details>
-                    <summary>What to do next</summary>
-                    <p><strong>In ChatGPT:</strong></p>
-                    <ol>
-                        <li>Open Explore GPTs, then Create.</li>
-                        <li>Open the Configure tab.</li>
-                        <li>Paste each box into the matching field. Starters go in Conversation starters.</li>
-                    </ol>
-                    <p><strong>In Gemini Notebook:</strong></p>
-                    <ol>
-                        <li>Open the notebook, then More, then Notebook settings.</li>
-                        <li>Paste the instructions into the instructions field.</li>
-                        <li>Or add the .md download as a source.</li>
-                    </ol>
-                </details>
-            </li>
-        </ul>
-    </section>
+                <p id="library-status" class="muted"></p>
+                <ul class="library-list" id="library-list"></ul>
+            </section>
 
-    <!-- ### Help ### -->
-    <section id="panel-help" role="tabpanel" aria-labelledby="tab-help" tabindex="-1" hidden>
-        <h2>Help</h2>
-        <h3>Why are there so many formats?</h3>
-        <p>Each AI product stores agents its own way. Microsoft uses two different files, Gemini and Claude share one open standard, and ChatGPT has no file at all. Agentprise keeps one description and writes each format for you.</p>
-        <h3>Which one do I need?</h3>
-        <p>Keep the complete copy. It also uploads to Gemini and Claude. Add the .agent file for Teams chats, or the Copilot app package for the Agents list in the Copilot app. Use the copy panel for ChatGPT and Gemini Notebook.</p>
-        <h3>Who can use my agent?</h3>
-        <p>In Microsoft 365, people need a Copilot license and permission to any files you linked. Guests cannot use it in Teams chats. Gemini Skills may need a Google AI subscription, and Claude skills need a paid plan.</p>
-        <h3>How do I update an agent people already have?</h3>
-        <p>Open the file you downloaded before on the Home tab, make your changes, and download it again. For the Copilot app, keep the same file so the app id stays the same and the upload replaces the old version.</p>
-        <h3>Why does my agent not answer in a Teams chat?</h3>
-        <p>Agents from the Copilot app do not work in group chats, channels, or meeting chats. Use the .agent file in a SharePoint library and add it to the chat with Copy link for Teams.</p>
-        <h3>Is anything uploaded anywhere?</h3>
-        <p>No. Everything happens in your browser. The only thing the page loads from the internet is its own library of ready-made agents. Your draft is kept in this browser only, and you can clear it from the footer.</p>
-        <h3>How do I add my agent to the library?</h3>
-        <p>Download the complete copy, unzip it into the library folder, add one line to the catalog, and open a pull request. The <a href="docs/how-to/add-to-library.md">add to the library</a> page has the steps.</p>
-        <h3>What is a SKILL.md file?</h3>
-        <p>It is the open Agent Skills format: a Markdown file with a short header and the instructions underneath. Gemini and Claude both read it. See <a href="https://agentskills.io/specification">the Agent Skills specification</a>.</p>
-        <h3>At a glance</h3>
-        <div class="table-wrap">
-            <table>
-                <caption>Which download works in which product</caption>
-                <thead>
-                    <tr><th scope="col">Download</th><th scope="col">Copilot app</th><th scope="col">Teams chats</th><th scope="col">Gemini</th><th scope="col">Claude</th><th scope="col">ChatGPT</th></tr>
-                </thead>
-                <tbody>
-                    <tr><th scope="row">Keep everything (.zip)</th><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
-                    <tr><th scope="row">SharePoint and Teams chats (.agent)</th><td>No</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
-                    <tr><th scope="row">Copilot app (.zip)</th><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
-                    <tr><th scope="row">Copy and paste</th><td>No</td><td>No</td><td>Notebook only</td><td>No</td><td>Yes</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-</main>
-<footer class="site-footer">
-    <div class="inner">
-        <p>Your draft is saved in this browser only.</p>
-        <button type="button" class="quiet" id="clear-draft">Clear my draft</button>
-        <p id="storage-note" class="muted" hidden>Storage is blocked in this browser, so the draft will not be kept after you close the page.</p>
-        <p><a href="docs/README.md">Documentation</a> and <a href="https://github.com/DepressionCenter/agentprise">source code</a>. Free software from the Eisenberg Family Depression Center, University of Michigan.</p>
+            <!-- ### Details ### -->
+            <section id="view-details" class="view" aria-labelledby="details-heading" hidden>
+                <div class="page-head">
+                    <h1 id="details-heading" class="page-title" tabindex="-1">Details</h1>
+                    <p class="page-hint">Every field on the left, and exactly what each product receives on the right.</p>
+                </div>
+                <div class="details-grid">
+                    <section class="card details-form" aria-labelledby="write-heading">
+                        <h2 id="write-heading" class="card-title">What you write</h2>
+                        <form id="details-form" novalidate>
+                            <div class="field">
+                                <label for="d-name">Name</label>
+                                <input type="text" id="d-name" maxlength="100" aria-describedby="d-name-skill d-name-error" autocomplete="off">
+                                <p class="counter" id="d-name-skill">Skill name, used for file and folder names: <code id="d-skill-name">agent</code></p>
+                                <p class="error-text" id="d-name-error" hidden></p>
+                            </div>
+                            <div class="field">
+                                <label for="d-description">Description</label>
+                                <p class="hint" id="d-description-hint">One sentence about what it does and when to use it. Up to 1,000 characters.</p>
+                                <textarea id="d-description" maxlength="1000" rows="2" aria-describedby="d-description-hint d-description-error"></textarea>
+                                <p class="error-text" id="d-description-error" hidden></p>
+                            </div>
+                            <div class="field">
+                                <label for="d-instructions">Instructions</label>
+                                <p class="hint" id="d-instructions-hint">How it should behave, what to focus on, and what to avoid. Plain English is fine.</p>
+                                <textarea id="d-instructions" maxlength="8000" rows="8" aria-describedby="d-instructions-hint d-instructions-counter d-instructions-error"></textarea>
+                                <p class="counter" id="d-instructions-counter">0 of 8,000 characters</p>
+                                <p class="error-text" id="d-instructions-error" hidden></p>
+                                <div class="button-row"><button type="button" class="instructions-template">Help me write this</button></div>
+                            </div>
+                            <div class="field">
+                                <label for="d-starters">Opening questions, one per line</label>
+                                <p class="hint" id="d-starters-hint">Example questions people can click. Up to 12. The order here is the order people see.</p>
+                                <textarea id="d-starters" rows="3" aria-describedby="d-starters-hint d-starters-error"></textarea>
+                                <p class="error-text" id="d-starters-error" hidden></p>
+                            </div>
+                            <div id="extras-details"></div>
+                        </form>
+                    </section>
+                    <section class="card details-files" aria-labelledby="receive-heading">
+                        <h2 id="receive-heading" class="card-title">What each product receives</h2>
+                        <p class="hint">Pick a product to see its files. Highlighted text comes straight from what you wrote.</p>
+                        <div class="product-tabs" role="tablist" aria-label="Product">
+                            <button type="button" role="tab" id="ptab-bundle" aria-controls="ppanel" aria-selected="true">Gemini and Claude</button>
+                            <button type="button" role="tab" id="ptab-msAgent" aria-controls="ppanel" aria-selected="false" tabindex="-1">Teams chats</button>
+                            <button type="button" role="tab" id="ptab-teamsZip" aria-controls="ppanel" aria-selected="false" tabindex="-1">Copilot app</button>
+                            <button type="button" role="tab" id="ptab-copy" aria-controls="ppanel" aria-selected="false" tabindex="-1">ChatGPT</button>
+                        </div>
+                        <div role="tabpanel" id="ppanel" aria-labelledby="ptab-bundle" tabindex="0">
+                            <div class="notice" id="product-blocked" hidden>
+                                <p>Before you can download, fill in:</p>
+                                <ul id="product-blocked-list"></ul>
+                            </div>
+                            <div class="notice" id="product-notes" hidden></div>
+                            <div class="file-view">
+                                <ul class="file-tree" id="file-tree" aria-label="Files in the download"></ul>
+                                <div class="file-body" id="file-body"></div>
+                            </div>
+                            <div class="download-row">
+                                <p class="small muted" id="product-hint"></p>
+                                <button type="button" class="primary download-button" id="product-download" data-format="bundle">Download</button>
+                            </div>
+                            <div class="after">
+                                <p class="label">After downloading</p>
+                                <div id="after-steps"></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <!-- ### Help ### -->
+            <section id="view-help" class="view" aria-labelledby="help-heading" hidden>
+                <div class="page-head">
+                    <h1 id="help-heading" class="page-title" tabindex="-1">Help</h1>
+                    <p class="page-hint">Short answers to the questions people ask most.</p>
+                </div>
+                <div class="card help-card">
+                    <h2>Why are there so many formats?</h2>
+                    <p>Each AI product stores assistants its own way. Microsoft uses two different files, Gemini and Claude share one open standard, and ChatGPT has no file at all. Agentprise keeps one description and writes each format for you.</p>
+                    <h2>Which one do I need?</h2>
+                    <p>Keep a copy. It is a small .zip that also uploads to Gemini and Claude as a skill. Add the .agent file for Teams chats, or the Copilot app package for the Agents list in the Copilot app. Use Copy text for ChatGPT and Gemini Notebook.</p>
+                    <h2>Who can use my assistant?</h2>
+                    <p>In Microsoft 365, people need a Copilot license and permission to any files you linked. Guests cannot use it in Teams chats. Gemini Skills may need a Google AI subscription, and Claude skills need a paid plan.</p>
+                    <h2>How do I update an assistant people already have?</h2>
+                    <p>Drop the file you downloaded before on the Workspace page, make your changes, and download it again. For the Copilot app, keep the same file so the app id stays the same and the upload replaces the old version.</p>
+                    <h2>Why does my assistant not answer in a Teams chat?</h2>
+                    <p>Assistants from the Copilot app do not work in group chats, channels, or meeting chats. Use the .agent file in a SharePoint library and add it to the chat with Copy link for Teams.</p>
+                    <h2>Is anything uploaded anywhere?</h2>
+                    <p>No. Everything happens in your browser. The only thing the page loads from the internet is its own library of ready-made assistants. Your draft is kept in this browser only. Start over on the Workspace page removes it.</p>
+                    <h2>How do I add my assistant to the library?</h2>
+                    <p>Keep a copy, unzip it into the library folder, add one line to the catalog, and open a pull request. The <a href="docs/how-to/add-to-library.md">add to the library</a> page has the steps.</p>
+                    <h2>What is a SKILL.md file?</h2>
+                    <p>It is the open Agent Skills format: a Markdown file with a short header and the instructions underneath. Gemini and Claude both read it. See <a href="https://agentskills.io/specification">the Agent Skills specification</a>. The Details page shows yours.</p>
+                    <h2>At a glance</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Which download works in which product</caption>
+                            <thead>
+                                <tr><th scope="col">Download</th><th scope="col">Copilot app</th><th scope="col">Teams chats</th><th scope="col">Gemini</th><th scope="col">Claude</th><th scope="col">ChatGPT</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><th scope="row">Keep a copy (.zip)</th><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+                                <tr><th scope="row">Teams chats (.agent)</th><td>No</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+                                <tr><th scope="row">Copilot app (.zip)</th><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+                                <tr><th scope="row">Copy text</th><td>No</td><td>No</td><td>Notebook only</td><td>No</td><td>Yes</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <footer class="site-footer">
+            <p>&copy; 2026 The Regents of the University of Michigan | <a href="https://depressioncenter.org">Eisenberg Family Depression Center</a></p>
+            <p><a href="https://github.com/DepressionCenter/agentprise">Source on GitHub</a> | <a href="docs/README.md">Documentation</a></p>
+        </footer>
     </div>
-</footer>
+</div>
 <dialog id="confirm-dialog" aria-labelledby="confirm-title">
     <h2 id="confirm-title">Replace your current work?</h2>
     <p id="confirm-message"></p>
@@ -773,7 +950,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
 <canvas id="icon-canvas" class="visually-hidden" width="192" height="192" aria-hidden="true"></canvas>
 <script>
 "use strict";
-
 // ### Configuration ###
 // Limits come from the strictest vendor that must accept the value. Microsoft's
 // declarative agent schema caps name at 100, description at 1,000, instructions at
@@ -3052,10 +3228,48 @@ globalThis.Agentprise = {
 
 // ### Interface: configuration ###
 const STORAGE_KEY = "agentprise-draft-v1";
-const TAB_NAMES = ["home", "library", "build", "check", "download", "help"];
+const VIEW_NAMES = ["workspace", "library", "details", "help"];
+// Hashes from the earlier tabbed interface keep opening the matching view.
+const LEGACY_HASHES = { home: "workspace", build: "workspace", check: "details", download: "details" };
+const PRODUCT_NAMES = ["bundle", "msAgent", "teamsZip", "copy"];
+// The sentence editor always shows at least this many blanks for opening questions.
+const MIN_STARTER_BLANKS = 2;
+const STARTER_PLACEHOLDERS = ["How do I calibrate the scale?", "What is the cleanup checklist?"];
+const DEFAULT_ICON_COLOR = "#2B4C7E";
+const EDITOR_TITLES = {
+    "new": ["Describe your assistant", "Fill in the lines. The preview updates as you type."],
+    file: ["Your file is open", "Change anything you like, then pick where it should go."],
+    sample: ["", "Change anything you like, then pick where it should go."],
+    draft: ["Your draft is open", "It is saved in this browser. Change anything you like, then pick where it should go."]
+};
+const READINESS_LABELS = { name: "a name", description: "what it does, in one line", instructions: "how it should always behave" };
+const SENTENCE_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions" };
+const DETAILS_FIELDS = { name: "d-name", description: "d-description", instructions: "d-instructions" };
+const PRODUCT_HINTS = {
+    bundle: "This file is also the copy to keep. Open it here later to edit.",
+    msAgent: "One file. Upload it to a SharePoint library, then add it to a chat.",
+    teamsZip: "Keep the same file when you update it, so the app id stays the same.",
+    copy: "No file to upload. Copy each box into the matching field."
+};
+const AFTER_STEPS = {
+    bundle: [
+        ["In Gemini", ["Open Settings, then Skills.", "Choose Upload and pick this .zip file.", "Gemini Skills may need a Google AI subscription."]],
+        ["In Claude", ["Open Settings, then Capabilities, then Skills.", "Choose Upload and pick this .zip file.", "Turn the skill on. Skills need a paid plan with code execution on."]]
+    ],
+    msAgent: [
+        ["In SharePoint and Teams", ["Upload the file to a SharePoint document library.", "Open the file's menu and choose Copy link for Teams.", "Paste the link in a Teams chat.", "Choose Add to this chat. People in the chat need a Copilot license and permission to any linked files."]]
+    ],
+    teamsZip: [
+        ["In the Microsoft 365 Copilot app", ["Choose Agents.", "Choose Upload, or Create, then Upload, and pick this .zip file.", "Choose Share to give it to other people. Your admin may need to allow custom agents."]]
+    ],
+    copy: [
+        ["In ChatGPT", ["Open Explore GPTs, then Create.", "Open the Configure tab.", "Paste each box into the matching field. Opening questions go in Conversation starters."]],
+        ["In Gemini Notebook", ["Open the notebook, then More, then Notebook settings.", "Paste the instructions into the instructions field.", "Or add the .md download as a source."]]
+    ]
+};
 const INSTRUCTIONS_TEMPLATE = [
     "# Purpose",
-    "Describe in one or two sentences what this agent is for and who uses it.",
+    "Describe in one or two sentences what this assistant is for and who uses it.",
     "",
     "# How to respond",
     "- Tone: friendly and clear.",
@@ -3063,26 +3277,34 @@ const INSTRUCTIONS_TEMPLATE = [
     "- Ask a question when the request is unclear.",
     "",
     "# Focus on",
-    "- The topics or tasks this agent should handle.",
+    "- The topics or tasks this assistant should handle.",
     "",
     "# Avoid",
-    "- Topics or actions this agent should not do.",
+    "- Topics or actions this assistant should not do.",
     "- Guessing. Say when you do not know.",
     "",
     "# Example",
     "User: (a typical request)",
-    "Agent: (the kind of answer you want)"
+    "Assistant: (the kind of answer you want)"
 ].join("\n");
 
 // ### Interface: state ###
 const ui = {
     agent: createAgent(),
-    tab: "home",
+    view: "workspace",
+    editorMode: null,
+    sampleName: "",
+    starterBlanks: [],
     storageOk: true,
     catalog: [],
     problems: [],
     warnings: [],
     saveTimer: null,
+    productTimer: null,
+    productRender: 0,
+    product: "bundle",
+    productFile: "",
+    built: null,
     pendingConfirm: null
 };
 
@@ -3154,65 +3376,143 @@ function readFileBytes(file) {
     });
 }
 
-// ### Interface: tabs ###
-function showTab(name, moveFocus) {
-    if (TAB_NAMES.indexOf(name) < 0) {
-        name = "home";
+/** True when the element is laid out, so its size can be measured. */
+function isVisible(element) {
+    return element.offsetParent !== null;
+}
+
+/** Grows a textarea to fit its text. Hidden textareas are left alone because they measure zero. */
+function autosize(area) {
+    if (!isVisible(area)) {
+        return;
     }
-    ui.tab = name;
-    TAB_NAMES.forEach(function (tab) {
-        const button = $("tab-" + tab);
-        const panel = $("panel-" + tab);
-        const selected = tab === name;
-        button.setAttribute("aria-selected", selected ? "true" : "false");
-        button.tabIndex = selected ? 0 : -1;
-        panel.hidden = !selected;
+    area.style.height = "auto";
+    area.style.height = area.scrollHeight + "px";
+}
+
+// ### Interface: views ###
+/** Maps a location hash to a view name, accepting the older tab names too. */
+function viewFromHash(hash) {
+    const name = String(hash || "").replace("#", "");
+    if (VIEW_NAMES.indexOf(name) >= 0) {
+        return name;
+    }
+    return LEGACY_HASHES[name] || "workspace";
+}
+
+function showView(name, moveFocus) {
+    if (VIEW_NAMES.indexOf(name) < 0) {
+        name = "workspace";
+    }
+    ui.view = name;
+    VIEW_NAMES.forEach(function (view) {
+        $("view-" + view).hidden = view !== name;
+        const link = $("nav-" + view);
+        if (view === name) {
+            link.setAttribute("aria-current", "page");
+        } else {
+            link.removeAttribute("aria-current");
+        }
     });
+    $("details-back").hidden = name !== "details";
     if (location.hash !== "#" + name) {
         history.pushState(null, "", "#" + name);
     }
-    if (name === "check") {
-        renderCheck();
-    } else if (name === "download") {
-        renderDownload();
+    if (name === "workspace") {
+        renderWorkspace();
+    } else if (name === "details") {
+        moveExtras($("extras-details"));
+        renderForm();
+        renderProductPanel();
     } else if (name === "library") {
         renderLibrary();
     }
+    renderBreadcrumb();
     if (moveFocus) {
-        $("panel-" + name).focus();
+        focusViewHeading(name);
     }
 }
 
-function setupTabs() {
-    const tabs = TAB_NAMES.map(function (tab) { return $("tab-" + tab); });
-    tabs.forEach(function (button, index) {
-        button.addEventListener("click", function () { showTab(TAB_NAMES[index], true); });
-        button.addEventListener("keydown", function (event) {
-            let next = -1;
-            if (event.key === "ArrowRight") { next = (index + 1) % tabs.length; }
-            if (event.key === "ArrowLeft") { next = (index - 1 + tabs.length) % tabs.length; }
-            if (event.key === "Home") { next = 0; }
-            if (event.key === "End") { next = tabs.length - 1; }
-            if (next >= 0) {
-                event.preventDefault();
-                showTab(TAB_NAMES[next], false);
-                tabs[next].focus();
-            }
-        });
+function focusViewHeading(name) {
+    if (name === "workspace") {
+        $(ui.editorMode ? "editor-heading" : "workspace-heading").focus();
+    } else {
+        $(name + "-heading").focus();
+    }
+}
+
+/** The welcome, picture, Copilot, and creator controls exist once and move between the two editors. */
+function moveExtras(container) {
+    const extras = $("extras");
+    if (extras.parentNode !== container) {
+        container.appendChild(extras);
+    }
+}
+
+/** Shows the start page or the editor, depending on whether there is anything to edit. */
+function renderWorkspace() {
+    if (!ui.editorMode && agentHasContent(ui.agent)) {
+        ui.editorMode = "draft";
+    }
+    const editing = Boolean(ui.editorMode);
+    $("start").hidden = editing;
+    $("editor").hidden = !editing;
+    if (!editing) {
+        return;
+    }
+    moveExtras($("extras-simple"));
+    const title = EDITOR_TITLES[ui.editorMode];
+    setText($("editor-heading"), ui.editorMode === "sample" ? ui.sampleName + ", from the library" : title[0]);
+    setText($("editor-hint"), title[1]);
+    renderForm();
+}
+
+function renderBreadcrumb() {
+    const list = $("breadcrumb");
+    clearChildren(list);
+    const name = ui.agent.name || "Untitled";
+    let crumbs;
+    if (ui.view === "workspace") {
+        crumbs = [["Workspace", "#workspace"], [ui.editorMode ? name : "Create", ""]];
+    } else if (ui.view === "details") {
+        crumbs = [["Workspace", "#workspace"], [name, "#workspace"], ["Details", ""]];
+    } else if (ui.view === "library") {
+        crumbs = [["Library", ""]];
+    } else {
+        crumbs = [["Help", ""]];
+    }
+    crumbs.forEach(function (crumb, index) {
+        const last = index === crumbs.length - 1;
+        const item = el("li", {});
+        item.appendChild(last ? el("span", { text: crumb[0], "aria-current": "page" }) : el("a", { href: crumb[1], text: crumb[0] }));
+        list.appendChild(item);
     });
+}
+
+function setupNavigation() {
     window.addEventListener("popstate", function () {
-        showTab(location.hash.replace("#", "") || "home", false);
+        showView(viewFromHash(location.hash), false);
     });
     document.addEventListener("click", function (event) {
         const link = event.target.closest("a[href^='#']");
-        if (link && TAB_NAMES.indexOf(link.getAttribute("href").slice(1)) >= 0) {
+        if (!link) {
+            return;
+        }
+        const target = link.getAttribute("href").slice(1);
+        if (VIEW_NAMES.indexOf(target) >= 0 || LEGACY_HASHES[target]) {
             event.preventDefault();
-            showTab(link.getAttribute("href").slice(1), true);
+            showView(viewFromHash(target), true);
         }
     });
 }
 
 // ### Interface: draft storage ###
+function storageBlocked() {
+    ui.storageOk = false;
+    $("storage-note-ok").hidden = true;
+    $("storage-note").hidden = false;
+}
+
 function saveDraftNow() {
     if (!ui.storageOk) {
         return;
@@ -3223,8 +3523,7 @@ function saveDraftNow() {
         });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(copy));
     } catch (error) {
-        ui.storageOk = false;
-        $("storage-note").hidden = false;
+        storageBlocked();
     }
 }
 
@@ -3250,8 +3549,7 @@ function loadDraft() {
         }
         return normalizeAgent(parsed).agent;
     } catch (error) {
-        ui.storageOk = false;
-        $("storage-note").hidden = false;
+        storageBlocked();
         return null;
     }
 }
@@ -3260,7 +3558,7 @@ function clearDraft() {
     try {
         localStorage.removeItem(STORAGE_KEY);
     } catch (error) {
-        ui.storageOk = false;
+        storageBlocked();
     }
 }
 
@@ -3268,7 +3566,7 @@ function agentHasContent(agent) {
     return Boolean(agent.name || agent.description || agent.instructions || agent.starters.length || agent.icon);
 }
 
-/** Replaces the working agent, saves it, and refreshes the form. */
+/** Replaces the working agent, saves it, and refreshes every control. */
 function setAgent(agent) {
     ui.agent = agent;
     renderForm();
@@ -3317,24 +3615,20 @@ function drawSquare(image, size) {
     return canvas;
 }
 
-/** The default icon: the first letter of the name in U-M Blue on a Maize circle over a blue square. */
+/** The default icon: the first letter of the name in white on the accent color. */
 function drawDefaultIcon(name, size) {
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
     const context = canvas.getContext("2d");
-    context.fillStyle = "#00274C";
+    context.fillStyle = DEFAULT_ICON_COLOR;
     context.fillRect(0, 0, size, size);
-    context.fillStyle = "#FFCB05";
-    context.beginPath();
-    context.arc(size / 2, size / 2, size * 0.36, 0, Math.PI * 2);
-    context.fill();
-    context.fillStyle = "#00274C";
-    context.font = "bold " + Math.round(size * 0.42) + "px system-ui, Arial, sans-serif";
+    context.fillStyle = "#FFFFFF";
+    context.font = "600 " + Math.round(size * 0.5) + "px system-ui, Arial, sans-serif";
     context.textAlign = "center";
     context.textBaseline = "middle";
     const letter = (name || "A").trim().charAt(0).toUpperCase() || "A";
-    context.fillText(letter, size / 2, size / 2 + size * 0.02);
+    context.fillText(letter, size / 2, size / 2 + size * 0.03);
     return canvas;
 }
 
@@ -3431,11 +3725,12 @@ async function openFile(file) {
         announce(result.error);
         return;
     }
-    confirmReplace("Opening " + file.name + " will replace the agent you are working on.", function () {
+    confirmReplace("Opening " + file.name + " will replace the assistant you are working on.", function () {
+        ui.editorMode = "file";
         setAgent(result.agent);
         const notes = result.notices.length ? " " + result.notices.join(" ") : "";
         announce("Opened " + file.name + "." + notes);
-        showTab("build", true);
+        showView("workspace", true);
     });
 }
 
@@ -3443,7 +3738,7 @@ function setupFileOpening() {
     const zone = $("dropzone");
     const input = $("file-input");
     $("browse-button").addEventListener("click", function () { input.click(); });
-    $("home-open").addEventListener("click", function () { input.click(); });
+    $("open-file").addEventListener("click", function () { input.click(); });
     input.addEventListener("change", function () {
         if (input.files && input.files[0]) {
             openFile(input.files[0]);
@@ -3472,19 +3767,22 @@ function setupFileOpening() {
     document.addEventListener("drop", function (event) { event.preventDefault(); });
 }
 
-// ### Interface: Build form ###
+// ### Interface: form state ###
+// The sentence editor and the Details form edit the same fields, so each text
+// field lists every control that shows it.
 const TEXT_FIELDS = [
-    { id: "f-name", get: function (a) { return a.name; }, set: function (a, v) { a.name = v; } },
-    { id: "f-description", get: function (a) { return a.description; }, set: function (a, v) { a.description = v; } },
-    { id: "f-welcome", get: function (a) { return a.welcome; }, set: function (a, v) { a.welcome = v; } },
-    { id: "f-instructions", get: function (a) { return a.instructions; }, set: function (a, v) { a.instructions = v; } },
-    { id: "a-name", get: function (a) { return a.creator.name; }, set: function (a, v) { a.creator.name = v; } },
-    { id: "a-website", get: function (a) { return a.creator.website; }, set: function (a, v) { a.creator.website = v; } },
-    { id: "a-privacy", get: function (a) { return a.creator.privacy; }, set: function (a, v) { a.creator.privacy = v; } },
-    { id: "a-terms", get: function (a) { return a.creator.terms; }, set: function (a, v) { a.creator.terms = v; } },
-    { id: "a-copyright", get: function (a) { return a.copyright; }, set: function (a, v) { a.copyright = v; } }
+    { ids: ["s-name", "d-name"], get: function (a) { return a.name; }, set: function (a, v) { a.name = v; } },
+    { ids: ["s-description", "d-description"], get: function (a) { return a.description; }, set: function (a, v) { a.description = v; } },
+    { ids: ["s-instructions", "d-instructions"], get: function (a) { return a.instructions; }, set: function (a, v) { a.instructions = v; } },
+    { ids: ["f-welcome"], get: function (a) { return a.welcome; }, set: function (a, v) { a.welcome = v; } },
+    { ids: ["a-name"], get: function (a) { return a.creator.name; }, set: function (a, v) { a.creator.name = v; } },
+    { ids: ["a-website"], get: function (a) { return a.creator.website; }, set: function (a, v) { a.creator.website = v; } },
+    { ids: ["a-privacy"], get: function (a) { return a.creator.privacy; }, set: function (a, v) { a.creator.privacy = v; } },
+    { ids: ["a-terms"], get: function (a) { return a.creator.terms; }, set: function (a, v) { a.creator.terms = v; } },
+    { ids: ["a-copyright"], get: function (a) { return a.copyright; }, set: function (a, v) { a.copyright = v; } }
 ];
 const CHECKBOX_KEYS = ["webSearch", "teamsMessages", "meetings", "codeInterpreter", "imageGeneration", "preferMyFiles"];
+const LINK_FIELDS = ["a-website", "a-privacy", "a-terms"];
 
 function showFieldError(id, message) {
     const error = $(id + "-error");
@@ -3503,80 +3801,136 @@ function showFieldError(id, message) {
     }
 }
 
-function updateDerived() {
-    setText($("f-skill-name"), toSkillName(ui.agent.name));
-    const count = ui.agent.instructions.length;
-    setText($("f-instructions-counter"), count.toLocaleString() + " of " + LIMITS.instructions.toLocaleString() + " characters");
-    $("icon-preview").src = iconPreviewUri(ui.agent);
-    const result = validateAgent(ui.agent);
-    ui.problems = result.problems;
-    ui.warnings = result.warnings;
-    const status = $("build-status");
-    if (result.problems.length === 0) {
-        setText(status, "Ready to check.");
-        status.className = "ok-text";
-    } else {
-        setText(status, result.problems.length + " thing(s) still needed before download.");
-        status.className = "";
+/** Blanks for the sentence editor: the saved starters plus empty ones up to the minimum. */
+function paddedBlanks(starters) {
+    const blanks = starters.slice(0, LIMITS.starters);
+    while (blanks.length < MIN_STARTER_BLANKS) {
+        blanks.push("");
     }
+    return blanks;
 }
 
-/** Renders the starters list from state. Keeps focus on the control named by focusIndex and focusKind. */
-function renderStarters(focusIndex, focusKind) {
-    const list = $("starters-list");
-    clearChildren(list);
-    ui.agent.starters.forEach(function (text, index) {
-        const inputId = "starter-" + index;
-        const input = el("input", { type: "text", id: inputId, maxlength: String(LIMITS.starterText), value: text, "aria-label": "Starter " + (index + 1) });
+/** Copies the non-empty blanks into the agent. Empty blanks are only a place to type. */
+function syncStartersFromBlanks() {
+    ui.agent.starters = ui.starterBlanks.filter(function (text) { return text.trim().length > 0; }).slice(0, LIMITS.starters);
+}
+
+function renderSentenceStarters(focusIndex) {
+    const box = $("s-starters");
+    clearChildren(box);
+    ui.starterBlanks.forEach(function (text, index) {
+        if (index > 0) {
+            box.appendChild(document.createTextNode(" or "));
+        }
+        const input = el("input", {
+            type: "text",
+            id: "s-starter-" + index,
+            className: "blank blank-wide",
+            maxlength: String(LIMITS.starterText),
+            autocomplete: "off",
+            "aria-label": "Opening question " + (index + 1),
+            placeholder: STARTER_PLACEHOLDERS[index] || ""
+        });
         input.value = text;
         input.addEventListener("input", function () {
-            ui.agent.starters[index] = input.value;
+            ui.starterBlanks[index] = input.value;
+            syncStartersFromBlanks();
+            updateDerived();
             saveDraft();
         });
-        const up = el("button", { type: "button", text: "Move up", "aria-label": "Move up starter " + (index + 1) });
-        up.disabled = index === 0;
-        up.addEventListener("click", function () {
-            const starters = ui.agent.starters;
-            const item = starters.splice(index, 1)[0];
-            starters.splice(index - 1, 0, item);
-            renderStarters(index - 1, "up");
-            saveDraft();
-        });
-        const down = el("button", { type: "button", text: "Move down", "aria-label": "Move down starter " + (index + 1) });
-        down.disabled = index === ui.agent.starters.length - 1;
-        down.addEventListener("click", function () {
-            const starters = ui.agent.starters;
-            const item = starters.splice(index, 1)[0];
-            starters.splice(index + 1, 0, item);
-            renderStarters(index + 1, "down");
-            saveDraft();
-        });
-        const remove = el("button", { type: "button", text: "Remove", "aria-label": "Remove starter " + (index + 1) });
-        remove.addEventListener("click", function () {
-            ui.agent.starters.splice(index, 1);
-            renderStarters(Math.min(index, ui.agent.starters.length - 1), "input");
-            saveDraft();
-            announce("Starter removed.");
-        });
-        list.appendChild(el("li", {}, [input, up, down, remove]));
+        box.appendChild(input);
     });
-    $("starter-add").disabled = ui.agent.starters.length >= LIMITS.starters;
-    if (focusIndex !== undefined && focusIndex >= 0 && focusIndex < ui.agent.starters.length) {
-        const row = list.children[focusIndex];
-        const buttons = row.querySelectorAll("button");
-        let target = row.querySelector("input");
-        if (focusKind === "up" && !buttons[0].disabled) { target = buttons[0]; }
-        if (focusKind === "down" && !buttons[1].disabled) { target = buttons[1]; }
-        if (focusKind === "up" && buttons[0].disabled) { target = buttons[1]; }
-        if (focusKind === "down" && buttons[1].disabled) { target = buttons[0]; }
-        target.focus();
+    $("starter-add").hidden = ui.starterBlanks.length >= LIMITS.starters;
+    if (focusIndex !== undefined) {
+        $("s-starter-" + focusIndex).focus();
     }
 }
 
-/** Writes state into every form control. */
+/** Makes the name blank about as wide as its text, so the sentence reads as one line. */
+function sizeNameBlank() {
+    const input = $("s-name");
+    const length = (input.value || input.placeholder || "").length;
+    input.style.width = Math.min(Math.max(length + 2, 8), 40) + "ch";
+}
+
+function renderPreview() {
+    const agent = ui.agent;
+    $("preview-icon").src = iconPreviewUri(agent);
+    setText($("preview-name"), agent.name || "Your assistant");
+    setText($("preview-description"), agent.description || "What it does, in one line");
+    const welcome = $("preview-welcome");
+    welcome.hidden = !agent.welcome;
+    setText(welcome, agent.welcome);
+    const list = $("preview-starters");
+    clearChildren(list);
+    agent.starters.forEach(function (text) {
+        list.appendChild(el("li", { text: text }));
+    });
+    list.hidden = agent.starters.length === 0;
+}
+
+/** Lists the missing required fields as links that focus the matching blank. */
+function renderReadiness() {
+    const box = $("readiness");
+    const list = $("readiness-list");
+    clearChildren(list);
+    box.hidden = ui.problems.length === 0;
+    ui.problems.forEach(function (problem) {
+        const link = el("a", { href: "#workspace", text: READINESS_LABELS[problem.field] || problem.message });
+        link.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            $(SENTENCE_FIELDS[problem.field]).focus();
+        });
+        list.appendChild(el("li", {}, [link]));
+    });
+}
+
+/** What the Copilot app package drops, shown under its buttons. */
+function teamsLossItems(agent) {
+    const items = [];
+    if (agent.welcome) { items.push("the welcome message"); }
+    if (agent.copyright || agent.license !== DEFAULT_LICENSE) { items.push("the copyright line and license name"); }
+    return items;
+}
+
+function renderCopilotLoss() {
+    const note = $("copilot-loss");
+    const items = teamsLossItems(ui.agent);
+    note.hidden = items.length === 0;
+    setText(note, items.length ? "The Copilot app package leaves out " + items.join(" and ") + "." : "");
+}
+
+/** Recomputes everything that follows from the agent: the preview, readiness, counters, and files. */
+function updateDerived() {
+    const agent = ui.agent;
+    setText($("d-skill-name"), toSkillName(agent.name));
+    setText($("d-instructions-counter"), agent.instructions.length.toLocaleString() + " of " + LIMITS.instructions.toLocaleString() + " characters");
+    $("icon-preview").src = iconPreviewUri(agent);
+    sizeNameBlank();
+    autosize($("s-instructions"));
+    const result = validateAgent(agent);
+    ui.problems = result.problems;
+    ui.warnings = result.warnings;
+    const blocked = ui.problems.length > 0;
+    document.querySelectorAll(".download-button").forEach(function (button) {
+        button.disabled = blocked;
+    });
+    renderPreview();
+    renderReadiness();
+    renderCopilotLoss();
+    renderBreadcrumb();
+    if (ui.view === "details") {
+        scheduleProductRender();
+    }
+}
+
+/** Writes state into every control in both editors. */
 function renderForm() {
     TEXT_FIELDS.forEach(function (field) {
-        $(field.id).value = field.get(ui.agent);
+        field.ids.forEach(function (id) {
+            $(id).value = field.get(ui.agent);
+        });
     });
     CHECKBOX_KEYS.forEach(function (key) {
         $("c-" + key).checked = ui.agent.copilot[key] === true;
@@ -3587,8 +3941,10 @@ function renderForm() {
     select.value = known ? ui.agent.license : "other";
     $("a-license-other-wrap").hidden = known;
     $("a-license-other").value = known ? "" : ui.agent.license;
-    renderStarters();
-    ["f-name", "f-description", "f-instructions", "f-sharepoint", "a-website", "a-privacy", "a-terms", "icon"].forEach(function (id) {
+    ui.starterBlanks = paddedBlanks(ui.agent.starters);
+    renderSentenceStarters();
+    $("d-starters").value = ui.agent.starters.join("\n");
+    ["d-name", "d-description", "d-instructions", "d-starters", "f-sharepoint", "a-website", "a-privacy", "a-terms", "icon"].forEach(function (id) {
         showFieldError(id, "");
     });
     updateDerived();
@@ -3616,33 +3972,61 @@ function readSharepointField() {
     }
 }
 
-/** Shows inline errors for the required fields. Returns true when none. */
+function readStartersField() {
+    const lines = $("d-starters").value.split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
+    ui.agent.starters = lines.slice(0, LIMITS.starters);
+    showFieldError("d-starters", lines.length > LIMITS.starters ? "Only the first " + LIMITS.starters + " questions are kept." : "");
+}
+
+/** Shows inline errors for the required fields in the Details form. */
 function showRequiredErrors() {
     const messages = {};
     ui.problems.forEach(function (problem) { messages[problem.field] = problem.message; });
-    showFieldError("f-name", messages.name || "");
-    showFieldError("f-description", messages.description || "");
-    showFieldError("f-instructions", messages.instructions || "");
-    return ui.problems.length === 0;
+    Object.keys(DETAILS_FIELDS).forEach(function (key) {
+        showFieldError(DETAILS_FIELDS[key], messages[key] || "");
+    });
 }
 
-function setupBuildForm() {
+/** Puts the template into the instructions, asking first when there is text to lose. */
+function insertInstructionsTemplate(visibleId) {
+    const insert = function () {
+        ui.agent.instructions = INSTRUCTIONS_TEMPLATE;
+        $("s-instructions").value = INSTRUCTIONS_TEMPLATE;
+        $("d-instructions").value = INSTRUCTIONS_TEMPLATE;
+        updateDerived();
+        saveDraft();
+        $(visibleId).focus();
+        announce("A template was added. Replace each line with your own words.");
+    };
+    if (ui.agent.instructions.trim()) {
+        const dialog = $("confirm-dialog");
+        setText($("confirm-message"), "The template will replace what you already wrote about how it should behave.");
+        ui.pendingConfirm = insert;
+        dialog.showModal();
+    } else {
+        insert();
+    }
+}
+
+function setupForm() {
     TEXT_FIELDS.forEach(function (field) {
-        const input = $(field.id);
-        input.addEventListener("input", function () {
-            field.set(ui.agent, input.value);
-            updateDerived();
-            saveDraft();
-        });
-        input.addEventListener("blur", function () {
-            if (field.id === "a-website" || field.id === "a-privacy" || field.id === "a-terms") {
-                validateLinkField(field.id, input.value.trim());
-            }
-            if (field.id === "f-name" || field.id === "f-description" || field.id === "f-instructions") {
-                const key = field.id.slice(2);
-                const problem = ui.problems.find(function (p) { return p.field === key; });
-                showFieldError(field.id, problem ? problem.message : "");
-            }
+        field.ids.forEach(function (id) {
+            const input = $(id);
+            input.addEventListener("input", function () {
+                field.set(ui.agent, input.value);
+                updateDerived();
+                saveDraft();
+            });
+            input.addEventListener("blur", function () {
+                if (LINK_FIELDS.indexOf(id) >= 0) {
+                    validateLinkField(id, input.value.trim());
+                }
+                if (id.indexOf("d-") === 0) {
+                    const key = id.slice(2);
+                    const problem = ui.problems.find(function (p) { return p.field === key; });
+                    showFieldError(id, problem ? problem.message : "");
+                }
+            });
         });
     });
     CHECKBOX_KEYS.forEach(function (key) {
@@ -3654,6 +4038,11 @@ function setupBuildForm() {
     });
     $("f-sharepoint").addEventListener("input", function () {
         readSharepointField();
+        updateDerived();
+        saveDraft();
+    });
+    $("d-starters").addEventListener("input", function () {
+        readStartersField();
         updateDerived();
         saveDraft();
     });
@@ -3674,34 +4063,20 @@ function setupBuildForm() {
     });
     $("a-license-other").addEventListener("input", function () {
         ui.agent.license = $("a-license-other").value.trim().slice(0, LIMITS.licenseText) || DEFAULT_LICENSE;
+        updateDerived();
         saveDraft();
     });
     $("starter-add").addEventListener("click", function () {
-        if (ui.agent.starters.length >= LIMITS.starters) {
+        if (ui.starterBlanks.length >= LIMITS.starters) {
             return;
         }
-        ui.agent.starters.push("");
-        renderStarters(ui.agent.starters.length - 1, "input");
-        saveDraft();
+        ui.starterBlanks.push("");
+        renderSentenceStarters(ui.starterBlanks.length - 1);
     });
-    $("instructions-template").addEventListener("click", function () {
-        const area = $("f-instructions");
-        const insert = function () {
-            area.value = INSTRUCTIONS_TEMPLATE;
-            ui.agent.instructions = INSTRUCTIONS_TEMPLATE;
-            updateDerived();
-            saveDraft();
-            area.focus();
-            announce("A template was added to the instructions. Replace each line with your own words.");
-        };
-        if (area.value.trim()) {
-            const dialog = $("confirm-dialog");
-            setText($("confirm-message"), "The template will replace the instructions you already wrote.");
-            ui.pendingConfirm = insert;
-            dialog.showModal();
-        } else {
-            insert();
-        }
+    document.querySelectorAll(".instructions-template").forEach(function (button) {
+        button.addEventListener("click", function () {
+            insertInstructionsTemplate(ui.view === "details" ? "d-instructions" : "s-instructions");
+        });
     });
     $("icon-input").addEventListener("change", async function (event) {
         const file = event.target.files && event.target.files[0];
@@ -3714,7 +4089,7 @@ function setupBuildForm() {
             showFieldError("icon", "");
             updateDerived();
             saveDraft();
-            announce("Icon updated.");
+            announce("Picture updated.");
         } catch (error) {
             showFieldError("icon", error.message);
         }
@@ -3724,122 +4099,11 @@ function setupBuildForm() {
         showFieldError("icon", "");
         updateDerived();
         saveDraft();
-        announce("The default icon will be used.");
-    });
-    $("build-next").addEventListener("click", function () {
-        updateDerived();
-        const ok = showRequiredErrors();
-        if (!ok) {
-            announce(ui.problems.length + " thing(s) still needed. The Check tab lists them.");
-        }
-        showTab("check", true);
+        announce("The default picture will be used.");
     });
 }
 
-// ### Interface: Check ###
-async function renderCheck() {
-    updateDerived();
-    const agent = ui.agent;
-    const summary = $("check-summary");
-    clearChildren(summary);
-    const problems = $("check-problems");
-    clearChildren(problems);
-    const warnings = $("check-warnings");
-    clearChildren(warnings);
-    const fieldIds = { name: "f-name", description: "f-description", instructions: "f-instructions", welcome: "f-welcome", sharepointLinks: "f-sharepoint", creator: "a-name", icon: "icon-input", copyright: "a-copyright" };
-    const makeList = function (items, heading, container) {
-        if (items.length === 0) {
-            return;
-        }
-        container.appendChild(el("h3", { text: heading }));
-        const list = el("ul", { className: "problem-list" });
-        items.forEach(function (item) {
-            const link = el("a", { href: "#build", text: item.message });
-            link.addEventListener("click", function (event) {
-                event.preventDefault();
-                event.stopPropagation();
-                showTab("build", false);
-                const target = $(fieldIds[item.field]);
-                if (target) {
-                    const details = target.closest("details");
-                    if (details) { details.open = true; }
-                    target.focus();
-                }
-            });
-            list.appendChild(el("li", {}, [link]));
-        });
-        container.appendChild(list);
-    };
-    if (ui.problems.length === 0) {
-        summary.appendChild(el("p", { className: "ok-text", text: "Nothing is missing. You can download this agent." }));
-    } else {
-        summary.appendChild(el("p", { className: "error-text", text: ui.problems.length + " thing(s) still needed before download. Each line below takes you to the field." }));
-    }
-    makeList(ui.problems, "Problems", problems);
-    makeList(ui.warnings, "Good to know", warnings);
-    $("preview-icon").src = iconPreviewUri(agent);
-    setText($("preview-name"), agent.name || "(no name yet)");
-    setText($("preview-description"), agent.description || "(no description yet)");
-    setText($("preview-creator"), agent.creator.name ? "By " + agent.creator.name : "");
-    showRequiredErrors();
-
-    const skillText = stringifyFrontmatter(bundleFrontmatter(agent, toSkillName(agent.name)), "\n" + agent.instructions + "\n");
-    setText($("raw-skill"), skillText);
-    setText($("raw-agent"), msAgentExport(agent).text.replace(/"icon": "data:image\/png;base64,[^"]*"/, "\"icon\": \"data:image/png;base64,(icon bytes)\""));
-    try {
-        const icons = await prepareTeamsIcons(agent);
-        const saved = agent.copilot.appId;
-        const pkg = await teamsZipExport(agent, icons);
-        if (!saved) {
-            saveDraft();
-        }
-        const entries = await zipRead(pkg.bytes);
-        setText($("raw-manifest"), fromBytes(entries.get("manifest.json")));
-        setText($("raw-declarative"), fromBytes(entries.get("declarativeAgent_0.json")));
-    } catch (error) {
-        setText($("raw-manifest"), "Could not build the package: " + error.message);
-        setText($("raw-declarative"), "");
-    }
-}
-
-// ### Interface: Download ###
-function lossNotice(id, items) {
-    const box = $(id);
-    clearChildren(box);
-    if (items.length === 0) {
-        box.hidden = true;
-        return;
-    }
-    box.hidden = false;
-    box.appendChild(el("p", { text: "This format leaves out:" }));
-    const list = el("ul");
-    items.forEach(function (item) { list.appendChild(el("li", { text: item })); });
-    box.appendChild(list);
-}
-
-function renderDownload() {
-    updateDerived();
-    const agent = ui.agent;
-    const blocked = ui.problems.length > 0;
-    $("download-blocked").hidden = !blocked;
-    document.querySelectorAll(".download-button").forEach(function (button) {
-        button.disabled = blocked;
-    });
-    const teamsLoss = [];
-    if (agent.welcome) { teamsLoss.push("the welcome message"); }
-    if (agent.copyright || agent.license !== DEFAULT_LICENSE) { teamsLoss.push("the copyright line and license name"); }
-    const missingCreator = ["name", "website", "privacy", "terms"].filter(function (key) { return !agent.creator[key]; });
-    if (missingCreator.length > 0) { teamsLoss.push("your creator details (placeholders are used for " + missingCreator.join(", ") + ")"); }
-    lossNotice("loss-teamsZip", teamsLoss);
-    lossNotice("loss-msAgent", []);
-    lossNotice("loss-bundle", []);
-    const copy = copyTextExport(agent);
-    $("copy-name").value = copy.name;
-    $("copy-description").value = copy.description;
-    $("copy-instructions").value = copy.instructions;
-    $("copy-starters").value = copy.starters;
-}
-
+// ### Interface: downloads ###
 async function runDownload(format) {
     const agent = ui.agent;
     try {
@@ -3867,44 +4131,268 @@ async function runDownload(format) {
     }
 }
 
-function updateChooser() {
-    const value = function (name) {
-        const checked = document.querySelector("input[name='" + name + "']:checked");
-        return checked ? checked.value : "";
-    };
-    const teams = value("q-teams");
-    const copilot = value("q-copilot");
-    const keep = value("q-keep");
-    const picks = [];
-    if (teams === "yes") { picks.push("the .agent file for SharePoint and Teams chats"); }
-    if (copilot === "yes" && teams !== "yes") { picks.push("the Copilot app package"); }
-    if (keep === "yes" || (copilot === "no" && teams === "no")) { picks.push("the complete copy, which also works in Gemini and Claude"); }
-    let answer = "";
-    if (teams || copilot || keep) {
-        answer = picks.length ? "Our suggestion: " + picks.join(", and ") + "." : "Answer the questions above and a suggestion appears here.";
+async function copyToClipboard(area) {
+    try {
+        await navigator.clipboard.writeText(area.value);
+        announce("Copied.");
+    } catch (error) {
+        area.focus();
+        area.select();
+        announce("Copying is blocked here. The text is selected, so press Ctrl+C or Command+C to copy it.");
     }
-    setText($("chooser-answer"), answer);
 }
 
-function setupDownload() {
+function setupDownloads() {
     document.querySelectorAll(".download-button").forEach(function (button) {
         button.addEventListener("click", function () { runDownload(button.getAttribute("data-format")); });
     });
-    document.querySelectorAll(".copy-button").forEach(function (button) {
-        button.addEventListener("click", async function () {
-            const area = $(button.getAttribute("data-copy"));
-            try {
-                await navigator.clipboard.writeText(area.value);
-                announce("Copied.");
-            } catch (error) {
-                area.focus();
-                area.select();
-                announce("Copying is blocked here. The text is selected, so press Ctrl+C or Command+C to copy it.");
+    $("chatgpt-copy").addEventListener("click", function () {
+        ui.product = "copy";
+        showView("details", false);
+        selectProduct("copy");
+        $("ptab-copy").focus();
+    });
+}
+
+// ### Interface: Details files ###
+/** The person's own words, longest first, so the code view can highlight them. */
+function highlightNeedles(agent) {
+    const values = [agent.name, toSkillName(agent.name), agent.description, agent.instructions, agent.welcome, agent.copyright,
+        agent.creator.name, agent.creator.website, agent.creator.privacy, agent.creator.terms]
+        .concat(agent.starters, agent.sharepointLinks);
+    const needles = [];
+    values.forEach(function (value) {
+        const text = String(value || "").trim();
+        if (text.length < 2) {
+            return;
+        }
+        // JSON files show the text with escaped quotes and newlines.
+        [text, JSON.stringify(text).slice(1, -1)].forEach(function (form) {
+            if (needles.indexOf(form) < 0) {
+                needles.push(form);
             }
         });
     });
-    document.querySelectorAll(".chooser input[type='radio']").forEach(function (radio) {
-        radio.addEventListener("change", updateChooser);
+    return needles.sort(function (a, b) { return b.length - a.length; });
+}
+
+/** Appends text to a container with every needle wrapped in a mark element. Text only, never markup. */
+function appendHighlighted(container, text, needles) {
+    let position = 0;
+    while (position < text.length) {
+        let bestIndex = -1;
+        let bestNeedle = "";
+        needles.forEach(function (needle) {
+            const index = text.indexOf(needle, position);
+            if (index >= 0 && (bestIndex < 0 || index < bestIndex)) {
+                bestIndex = index;
+                bestNeedle = needle;
+            }
+        });
+        if (bestIndex < 0) {
+            container.appendChild(document.createTextNode(text.slice(position)));
+            return;
+        }
+        if (bestIndex > position) {
+            container.appendChild(document.createTextNode(text.slice(position, bestIndex)));
+        }
+        container.appendChild(el("mark", { text: bestNeedle }));
+        position = bestIndex + bestNeedle.length;
+    }
+}
+
+/**
+ * Builds the files one product receives, as text or PNG bytes, without downloading.
+ * @returns {Promise<{root: string, files: Array<object>, fileName: string, format: string, notes: string[]}>}
+ */
+async function buildProductFiles(agent, product) {
+    if (product === "bundle") {
+        const skillName = toSkillName(agent.name);
+        const files = [{ name: "SKILL.md", text: stringifyFrontmatter(bundleFrontmatter(agent, skillName), "\n" + agent.instructions + "\n") }];
+        if (agent.icon) {
+            files.push({ name: "icon.png", image: agent.icon.bytes });
+        }
+        files.push({ name: "LICENSE.txt", text: bundleLicenseText(agent) });
+        files.push({ name: "README.md", text: bundleReadme(agent) });
+        return { root: skillName + "/", files: files, fileName: safeFileName(skillName, ".zip"), format: "bundle", notes: [] };
+    }
+    if (product === "msAgent") {
+        const result = msAgentExport(agent);
+        const text = result.text.replace(/"icon": "data:image\/png;base64,[^"]*"/, "\"icon\": \"data:image/png;base64,(the picture, as text)\"");
+        return { root: "", files: [{ name: result.fileName, text: text }], fileName: result.fileName, format: "msAgent", notes: result.warnings };
+    }
+    if (product === "teamsZip") {
+        const icons = await prepareTeamsIcons(agent);
+        const hadAppId = Boolean(agent.copilot.appId);
+        const result = await teamsZipExport(agent, icons);
+        if (!hadAppId) {
+            saveDraft();
+        }
+        const entries = await zipRead(result.bytes);
+        const files = [];
+        entries.forEach(function (bytes, name) {
+            files.push(name.endsWith(".png") ? { name: name, image: bytes } : { name: name, text: fromBytes(bytes) });
+        });
+        return { root: "", files: files, fileName: result.fileName, format: "teamsZip", notes: result.warnings };
+    }
+    const copy = copyTextExport(agent);
+    return { root: "", files: [{ name: "Copy and paste", copy: copy }, { name: copy.fileName, text: copy.markdown }], fileName: copy.fileName, format: "markdown", notes: [] };
+}
+
+function buildCopyBoxes(copy) {
+    const box = el("div", { className: "copy-boxes" });
+    [["copy-name", "Name", copy.name, 1], ["copy-description", "Description", copy.description, 2], ["copy-instructions", "Instructions", copy.instructions, 6], ["copy-starters", "Conversation starters", copy.starters, 3]].forEach(function (item) {
+        const area = el("textarea", { id: item[0], readonly: "", rows: String(item[3]) });
+        area.value = item[2];
+        const button = el("button", { type: "button", text: "Copy the " + item[1].toLowerCase() });
+        button.addEventListener("click", function () { copyToClipboard(area); });
+        box.appendChild(el("div", { className: "copy-box" }, [el("label", { "for": item[0], text: item[1] }), area, button]));
+    });
+    return box;
+}
+
+function renderFileBody() {
+    const body = $("file-body");
+    clearChildren(body);
+    const built = ui.built;
+    const file = built.files.find(function (f) { return f.name === ui.productFile; }) || built.files[0];
+    if (file.copy) {
+        body.appendChild(buildCopyBoxes(file.copy));
+        return;
+    }
+    if (file.image) {
+        const size = pngDimensions(file.image);
+        const image = el("img", { className: "file-image", alt: file.name + (size ? ", " + size.width + " by " + size.height + " pixels" : ""), src: PNG_DATA_URI_PREFIX + bytesToBase64(file.image) });
+        body.appendChild(el("div", { className: "file-image-wrap" }, [image]));
+        return;
+    }
+    const pre = el("pre", { className: "file-text", tabindex: "0", role: "region", "aria-label": "Contents of " + file.name });
+    appendHighlighted(pre, file.text, highlightNeedles(ui.agent));
+    body.appendChild(pre);
+}
+
+function renderFileTree() {
+    const tree = $("file-tree");
+    clearChildren(tree);
+    const built = ui.built;
+    if (built.root) {
+        tree.appendChild(el("li", { className: "file-root", text: built.root }));
+    }
+    built.files.forEach(function (file) {
+        const button = el("button", { type: "button", text: file.name });
+        if (file.name === ui.productFile) {
+            button.setAttribute("aria-current", "true");
+        }
+        button.addEventListener("click", function () {
+            ui.productFile = file.name;
+            tree.querySelectorAll("button").forEach(function (other) { other.removeAttribute("aria-current"); });
+            button.setAttribute("aria-current", "true");
+            renderFileBody();
+        });
+        tree.appendChild(el("li", {}, [button]));
+    });
+}
+
+function renderAfterSteps(product) {
+    const box = $("after-steps");
+    clearChildren(box);
+    AFTER_STEPS[product].forEach(function (group) {
+        box.appendChild(el("p", { text: group[0] }));
+        const list = el("ol");
+        group[1].forEach(function (step) { list.appendChild(el("li", { text: step })); });
+        box.appendChild(list);
+    });
+}
+
+function renderProductBlocked() {
+    const box = $("product-blocked");
+    const list = $("product-blocked-list");
+    clearChildren(list);
+    box.hidden = ui.problems.length === 0;
+    ui.problems.forEach(function (problem) {
+        const link = el("a", { href: "#details", text: READINESS_LABELS[problem.field] || problem.message });
+        link.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            $(DETAILS_FIELDS[problem.field]).focus();
+        });
+        list.appendChild(el("li", {}, [link]));
+    });
+}
+
+/** Rebuilds the files a little after typing stops, because the Teams package is a whole ZIP. */
+function scheduleProductRender() {
+    clearTimeout(ui.productTimer);
+    ui.productTimer = setTimeout(renderProductPanel, 250);
+}
+
+async function renderProductPanel() {
+    const token = ui.productRender + 1;
+    ui.productRender = token;
+    const agent = ui.agent;
+    let built;
+    try {
+        built = await buildProductFiles(agent, ui.product);
+    } catch (error) {
+        built = { root: "", files: [{ name: "Could not build the files", text: error.message }], fileName: "", format: "", notes: [] };
+    }
+    if (token !== ui.productRender || ui.view !== "details") {
+        return;
+    }
+    ui.built = built;
+    if (!built.files.some(function (f) { return f.name === ui.productFile; })) {
+        ui.productFile = built.files[0].name;
+    }
+    renderProductBlocked();
+    const notes = $("product-notes");
+    clearChildren(notes);
+    const warnings = built.notes.slice();
+    if (ui.product === "teamsZip") {
+        ui.warnings.forEach(function (warning) {
+            if (warning.field === "creator") { warnings.push(warning.message); }
+        });
+    }
+    notes.hidden = warnings.length === 0;
+    warnings.forEach(function (text) { notes.appendChild(el("p", { text: text })); });
+    renderFileTree();
+    renderFileBody();
+    const download = $("product-download");
+    download.setAttribute("data-format", built.format);
+    setText(download, built.fileName ? "Download " + built.fileName : "Download");
+    download.disabled = ui.problems.length > 0 || !built.format;
+    setText($("product-hint"), PRODUCT_HINTS[ui.product]);
+    renderAfterSteps(ui.product);
+}
+
+function selectProduct(name) {
+    ui.product = name;
+    ui.productFile = "";
+    PRODUCT_NAMES.forEach(function (product) {
+        const tab = $("ptab-" + product);
+        const selected = product === name;
+        tab.setAttribute("aria-selected", selected ? "true" : "false");
+        tab.tabIndex = selected ? 0 : -1;
+    });
+    $("ppanel").setAttribute("aria-labelledby", "ptab-" + name);
+    renderProductPanel();
+}
+
+function setupProductTabs() {
+    const tabs = PRODUCT_NAMES.map(function (product) { return $("ptab-" + product); });
+    tabs.forEach(function (tab, index) {
+        tab.addEventListener("click", function () { selectProduct(PRODUCT_NAMES[index]); });
+        tab.addEventListener("keydown", function (event) {
+            let next = -1;
+            if (event.key === "ArrowRight") { next = (index + 1) % tabs.length; }
+            if (event.key === "ArrowLeft") { next = (index - 1 + tabs.length) % tabs.length; }
+            if (event.key === "Home") { next = 0; }
+            if (event.key === "End") { next = tabs.length - 1; }
+            if (next >= 0) {
+                event.preventDefault();
+                selectProduct(PRODUCT_NAMES[next]);
+                tabs[next].focus();
+            }
+        });
     });
 }
 
@@ -4013,36 +4501,38 @@ async function renderLibrary() {
         return haystack.indexOf(query) >= 0;
     });
     clearChildren(list);
-    setText(status, matches.length === 0 ? "No agents match." : matches.length + " agent(s).");
+    setText(status, matches.length === 0 ? "No assistants match." : matches.length + " assistant(s).");
     matches.forEach(function (entry) {
-        const icon = el("img", { className: "icon-preview", alt: "", src: "" });
+        const icon = el("img", { alt: "", src: "" });
         icon.src = entry.agent && entry.agent.icon ? iconPreviewUri(entry.agent) : "library/" + entry.folder + "/icon.png";
         icon.addEventListener("error", function () { icon.src = drawDefaultIcon(entry.name, 96).toDataURL("image/png"); });
         const tags = el("ul", { className: "tags", "aria-label": "Tags" });
         entry.tags.forEach(function (tag) { tags.appendChild(el("li", { text: tag })); });
         const tryButton = el("button", { type: "button", className: "primary", text: "Try it" });
-        const downloadButton = el("button", { type: "button", text: "Download" });
+        const filesButton = el("button", { type: "button", text: "See the files" });
         const load = async function (then) {
             try {
                 const agent = await loadLibraryAgent(entry);
-                confirmReplace("Loading " + entry.name + " will replace the agent you are working on.", function () {
+                confirmReplace("Loading " + entry.name + " will replace the assistant you are working on.", function () {
+                    ui.editorMode = "sample";
+                    ui.sampleName = entry.name;
                     setAgent(normalizeAgent(JSON.parse(JSON.stringify(Object.assign({}, agent, { icon: null })))).agent);
                     ui.agent.icon = agent.icon ? { bytes: copyBytes(agent.icon.bytes), mime: "image/png" } : null;
                     renderForm();
                     saveDraft();
                     announce("Loaded " + entry.name + ".");
-                    showTab(then, true);
+                    showView(then, true);
                 });
             } catch (error) {
                 announce(error.message);
             }
         };
-        tryButton.addEventListener("click", function () { load("build"); });
-        downloadButton.addEventListener("click", function () { load("download"); });
-        const meta = el("p", { className: "muted", text: (entry.author ? "By " + entry.author + ". " : "") + (entry.license ? "License: " + entry.license + "." : "") });
-        list.appendChild(el("li", { className: "card" }, [
-            el("div", { className: "preview-card" }, [icon, el("div", {}, [el("h3", { text: entry.name }), el("p", { text: entry.summary }), tags, meta])]),
-            el("div", { className: "button-row" }, [tryButton, downloadButton])
+        tryButton.addEventListener("click", function () { load("workspace"); });
+        filesButton.addEventListener("click", function () { load("details"); });
+        const meta = el("p", { className: "muted small", text: (entry.author ? "By " + entry.author + ". " : "") + (entry.license ? "License: " + entry.license + "." : "") });
+        list.appendChild(el("li", { className: "card library-card" }, [
+            el("div", { className: "preview-head" }, [icon, el("div", {}, [el("h3", { text: entry.name }), el("p", { text: entry.summary }), tags, meta])]),
+            el("div", { className: "button-row" }, [tryButton, filesButton])
         ]));
     });
 }
@@ -4066,29 +4556,30 @@ function loadAnalyticsIfProduction() {
 // ### Interface: startup ###
 function initApp() {
     loadAnalyticsIfProduction();
-    setupTabs();
+    setupNavigation();
     setupFileOpening();
-    setupBuildForm();
-    setupDownload();
+    setupForm();
+    setupDownloads();
+    setupProductTabs();
     $("library-search").addEventListener("input", function () { renderLibrary(); });
-    $("home-new").addEventListener("click", function () {
-        confirmReplace("Starting a new agent will replace the one you are working on.", function () {
-            setAgent(createAgent());
-            clearDraft();
-            announce("Started a new agent.");
-            showTab("build", true);
-            $("f-name").focus();
-        });
+    $("start-new").addEventListener("click", function () {
+        ui.editorMode = "new";
+        renderWorkspace();
+        renderBreadcrumb();
+        announce("");
+        $("s-name").focus();
     });
-    $("home-library").addEventListener("click", function () { showTab("library", true); });
-    $("check-back").addEventListener("click", function () { showTab("build", true); });
-    $("check-next").addEventListener("click", function () { showTab("download", true); });
-    $("clear-draft").addEventListener("click", function () {
-        confirmReplace("Clearing the draft removes the agent you are working on from this browser.", function () {
+    $("start-sample").addEventListener("click", function () { showView("library", true); });
+    $("start-over").addEventListener("click", function () {
+        confirmReplace("Starting over removes the assistant you are working on from this browser.", function () {
             clearDraft();
-            setAgent(createAgent());
-            $("draft-banner").hidden = true;
-            announce("Draft cleared.");
+            ui.agent = createAgent();
+            ui.editorMode = null;
+            renderForm();
+            renderWorkspace();
+            renderBreadcrumb();
+            announce("Started over.");
+            $("start-new").focus();
         });
     });
     const dialog = $("confirm-dialog");
@@ -4100,24 +4591,14 @@ function initApp() {
         if (proceed) { proceed(); }
     });
     dialog.addEventListener("close", function () { ui.pendingConfirm = null; });
-    $("draft-continue").addEventListener("click", function () {
-        $("draft-banner").hidden = true;
-        showTab("build", true);
-    });
-    $("draft-discard").addEventListener("click", function () {
-        clearDraft();
-        setAgent(createAgent());
-        $("draft-banner").hidden = true;
-        announce("Started fresh.");
-    });
 
     const draft = loadDraft();
     if (draft && agentHasContent(draft)) {
         ui.agent = draft;
-        $("draft-banner").hidden = false;
+        ui.editorMode = "draft";
     }
     renderForm();
-    showTab(location.hash.replace("#", "") || "home", false);
+    showView(viewFromHash(location.hash), false);
 }
 
 // The engine above has no DOM dependency so the test suite can load it in Node.
