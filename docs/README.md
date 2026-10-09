@@ -4,7 +4,8 @@ docs/README.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
 Last Modified: 2026-10-09
-Summary: Index of the Agentprise knowledge base: one linked line per page.
+Summary: Index of the Agentprise documentation: one linked line per page, with
+         who each page is for.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -20,36 +21,43 @@ See <https://www.gnu.org/licenses/fdl-1.3.html>. See README for full license inf
 
 [Back to project README](../README.md)
 
-This folder is the knowledge base for Agentprise. It is written for two readers at
-once: someone who wants to make or move an agent, and a developer or new hire who
-needs to understand how the app works and why it is built the way it is.
+Agentprise lets you describe an AI assistant once and download it for Microsoft
+365 Copilot, Teams, Gemini, Claude, or ChatGPT. This folder holds the pages that
+go deeper than the Help page inside the app. Most pages are for people who use
+Agentprise. The ones for developers say so.
 
-### Pages
+### Using Agentprise
 
-- [Formats](formats.md): every file the app opens or downloads, what each one
-  carries, the vendor facts behind them with check dates, and the tests that still
-  need a real account.
-- [Compliance](compliance.md): the security, privacy, and accessibility
-  controls in place, with the evidence behind each and the known gaps.
-- [Implementation plans](implementation-plans/README.md): the phased build plan
-  for the app, for anyone picking up a phase cold.
+The quickest way to learn the app is to open it and choose Create new. The Help
+page inside the app answers the common questions: which download you need, who
+can use your assistant, and where your work is kept.
 
-### Template guides
+- [Formats](formats.md): what each download is for, what each one keeps, and what
+  to do with the file once you have it. The second half of the page holds the
+  technical details for maintainers.
 
-These came with the EFDC repository template and are kept for reference.
+### Trust and privacy
 
-- [Documentation template](doc-template.md): starting structure for a knowledge base page.
-- [Skill authoring examples](skill-examples.md): optional recipes for common project types.
+- [Compliance](compliance.md): what the app does to keep your work private and
+  the page usable by everyone, with the evidence behind each statement. Written
+  for IT staff, privacy reviewers, and anyone who wants to check for themselves.
+
+### For developers
+
+- [Implementation plans](implementation-plans/README.md): how the app was built,
+  in phases, for anyone changing the code.
+- [Documentation template](doc-template.md) and
+  [skill authoring examples](skill-examples.md): guides that came with the
+  repository template, kept for reference.
 
 ### Conclusion
 
-Start with the formats page if you are moving an agent between products, and with
-the implementation plans if you are changing the code.
+Start with the app itself. Come back here when you want to know what a download
+contains, how your work is protected, or how the code is put together.
 
 ### Additional resources
 
-- [Project instructions](../AGENTS.md)
-- [Project preferences](../skills/project-preferences/SKILL.md)
-- [Skills index](../SKILLS.md)
+- [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
+- [Project instructions for contributors](../AGENTS.md)
 
 [Back to project README](../README.md)

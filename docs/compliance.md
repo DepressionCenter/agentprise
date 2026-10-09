@@ -98,9 +98,14 @@ the hidden file input was moved inside the main landmark.
 
 #### Keyboard and reflow checks run in the walkthrough
 
-- "Create new" opens the editor with focus on the name blank. Every blank has an
-  accessible name, because the sentence around it is not a label.
+- "Create new" opens the editor with focus on the name blank. Each blank sits
+  under a visible question that is its label; the example question blanks are
+  named "Example question 1", "Example question 2", and so on.
 - "Add another question" adds a blank and moves focus to it.
+- Confirmations in the status bar ("Copied.", "Started over.") clear themselves
+  after eight seconds. They are announced when they appear, so nothing is lost.
+  Errors, such as a file the app cannot open, stay until the person acts.
+- Links that leave the app open in a new tab and carry hidden text that says so.
 - The product tabs in Details move with Left, Right, Home, and End, with roving
   `tabindex`, and the file list is a set of buttons.
 - Inline link errors appear on blur and clear when fixed.
@@ -177,8 +182,8 @@ borders.
   `tabpanel` roles for the product files, `fieldset` and `legend` for grouped
   controls, a captioned table with header cells, and native `details`, `dialog`,
   and `button` elements.
-- Every input has a visible label or, for the sentence blanks, an `aria-label`
-  that names the field. Hints and errors are joined to their inputs with
+- Every input has a visible label. In the Workspace editor the label is the
+  question above the blank. Hints and errors are joined to their inputs with
   `aria-describedby`, and invalid inputs carry `aria-invalid`.
 - Required fields that are still empty are listed as links beside the download
   buttons, and each link moves focus to the field. The download buttons are
@@ -200,7 +205,7 @@ borders.
 ### Known gaps and checks that still need a person
 
 - A screen reader pass on the main flows (NVDA or JAWS on Windows, VoiceOver on
-  macOS) has not been done. The sentence blanks, the live region, the dialog, and
+  macOS) has not been done. The question blanks, the live region, the dialog, and
   the product tabs are the parts most worth listening to.
 - 200 percent zoom was checked only through the 320 pixel reflow test, not by a
   person zooming a desktop browser.

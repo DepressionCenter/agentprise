@@ -62,6 +62,8 @@ that matter for the build are recorded here so the plan stands on its own.
   (Teams chats `.agent`, Copilot app `.zip`), Gemini (Download skill), Claude
   (Download skill), and ChatGPT (Copy text), with the primary button "Keep a copy
   I can edit later" and the note "A small .zip you can open here any time."
+  After review the Microsoft entry was split in two: "Copilot / Teams Apps" for
+  the app package and "Teams Chat" for the `.agent` file.
 - **Details.** The same shell with Details active, a breadcrumb that includes the
   assistant's name, and a "Back to the simple view" button in the top bar. The
   left card, "What you write", is a plain form: Name, Description, Instructions
@@ -89,11 +91,18 @@ that matter for the build are recorded here so the plan stands on its own.
   is about 1.6:1 against white and fails WCAG 1.4.11 for component boundaries.
   Inputs use `#7F8A96` instead. Card borders stay light because they carry no
   meaning.
-- **The sentence blanks edit the real fields.** The blank after "In one line, it"
-  is the description, the blank after "It should always" is the instructions, and
-  the blanks after "People might open by asking" are the conversation starters.
-  The wording differs from the mockup ("It helps people ___") so that a
-  description imported from a file still reads as a sentence.
+- **Questions instead of a sentence.** The mockup wove the blanks into one
+  sentence ("My assistant is called ___. It helps people ___"). A description or
+  instructions imported from a file rarely fit that grammar, and the first build
+  read badly. The editor now asks four plain questions, each with a blank under
+  it: what it should be called, what it does, how it should behave, and what
+  people might ask it first. Each question is the blank's visible label.
+- **No notice about saved work.** When a draft exists, the editor simply opens
+  with it. Confirmations in the status bar clear themselves after a few seconds;
+  errors stay until the person acts.
+- **Links.** Links that leave the app open in a new tab. The documentation link
+  uses the full GitHub address, because the site is served with `.nojekyll` and
+  Markdown is not turned into web pages.
 - **Dark mode stays.** The mockups show light mode only. The page keeps a dark
   palette that follows the system setting, with the same accent.
 - **The starter list is text.** In the Details form, opening questions are one
@@ -144,7 +153,7 @@ Same as Phase 2, with these changes:
 ### Task 2: workspace start page and editor
 
 - [x] Build the start page: drop zone, "Create new", "Use a sample".
-- [x] Build the sentence editor bound to name, description, instructions, and
+- [x] Build the question editor bound to name, description, instructions, and
       starters, with the "More" disclosure holding the remaining fields.
 - [x] Build the chat preview card and keep it in step with every keystroke.
 - [x] Build the "Where it can go" card with the download buttons, the readiness

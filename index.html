@@ -380,11 +380,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         .editor-grid { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
         .editor-card { flex: 999 1 460px; min-width: 0; padding: 32px 36px 28px; }
         .editor-side { flex: 1 1 320px; min-width: 0; max-width: 380px; display: flex; flex-direction: column; gap: 20px; }
-        .sentence { margin: 0 0 32px; font-size: 1.625rem; line-height: 1.7; max-width: 34ch; }
-        .sentence.secondary { font-size: 1.25rem; max-width: 36ch; }
-        .nowrap { white-space: nowrap; }
+        .prompt-group { margin: 0 0 28px; font-size: 1.375rem; line-height: 1.6; max-width: 36ch; }
+        .prompt { display: block; margin: 0 0 2px; font-weight: 500; }
         /* Outweighs the generic input rule further down, so the blank look wins. */
-        .sentence input.blank, .sentence textarea.blank {
+        .prompt-group input.blank, .prompt-group textarea.blank {
             font: inherit;
             color: var(--accent-text);
             border: 0;
@@ -397,9 +396,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             max-width: 100%;
         }
         .blank::placeholder { color: var(--muted); opacity: 1; }
-        .sentence input.blank-wide, .sentence textarea.blank-wide { display: block; width: 100%; }
-        .sentence textarea.blank { resize: none; overflow-y: auto; line-height: 1.5; margin-top: 8px; max-height: 20rem; }
-        .sentence-actions { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: -16px 0 24px; }
+        .prompt-group input.blank-wide, .prompt-group textarea.blank-wide { display: block; width: 100%; }
+        .prompt-group textarea.blank { resize: none; overflow-y: auto; line-height: 1.5; max-height: 20rem; }
+        .prompt-group .link-button { font-size: 0.9375rem; margin-top: 6px; }
+        .starter-blanks input + input { margin-top: 8px; }
         .more { border-top: 1px solid var(--border-soft); padding-top: 8px; }
         details > summary {
             cursor: pointer;
@@ -422,14 +422,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         .preview-head img { width: 44px; height: 44px; border-radius: 12px; flex: none; object-fit: cover; }
         .preview-name { margin: 0; font-weight: 600; }
         .preview-description { margin: 0; font-size: 0.8125rem; color: var(--muted); }
-        .bubble {
-            margin: 0 0 16px;
-            padding: 10px 12px;
-            background: var(--panel-alt);
-            border-radius: 12px;
-            font-size: 0.875rem;
-            overflow-wrap: anywhere;
-        }
+        /* The welcome message is plain text, as Copilot and the other products show it. */
+        .preview-welcome { margin: 0 0 20px; font-size: 0.875rem; line-height: 1.5; overflow-wrap: anywhere; white-space: pre-line; }
         .preview-starters { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
         .preview-starters li {
             min-height: 44px;
@@ -618,9 +612,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             <nav aria-label="Breadcrumb"><ol class="breadcrumb" id="breadcrumb"></ol></nav>
             <div class="topbar-actions">
                 <a class="button" href="#workspace" id="details-back" hidden>Back to the simple view</a>
-                <a class="github-link" href="https://github.com/DepressionCenter/agentprise">
+                <a class="github-link" href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-4.5 1.4-4.5-2.5-6-3"/><path d="M15 21v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>
-                    GitHub
+                    GitHub<span class="visually-hidden"> (opens in a new tab)</span>
                 </a>
             </div>
         </header>
@@ -674,19 +668,23 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     </div>
                     <div class="editor-grid">
                         <section class="card editor-card" aria-labelledby="sentence-heading">
-                            <h2 id="sentence-heading" class="visually-hidden">Your assistant in a few lines</h2>
-                            <p class="sentence">
-                                My assistant is called <span class="nowrap"><input type="text" id="s-name" class="blank" maxlength="100" aria-label="Name" placeholder="Lab Helper" autocomplete="off">.</span>
-                                In one line, it <input type="text" id="s-description" class="blank blank-wide" maxlength="1000" aria-label="What it does, in one line" placeholder="answers questions about lab procedures and safety" autocomplete="off">
-                                It should always <textarea id="s-instructions" class="blank blank-wide" rows="1" maxlength="8000" aria-label="How it should always behave" placeholder="explain steps in order and point to the safety sheet first"></textarea>
-                            </p>
-                            <div class="sentence-actions">
-                                <button type="button" class="link-button instructions-template">Help me write how it should behave</button>
+                            <h2 id="sentence-heading" class="visually-hidden">About your assistant</h2>
+                            <div class="prompt-group">
+                                <label for="s-name" class="prompt">What should it be called?</label>
+                                <input type="text" id="s-name" class="blank" maxlength="100" placeholder="Lab Helper" autocomplete="off">
                             </div>
-                            <p class="sentence secondary">
-                                People might open by asking <span id="s-starters"></span>
-                            </p>
-                            <div class="sentence-actions">
+                            <div class="prompt-group">
+                                <label for="s-description" class="prompt">What does it do? One sentence is enough.</label>
+                                <input type="text" id="s-description" class="blank blank-wide" maxlength="1000" placeholder="Answers questions about lab procedures and safety." autocomplete="off">
+                            </div>
+                            <div class="prompt-group">
+                                <label for="s-instructions" class="prompt">How should it behave?</label>
+                                <textarea id="s-instructions" class="blank blank-wide" rows="2" maxlength="8000" placeholder="Be friendly and brief. Explain lab steps in order. Point to the safety sheet before any step that uses chemicals."></textarea>
+                                <button type="button" class="link-button instructions-template">Help me write this</button>
+                            </div>
+                            <div class="prompt-group">
+                                <p class="prompt" id="s-starters-label">What might people ask it first?</p>
+                                <div class="starter-blanks" id="s-starters"></div>
                                 <button type="button" class="link-button" id="starter-add">Add another question</button>
                             </div>
                             <details class="more" id="more">
@@ -765,7 +763,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <p class="preview-description" id="preview-description"></p>
                                     </div>
                                 </div>
-                                <p class="bubble" id="preview-welcome" hidden></p>
+                                <p class="preview-welcome" id="preview-welcome" hidden></p>
                                 <ul class="preview-starters" id="preview-starters" aria-label="Opening questions" hidden></ul>
                                 <p class="ask-pill" aria-hidden="true">Ask anything</p>
                                 <p class="preview-note">Preview. Appearance varies by product.</p>
@@ -778,12 +776,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                 </div>
                                 <ul class="destination-list">
                                     <li>
-                                        <span class="destination-name">Microsoft 365 Copilot</span>
-                                        <div class="button-row">
-                                            <button type="button" class="download-button" data-format="msAgent">Teams chats (.agent)</button>
-                                            <button type="button" class="download-button" data-format="teamsZip">Copilot app (.zip)</button>
-                                        </div>
+                                        <span class="destination-name">Copilot / Teams Apps</span>
+                                        <button type="button" class="download-button" data-format="teamsZip">Download app package</button>
                                         <p class="destination-note" id="copilot-loss" hidden></p>
+                                    </li>
+                                    <li>
+                                        <span class="destination-name">Teams Chat</span>
+                                        <button type="button" class="download-button" data-format="msAgent">Download .agent file</button>
                                     </li>
                                     <li>
                                         <span class="destination-name">Gemini</span>
@@ -810,7 +809,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             <section id="view-library" class="view" aria-labelledby="library-heading" hidden>
                 <div class="page-head">
                     <h1 id="library-heading" class="page-title" tabindex="-1">Library</h1>
-                    <p class="page-hint">Ready-made assistants you can try, change, and download. <a href="docs/how-to/add-to-library.md">Add yours</a> by sending a pull request.</p>
+                    <p class="page-hint">Ready-made assistants you can try, change, and download. Want yours listed here? <a href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener">Send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
                 </div>
                 <div class="field">
                     <label for="library-search">Search the library</label>
@@ -865,8 +864,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                         <p class="hint">Pick a product to see its files. Highlighted text comes straight from what you wrote.</p>
                         <div class="product-tabs" role="tablist" aria-label="Product">
                             <button type="button" role="tab" id="ptab-bundle" aria-controls="ppanel" aria-selected="true">Gemini and Claude</button>
-                            <button type="button" role="tab" id="ptab-msAgent" aria-controls="ppanel" aria-selected="false" tabindex="-1">Teams chats</button>
-                            <button type="button" role="tab" id="ptab-teamsZip" aria-controls="ppanel" aria-selected="false" tabindex="-1">Copilot app</button>
+                            <button type="button" role="tab" id="ptab-msAgent" aria-controls="ppanel" aria-selected="false" tabindex="-1">Teams Chat</button>
+                            <button type="button" role="tab" id="ptab-teamsZip" aria-controls="ppanel" aria-selected="false" tabindex="-1">Copilot / Teams Apps</button>
                             <button type="button" role="tab" id="ptab-copy" aria-controls="ppanel" aria-selected="false" tabindex="-1">ChatGPT</button>
                         </div>
                         <div role="tabpanel" id="ppanel" aria-labelledby="ptab-bundle" tabindex="0">
@@ -896,36 +895,43 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             <section id="view-help" class="view" aria-labelledby="help-heading" hidden>
                 <div class="page-head">
                     <h1 id="help-heading" class="page-title" tabindex="-1">Help</h1>
-                    <p class="page-hint">Short answers to the questions people ask most.</p>
+                    <p class="page-hint">Answers to the questions people ask most.</p>
                 </div>
                 <div class="card help-card">
-                    <h2>Why are there so many formats?</h2>
-                    <p>Each AI product stores assistants its own way. Microsoft uses two different files, Gemini and Claude share one open standard, and ChatGPT has no file at all. Agentprise keeps one description and writes each format for you.</p>
-                    <h2>Which one do I need?</h2>
-                    <p>Keep a copy. It is a small .zip that also uploads to Gemini and Claude as a skill. Add the .agent file for Teams chats, or the Copilot app package for the Agents list in the Copilot app. Use Copy text for ChatGPT and Gemini Notebook.</p>
+                    <h2>What is Agentprise?</h2>
+                    <p>A place to describe an AI assistant once and get it in the form each product wants, whether that is Microsoft 365 Copilot, a Teams chat, Gemini, Claude, or ChatGPT. It runs in your browser. Nothing you type is sent anywhere.</p>
+                    <h2>Which download do I need?</h2>
+                    <p>It depends on where people will use the assistant.</p>
+                    <ul>
+                        <li><strong>Copilot / Teams Apps</strong> gives you an app package (.zip) for the Agents list in the Microsoft 365 Copilot app and in Teams.</li>
+                        <li><strong>Teams Chat</strong> gives you a .agent file for a Teams group chat, channel, or meeting. You put the file in a SharePoint library first.</li>
+                        <li><strong>Gemini</strong> and <strong>Claude</strong> each get a skill. It is the same file, and it works in both.</li>
+                        <li><strong>ChatGPT</strong> gets text to copy and paste, because ChatGPT and Gemini Notebook have no file to upload.</li>
+                    </ul>
+                    <p>Not sure yet? Keep a copy. You can come back any time and download it for another product.</p>
+                    <h2>What does "Keep a copy" do?</h2>
+                    <p>It saves a small .zip file to your computer. Drop that file on the Workspace page later to change the assistant or download it for a different product. The same file also works as a skill in Gemini and Claude.</p>
                     <h2>Who can use my assistant?</h2>
-                    <p>In Microsoft 365, people need a Copilot license and permission to any files you linked. Guests cannot use it in Teams chats. Gemini Skills may need a Google AI subscription, and Claude skills need a paid plan.</p>
-                    <h2>How do I update an assistant people already have?</h2>
-                    <p>Drop the file you downloaded before on the Workspace page, make your changes, and download it again. For the Copilot app, keep the same file so the app id stays the same and the upload replaces the old version.</p>
+                    <p>In Microsoft 365, people need a Copilot license and permission to any files you linked. Guests cannot use it in Teams chats. Gemini skills may need a paid Google AI plan, and Claude skills need a paid Claude plan.</p>
+                    <h2>How do I change an assistant I already shared?</h2>
+                    <p>Drop the file you downloaded before on the Workspace page, make your changes, and download it again. For an app package, upload the new file in place of the old one. It keeps the same id, so Copilot treats it as an update.</p>
                     <h2>Why does my assistant not answer in a Teams chat?</h2>
-                    <p>Assistants from the Copilot app do not work in group chats, channels, or meeting chats. Use the .agent file in a SharePoint library and add it to the chat with Copy link for Teams.</p>
-                    <h2>Is anything uploaded anywhere?</h2>
-                    <p>No. Everything happens in your browser. The only thing the page loads from the internet is its own library of ready-made assistants. Your draft is kept in this browser only. Start over on the Workspace page removes it.</p>
-                    <h2>How do I add my assistant to the library?</h2>
-                    <p>Keep a copy, unzip it into the library folder, add one line to the catalog, and open a pull request. The <a href="docs/how-to/add-to-library.md">add to the library</a> page has the steps.</p>
-                    <h2>What is a SKILL.md file?</h2>
-                    <p>It is the open Agent Skills format: a Markdown file with a short header and the instructions underneath. Gemini and Claude both read it. See <a href="https://agentskills.io/specification">the Agent Skills specification</a>. The Details page shows yours.</p>
+                    <p>App packages do not work in group chats, channels, or meeting chats. Use the Teams Chat download instead: put the .agent file in a SharePoint library, choose Copy link for Teams, paste the link in the chat, and choose Add to this chat.</p>
+                    <h2>Where does my work go?</h2>
+                    <p>It stays in your browser, so you can close the page and pick up later on the same computer. Nothing is uploaded. Start over removes it.</p>
+                    <h2>Can other people start from my assistant?</h2>
+                    <p>Yes. The Library holds ready-made assistants anyone can try and change. To add yours, keep a copy and <a href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener">send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
                     <h2>At a glance</h2>
                     <div class="table-wrap">
                         <table>
                             <caption>Which download works in which product</caption>
                             <thead>
-                                <tr><th scope="col">Download</th><th scope="col">Copilot app</th><th scope="col">Teams chats</th><th scope="col">Gemini</th><th scope="col">Claude</th><th scope="col">ChatGPT</th></tr>
+                                <tr><th scope="col">Download</th><th scope="col">Copilot / Teams Apps</th><th scope="col">Teams Chat</th><th scope="col">Gemini</th><th scope="col">Claude</th><th scope="col">ChatGPT</th></tr>
                             </thead>
                             <tbody>
-                                <tr><th scope="row">Keep a copy (.zip)</th><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
-                                <tr><th scope="row">Teams chats (.agent)</th><td>No</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
-                                <tr><th scope="row">Copilot app (.zip)</th><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+                                <tr><th scope="row">App package (.zip)</th><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+                                <tr><th scope="row">.agent file</th><td>No</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+                                <tr><th scope="row">Skill, also "Keep a copy" (.zip)</th><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
                                 <tr><th scope="row">Copy text</th><td>No</td><td>No</td><td>Notebook only</td><td>No</td><td>Yes</td></tr>
                             </tbody>
                         </table>
@@ -934,8 +940,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             </section>
         </main>
         <footer class="site-footer">
-            <p>&copy; 2026 The Regents of the University of Michigan | <a href="https://depressioncenter.org">Eisenberg Family Depression Center</a></p>
-            <p><a href="https://github.com/DepressionCenter/agentprise">Source on GitHub</a> | <a href="docs/README.md">Documentation</a></p>
+            <p>&copy; 2026 The Regents of the University of Michigan | <a href="https://depressioncenter.org" target="_blank" rel="noopener">Eisenberg Family Depression Center<span class="visually-hidden"> (opens in a new tab)</span></a></p>
+            <p><a href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener">Source on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a> | <a href="https://github.com/DepressionCenter/agentprise/tree/main/docs" target="_blank" rel="noopener">Documentation<span class="visually-hidden"> (opens in a new tab)</span></a></p>
         </footer>
     </div>
 </div>
@@ -3236,13 +3242,9 @@ const PRODUCT_NAMES = ["bundle", "msAgent", "teamsZip", "copy"];
 const MIN_STARTER_BLANKS = 2;
 const STARTER_PLACEHOLDERS = ["How do I calibrate the scale?", "What is the cleanup checklist?"];
 const DEFAULT_ICON_COLOR = "#2B4C7E";
-const EDITOR_TITLES = {
-    "new": ["Describe your assistant", "Fill in the lines. The preview updates as you type."],
-    file: ["Your file is open", "Change anything you like, then pick where it should go."],
-    sample: ["", "Change anything you like, then pick where it should go."],
-    draft: ["Your draft is open", "It is saved in this browser. Change anything you like, then pick where it should go."]
-};
-const READINESS_LABELS = { name: "a name", description: "what it does, in one line", instructions: "how it should always behave" };
+// Confirmations in the status bar clear themselves after this long. Errors stay.
+const STATUS_SECONDS = 8;
+const READINESS_LABELS = { name: "a name", description: "what it does", instructions: "how it should behave" };
 const SENTENCE_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions" };
 const DETAILS_FIELDS = { name: "d-name", description: "d-description", instructions: "d-instructions" };
 const PRODUCT_HINTS = {
@@ -3257,10 +3259,10 @@ const AFTER_STEPS = {
         ["In Claude", ["Open Settings, then Capabilities, then Skills.", "Choose Upload and pick this .zip file.", "Turn the skill on. Skills need a paid plan with code execution on."]]
     ],
     msAgent: [
-        ["In SharePoint and Teams", ["Upload the file to a SharePoint document library.", "Open the file's menu and choose Copy link for Teams.", "Paste the link in a Teams chat.", "Choose Add to this chat. People in the chat need a Copilot license and permission to any linked files."]]
+        ["For a Teams chat", ["Upload the file to a SharePoint document library.", "Open the file's menu and choose Copy link for Teams.", "Paste the link in a Teams chat.", "Choose Add to this chat. People in the chat need a Copilot license and permission to any linked files."]]
     ],
     teamsZip: [
-        ["In the Microsoft 365 Copilot app", ["Choose Agents.", "Choose Upload, or Create, then Upload, and pick this .zip file.", "Choose Share to give it to other people. Your admin may need to allow custom agents."]]
+        ["In the Microsoft 365 Copilot app or in Teams", ["Choose Agents.", "Choose Upload, or Create, then Upload, and pick this .zip file.", "Choose Share to give it to other people. Your admin may need to allow custom agents."]]
     ],
     copy: [
         ["In ChatGPT", ["Open Explore GPTs, then Create.", "Open the Configure tab.", "Paste each box into the matching field. Opening questions go in Conversation starters."]],
@@ -3293,13 +3295,13 @@ const ui = {
     agent: createAgent(),
     view: "workspace",
     editorMode: null,
-    sampleName: "",
     starterBlanks: [],
     storageOk: true,
     catalog: [],
     problems: [],
     warnings: [],
     saveTimer: null,
+    statusTimer: null,
     productTimer: null,
     productRender: 0,
     product: "bundle",
@@ -3342,12 +3344,21 @@ function el(tag, attributes, children) {
     return node;
 }
 
-/** Puts a message in the polite live region. Empty text clears it. */
-function announce(message) {
+/**
+ * Puts a message in the polite live region. Empty text clears it. A plain
+ * confirmation clears itself after a few seconds; pass keep for an error that
+ * should stay until the person acts.
+ */
+function announce(message, keep) {
     const status = $("status");
+    clearTimeout(ui.statusTimer);
     clearChildren(status);
-    if (message) {
-        status.appendChild(el("p", { text: message }));
+    if (!message) {
+        return;
+    }
+    status.appendChild(el("p", { text: message }));
+    if (!keep) {
+        ui.statusTimer = setTimeout(function () { clearChildren(status); }, STATUS_SECONDS * 1000);
     }
 }
 
@@ -3461,9 +3472,6 @@ function renderWorkspace() {
         return;
     }
     moveExtras($("extras-simple"));
-    const title = EDITOR_TITLES[ui.editorMode];
-    setText($("editor-heading"), ui.editorMode === "sample" ? ui.sampleName + ", from the library" : title[0]);
-    setText($("editor-hint"), title[1]);
     renderForm();
 }
 
@@ -3491,6 +3499,7 @@ function renderBreadcrumb() {
 
 function setupNavigation() {
     window.addEventListener("popstate", function () {
+        announce("");
         showView(viewFromHash(location.hash), false);
     });
     document.addEventListener("click", function (event) {
@@ -3501,6 +3510,7 @@ function setupNavigation() {
         const target = link.getAttribute("href").slice(1);
         if (VIEW_NAMES.indexOf(target) >= 0 || LEGACY_HASHES[target]) {
             event.preventDefault();
+            announce("");
             showView(viewFromHash(target), true);
         }
     });
@@ -3717,12 +3727,12 @@ async function openFile(file) {
     try {
         bytes = await readFileBytes(file);
     } catch (error) {
-        announce(error.message);
+        announce(error.message, true);
         return;
     }
     const result = await importBytes(file.name, bytes);
     if (result.error) {
-        announce(result.error);
+        announce(result.error, true);
         return;
     }
     confirmReplace("Opening " + file.name + " will replace the assistant you are working on.", function () {
@@ -3819,16 +3829,13 @@ function renderSentenceStarters(focusIndex) {
     const box = $("s-starters");
     clearChildren(box);
     ui.starterBlanks.forEach(function (text, index) {
-        if (index > 0) {
-            box.appendChild(document.createTextNode(" or "));
-        }
         const input = el("input", {
             type: "text",
             id: "s-starter-" + index,
             className: "blank blank-wide",
             maxlength: String(LIMITS.starterText),
             autocomplete: "off",
-            "aria-label": "Opening question " + (index + 1),
+            "aria-label": "Example question " + (index + 1),
             placeholder: STARTER_PLACEHOLDERS[index] || ""
         });
         input.value = text;
@@ -3898,7 +3905,7 @@ function renderCopilotLoss() {
     const note = $("copilot-loss");
     const items = teamsLossItems(ui.agent);
     note.hidden = items.length === 0;
-    setText(note, items.length ? "The Copilot app package leaves out " + items.join(" and ") + "." : "");
+    setText(note, items.length ? "The app package leaves out " + items.join(" and ") + "." : "");
 }
 
 /** Recomputes everything that follows from the agent: the preview, readiness, counters, and files. */
@@ -4127,7 +4134,7 @@ async function runDownload(format) {
             announce("Downloaded " + result.fileName + ".");
         }
     } catch (error) {
-        announce("The download could not be made: " + error.message);
+        announce("The download could not be made: " + error.message, true);
     }
 }
 
@@ -4138,7 +4145,7 @@ async function copyToClipboard(area) {
     } catch (error) {
         area.focus();
         area.select();
-        announce("Copying is blocked here. The text is selected, so press Ctrl+C or Command+C to copy it.");
+        announce("Copying is blocked here. The text is selected, so press Ctrl+C or Command+C to copy it.", true);
     }
 }
 
@@ -4515,7 +4522,6 @@ async function renderLibrary() {
                 const agent = await loadLibraryAgent(entry);
                 confirmReplace("Loading " + entry.name + " will replace the assistant you are working on.", function () {
                     ui.editorMode = "sample";
-                    ui.sampleName = entry.name;
                     setAgent(normalizeAgent(JSON.parse(JSON.stringify(Object.assign({}, agent, { icon: null })))).agent);
                     ui.agent.icon = agent.icon ? { bytes: copyBytes(agent.icon.bytes), mime: "image/png" } : null;
                     renderForm();
@@ -4524,7 +4530,7 @@ async function renderLibrary() {
                     showView(then, true);
                 });
             } catch (error) {
-                announce(error.message);
+                announce(error.message, true);
             }
         };
         tryButton.addEventListener("click", function () { load("workspace"); });

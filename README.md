@@ -29,23 +29,34 @@ Agentprise makes AI agents and skills portable across Copilot, Gemini, Claude, a
 
 <!-- ![Preview Image](images/Repo-preview.png) -->
 
-<!-- < List of key features, or a few sentences about what makes this project unique >. -->
+Describe your assistant once: what it is called, what it does, how it should behave, and a few questions people might ask it first. Agentprise then gives you the file each product wants: an app package for the Microsoft 365 Copilot app and Teams, a `.agent` file for Teams chats, a skill for Gemini and Claude, or text to paste into ChatGPT. It works in your web browser, needs no account, and sends nothing you type anywhere. You can also open a file you already have and move it to another product, or start from a ready-made assistant in the library.
 
 
 ## Quick Start Guide
-+ < Short compile/run instructions, without too much detail >
++ **Use it online.** Open [code.depressioncenter.org/agentprise](https://code.depressioncenter.org/agentprise/), choose **Create new**, and answer the questions. There is nothing to install and no account to make.
++ **Run it on your own computer.** Download this repository (the green **Code** button, then **Download ZIP**) and unzip it. Then start the included ZippyServe web server:
+  + Windows: right-click `run-windows.ps1` and choose **Run with PowerShell**.
+  + Mac: double-click `run-mac.command`.
+  + Linux: run `./run-linux.sh` in a terminal.
+
+  Your browser opens the app at `http://localhost:8010`. Close the server window when you are done.
++ **Open the page directly.** You can also open `index.html` from the unzipped folder, with no server at all. Everything works; the Library shows only the assistants built into the page.
 
 
 
 ## Documentation
-+ **Complete documentation:** See the [`/docs`](./docs) folder in this repository for setup guides, usage examples, architecture, and technical details.
++ **Complete documentation:** See the [`/docs`](./docs) folder in this repository for which download goes where, how your work stays private, and the technical details.
 + **Overview for researchers and developers:** Visit the [Health Research Resource Library](https://michmed.org/efdc-kb) for a high-level summary, key features, and important assumptions.
 
 
 
 
 ## Additional Resources
-+ < Links to study website, related projects, etc. >
++ [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
++ [Agent Skills standard](https://agentskills.io/specification): the open `SKILL.md` format that Gemini and Claude read.
++ [Agents for Microsoft 365 Copilot](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agents-overview): Microsoft's guide to what agents are and where they run.
++ [Declarative agents for Microsoft 365 Copilot](https://learn.microsoft.com/microsoft-365/copilot/extensibility/overview-declarative-agent): the kind of agent Agentprise makes.
++ [ZippyServe](https://github.com/DepressionCenter/ZippyServe): the small web server included for running the app on your own computer.
 
 
 
@@ -74,7 +85,7 @@ If you need assistance identifying a contact person, email the Mobile Technologi
 
 
 #### This work is based in part on the following projects, libraries and/or studies:
-+ None
++ [ZippyServe](https://github.com/DepressionCenter/ZippyServe), the Eisenberg Family Depression Center's portable web server, included in `bin/` with its run scripts so the app can run locally.
 
 
 
