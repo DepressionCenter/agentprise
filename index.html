@@ -1,10 +1,13 @@
 <!--
-This file is part of Agentprise™
+This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
 Last Modified: 2026-10-09
-Summary: Redirects visitors to the Agentprise repository on GitHub.
+Summary: The whole Agentprise web app in one file. Lets a person describe an AI
+         assistant once, then download it as an Agent Skill bundle (Gemini and
+         Claude), a Microsoft 365 Copilot .agent file, a Teams app package, or
+         copy-ready text for ChatGPT and Gemini Notebook. Nothing leaves the browser.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -24,14 +27,926 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Zero-second delay: WCAG treats an immediate redirect as acceptable, but a timed one as a failure -->
-    <meta http-equiv="refresh" content="0; url=https://github.com/DepressionCenter/agentprise">
-    <link rel="canonical" href="https://github.com/DepressionCenter/agentprise">
+    <meta name="description" content="Make AI agents portable across Copilot, Gemini, Claude, and ChatGPT.">
     <title>Agentprise</title>
 </head>
 <body>
-<h1>Agentprise</h1>
-<!-- Fallback for browsers that block or ignore meta refresh -->
-<p>This page has moved to <a href="https://github.com/DepressionCenter/agentprise">the Agentprise repository on GitHub</a>.</p>
+<main id="main">
+    <h1>Agentprise</h1>
+    <p>Make AI agents portable across Copilot, Gemini, Claude, and ChatGPT.</p>
+</main>
+<script>
+"use strict";
+
+// ### Configuration ###
+// Limits come from the strictest vendor that must accept the value. Microsoft's
+// declarative agent schema caps name at 100, description at 1,000, instructions at
+// 8,000, and conversation starters at 12. The Agent Skills specification caps the
+// skill name at 64 characters. ZIP caps guard against decompression bombs.
+const LIMITS = Object.freeze({
+    name: 100,
+    skillName: 64,
+    description: 1000,
+    instructions: 8000,
+    welcome: 1000,
+    starters: 12,
+    starterText: 500,
+    sharepointLinks: 20,
+    sharepointLinkText: 2048,
+    creatorText: 2048,
+    copyrightText: 500,
+    licenseText: 200,
+    zipEntries: 200,
+    zipEntryBytes: 10 * 1024 * 1024,
+    zipTotalBytes: 50 * 1024 * 1024,
+    iconBytes: 2 * 1024 * 1024
+});
+
+const APP_VERSION = "1";
+const DEFAULT_LICENSE = "GPL-3.0-or-later";
+
+// License choices offered in the form. The URL is written into LICENSE.txt for
+// every choice except the default, which gets the full GPL text.
+const LICENSE_CHOICES = Object.freeze([
+    { id: "GPL-3.0-or-later", label: "GNU GPL v3 or later (default)", url: "https://www.gnu.org/licenses/gpl-3.0.html" },
+    { id: "MIT", label: "MIT", url: "https://opensource.org/license/mit" },
+    { id: "Apache-2.0", label: "Apache 2.0", url: "https://www.apache.org/licenses/LICENSE-2.0" },
+    { id: "CC-BY-4.0", label: "Creative Commons Attribution 4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
+    { id: "CC0-1.0", label: "Creative Commons Zero (public domain)", url: "https://creativecommons.org/publicdomain/zero/1.0/" },
+    { id: "Proprietary", label: "All rights reserved", url: "" }
+]);
+
+// The project notice carried in exported JSON files that tolerate an extra key.
+const AGENTPRISE_NOTICE = "This file was made with Agentprise (https://github.com/DepressionCenter/agentprise), free software under the GNU General Public License v3.0 or later. The agent it describes belongs to its creator and carries the license named in its own license field.";
+
+// Microsoft format constants. The manifest version and valid domains match what the
+// Copilot app itself exported on 2026-10-09, so sideloading is known to accept them.
+const MS_AGENT_SCHEMA_VERSION = "0.2.0";
+const TEAMS_MANIFEST_VERSION = "1.28";
+const TEAMS_MANIFEST_SCHEMA = "https://developer.microsoft.com/en-us/json-schemas/teams/v1.28/MicrosoftTeams.schema.json";
+const TEAMS_VALID_DOMAINS = Object.freeze([
+    "*.botframework.com",
+    "*.*.botframework.com",
+    "copilotstudio.microsoft.com",
+    "copilotstudio.preview.microsoft.com"
+]);
+const TEAMS_ACCENT_COLOR = "#E0F6FC";
+const TEAMS_SHORT_NAME_MAX = 30;
+const TEAMS_SHORT_DESCRIPTION_MAX = 80;
+const TEAMS_DEVELOPER_NAME_MAX = 32;
+const DECLARATIVE_AGENT_VERSION = "v1.8";
+
+// The Teams manifest requires a developer name and three https links. When the
+// creator leaves them blank, these reserved example.com addresses stand in, and the
+// export reports a warning so the person knows to fill them in.
+const CREATOR_PLACEHOLDERS = Object.freeze({
+    name: "Agent creator",
+    website: "https://example.com",
+    privacy: "https://example.com/privacy",
+    terms: "https://example.com/terms"
+});
+
+// Copilot capability names as the declarative agent schema spells them, in the
+// order the Copilot app writes them.
+const COPILOT_CAPABILITIES = Object.freeze([
+    { key: "webSearch", name: "WebSearch" },
+    { key: "teamsMessages", name: "TeamsMessages" },
+    { key: "meetings", name: "Meetings" },
+    { key: "codeInterpreter", name: "CodeInterpreter" },
+    { key: "imageGeneration", name: "GraphicArt" }
+]);
+
+// Metadata keys used inside SKILL.md frontmatter. Values are always strings because
+// the Agent Skills specification defines metadata as a string-to-string map.
+const META = Object.freeze({
+    version: "agentprise-version",
+    displayName: "display-name",
+    welcome: "welcome",
+    starters: "starters",
+    sharepoint: "sharepoint-sources",
+    webSearch: "copilot-web-search",
+    teamsMessages: "copilot-teams-messages",
+    meetings: "copilot-meetings",
+    codeInterpreter: "copilot-code-interpreter",
+    imageGeneration: "copilot-image-generation",
+    preferMyFiles: "copilot-prefer-my-files",
+    appId: "copilot-app-id",
+    creatorName: "creator-name",
+    creatorWebsite: "creator-website",
+    creatorPrivacy: "creator-privacy",
+    creatorTerms: "creator-terms",
+    copyright: "copyright"
+});
+
+const PNG_SIGNATURE = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+const PNG_DATA_URI_PREFIX = "data:image/png;base64,";
+
+/*__GPL_TEXT__*/
+
+// ### Shared helpers ###
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder("utf-8", { fatal: false });
+
+/** Encodes a string as UTF-8 bytes. */
+function toBytes(text) {
+    return textEncoder.encode(text);
+}
+
+/** Decodes UTF-8 bytes to a string, replacing invalid sequences. */
+function fromBytes(bytes) {
+    return textDecoder.decode(bytes);
+}
+
+/** Returns true when the value is a plain object (not null, not an array). */
+function isPlainObject(value) {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Coerces an untrusted value to a trimmed string no longer than max characters.
+ * Non-strings become empty. A truncation adds a notice naming the field.
+ */
+function asText(value, max, field, notices) {
+    if (typeof value !== "string") {
+        return "";
+    }
+    let text = value.replace(/\r\n?/g, "\n").trim();
+    if (text.length > max) {
+        text = text.slice(0, max).trim();
+        if (notices) {
+            notices.push("The " + field + " was longer than " + max + " characters and was shortened.");
+        }
+    }
+    return text;
+}
+
+/** Coerces an untrusted value to a boolean. Strings "true" and "false" are accepted. */
+function asBool(value, fallback) {
+    if (typeof value === "boolean") {
+        return value;
+    }
+    if (value === "true") {
+        return true;
+    }
+    if (value === "false") {
+        return false;
+    }
+    return fallback;
+}
+
+/** Returns true for an absolute https URL with no spaces. */
+function isHttpsUrl(value) {
+    return typeof value === "string" && /^https:\/\/[^\s]+$/i.test(value);
+}
+
+/** Converts bytes to base64 without building one huge argument list. */
+function bytesToBase64(bytes) {
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+}
+
+/** Converts base64 to bytes. Returns null when the text is not valid base64. */
+function base64ToBytes(text) {
+    try {
+        const binary = atob(text);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    } catch (error) {
+        return null;
+    }
+}
+
+/** Returns a copy of bytes so callers never share buffers with untrusted input. */
+function copyBytes(bytes) {
+    return new Uint8Array(bytes);
+}
+
+/** Returns true when two byte arrays have the same length and content. */
+function bytesEqual(a, b) {
+    if (!a || !b || a.length !== b.length) {
+        return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Builds a file name safe for every desktop operating system from a display
+ * name: letters, digits, spaces, dots, hyphens, and underscores only.
+ */
+function safeFileName(name, extension) {
+    let base = String(name || "").replace(/[^A-Za-z0-9 ._-]+/g, " ").replace(/\s+/g, " ").trim();
+    base = base.replace(/^[. ]+|[. ]+$/g, "");
+    if (!base) {
+        base = "agent";
+    }
+    return base.slice(0, 80) + extension;
+}
+
+/** Generates a random UUID with the platform CSPRNG. */
+function newUuid() {
+    return crypto.randomUUID();
+}
+
+// ### Agent model ###
+
+/**
+ * Creates an agent with every field at its default.
+ * @returns {object} a fresh agent
+ */
+function createAgent() {
+    return {
+        version: APP_VERSION,
+        name: "",
+        description: "",
+        welcome: "",
+        instructions: "",
+        starters: [],
+        icon: null,
+        sharepointLinks: [],
+        copilot: {
+            webSearch: true,
+            teamsMessages: true,
+            meetings: true,
+            codeInterpreter: true,
+            imageGeneration: true,
+            preferMyFiles: false,
+            appId: ""
+        },
+        creator: { name: "", website: "", privacy: "", terms: "" },
+        copyright: "",
+        license: DEFAULT_LICENSE
+    };
+}
+
+/**
+ * Derives the Agent Skills name from a display name: lowercase letters, digits,
+ * and single hyphens, 1 to 64 characters, never starting or ending with a hyphen.
+ * Accented letters lose their accents so "Cafe" and "Caf\u00e9" map to the same name.
+ * @param {string} displayName
+ * @returns {string} the skill name, or "agent" when nothing usable remains
+ */
+function toSkillName(displayName) {
+    let name = String(displayName || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+    name = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    name = name.slice(0, LIMITS.skillName).replace(/-+$/g, "");
+    return name || "agent";
+}
+
+/**
+ * Copies an untrusted agent-shaped value into a clean agent, trimming text,
+ * enforcing every limit, and dropping empty list items. Use it on anything read
+ * from a file or from storage before it reaches the form.
+ * @param {object} input any value
+ * @returns {{agent: object, notices: string[]}} the clean agent and plain-language notes
+ */
+function normalizeAgent(input) {
+    const notices = [];
+    const agent = createAgent();
+    const source = isPlainObject(input) ? input : {};
+
+    agent.name = asText(source.name, LIMITS.name, "name", notices);
+    agent.description = asText(source.description, LIMITS.description, "description", notices);
+    agent.welcome = asText(source.welcome, LIMITS.welcome, "welcome message", notices);
+    agent.instructions = asText(source.instructions, LIMITS.instructions, "instructions", notices);
+
+    const starters = Array.isArray(source.starters) ? source.starters : [];
+    agent.starters = starters
+        .map(function (item) { return asText(item, LIMITS.starterText, "conversation starter", notices); })
+        .filter(function (item) { return item.length > 0; });
+    if (agent.starters.length > LIMITS.starters) {
+        notices.push("Only the first " + LIMITS.starters + " conversation starters were kept.");
+        agent.starters = agent.starters.slice(0, LIMITS.starters);
+    }
+
+    const links = Array.isArray(source.sharepointLinks) ? source.sharepointLinks : [];
+    let droppedLinks = 0;
+    agent.sharepointLinks = links
+        .map(function (item) { return asText(item, LIMITS.sharepointLinkText, "SharePoint link", notices); })
+        .filter(function (item) {
+            if (!item) {
+                return false;
+            }
+            if (!isHttpsUrl(item)) {
+                droppedLinks += 1;
+                return false;
+            }
+            return true;
+        });
+    if (droppedLinks > 0) {
+        notices.push(droppedLinks + " SharePoint link(s) were removed because they were not https addresses.");
+    }
+    if (agent.sharepointLinks.length > LIMITS.sharepointLinks) {
+        notices.push("Only the first " + LIMITS.sharepointLinks + " SharePoint links were kept.");
+        agent.sharepointLinks = agent.sharepointLinks.slice(0, LIMITS.sharepointLinks);
+    }
+
+    if (isPlainObject(source.icon) && source.icon.bytes instanceof Uint8Array && source.icon.bytes.length > 0) {
+        if (source.icon.bytes.length > LIMITS.iconBytes) {
+            notices.push("The icon was larger than " + Math.round(LIMITS.iconBytes / 1024 / 1024) + " MB and was removed.");
+        } else if (!pngDimensions(source.icon.bytes)) {
+            notices.push("The icon was not a PNG image and was removed.");
+        } else {
+            agent.icon = { bytes: copyBytes(source.icon.bytes), mime: "image/png" };
+        }
+    }
+
+    const copilot = isPlainObject(source.copilot) ? source.copilot : {};
+    COPILOT_CAPABILITIES.forEach(function (cap) {
+        agent.copilot[cap.key] = asBool(copilot[cap.key], agent.copilot[cap.key]);
+    });
+    agent.copilot.preferMyFiles = asBool(copilot.preferMyFiles, false);
+    const appId = asText(copilot.appId, 64, "app id", notices);
+    agent.copilot.appId = /^[0-9a-f-]{36}$/i.test(appId) ? appId.toLowerCase() : "";
+
+    const creator = isPlainObject(source.creator) ? source.creator : {};
+    agent.creator.name = asText(creator.name, LIMITS.creatorText, "creator name", notices);
+    ["website", "privacy", "terms"].forEach(function (key) {
+        const value = asText(creator[key], LIMITS.creatorText, "creator " + key + " link", notices);
+        if (value && !isHttpsUrl(value)) {
+            notices.push("The creator " + key + " link was removed because it was not an https address.");
+            agent.creator[key] = "";
+        } else {
+            agent.creator[key] = value;
+        }
+    });
+
+    agent.copyright = asText(source.copyright, LIMITS.copyrightText, "copyright line", notices);
+    agent.license = asText(source.license, LIMITS.licenseText, "license", notices) || DEFAULT_LICENSE;
+
+    return { agent: agent, notices: notices };
+}
+
+/**
+ * Checks an agent for problems that block a download and warnings that only
+ * affect some formats. Messages are plain English for the Check screen.
+ * @param {object} agent a normalized agent
+ * @returns {{problems: Array<{field: string, message: string}>, warnings: Array<{field: string, message: string}>}}
+ */
+function validateAgent(agent) {
+    const problems = [];
+    const warnings = [];
+    if (!agent.name) {
+        problems.push({ field: "name", message: "Give your agent a name." });
+    }
+    if (!agent.description) {
+        problems.push({ field: "description", message: "Add a short description. Every product requires one." });
+    }
+    if (!agent.instructions) {
+        problems.push({ field: "instructions", message: "Add instructions so the agent knows how to behave." });
+    }
+    if (agent.welcome) {
+        warnings.push({ field: "welcome", message: "The Copilot app package can't carry a welcome message. The SharePoint file and the complete copy keep it." });
+    }
+    if (agent.sharepointLinks.length > 0) {
+        warnings.push({ field: "sharepointLinks", message: "SharePoint knowledge only works in Microsoft 365 Copilot. Other products ignore it." });
+    }
+    const missingCreator = ["name", "website", "privacy", "terms"].filter(function (key) { return !agent.creator[key]; });
+    if (missingCreator.length > 0) {
+        warnings.push({ field: "creator", message: "The Copilot app package needs a creator name and three links. Placeholder values will be used for the ones you left blank." });
+    }
+    if (!agent.icon) {
+        warnings.push({ field: "icon", message: "No icon yet. Downloads will use the default icon." });
+    }
+    return { problems: problems, warnings: warnings };
+}
+
+// ### YAML frontmatter (subset) ###
+// Only the syntax the bundle uses is supported: key: value scalars, quoted
+// scalars, one nested mapping level, and block scalars written with | or |-.
+// Everything else produces a warning and is skipped. Values are always strings.
+
+/** Removes surrounding quotes and resolves the escapes the writer produces. */
+function parseYamlScalar(raw) {
+    const text = raw.trim();
+    if (text.startsWith("\"") && text.endsWith("\"") && text.length >= 2) {
+        return text.slice(1, -1).replace(/\\(["\\nrt])/g, function (match, code) {
+            if (code === "n") { return "\n"; }
+            if (code === "r") { return "\r"; }
+            if (code === "t") { return "\t"; }
+            return code;
+        });
+    }
+    if (text.startsWith("'") && text.endsWith("'") && text.length >= 2) {
+        return text.slice(1, -1).replace(/''/g, "'");
+    }
+    // A hash starts a comment only when preceded by whitespace.
+    return text.replace(/\s+#.*$/, "").trim();
+}
+
+/** Returns the number of leading spaces on a line. */
+function indentOf(line) {
+    return line.length - line.replace(/^ +/, "").length;
+}
+
+/**
+ * Splits text into frontmatter data and body. Windows line endings are accepted.
+ * @param {string} text a SKILL.md file
+ * @returns {{data: object, body: string, warnings: string[]}}
+ */
+function parseFrontmatter(text) {
+    const warnings = [];
+    const normalized = String(text || "").replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+    const lines = normalized.split("\n");
+    if (lines[0] !== "---") {
+        return { data: {}, body: normalized, warnings: warnings };
+    }
+    let end = -1;
+    for (let i = 1; i < lines.length; i++) {
+        if (lines[i] === "---" || lines[i] === "...") {
+            end = i;
+            break;
+        }
+    }
+    if (end < 0) {
+        warnings.push("The frontmatter never closed, so the whole file was treated as instructions.");
+        return { data: {}, body: normalized, warnings: warnings };
+    }
+    const data = {};
+    const headerLines = lines.slice(1, end);
+    let i = 0;
+
+    function readBlock(keyIndent, keepTrailing) {
+        const collected = [];
+        const contentIndent = keyIndent + 2;
+        while (i < headerLines.length) {
+            const line = headerLines[i];
+            if (line.trim() === "") {
+                collected.push("");
+                i += 1;
+                continue;
+            }
+            if (indentOf(line) < contentIndent) {
+                break;
+            }
+            collected.push(line.slice(contentIndent));
+            i += 1;
+        }
+        // Blank lines at the end belong to the chomping rule, not the content.
+        while (collected.length > 0 && collected[collected.length - 1] === "") {
+            collected.pop();
+        }
+        const value = collected.join("\n");
+        return keepTrailing ? value + "\n" : value;
+    }
+
+    function readEntry(line, indent, target) {
+        const match = line.slice(indent).match(/^([A-Za-z0-9_.-]+):(?:\s(.*))?$/);
+        if (!match) {
+            warnings.push("Skipped a frontmatter line that is not a key and value: " + line.trim().slice(0, 60));
+            i += 1;
+            return;
+        }
+        const key = match[1];
+        const rest = (match[2] || "").trim();
+        i += 1;
+        if (rest === "|" || rest === "|-" || rest === "|+") {
+            target[key] = readBlock(indent, rest !== "|-");
+            return;
+        }
+        if (rest === ">" || rest === ">-") {
+            warnings.push("Folded text for \"" + key + "\" is not supported and was skipped.");
+            readBlock(indent, false);
+            return;
+        }
+        if (rest === "" && indent === 0) {
+            const nested = {};
+            while (i < headerLines.length) {
+                const next = headerLines[i];
+                if (next.trim() === "" || next.trim().startsWith("#")) {
+                    i += 1;
+                    continue;
+                }
+                const nextIndent = indentOf(next);
+                if (nextIndent === 0) {
+                    break;
+                }
+                if (next.trim().startsWith("- ")) {
+                    warnings.push("Lists under \"" + key + "\" are not supported and were skipped.");
+                    i += 1;
+                    continue;
+                }
+                readEntry(next, nextIndent, nested);
+            }
+            target[key] = nested;
+            return;
+        }
+        target[key] = parseYamlScalar(rest);
+    }
+
+    while (i < headerLines.length) {
+        const line = headerLines[i];
+        if (line.trim() === "" || line.trim().startsWith("#")) {
+            i += 1;
+            continue;
+        }
+        const indent = indentOf(line);
+        if (indent !== 0) {
+            warnings.push("Skipped an indented frontmatter line with no parent key.");
+            i += 1;
+            continue;
+        }
+        if (line.trim().startsWith("- ")) {
+            warnings.push("Top-level lists in frontmatter are not supported and were skipped.");
+            i += 1;
+            continue;
+        }
+        readEntry(line, 0, data);
+    }
+    const body = lines.slice(end + 1).join("\n");
+    return { data: data, body: body, warnings: warnings };
+}
+
+/** Quotes a scalar when YAML would otherwise misread it. */
+function formatYamlScalar(value) {
+    const text = String(value);
+    if (text === "") {
+        return "\"\"";
+    }
+    const looksSpecial = /^[-?:,\[\]{}#&*!|>'"%@`]/.test(text) ||
+        /: |\s#|#/.test(text) ||
+        /^\s|\s$/.test(text) ||
+        /^(true|false|yes|no|on|off|null|~)$/i.test(text) ||
+        /^[-+]?(\d[\d_]*\.?\d*([eE][-+]?\d+)?|\.\d+|0x[0-9a-fA-F]+|0o[0-7]+)$/.test(text) ||
+        /^\d{4}-\d{2}-\d{2}/.test(text) ||
+        text.endsWith(":");
+    if (!looksSpecial) {
+        return text;
+    }
+    return "\"" + text.replace(/\\/g, "\\\\").replace(/"/g, "\\\"").replace(/\t/g, "\\t").replace(/\r/g, "\\r") + "\"";
+}
+
+/** Writes one key, choosing a block scalar for multi-line values. */
+function formatYamlEntry(key, value, indent) {
+    const pad = " ".repeat(indent);
+    if (isPlainObject(value)) {
+        const lines = [pad + key + ":"];
+        Object.keys(value).forEach(function (childKey) {
+            lines.push(formatYamlEntry(childKey, value[childKey], indent + 2));
+        });
+        return lines.join("\n");
+    }
+    const text = String(value === null || value === undefined ? "" : value);
+    if (text.indexOf("\n") >= 0) {
+        const keepTrailing = text.endsWith("\n");
+        const content = keepTrailing ? text.slice(0, -1) : text;
+        const blockLines = content.split("\n").map(function (line) {
+            return line === "" ? "" : pad + "  " + line;
+        });
+        return pad + key + ": " + (keepTrailing ? "|" : "|-") + "\n" + blockLines.join("\n");
+    }
+    return pad + key + ": " + formatYamlScalar(text);
+}
+
+/**
+ * Writes frontmatter and a body as one Markdown document that the parser above
+ * and standard YAML readers both accept.
+ * @param {object} data string values or one level of nested string values
+ * @param {string} body Markdown body
+ * @returns {string}
+ */
+function stringifyFrontmatter(data, body) {
+    const lines = ["---"];
+    Object.keys(data).forEach(function (key) {
+        lines.push(formatYamlEntry(key, data[key], 0));
+    });
+    lines.push("---");
+    return lines.join("\n") + "\n" + String(body || "");
+}
+
+// ### PNG header check ###
+
+/**
+ * Reads the width and height from a PNG header without decoding the image.
+ * @param {Uint8Array} bytes
+ * @returns {{width: number, height: number}|null} null when the bytes are not a PNG
+ */
+function pngDimensions(bytes) {
+    if (!(bytes instanceof Uint8Array) || bytes.length < 24) {
+        return null;
+    }
+    for (let i = 0; i < PNG_SIGNATURE.length; i++) {
+        if (bytes[i] !== PNG_SIGNATURE[i]) {
+            return null;
+        }
+    }
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    if (fromBytes(bytes.subarray(12, 16)) !== "IHDR") {
+        return null;
+    }
+    const width = view.getUint32(16, false);
+    const height = view.getUint32(20, false);
+    if (width === 0 || height === 0) {
+        return null;
+    }
+    return { width: width, height: height };
+}
+
+// ### ZIP reader and writer ###
+// The writer stores entries uncompressed. The reader accepts stored and deflated
+// entries, treats every header field as untrusted, and refuses archives that
+// could escape a folder or exhaust memory.
+
+/** Error type for every ZIP problem the reader reports. */
+class ZipError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "ZipError";
+    }
+}
+
+const CRC_TABLE = (function () {
+    const table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) {
+            c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        }
+        table[n] = c >>> 0;
+    }
+    return table;
+})();
+
+/** Computes the CRC-32 of a byte array as an unsigned 32-bit number. */
+function crc32(bytes) {
+    let crc = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) {
+        crc = CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+/** Returns the DOS time and date fields for the current moment. */
+function dosDateTime() {
+    const now = new Date();
+    const year = Math.max(1980, now.getFullYear());
+    const time = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+    const date = ((year - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+    return { time: time, date: date };
+}
+
+/**
+ * Builds a ZIP archive with the store method.
+ * @param {Array<{name: string, bytes: Uint8Array}>} entries file names use forward slashes
+ * @returns {Uint8Array}
+ */
+function zipWrite(entries) {
+    const stamp = dosDateTime();
+    const localParts = [];
+    const centralParts = [];
+    let offset = 0;
+    entries.forEach(function (entry) {
+        const nameBytes = toBytes(entry.name);
+        const data = entry.bytes instanceof Uint8Array ? entry.bytes : toBytes(String(entry.bytes));
+        const crc = crc32(data);
+        const local = new Uint8Array(30 + nameBytes.length);
+        const lv = new DataView(local.buffer);
+        lv.setUint32(0, 0x04034B50, true);
+        lv.setUint16(4, 20, true);
+        lv.setUint16(6, 0x0800, true);
+        lv.setUint16(8, 0, true);
+        lv.setUint16(10, stamp.time, true);
+        lv.setUint16(12, stamp.date, true);
+        lv.setUint32(14, crc, true);
+        lv.setUint32(18, data.length, true);
+        lv.setUint32(22, data.length, true);
+        lv.setUint16(26, nameBytes.length, true);
+        lv.setUint16(28, 0, true);
+        local.set(nameBytes, 30);
+        localParts.push(local, data);
+
+        const central = new Uint8Array(46 + nameBytes.length);
+        const cv = new DataView(central.buffer);
+        cv.setUint32(0, 0x02014B50, true);
+        cv.setUint16(4, 20, true);
+        cv.setUint16(6, 20, true);
+        cv.setUint16(8, 0x0800, true);
+        cv.setUint16(10, 0, true);
+        cv.setUint16(12, stamp.time, true);
+        cv.setUint16(14, stamp.date, true);
+        cv.setUint32(16, crc, true);
+        cv.setUint32(20, data.length, true);
+        cv.setUint32(24, data.length, true);
+        cv.setUint16(28, nameBytes.length, true);
+        cv.setUint16(30, 0, true);
+        cv.setUint16(32, 0, true);
+        cv.setUint16(34, 0, true);
+        cv.setUint16(36, 0, true);
+        cv.setUint32(38, 0, true);
+        cv.setUint32(42, offset, true);
+        central.set(nameBytes, 46);
+        centralParts.push(central);
+        offset += local.length + data.length;
+    });
+    const centralSize = centralParts.reduce(function (sum, part) { return sum + part.length; }, 0);
+    const end = new Uint8Array(22);
+    const ev = new DataView(end.buffer);
+    ev.setUint32(0, 0x06054B50, true);
+    ev.setUint16(4, 0, true);
+    ev.setUint16(6, 0, true);
+    ev.setUint16(8, entries.length, true);
+    ev.setUint16(10, entries.length, true);
+    ev.setUint32(12, centralSize, true);
+    ev.setUint32(16, offset, true);
+    ev.setUint16(20, 0, true);
+    const total = offset + centralSize + end.length;
+    const out = new Uint8Array(total);
+    let cursor = 0;
+    localParts.concat(centralParts, [end]).forEach(function (part) {
+        out.set(part, cursor);
+        cursor += part.length;
+    });
+    return out;
+}
+
+/** Rejects entry names that could escape the target folder or confuse a reader. */
+function checkZipEntryName(name) {
+    if (!name || name.length > 512) {
+        throw new ZipError("The file contains an entry with an empty or very long name.");
+    }
+    if (name.indexOf("\\") >= 0 || name.startsWith("/") || /^[A-Za-z]:/.test(name) || name.indexOf("\u0000") >= 0) {
+        throw new ZipError("The file contains an entry with an unsafe path and was not opened.");
+    }
+    const parts = name.split("/");
+    if (parts.some(function (part) { return part === ".." || part === "."; })) {
+        throw new ZipError("The file contains an entry that points outside its folder and was not opened.");
+    }
+}
+
+/**
+ * Inflates raw deflate data, stopping as soon as the output passes the size the
+ * archive declared so a mislabeled bomb cannot fill memory.
+ */
+async function inflateRaw(bytes, expectedSize) {
+    if (typeof DecompressionStream === "undefined") {
+        throw new ZipError("This browser can't open compressed files. Try a current version of Chrome, Edge, Firefox, or Safari.");
+    }
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+    const reader = stream.getReader();
+    const chunks = [];
+    let total = 0;
+    try {
+        while (true) {
+            const step = await reader.read();
+            if (step.done) {
+                break;
+            }
+            total += step.value.length;
+            if (total > expectedSize) {
+                await reader.cancel();
+                throw new ZipError("An entry in the file is larger than it claims to be, so the file was not opened.");
+            }
+            chunks.push(step.value);
+        }
+    } catch (error) {
+        if (error instanceof ZipError) {
+            throw error;
+        }
+        throw new ZipError("An entry in the file could not be decompressed.");
+    }
+    const out = new Uint8Array(total);
+    let cursor = 0;
+    chunks.forEach(function (chunk) {
+        out.set(chunk, cursor);
+        cursor += chunk.length;
+    });
+    return out;
+}
+
+/**
+ * Reads a ZIP archive into a map of entry name to bytes. Directory entries are
+ * skipped. Throws ZipError for anything malformed, unsafe, or over the limits.
+ * @param {Uint8Array} bytes
+ * @returns {Promise<Map<string, Uint8Array>>}
+ */
+async function zipRead(bytes) {
+    if (!(bytes instanceof Uint8Array) || bytes.length < 22) {
+        throw new ZipError("This is not a ZIP file.");
+    }
+    if (bytes.length > LIMITS.zipTotalBytes) {
+        throw new ZipError("The file is larger than " + Math.round(LIMITS.zipTotalBytes / 1024 / 1024) + " MB, which is the most this app opens.");
+    }
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    let endOffset = -1;
+    const searchFloor = Math.max(0, bytes.length - 22 - 65535);
+    for (let i = bytes.length - 22; i >= searchFloor; i--) {
+        if (view.getUint32(i, true) === 0x06054B50) {
+            endOffset = i;
+            break;
+        }
+    }
+    if (endOffset < 0) {
+        throw new ZipError("This is not a ZIP file.");
+    }
+    const entryCount = view.getUint16(endOffset + 10, true);
+    const centralSize = view.getUint32(endOffset + 12, true);
+    const centralOffset = view.getUint32(endOffset + 16, true);
+    if (entryCount > LIMITS.zipEntries) {
+        throw new ZipError("The file holds more than " + LIMITS.zipEntries + " entries, which is more than this app opens.");
+    }
+    if (centralOffset + centralSize > endOffset) {
+        throw new ZipError("The file's directory is damaged.");
+    }
+    const entries = new Map();
+    let cursor = centralOffset;
+    let totalBytes = 0;
+    for (let n = 0; n < entryCount; n++) {
+        if (cursor + 46 > endOffset || view.getUint32(cursor, true) !== 0x02014B50) {
+            throw new ZipError("The file's directory is damaged.");
+        }
+        const flags = view.getUint16(cursor + 8, true);
+        const method = view.getUint16(cursor + 10, true);
+        const crc = view.getUint32(cursor + 16, true);
+        const compressedSize = view.getUint32(cursor + 20, true);
+        const uncompressedSize = view.getUint32(cursor + 24, true);
+        const nameLength = view.getUint16(cursor + 28, true);
+        const extraLength = view.getUint16(cursor + 30, true);
+        const commentLength = view.getUint16(cursor + 32, true);
+        const localOffset = view.getUint32(cursor + 42, true);
+        const name = fromBytes(bytes.subarray(cursor + 46, cursor + 46 + nameLength));
+        cursor += 46 + nameLength + extraLength + commentLength;
+
+        if (compressedSize === 0xFFFFFFFF || uncompressedSize === 0xFFFFFFFF || localOffset === 0xFFFFFFFF) {
+            throw new ZipError("64-bit ZIP files are not supported.");
+        }
+        if ((flags & 0x0001) !== 0) {
+            throw new ZipError("Encrypted ZIP files are not supported.");
+        }
+        checkZipEntryName(name);
+        if (name.endsWith("/")) {
+            continue;
+        }
+        if (uncompressedSize > LIMITS.zipEntryBytes) {
+            throw new ZipError("An entry in the file is larger than " + Math.round(LIMITS.zipEntryBytes / 1024 / 1024) + " MB, which is more than this app opens.");
+        }
+        totalBytes += uncompressedSize;
+        if (totalBytes > LIMITS.zipTotalBytes) {
+            throw new ZipError("The unpacked file would be larger than " + Math.round(LIMITS.zipTotalBytes / 1024 / 1024) + " MB, which is more than this app opens.");
+        }
+        if (localOffset + 30 > centralOffset || view.getUint32(localOffset, true) !== 0x04034B50) {
+            throw new ZipError("The file's directory is damaged.");
+        }
+        const localNameLength = view.getUint16(localOffset + 26, true);
+        const localExtraLength = view.getUint16(localOffset + 28, true);
+        const dataStart = localOffset + 30 + localNameLength + localExtraLength;
+        if (dataStart + compressedSize > centralOffset) {
+            throw new ZipError("The file's directory is damaged.");
+        }
+        const raw = bytes.subarray(dataStart, dataStart + compressedSize);
+        let data;
+        if (method === 0) {
+            if (compressedSize !== uncompressedSize) {
+                throw new ZipError("The file's directory is damaged.");
+            }
+            data = copyBytes(raw);
+        } else if (method === 8) {
+            data = await inflateRaw(raw, uncompressedSize);
+        } else {
+            throw new ZipError("The file uses a compression method this app does not support.");
+        }
+        if (data.length !== uncompressedSize || crc32(data) !== crc) {
+            throw new ZipError("An entry in the file is damaged (its checksum does not match).");
+        }
+        entries.set(name, data);
+    }
+    return entries;
+}
+
+// ### Public engine namespace ###
+globalThis.Agentprise = {
+    LIMITS: LIMITS,
+    APP_VERSION: APP_VERSION,
+    DEFAULT_LICENSE: DEFAULT_LICENSE,
+    LICENSE_CHOICES: LICENSE_CHOICES,
+    META: META,
+    createAgent: createAgent,
+    normalizeAgent: normalizeAgent,
+    validateAgent: validateAgent,
+    toSkillName: toSkillName,
+    safeFileName: safeFileName,
+    yaml: { parseFrontmatter: parseFrontmatter, stringifyFrontmatter: stringifyFrontmatter },
+    zip: { read: zipRead, write: zipWrite, ZipError: ZipError },
+    png: { dimensions: pngDimensions },
+    bytes: { toBase64: bytesToBase64, fromBase64: base64ToBytes, equal: bytesEqual, toText: fromBytes, fromText: toBytes }
+};
+
+// ### Interface startup ###
+// The engine above has no DOM dependency so the test suite can load it in Node.
+// Everything that touches the page starts here and only in a browser.
+if (typeof document !== "undefined" && document.getElementById) {
+    // The interface is added in a later phase.
+}
+</script>
 </body>
 </html>
