@@ -4404,31 +4404,29 @@ function setupProductTabs() {
 }
 
 // ### Interface: Library ###
-/** Library entries embedded in the page, so the demo works without a server. */
-function embeddedLibrary() {
-    const entries = [];
-    document.querySelectorAll("script[type='text/plain'][data-library-skill]").forEach(function (node) {
-        const result = skillMdImport(node.textContent);
-        entries.push({
-            folder: node.getAttribute("data-library-skill"),
-            name: result.agent.name,
-            summary: result.agent.description,
-            tags: (node.getAttribute("data-tags") || "").split(",").map(function (t) { return t.trim(); }).filter(Boolean),
-            author: result.agent.creator.name,
-            license: result.agent.license,
-            agent: result.agent
-        });
-    });
-    return entries;
+// The library is a folder of Agentprise bundles (the same zip "Keep a copy" makes)
+// next to the page, listed in library/catalog.json. Each bundle is opened with the
+// same importer as a dropped file, so adding an entry means dropping the zip in the
+// folder and adding one catalog line. Nothing about an entry lives in this page.
+const LIBRARY_PATH = "library/";
+
+/** A page opened from a file cannot fetch its own folder, so the Library is only available when served. */
+function libraryAvailable() {
+    return location.protocol === "http:" || location.protocol === "https:";
 }
 
-/** Reads the catalog from the library folder when served over HTTP. Entries are untrusted data. */
+/**
+ * Reads the catalog from the library folder. Catalog entries are untrusted data:
+ * every value is type-checked and capped, and the file name must be a plain
+ * name ending in .zip so a catalog line can never point outside the folder.
+ * @returns {Promise<Array<object>|null>} entries, or null when the catalog cannot be read
+ */
 async function fetchCatalog() {
-    if (location.protocol !== "http:" && location.protocol !== "https:") {
+    if (!libraryAvailable()) {
         return null;
     }
     try {
-        const response = await fetch("library/catalog.json", { cache: "no-cache" });
+        const response = await fetch(LIBRARY_PATH + "catalog.json", { cache: "no-cache" });
         if (!response.ok) {
             return null;
         }
@@ -4437,49 +4435,80 @@ async function fetchCatalog() {
             return null;
         }
         return catalog.agents.filter(isPlainObject).slice(0, 200).map(function (entry) {
-            const folder = typeof entry.folder === "string" ? entry.folder : "";
+            const file = typeof entry.file === "string" ? entry.file : "";
             return {
-                folder: folder === toSkillName(folder) ? folder : "",
+                file: /^[A-Za-z0-9][A-Za-z0-9 ._-]{0,99}\.zip$/.test(file) ? file : "",
                 name: asText(entry.name, LIMITS.name),
                 summary: asText(entry.summary, LIMITS.description),
                 tags: (Array.isArray(entry.tags) ? entry.tags : []).map(function (t) { return asText(t, 40); }).filter(Boolean).slice(0, 10),
                 author: asText(entry.author, 200),
                 license: asText(entry.license, LIMITS.licenseText),
-                agent: null
+                agent: null,
+                problem: ""
             };
-        }).filter(function (entry) { return entry.folder && entry.name; });
+        }).filter(function (entry) { return entry.file && entry.name; });
     } catch (error) {
         return null;
     }
 }
 
-/** Loads a catalog entry's bundle files from the library folder. */
+/** Fetches an entry's bundle and opens it the way a dropped file is opened. The result is cached on the entry. */
 async function loadLibraryAgent(entry) {
-    if (entry.agent && entry.agent.icon) {
+    if (entry.agent) {
         return entry.agent;
     }
-    const base = "library/" + entry.folder + "/";
-    let agent = entry.agent;
-    if (!agent) {
-        const response = await fetch(base + "SKILL.md", { cache: "no-cache" });
-        if (!response.ok) {
-            throw new Error("The library entry could not be loaded.");
-        }
-        agent = skillMdImport(await response.text()).agent;
+    const response = await fetch(LIBRARY_PATH + entry.file, { cache: "no-cache" });
+    if (!response.ok) {
+        throw new Error("The library file " + entry.file + " could not be loaded.");
     }
-    if (location.protocol === "http:" || location.protocol === "https:") {
-        try {
-            const iconResponse = await fetch(base + "icon.png", { cache: "no-cache" });
-            if (iconResponse.ok) {
-                const bytes = new Uint8Array(await iconResponse.arrayBuffer());
-                agent = normalizeAgent(Object.assign({}, agent, { icon: { bytes: bytes, mime: "image/png" } })).agent;
-            }
-        } catch (error) {
-            // The icon is optional, so a missing one leaves the entry usable.
-        }
+    const result = await importBytes(entry.file, new Uint8Array(await response.arrayBuffer()));
+    if (result.error) {
+        throw new Error(result.error);
     }
-    entry.agent = agent;
-    return agent;
+    entry.agent = result.agent;
+    return entry.agent;
+}
+
+/** Opens every bundle once so the cards can show real icons. A bad file marks its own entry and never hides the others. */
+async function loadLibraryEntries(entries) {
+    await Promise.all(entries.map(function (entry) {
+        return loadLibraryAgent(entry).catch(function (error) {
+            entry.problem = error.message;
+        });
+    }));
+}
+
+/** Copies a library agent into the workspace, after the usual confirmation when there is work to lose. */
+function useLibraryEntry(entry) {
+    const agent = entry.agent;
+    confirmReplace("Loading " + entry.name + " will replace the assistant you are working on.", function () {
+        ui.editorMode = "sample";
+        setAgent(normalizeAgent(JSON.parse(JSON.stringify(Object.assign({}, agent, { icon: null })))).agent);
+        ui.agent.icon = agent.icon ? { bytes: copyBytes(agent.icon.bytes), mime: "image/png" } : null;
+        renderForm();
+        saveDraftNow();  // A loaded entry is a complete state, so it is kept at once rather than after the typing delay
+        announce("Loaded " + entry.name + ".");
+        showView("workspace", true);
+    });
+}
+
+function libraryCard(entry) {
+    const icon = el("img", { alt: "", src: "" });
+    icon.src = entry.agent ? iconPreviewUri(entry.agent) : drawDefaultIcon(entry.name, 96).toDataURL("image/png");
+    const tags = el("ul", { className: "tags", "aria-label": "Tags" });
+    entry.tags.forEach(function (tag) { tags.appendChild(el("li", { text: tag })); });
+    const tryButton = el("button", { type: "button", className: "primary", text: "Try it" });
+    tryButton.addEventListener("click", function () { useLibraryEntry(entry); });
+    const meta = el("p", { className: "muted small", text: (entry.author ? "By " + entry.author + ". " : "") + (entry.license ? "License: " + entry.license + "." : "") });
+    const body = [el("h3", { text: entry.name }), el("p", { text: entry.summary }), tags, meta];
+    if (entry.problem) {
+        tryButton.disabled = true;
+        body.push(el("p", { className: "error-text", text: "This entry cannot be opened right now. " + entry.problem }));
+    }
+    return el("li", { className: "card library-card" }, [
+        el("div", { className: "preview-head" }, [icon, el("div", {}, body)]),
+        el("div", { className: "button-row" }, [tryButton])
+    ]);
 }
 
 let libraryLoaded = false;
@@ -4490,14 +4519,14 @@ async function renderLibrary() {
         libraryLoaded = true;
         setText(status, "Loading the library...");
         const fetched = await fetchCatalog();
-        const embedded = embeddedLibrary();
-        ui.catalog = fetched || embedded;
-        if (fetched) {
-            embedded.forEach(function (entry) {
-                const match = ui.catalog.find(function (item) { return item.folder === entry.folder; });
-                if (match) { match.agent = entry.agent; }
-            });
+        ui.catalog = fetched || [];
+        if (!fetched) {
+            setText(status, libraryAvailable()
+                ? "The library could not be loaded. Try again later."
+                : "The Library needs the app to run from a web address. Use the online version at " + APP_SITE_URL + " or start the included server.");
+            return;
         }
+        await loadLibraryEntries(ui.catalog);
     }
     const query = $("library-search").value.trim().toLowerCase();
     const matches = ui.catalog.filter(function (entry) {
@@ -4509,38 +4538,7 @@ async function renderLibrary() {
     });
     clearChildren(list);
     setText(status, matches.length === 0 ? "No assistants match." : matches.length + " assistant(s).");
-    matches.forEach(function (entry) {
-        const icon = el("img", { alt: "", src: "" });
-        icon.src = entry.agent && entry.agent.icon ? iconPreviewUri(entry.agent) : "library/" + entry.folder + "/icon.png";
-        icon.addEventListener("error", function () { icon.src = drawDefaultIcon(entry.name, 96).toDataURL("image/png"); });
-        const tags = el("ul", { className: "tags", "aria-label": "Tags" });
-        entry.tags.forEach(function (tag) { tags.appendChild(el("li", { text: tag })); });
-        const tryButton = el("button", { type: "button", className: "primary", text: "Try it" });
-        const filesButton = el("button", { type: "button", text: "See the files" });
-        const load = async function (then) {
-            try {
-                const agent = await loadLibraryAgent(entry);
-                confirmReplace("Loading " + entry.name + " will replace the assistant you are working on.", function () {
-                    ui.editorMode = "sample";
-                    setAgent(normalizeAgent(JSON.parse(JSON.stringify(Object.assign({}, agent, { icon: null })))).agent);
-                    ui.agent.icon = agent.icon ? { bytes: copyBytes(agent.icon.bytes), mime: "image/png" } : null;
-                    renderForm();
-                    saveDraft();
-                    announce("Loaded " + entry.name + ".");
-                    showView(then, true);
-                });
-            } catch (error) {
-                announce(error.message, true);
-            }
-        };
-        tryButton.addEventListener("click", function () { load("workspace"); });
-        filesButton.addEventListener("click", function () { load("details"); });
-        const meta = el("p", { className: "muted small", text: (entry.author ? "By " + entry.author + ". " : "") + (entry.license ? "License: " + entry.license + "." : "") });
-        list.appendChild(el("li", { className: "card library-card" }, [
-            el("div", { className: "preview-head" }, [icon, el("div", {}, [el("h3", { text: entry.name }), el("p", { text: entry.summary }), tags, meta])]),
-            el("div", { className: "button-row" }, [tryButton, filesButton])
-        ]));
-    });
+    matches.forEach(function (entry) { list.appendChild(libraryCard(entry)); });
 }
 
 // ### Interface: analytics ###

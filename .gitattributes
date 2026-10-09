@@ -4,7 +4,8 @@
 # Created: 2026-10-09
 # Last Modified: 2026-10-09
 # Summary: Keeps the launch scripts and prebuilt server binaries byte-exact on
-#          every platform, so the Linux and macOS scripts run after a Windows checkout.
+#          every platform, so the Linux and macOS scripts run after a Windows checkout,
+#          and keeps the library bundles untouched by line-ending conversion.
 # Notes: See README file for documentation and full license information.
 #
 # Copyright © 2026 The Regents of the University of Michigan
@@ -22,3 +23,4 @@
 *.sh text eol=lf
 *.command text eol=lf
 bin/* binary
+library/*.zip binary
