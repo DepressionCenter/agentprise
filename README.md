@@ -27,9 +27,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
 ## Description
 Agentprise makes AI agents and skills portable across Copilot, Gemini, Claude, and ChatGPT.
 
-![Preview Image](images/Repo-preview.png)
+<!-- ![Preview Image](images/Repo-preview.png) -->
 
-< List of key features, or a few sentences about what makes this project unique >.
+<!-- < List of key features, or a few sentences about what makes this project unique >. -->
 
 
 ## Quick Start Guide
