@@ -177,9 +177,9 @@ export function sampleAgent(engine) {
   };
   agent.creator = {
     name: "Example Creator",
-    website: "https://example.com",
-    privacy: "https://example.com/privacy",
-    terms: "https://example.com/terms",
+    website: "https://example.org",
+    privacy: "https://example.org/privacy",
+    terms: "https://example.org/terms",
   };
   agent.copyright = "Copyright (C) 2026 Example Creator";
   agent.license = "GPL-3.0-or-later";
