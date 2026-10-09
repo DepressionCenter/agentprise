@@ -4,13 +4,13 @@ description: Write and maintain the /docs knowledge base. Apply when adding or c
 ---
 
 <!--
-This file is part of YOUR_PROJECT_TITLE
-Copyright © YOUR_YEAR The Regents of the University of Michigan
+This file is part of Agentprise
+Copyright © 2026 The Regents of the University of Michigan
 Licensed under the GNU Free Documentation License v1.3 or later.
 See <https://www.gnu.org/licenses/fdl-1.3.html>. See README for full license information.
 -->
 
-# YOUR_PROJECT_TITLE
+# Agentprise
 
 ## Documentation and the /docs knowledge base
 
@@ -48,7 +48,7 @@ Every page uses this order.
    the source and invisible when rendered:
 
        <!--
-       This file is part of YOUR_PROJECT_TITLE
+       This file is part of Agentprise
        Copyright © YYYY The Regents of the University of Michigan
        Licensed under the GNU Free Documentation License v1.3 or later.
        See <https://www.gnu.org/licenses/fdl-1.3.html>. See README for full license information.

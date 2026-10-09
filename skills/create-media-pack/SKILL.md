@@ -4,15 +4,15 @@ description: Create a coordinated project branding and media pack with three acc
 ---
 
 <!--
-This file is part of YOUR_PROJECT_TITLE
-Copyright © YOUR_YEAR The Regents of the University of Michigan
+This file is part of Agentprise
+Copyright © 2026 The Regents of the University of Michigan
 Based on the create-media-pack skill by Gabriel Mongefranco,
 Copyright © 2026 Gabriel Mongefranco. See <https://github.com/gabrielmongefranco/repo-template>.
 Licensed under the GNU Free Documentation License v1.3 or later.
 See <https://www.gnu.org/licenses/fdl-1.3.html>. See README for full license information.
 -->
 
-# YOUR_PROJECT_TITLE
+# Agentprise
 
 ## Create media pack
 
@@ -47,7 +47,7 @@ any explicit scope changes instead of producing unwanted assets.
 - Use the project's established voice and tagline. Do not invent domains, claims, or slogans without presenting them for approval.
 
 <!-- Project maintainers: record the approved project name, tagline, audience, and
-any trademark (for example, "YOUR_PROJECT_TITLE™") here or in project-preferences,
+any trademark (for example, "Agentprise™") here or in project-preferences,
 so later runs do not have to infer them. -->
 
 #### 2. Start from the institutional branding
@@ -151,7 +151,7 @@ example, app icons for a command-line tool), say so here so agents skip it. -->
 - Do not put images under /docs or /assets/branding.
 - If font files are included, place them under /assets/fonts with their required licenses and attribution.
 - Put the branding guide at /docs/branding.md and link it from /docs/README.md, following the required documentation page structure.
-- Add /images/LICENSE.txt stating the artwork copyright and license. Original project artwork defaults to Copyright © YOUR_YEAR The Regents of the University of Michigan under the GNU Free Documentation License v1.3 or later. Note there any font-derived letterforms or third-party marks that keep their own terms.
+- Add /images/LICENSE.txt stating the artwork copyright and license. Original project artwork defaults to Copyright © 2026 The Regents of the University of Michigan under the GNU Free Documentation License v1.3 or later. Note there any font-derived letterforms or third-party marks that keep their own terms.
 - Follow scoped repository instructions and preserve required source headers. Where an SVG carries a header, use the U-M copyright notice from section 3 of AGENTS.md in an XML comment.
 - Do not overwrite unrelated assets. Leave [styles/um-style.css](../../styles/um-style.css) unchanged unless the user asks for a stylesheet change.
 

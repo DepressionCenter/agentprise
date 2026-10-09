@@ -1,10 +1,10 @@
 <!--
-This file is part of Agentprise
-< CLASS, MODULE OR FILE NAME >
-Author(s): First Last; First Last; First Last; First Last.
-Created: 2026-01-01
-Last Modified: 2026-01-01
-Summary: < SUMMARY OF WHAT THIS FILE OR MODULE DOES >
+This file is part of Agentprise™
+index.html
+Author(s): Gabriel Mongefranco.
+Created: 2026-10-09
+Last Modified: 2026-10-09
+Summary: Redirects visitors to the Agentprise repository on GitHub.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -24,10 +24,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTML Code Template</title>
+    <!-- Zero-second delay: WCAG treats an immediate redirect as acceptable, but a timed one as a failure -->
+    <meta http-equiv="refresh" content="0; url=https://github.com/DepressionCenter/agentprise">
+    <link rel="canonical" href="https://github.com/DepressionCenter/agentprise">
+    <title>Agentprise</title>
 </head>
 <body>
-<h1>HTML Code Template</h1>
-<p>Hello, World!</p>
+<h1>Agentprise</h1>
+<!-- Fallback for browsers that block or ignore meta refresh -->
+<p>This page has moved to <a href="https://github.com/DepressionCenter/agentprise">the Agentprise repository on GitHub</a>.</p>
 </body>
 </html>

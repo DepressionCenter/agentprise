@@ -4,13 +4,13 @@ description: Apply repository-specific preferences when planning, implementing, 
 ---
 
 <!--
-This file is part of YOUR_PROJECT_TITLE
-Copyright © YOUR_YEAR The Regents of the University of Michigan
+This file is part of Agentprise
+Copyright © 2026 The Regents of the University of Michigan
 Licensed under the GNU Free Documentation License v1.3 or later.
 See <https://www.gnu.org/licenses/fdl-1.3.html>. See README for full license information.
 -->
 
-# YOUR_PROJECT_TITLE
+# Agentprise
 
 ## Project preferences
 
@@ -20,6 +20,8 @@ supplements `AGENTS.md` and cannot weaken its security, privacy, accessibility,
 licensing, testing, or authorization rules.
 
 ### Purpose and scope
+
+Agentprise makes AI agents portable across Copilot, Gemini, Claude, and ChatGPT.
 
 ### Environment and structure
 
