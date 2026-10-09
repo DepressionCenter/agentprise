@@ -51,7 +51,9 @@ The page has four parts, listed down the left side:
    - **What might people ask it first?** A few example questions people can
      click. Choose **Add another question** for more, up to twelve.
 3. Watch the preview on the right. It updates as you type and shows roughly
-   what people will see.
+   what people will see. When you write more than three questions, the preview
+   shows three of them at random, because most products show only a few at a
+   time.
 
 The buttons under **Where it can go** stay off until the name, the description,
 and the behavior are filled in. The card tells you what is still missing, and

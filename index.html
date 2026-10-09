@@ -3240,6 +3240,8 @@ const LEGACY_HASHES = { home: "workspace", build: "workspace", check: "details",
 const PRODUCT_NAMES = ["bundle", "msAgent", "teamsZip", "copy"];
 // The Workspace editor always shows at least this many blanks for example questions.
 const MIN_STARTER_BLANKS = 2;
+// Products show only a few starters at a time, so the preview shows at most this many.
+const PREVIEW_STARTERS = 3;
 const STARTER_PLACEHOLDERS = ["How do I calibrate the scale?", "What is the cleanup checklist?"];
 const DEFAULT_ICON_COLOR = "#2B4C7E";
 // Confirmations in the status bar clear themselves after this long. Errors stay.
@@ -3296,6 +3298,7 @@ const ui = {
     view: "workspace",
     editorMode: null,
     starterBlanks: [],
+    previewOrder: [],
     storageOk: true,
     catalog: [],
     problems: [],
@@ -3870,10 +3873,31 @@ function renderPreview() {
     setText(welcome, agent.welcome);
     const list = $("preview-starters");
     clearChildren(list);
-    agent.starters.forEach(function (text) {
+    previewStarters(agent.starters).forEach(function (text) {
         list.appendChild(el("li", { text: text }));
     });
     list.hidden = agent.starters.length === 0;
+}
+
+/**
+ * Picks the starters the preview shows: all of them when there are few, otherwise a random
+ * sample. The random order is kept until the number of starters changes, so typing inside a
+ * question does not reshuffle the preview under the person's eyes. Not security relevant.
+ */
+function previewStarters(starters) {
+    if (starters.length <= PREVIEW_STARTERS) {
+        return starters;
+    }
+    if (ui.previewOrder.length !== starters.length) {
+        ui.previewOrder = starters.map(function (unused, index) { return index; });
+        for (let i = ui.previewOrder.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const swap = ui.previewOrder[i];
+            ui.previewOrder[i] = ui.previewOrder[j];
+            ui.previewOrder[j] = swap;
+        }
+    }
+    return ui.previewOrder.slice(0, PREVIEW_STARTERS).map(function (index) { return starters[index]; });
 }
 
 /** Lists the missing required fields as links that focus the matching blank. */
