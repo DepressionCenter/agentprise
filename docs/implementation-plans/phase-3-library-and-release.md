@@ -34,7 +34,9 @@ fetches, the Library view, the knowledge base pages, and a verified pull request
 
 - [ ] Create `library/caveman/SKILL.md`, `icon.png`, `LICENSE.txt`, and
       `README.md` from the Caveman exports using the Phase 1 exporter, with the
-      creator links replaced by the project's own links.
+      creator links replaced by the project's own links and without the starter
+      "What's new today at Michigan Medicine?", which only makes sense inside
+      the university.
 - [ ] Create `library/catalog.json` with a leading `_license` key and one entry:
       folder, display name, summary, tags, author, license.
 - [ ] Embed the Caveman `SKILL.md` text in `index.html` so the demo works from a

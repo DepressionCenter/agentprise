@@ -89,7 +89,7 @@ choose Open a file in the editor.
 ## For maintainers
 
 The rest of this page records how each file is built, the vendor facts the
-design relies on with the date each was checked, and the tests that still need
+converters rely on with the date each was checked, and the tests that still need
 a real account. Read it before changing any converter in `index.html`.
 
 ### The formats at a glance
@@ -228,7 +228,7 @@ Checked on 2026-10-09 unless a line says otherwise.
 | Fact | Source |
 |---|---|
 | An Agent Skill is a folder with `SKILL.md`; `name` is 1 to 64 lowercase characters and hyphens, must match the folder name; `description` is up to 1,024 characters; `metadata` is a string-to-string map; unknown top-level fields are not allowed | [Agent Skills specification](https://agentskills.io/specification) |
-| Gemini uploads a skill from Settings, then Skills, then Upload, as a `SKILL.md` or a ZIP with `SKILL.md` in the root folder; Gems migrate to Skills starting 2026-11-17 for personal accounts | [Gemini productivity overview](https://gemini.google/overview/productivity/), vendor help pages as summarized in the design |
+| Gemini uploads a skill from Settings, then Skills, then Upload, as a `SKILL.md` or a ZIP with `SKILL.md` in the root folder; Gems migrate to Skills starting 2026-11-17 for personal accounts | [Gemini productivity overview](https://gemini.google/overview/productivity/) and Google's help pages for Gemini Skills |
 | Claude uploads skills as a ZIP from Settings, then Capabilities, on paid plans with code execution on | [Claude skills documentation](https://claude.com/docs/skills/how-to) |
 | Declarative agent schema 1.8: name up to 100, description up to 1,000, instructions up to 8,000, at most 12 starters, capability names as listed above, `behavior_overrides.special_instructions.discourage_model_knowledge`, unrecognized properties invalidate the document | [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8) |
 | The app package needs `manifest.json`, a 192 by 192 `color.png`, and a 32 by 32 transparent `outline.png` | [App package for Microsoft 365](https://learn.microsoft.com/office/dev/add-ins/overview/app-package-for-microsoft-365) |
@@ -251,8 +251,8 @@ These are open. Record the date and result here when someone runs them.
 
 - Upload a bundle made by Agentprise to a Gemini account and to a Claude account.
 - Load a `.agent` file written by Agentprise, with `_license` and `_agentprise`,
-  in a SharePoint library and in a Teams chat. The earlier tenant test used a
-  hand-edited file, not this app's output.
+  in a SharePoint library and in a Teams chat. The tenant test recorded above
+  used a hand-edited file, not this app's output.
 - Try a Teams package with an extra `LICENSE.txt` file inside. The app does not
   add one until this is known to work.
 

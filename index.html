@@ -667,8 +667,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                         </div>
                     </div>
                     <div class="editor-grid">
-                        <section class="card editor-card" aria-labelledby="sentence-heading">
-                            <h2 id="sentence-heading" class="visually-hidden">About your assistant</h2>
+                        <section class="card editor-card" aria-labelledby="about-heading">
+                            <h2 id="about-heading" class="visually-hidden">About your assistant</h2>
                             <div class="prompt-group">
                                 <label for="s-name" class="prompt">What should it be called?</label>
                                 <input type="text" id="s-name" class="blank" maxlength="100" placeholder="Lab Helper" autocomplete="off">
@@ -809,7 +809,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             <section id="view-library" class="view" aria-labelledby="library-heading" hidden>
                 <div class="page-head">
                     <h1 id="library-heading" class="page-title" tabindex="-1">Library</h1>
-                    <p class="page-hint">Ready-made assistants you can try, change, and download. Want yours listed here? <a href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener">Send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
+                    <p class="page-hint">Ready-made assistants you can try, change, and download. Want yours listed here? <a href="https://github.com/DepressionCenter/agentprise/issues/new" target="_blank" rel="noopener">Send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
                 </div>
                 <div class="field">
                     <label for="library-search">Search the library</label>
@@ -920,7 +920,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <h2>Where does my work go?</h2>
                     <p>It stays in your browser, so you can close the page and pick up later on the same computer. Nothing is uploaded. Start over removes it.</p>
                     <h2>Can other people start from my assistant?</h2>
-                    <p>Yes. The Library holds ready-made assistants anyone can try and change. To add yours, keep a copy and <a href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener">send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
+                    <p>Yes. The Library holds ready-made assistants anyone can try and change. To add yours, keep a copy and <a href="https://github.com/DepressionCenter/agentprise/issues/new" target="_blank" rel="noopener">send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
                     <h2>At a glance</h2>
                     <div class="table-wrap">
                         <table>
@@ -1991,7 +1991,7 @@ function normalizeAgent(input) {
 
 /**
  * Checks an agent for problems that block a download and warnings that only
- * affect some formats. Messages are plain English for the Check screen.
+ * affect some formats. Messages are plain English and are shown as written.
  * @param {object} agent a normalized agent
  * @returns {{problems: Array<{field: string, message: string}>, warnings: Array<{field: string, message: string}>}}
  */
@@ -3235,17 +3235,17 @@ globalThis.Agentprise = {
 // ### Interface: configuration ###
 const STORAGE_KEY = "agentprise-draft-v1";
 const VIEW_NAMES = ["workspace", "library", "details", "help"];
-// Hashes from the earlier tabbed interface keep opening the matching view.
+// Links elsewhere may use these hash names; each one opens the matching view.
 const LEGACY_HASHES = { home: "workspace", build: "workspace", check: "details", download: "details" };
 const PRODUCT_NAMES = ["bundle", "msAgent", "teamsZip", "copy"];
-// The sentence editor always shows at least this many blanks for opening questions.
+// The Workspace editor always shows at least this many blanks for example questions.
 const MIN_STARTER_BLANKS = 2;
 const STARTER_PLACEHOLDERS = ["How do I calibrate the scale?", "What is the cleanup checklist?"];
 const DEFAULT_ICON_COLOR = "#2B4C7E";
 // Confirmations in the status bar clear themselves after this long. Errors stay.
 const STATUS_SECONDS = 8;
 const READINESS_LABELS = { name: "a name", description: "what it does", instructions: "how it should behave" };
-const SENTENCE_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions" };
+const WORKSPACE_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions" };
 const DETAILS_FIELDS = { name: "d-name", description: "d-description", instructions: "d-instructions" };
 const PRODUCT_HINTS = {
     bundle: "This file is also the copy to keep. Open it here later to edit.",
@@ -3402,7 +3402,7 @@ function autosize(area) {
 }
 
 // ### Interface: views ###
-/** Maps a location hash to a view name, accepting the older tab names too. */
+/** Maps a location hash to a view name, accepting the hash names in LEGACY_HASHES too. */
 function viewFromHash(hash) {
     const name = String(hash || "").replace("#", "");
     if (VIEW_NAMES.indexOf(name) >= 0) {
@@ -3778,7 +3778,7 @@ function setupFileOpening() {
 }
 
 // ### Interface: form state ###
-// The sentence editor and the Details form edit the same fields, so each text
+// The Workspace editor and the Details form edit the same fields, so each text
 // field lists every control that shows it.
 const TEXT_FIELDS = [
     { ids: ["s-name", "d-name"], get: function (a) { return a.name; }, set: function (a, v) { a.name = v; } },
@@ -3811,7 +3811,7 @@ function showFieldError(id, message) {
     }
 }
 
-/** Blanks for the sentence editor: the saved starters plus empty ones up to the minimum. */
+/** Blanks for the Workspace editor: the saved starters plus empty ones up to the minimum. */
 function paddedBlanks(starters) {
     const blanks = starters.slice(0, LIMITS.starters);
     while (blanks.length < MIN_STARTER_BLANKS) {
@@ -3825,7 +3825,7 @@ function syncStartersFromBlanks() {
     ui.agent.starters = ui.starterBlanks.filter(function (text) { return text.trim().length > 0; }).slice(0, LIMITS.starters);
 }
 
-function renderSentenceStarters(focusIndex) {
+function renderStarterBlanks(focusIndex) {
     const box = $("s-starters");
     clearChildren(box);
     ui.starterBlanks.forEach(function (text, index) {
@@ -3853,7 +3853,7 @@ function renderSentenceStarters(focusIndex) {
     }
 }
 
-/** Makes the name blank about as wide as its text, so the sentence reads as one line. */
+/** Sizes the name blank to its text, because a short name on a full-width line looks like a mistake. */
 function sizeNameBlank() {
     const input = $("s-name");
     const length = (input.value || input.placeholder || "").length;
@@ -3887,13 +3887,13 @@ function renderReadiness() {
         link.addEventListener("click", function (event) {
             event.preventDefault();
             event.stopPropagation();
-            $(SENTENCE_FIELDS[problem.field]).focus();
+            $(WORKSPACE_FIELDS[problem.field]).focus();
         });
         list.appendChild(el("li", {}, [link]));
     });
 }
 
-/** What the Copilot app package drops, shown under its buttons. */
+/** What the app package drops, shown under its download button. */
 function teamsLossItems(agent) {
     const items = [];
     if (agent.welcome) { items.push("the welcome message"); }
@@ -3949,7 +3949,7 @@ function renderForm() {
     $("a-license-other-wrap").hidden = known;
     $("a-license-other").value = known ? "" : ui.agent.license;
     ui.starterBlanks = paddedBlanks(ui.agent.starters);
-    renderSentenceStarters();
+    renderStarterBlanks();
     $("d-starters").value = ui.agent.starters.join("\n");
     ["d-name", "d-description", "d-instructions", "d-starters", "f-sharepoint", "a-website", "a-privacy", "a-terms", "icon"].forEach(function (id) {
         showFieldError(id, "");
@@ -4078,7 +4078,7 @@ function setupForm() {
             return;
         }
         ui.starterBlanks.push("");
-        renderSentenceStarters(ui.starterBlanks.length - 1);
+        renderStarterBlanks(ui.starterBlanks.length - 1);
     });
     document.querySelectorAll(".instructions-template").forEach(function (button) {
         button.addEventListener("click", function () {

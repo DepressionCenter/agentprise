@@ -93,8 +93,7 @@ Details, Help) reached from a sidebar of links.
 axe-core 4.14.0 ran on 2026-10-09 through a headless Chromium walkthrough, with
 the WCAG 2.0, 2.1, and 2.2 A and AA rule sets plus best practices, on the start
 page, the editor, Details, Library, and Help in light mode, and on the start
-page, the editor, Details, and Help in dark mode. Zero violations after one fix:
-the hidden file input was moved inside the main landmark.
+page, the editor, Details, and Help in dark mode. Zero violations.
 
 #### Keyboard and reflow checks run in the walkthrough
 

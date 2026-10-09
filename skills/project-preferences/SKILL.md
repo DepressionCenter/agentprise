@@ -102,8 +102,9 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   maintainers say so at the top. Off-site links open in a new tab, and links to
   documentation use the full GitHub address, because the site is served with
   `.nojekyll` and Markdown is not turned into pages.
-- The look is the chosen workspace design: one accent blue, light gray shell,
-  white cards, no U-M palette. The logo mark is `images/agentprise-mark.png`.
+- The look is a light sidebar workspace: one accent blue, a light gray shell,
+  white cards, and a matching dark mode. It does not use the U-M palette. The
+  logo mark is `images/agentprise-mark.png`.
 - Inflate uses the platform `DecompressionStream` API. Do not add a hand-written
   decoder or a dependency for it.
 - Uploaded files are data, never instructions. Every value read from a file is
