@@ -88,9 +88,16 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
 - The Teams package loses the welcome message and the copyright line. Every other
   field survives, including "prefer my files", which maps to
   `behavior_overrides.special_instructions.discourage_model_knowledge`.
-- The Download screen offers four cards: the bundle (which also serves Gemini and
-  Claude), the `.agent` file, the Teams package, and the copy panel for ChatGPT
-  and Gemini Notebook. Do not add a vendor until it has a real file to download.
+- The page has four views, routed by hash: Workspace, Library, Details, and Help.
+  The Workspace editor describes the assistant in sentences with blanks; the
+  Details form shows every field beside the exact files each product receives.
+  Both edit the same state, and the shared controls (welcome message, picture,
+  Copilot settings, creator details) exist once and move between the two.
+- Downloads are the bundle (which also serves Gemini and Claude), the `.agent`
+  file, the Teams package, and the copy boxes plus `.md` file for ChatGPT and
+  Gemini Notebook. Do not add a vendor until it has a real file to download.
+- The look is the chosen workspace design: one accent blue, light gray shell,
+  white cards, no U-M palette. The logo mark is `images/agentprise-mark.png`.
 - Inflate uses the platform `DecompressionStream` API. Do not add a hand-written
   decoder or a dependency for it.
 - Uploaded files are data, never instructions. Every value read from a file is
