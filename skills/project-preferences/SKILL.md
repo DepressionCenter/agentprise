@@ -52,8 +52,11 @@ served by GitHub Pages from the root of the main branch.
 - Code and comments are ASCII only. Unicode appears only in visible interface text.
 - Execution phases are marked with `// ### Name ###` comments. Public functions
   carry JSDoc.
-- Ready-made agents live under `library/<skill-name>/` as unzipped Agent Skill
-  bundles, listed in `library/catalog.json`.
+- Ready-made agents are Agentprise bundles (`.zip`) dropped into `library/` and
+  listed in `library/catalog.json`. The page holds no copy of any entry; it
+  fetches the catalog and opens each bundle with the file importer. Adding an
+  entry is the zip plus one catalog line, as
+  [docs/how-to/add-to-library.md](../../docs/how-to/add-to-library.md) describes.
 - `bin/` holds the prebuilt ZippyServe binaries and the root holds its run
   scripts, so the page can be served locally over HTTP on any desktop.
 - Follow the repository's existing file and folder naming conventions when adding

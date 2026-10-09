@@ -31,9 +31,17 @@ listed under known gaps.
 
 - Nothing a person types or uploads leaves the browser. The app makes no network
   request except to its own `library/` folder and, on the production host only,
-  to Google Analytics. Evidence: the script contains one `fetch` call for
-  `library/catalog.json` and the library files, and one dynamically added
-  analytics script. A review of the script on 2026-10-09 found no other request.
+  to Google Analytics. Evidence: the script contains two `fetch` calls, for
+  `library/catalog.json` and for the `.zip` files it lists, and one dynamically
+  added analytics script. A review of the script on 2026-10-09 found no other
+  request, and a served browser walkthrough the same day recorded only
+  `library/catalog.json` and `library/caveman.zip` as library requests and no
+  request to another host.
+- Library entries are untrusted input like any dropped file. Each catalog line
+  is type-checked and capped, its file name must be a plain name ending in
+  `.zip` so it cannot point outside the folder, and each bundle goes through the
+  same importer and `normalizeAgent` path as an upload. Evidence:
+  `tests/library.test.mjs`.
 - The page loads no web font. Its font stacks name IBM Plex first, so the face is
   used where it is installed, and fall back to the system interface font. A font
   request would contact a third party from every visitor's browser.
@@ -59,8 +67,8 @@ listed under known gaps.
 
 - Uploaded files are untrusted input. Every value read from a file passes through
   `normalizeAgent`, which type-checks and length-caps each field before it reaches
-  the form. Evidence: `tests/engine.test.mjs` and `tests/formats.test.mjs`
-  (44 tests passing on 2026-10-09).
+  the form. Evidence: `tests/engine.test.mjs`, `tests/formats.test.mjs`, and
+  `tests/library.test.mjs` (48 tests passing on 2026-10-09).
 - The ZIP reader caps the entry count at 200, each entry at 10 MB, and the whole
   archive at 50 MB. It rejects names containing `..`, a leading slash, a
   backslash, or a drive letter; refuses encrypted and 64-bit archives; verifies
@@ -93,7 +101,9 @@ Details, Help) reached from a sidebar of links.
 axe-core 4.14.0 ran on 2026-10-09 through a headless Chromium walkthrough, with
 the WCAG 2.0, 2.1, and 2.2 A and AA rule sets plus best practices, on the start
 page, the editor, Details, Library, and Help in light mode, and on the start
-page, the editor, Details, and Help in dark mode. Zero violations.
+page, the editor, Details, and Help in dark mode. A second run the same day
+scanned the Library with the Caveman card in light and dark mode. Zero
+violations.
 
 #### Keyboard and reflow checks run in the walkthrough
 
