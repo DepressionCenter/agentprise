@@ -2419,8 +2419,8 @@ function normalizeAgent(input) {
     if (isPlainObject(source.icon) && source.icon.bytes instanceof Uint8Array && source.icon.bytes.length > 0) {
         if (source.icon.bytes.length > LIMITS.iconBytes) {
             notices.push("The icon was larger than " + Math.round(LIMITS.iconBytes / 1024 / 1024) + " MB and was removed.");
-        } else if (!pngDimensions(source.icon.bytes)) {
-            notices.push("The icon was not a PNG image and was removed.");
+        } else if (!pngIsComplete(source.icon.bytes)) {
+            notices.push("The icon was not a complete PNG image and was removed.");
         } else {
             agent.icon = { bytes: copyBytes(source.icon.bytes), mime: "image/png" };
         }
@@ -2750,6 +2750,39 @@ function pngDimensions(bytes) {
     return { width: width, height: height };
 }
 
+/**
+ * Walks every chunk of a PNG and returns true only when the file runs from
+ * IHDR to IEND with nothing after it and a correct CRC on each chunk. The
+ * header check alone would let any bytes ride behind a real-looking start.
+ * @param {Uint8Array} bytes
+ * @returns {boolean}
+ */
+function pngIsComplete(bytes) {
+    if (!pngDimensions(bytes)) {
+        return false;
+    }
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    let offset = PNG_SIGNATURE.length;
+    while (offset + 12 <= bytes.length) {
+        const length = view.getUint32(offset, false);
+        if (length > bytes.length - offset - 12) {
+            return false;
+        }
+        const type = fromBytes(bytes.subarray(offset + 4, offset + 8));
+        if (!/^[A-Za-z]{4}$/.test(type) || (offset === PNG_SIGNATURE.length && type !== "IHDR")) {
+            return false;
+        }
+        if (crc32(bytes.subarray(offset + 4, offset + 8 + length)) !== view.getUint32(offset + 8 + length, false)) {
+            return false;
+        }
+        offset += 12 + length;
+        if (type === "IEND") {
+            return offset === bytes.length;
+        }
+    }
+    return false;
+}
+
 // ### ZIP reader and writer ###
 // The writer stores entries uncompressed. The reader accepts stored and deflated
 // entries, treats every header field as untrusted, and refuses archives that
@@ -3014,6 +3047,10 @@ async function zipRead(bytes) {
         }
         if (data.length !== uncompressedSize || crc32(data) !== crc) {
             throw new ZipError("An entry in the file is damaged (its checksum does not match).");
+        }
+        // Two entries with one name would let the second silently replace the first.
+        if (entries.has(name)) {
+            throw new ZipError("The file lists the same name twice.");
         }
         entries.set(name, data);
     }
@@ -3901,7 +3938,7 @@ globalThis.Agentprise = {
     detectFormat: detectFormat,
     yaml: { parseFrontmatter: parseFrontmatter, stringifyFrontmatter: stringifyFrontmatter },
     zip: { read: zipRead, write: zipWrite, ZipError: ZipError },
-    png: { dimensions: pngDimensions },
+    png: { dimensions: pngDimensions, isComplete: pngIsComplete },
     files: { kind: fileKind, problem: attachedFileProblem, isCopilotName: isCopilotFileName, originalTextName: originalTextName },
     bytes: { toBase64: bytesToBase64, fromBase64: base64ToBytes, equal: bytesEqual, toText: fromBytes, fromText: toBytes },
     formats: {

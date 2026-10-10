@@ -91,6 +91,14 @@ describe("normalizeAgent", () => {
     assert.equal(good.agent.icon.mime, "image/png");
   });
 
+  test("rejects an icon that hides data behind a real PNG", () => {
+    const png = makePng(8, 8);
+    const padded = new Uint8Array([...png, ...makeDeflatedZip([{ name: "x.txt", bytes: encode("x") }])]);
+    const result = engine.normalizeAgent({ icon: { bytes: padded, mime: "image/png" } });
+    assert.equal(result.agent.icon, null);
+    assert.ok(result.notices.some((n) => n.includes("complete PNG")));
+  });
+
   test("accepts string booleans and ignores unknown copilot keys", () => {
     const { agent } = engine.normalizeAgent({ copilot: { webSearch: "false", preferMyFiles: "true", bogus: true, appId: "not-a-uuid" } });
     assert.equal(agent.copilot.webSearch, false);
@@ -319,6 +327,23 @@ describe("png", () => {
     assert.equal(engine.png.dimensions(encode("GIF89a and some more bytes here......")), null);
     assert.equal(engine.png.dimensions(new Uint8Array(3)), null);
   });
+
+  test("a complete PNG passes and damaged or padded ones do not", () => {
+    const png = makePng(16, 16);
+    assert.equal(engine.png.isComplete(png), true);
+    assert.equal(engine.png.isComplete(new Uint8Array([...png, 0x00])), false);
+    assert.equal(engine.png.isComplete(png.subarray(0, png.length - 12)), false);
+    const badCrc = new Uint8Array(png);
+    badCrc[png.length - 1] ^= 0xff;
+    assert.equal(engine.png.isComplete(badCrc), false);
+    const badType = new Uint8Array(png);
+    badType[12] = 0x31;
+    assert.equal(engine.png.isComplete(badType), false);
+    const hugeLength = new Uint8Array(png);
+    new DataView(hugeLength.buffer).setUint32(8, 0xffffff00, false);
+    assert.equal(engine.png.isComplete(hugeLength), false);
+    assert.equal(engine.png.isComplete(encode("not a png at all, really not")), false);
+  });
 });
 
 describe("zip", () => {
@@ -346,6 +371,11 @@ describe("zip", () => {
       const bytes = engine.zip.write([{ name, bytes: encode("x") }]);
       await assert.rejects(engine.zip.read(bytes), engine.zip.ZipError, name);
     }
+  });
+
+  test("rejects a name listed twice", async () => {
+    const bytes = makeDeflatedZip([{ name: "a/SKILL.md", bytes: encode("first") }, { name: "a/SKILL.md", bytes: encode("second") }]);
+    await assert.rejects(engine.zip.read(bytes), /twice/);
   });
 
   test("rejects too many entries", async () => {

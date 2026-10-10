@@ -73,13 +73,14 @@ listed under known gaps.
 - Uploaded files are untrusted input. Every value read from a file passes through
   `normalizeAgent`, which type-checks and length-caps each field before it reaches
   the form. Evidence: `tests/engine.test.mjs`, `tests/formats.test.mjs`, and
-  `tests/library.test.mjs` (61 tests passing on 2026-10-10).
+  `tests/library.test.mjs` (64 tests passing on 2026-10-10).
 - The ZIP reader caps the entry count at 200, each entry at 10 MB, and the whole
   archive at 50 MB. It rejects names containing `..`, a leading slash, a
-  backslash, or a drive letter; refuses encrypted and 64-bit archives; verifies
-  every checksum; and stops inflating as soon as output passes the declared size.
-  Evidence: the `zip` test suite, including a path-traversal name, an oversize
-  declared length, a mislabeled inflated size, and a damaged checksum.
+  backslash, or a drive letter; refuses encrypted and 64-bit archives; refuses
+  an archive that lists one name twice; verifies every checksum; and stops
+  inflating as soon as output passes the declared size. Evidence: the `zip`
+  test suite, including a path-traversal name, an oversize declared length, a
+  mislabeled inflated size, a damaged checksum, and a repeated name.
 - JSON and YAML are parsed, never evaluated. The YAML reader handles only the
   subset the bundle uses and skips anything else with a warning.
 - All text reaches the page through `textContent`. The script never assigns
@@ -90,7 +91,10 @@ listed under known gaps.
   appears as literal text in the code view.
 - Icons are decoded through an `Image` element and redrawn on a canvas, which
   strips any embedded content. Only PNG and JPG uploads are accepted; SVG is not.
-  Imported icons are checked against the PNG signature and header.
+  Icons that arrive inside a file are walked chunk by chunk: the signature, an
+  IHDR first, a valid CRC on every chunk, and an IEND that ends the file, so
+  nothing can ride behind a real-looking header into a download. Evidence:
+  `tests/engine.test.mjs` feeds a padded, a truncated, and a corrupted PNG.
 - Attached files are carried as bytes and never opened, decoded, or run. The
   name loses any folder part and any character outside letters, digits, spaces,
   dots, hyphens, underscores, and parentheses, and may not hide a program type
