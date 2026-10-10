@@ -500,6 +500,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         .readiness { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--panel-alt); font-size: 0.9375rem; }
         .readiness p { margin: 0 0 4px; font-weight: 500; }
         .readiness ul { margin: 0; padding-left: 1.25rem; }
+        .readiness .hint { font-weight: 400; }
+        .readiness li { overflow-wrap: anywhere; }
         .destination-list { list-style: none; margin: 0 0 14px; padding: 0; }
         .destination-list li {
             padding: 12px 0;
@@ -928,6 +930,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                     <p>Before it can travel, fill in:</p>
                                     <ul id="readiness-list"></ul>
                                 </div>
+                                <div class="readiness" id="review-box" hidden>
+                                    <p id="review-heading">Review before sharing</p>
+                                    <p class="hint">Pattern matches, not proof. Nothing is blocked, and names are not detected.</p>
+                                    <ul id="review-list" aria-labelledby="review-heading"></ul>
+                                </div>
                                 <ul class="destination-list">
                                     <li>
                                         <span class="destination-name">Copilot / Teams Apps</span>
@@ -1083,6 +1090,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <p>App packages do not work in group chats, channels, or meeting chats. Use the Teams Chat download instead: put the .agent file in a SharePoint library, choose Copy link for Teams, paste the link in the chat, and choose Add to this chat.</p>
                     <h2>Why does Teams ask me to approve the answer?</h2>
                     <p>In a group chat, Teams shows the person who asked a preview whenever the answer used something the others may not be able to see, such as that person's own chats, mail, or meetings. Turn off Teams messages, email, and meetings under Copilot settings and answers post straight to the chat. Web search does not cause this.</p>
+                    <h2>What does "Review before sharing" check?</h2>
+                    <p>Before you download, the app looks through your assistant's text and plain-text files for shapes that often mean personal information, such as Social Security numbers, phone numbers, email addresses, dates, street addresses, and long numbers, and for phrases common in prompt injection, such as "ignore previous instructions" or invisible characters. Each match is listed with where it was found and a masked sample. It is a hint to look, not proof: a help desk assistant may hold a phone number on purpose. It also misses plenty, including people's names, so it is not a privacy review and never blocks a download. The check runs in your browser and nothing is sent anywhere.</p>
                     <h2>Where does my work go?</h2>
                     <p>It stays in your browser, so you can close the page and pick up later on the same computer. Nothing is uploaded. Start over removes it.</p>
                     <h2>Can other people start from my assistant?</h2>
@@ -1150,7 +1159,8 @@ const LIMITS = Object.freeze({
     zipEntries: 200,
     zipEntryBytes: 10 * 1024 * 1024,
     zipTotalBytes: 50 * 1024 * 1024,
-    iconBytes: 2 * 1024 * 1024
+    iconBytes: 2 * 1024 * 1024,
+    scanFileBytes: 1024 * 1024
 });
 
 const APP_VERSION = "1";
@@ -2517,6 +2527,131 @@ function validateAgent(agent) {
         warnings.push({ field: "icon", message: "No icon yet. Downloads will use the default icon." });
     }
     return { problems: problems, warnings: warnings };
+}
+
+// ### Sharing checks ###
+// Pattern matches that may mean an assistant carries personal identifiers, or
+// text written to steer the assistant against its owner. They warn and never
+// block, because a help desk assistant legitimately holds phone numbers. The
+// first five identifier patterns come from Field Station AI, a sibling EFDC
+// app. A match is a hint for a person to look at, never proof, and no match
+// is never a clean bill: names, for one, are not detected.
+const IDENTIFIER_PATTERNS = Object.freeze([
+    { id: "ssn", label: "Social Security number", re: /\b\d{3}-\d{2}-\d{4}\b/g },
+    { id: "phone", label: "phone number", re: /\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g },
+    { id: "email", label: "email address", re: /\b[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}\b/g },
+    { id: "date", label: "date", re: /\b(?:(?:0?[1-9]|1[0-2])[\/-](?:0?[1-9]|[12]\d|3[01])[\/-](?:19|20)\d{2}|(?:19|20)\d{2}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))\b/g },
+    { id: "labelled-id", label: "labelled identifier", re: /\b(?:mrn|medical record(?: number)?|patient id|member id|account number|dob|date of birth|ssn)\b\s*[:#]?\s*[A-Za-z0-9-]{3,}/gi },
+    { id: "long-number", label: "long number", re: /\b\d{6,10}\b/g },
+    { id: "address", label: "street address", re: /\b\d{1,6}\s+(?:[A-Za-z0-9.'-]+\s+){1,4}(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|court|ct|way|place|pl)\b\.?/gi },
+    { id: "zip-plus-4", label: "ZIP+4 code", re: /\b\d{5}-\d{4}\b/g },
+    { id: "ipv4", label: "IP address", re: /\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b/g },
+    { id: "age-over-89", label: "age over 89", re: /\b(?:(?:9\d|1[0-2]\d)[- ]?(?:years?[- ]old|y\/?o)|aged?\s*:?\s*(?:9\d|1[0-2]\d))\b/gi },
+    { id: "card", label: "card number", re: /\b(?:\d[ -]?){13,19}\b/g }
+]);
+
+// Phrases and tricks common in prompt injection: orders to drop or reveal
+// instructions, jailbreak openers, claims of authority, orders to hide things
+// from the person, characters that are invisible on screen, image links that
+// could carry text to another server, and HTML comments that hide text from a
+// reader but not from a model.
+const INJECTION_PATTERNS = Object.freeze([
+    { id: "ignore-previous", label: "text telling the assistant to ignore its instructions", re: /\bignore\s+(?:all\s+|any\s+)?(?:previous|prior|above|earlier|preceding)\s+(?:instructions|prompts|rules|messages|directions)\b/gi },
+    { id: "disregard-system", label: "text telling the assistant to drop its rules", re: /\b(?:disregard|forget|override|bypass)\s+(?:your|the|all|any)\s+(?:system|previous|prior|earlier|original|safety)\s+(?:prompt|instructions|rules|guidelines)\b/gi },
+    { id: "reveal-prompt", label: "text asking for the hidden prompt", re: /\b(?:reveal|print|show|repeat|output|leak|display)\s+(?:your|the)\s+(?:system|hidden|initial|original|secret)\s+(?:prompt|instructions)\b/gi },
+    { id: "jailbreak-persona", label: "a jailbreak phrase", re: /\b(?:do anything now|developer mode|jailbreak|no (?:restrictions|rules|filters|limits))\b/gi },
+    { id: "override-claim", label: "text claiming to override other instructions", re: /\bthis (?:message|instruction|note|text) (?:overrides|supersedes|replaces|takes precedence over)\b/gi },
+    { id: "hide-from-user", label: "text telling the assistant to hide something from the person", re: /\b(?:do not|don't|never)\s+(?:tell|inform|reveal to|mention to|let)\s+the\s+user\b/gi },
+    { id: "hidden-characters", label: "invisible characters", re: /[\u200B-\u200D\u2060\uFEFF\u202A-\u202E\u2066-\u2069]|\uDB40[\uDC00-\uDC7F]/g },
+    { id: "remote-image-link", label: "an image link that could send text out", re: /!\[[^\]]*\]\(\s*https?:\/\/[^)\s]*\?[^)]*\)/gi },
+    { id: "html-comment", label: "an HTML comment", re: /<!--[\s\S]*?-->/g }
+]);
+const SCAN_KINDS = Object.freeze(["identifier", "injection"]);
+
+// The text an assistant carries, by field, in the order the panel lists them.
+// Link fields are checked for injection tricks only, because digit runs inside
+// SharePoint ids would otherwise read as identifiers.
+const SCAN_FIELDS = Object.freeze([
+    { field: "name", label: "Name", kinds: SCAN_KINDS, get: function (agent) { return agent.name; } },
+    { field: "description", label: "Description", kinds: SCAN_KINDS, get: function (agent) { return agent.description; } },
+    { field: "welcome", label: "Welcome message", kinds: SCAN_KINDS, get: function (agent) { return agent.welcome; } },
+    { field: "instructions", label: "Instructions", kinds: SCAN_KINDS, get: function (agent) { return agent.instructions; } },
+    { field: "starters", label: "Example questions", kinds: SCAN_KINDS, get: function (agent) { return agent.starters.join("\n"); } },
+    { field: "sharepointLinks", label: "SharePoint sources", kinds: ["injection"], get: function (agent) {
+        return agent.sharepointLinks.concat(agent.sharepointItems.map(function (item) { return [item.name, item.url].filter(Boolean).join(" "); })).join("\n");
+    } },
+    { field: "webSites", label: "Web sites", kinds: ["injection"], get: function (agent) { return agent.copilot.webSites.join("\n"); } },
+    { field: "creator", label: "About you", kinds: SCAN_KINDS, get: function (agent) { return [agent.creator.name, agent.creator.website, agent.creator.privacy, agent.creator.terms].join("\n"); } },
+    { field: "copyright", label: "Copyright line", kinds: SCAN_KINDS, get: function (agent) { return agent.copyright; } }
+]);
+
+/** Masks a match so the panel never shows a full identifier: digits become #, letters after the third become x. */
+function maskSample(text) {
+    let letters = 0;
+    return Array.from(String(text).slice(0, 40)).map(function (ch) {
+        if (/\d/.test(ch)) {
+            return "#";
+        }
+        if (/[A-Za-z]/.test(ch)) {
+            letters += 1;
+            return letters > 3 ? (ch === ch.toUpperCase() ? "X" : "x") : ch;
+        }
+        return ch;
+    }).join("");
+}
+
+/**
+ * Finds every pattern in a text. Each finding carries the pattern label, how
+ * many times it matched, and a masked sample, never the raw match.
+ * @param {string} text
+ * @param {Array<{id: string, label: string, re: RegExp}>} patterns
+ * @returns {Array<{id: string, label: string, count: number, sample: string}>}
+ */
+function scanText(text, patterns) {
+    const value = String(text || "");
+    const findings = [];
+    patterns.forEach(function (pattern) {
+        const matches = value.match(pattern.re);
+        if (!matches) {
+            return;
+        }
+        const sample = pattern.id === "hidden-characters" ? "" : maskSample(matches[0]);
+        findings.push({ id: pattern.id, label: pattern.label, count: matches.length, sample: sample });
+    });
+    return findings;
+}
+
+/** Returns the decoded text of a plain-text attachment, capped for scanning, or "" for a document. */
+function attachedFileText(file) {
+    if (!file || fileKind(file.name) !== "text") {
+        return "";
+    }
+    return fromBytes(file.bytes.subarray(0, LIMITS.scanFileBytes));
+}
+
+/**
+ * Scans every text field of an agent, plus the decoded text of the attached
+ * files the caller supplies, and returns one finding per field and pattern.
+ * @param {object} agent a normalized agent
+ * @param {Array<{name: string, text: string}>} [fileTexts] decoded plain-text attachments
+ * @returns {Array<{field: string, label: string, fileName: string, kind: string, patternLabel: string, count: number, sample: string}>}
+ */
+function scanAgent(agent, fileTexts) {
+    const findings = [];
+    function collect(field, label, fileName, text, kinds) {
+        kinds.forEach(function (kind) {
+            scanText(text, kind === "identifier" ? IDENTIFIER_PATTERNS : INJECTION_PATTERNS).forEach(function (found) {
+                findings.push({ field: field, label: label, fileName: fileName, kind: kind, patternLabel: found.label, count: found.count, sample: found.sample });
+            });
+        });
+    }
+    SCAN_FIELDS.forEach(function (entry) {
+        collect(entry.field, entry.label, "", entry.get(agent), entry.kinds);
+    });
+    (fileTexts || []).forEach(function (file) {
+        collect("files", file.name, file.name, file.text, SCAN_KINDS);
+    });
+    return findings;
 }
 
 // ### YAML frontmatter (subset) ###
@@ -3940,6 +4075,7 @@ globalThis.Agentprise = {
     zip: { read: zipRead, write: zipWrite, ZipError: ZipError },
     png: { dimensions: pngDimensions, isComplete: pngIsComplete },
     files: { kind: fileKind, problem: attachedFileProblem, isCopilotName: isCopilotFileName, originalTextName: originalTextName },
+    scan: { text: scanText, agent: scanAgent, fileText: attachedFileText, mask: maskSample, IDENTIFIER_PATTERNS: IDENTIFIER_PATTERNS, INJECTION_PATTERNS: INJECTION_PATTERNS },
     bytes: { toBase64: bytesToBase64, fromBase64: base64ToBytes, equal: bytesEqual, toText: fromBytes, fromText: toBytes },
     formats: {
         bundle: { export: bundleExport, import: bundleImport },
@@ -3967,6 +4103,8 @@ const DEFAULT_ICON_COLOR = "#2B4C7E";
 // Confirmations in the status bar clear themselves after this long. Errors stay.
 const STATUS_SECONDS = 8;
 const READINESS_LABELS = { name: "a name", description: "what it does", instructions: "how it should behave" };
+// Where a review finding sends focus. Attached files have no control, so their findings are plain text.
+const REVIEW_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions", starters: "s-starters", welcome: "f-welcome", sharepointLinks: "f-sharepoint", webSites: "f-websites", creator: "a-name", copyright: "a-copyright" };
 const WORKSPACE_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions" };
 const DETAILS_FIELDS = { name: "d-name", description: "d-description", instructions: "d-instructions" };
 const PRODUCT_HINTS = {
@@ -4033,7 +4171,10 @@ const ui = {
     product: "bundle",
     productFile: "",
     built: null,
-    pendingConfirm: null
+    pendingConfirm: null,
+    findings: [],
+    fileScanKey: "",
+    fileTexts: []
 };
 
 // ### Interface: helpers ###
@@ -4374,16 +4515,24 @@ function isUntouchedSample() {
     return ui.editorMode === "sample" && ui.sampleFingerprint !== null && agentRecord(ui.agent) === ui.sampleFingerprint;
 }
 
+/** Opens the one confirm dialog with its own title, message, and button labels. Calls proceed() on the confirming button. */
+function openConfirm(title, message, okLabel, cancelLabel, proceed) {
+    const dialog = $("confirm-dialog");
+    setText($("confirm-title"), title);
+    setText($("confirm-message"), message);
+    setText($("confirm-ok"), okLabel);
+    setText($("confirm-cancel"), cancelLabel);
+    ui.pendingConfirm = proceed;
+    dialog.showModal();
+}
+
 /** Asks before replacing work that could be lost. Calls proceed() on yes, or at once when nothing is at risk. */
 function confirmReplace(message, proceed) {
     if (!agentHasContent(ui.agent) || isUntouchedSample()) {
         proceed();
         return;
     }
-    const dialog = $("confirm-dialog");
-    setText($("confirm-message"), message);
-    ui.pendingConfirm = proceed;
-    dialog.showModal();
+    openConfirm("Replace your current work?", message, "Replace it", "Keep my work", proceed);
 }
 
 // ### Interface: icons (canvas) ###
@@ -4530,7 +4679,8 @@ async function openFile(file) {
         ui.editorMode = "file";
         setAgent(result.agent);
         const notes = result.notices.length ? " " + result.notices.join(" ") : "";
-        announce("Opened " + file.name + "." + notes);
+        const review = ui.findings.length ? " Review before sharing lists " + ui.findings.length + " thing(s) to look at." : "";
+        announce("Opened " + file.name + "." + notes + review);
         showView("workspace", true);
     });
 }
@@ -4710,6 +4860,46 @@ function renderReadiness() {
     });
 }
 
+/** Decodes plain-text attachments for scanning, reusing the last result while the file list is unchanged. */
+function fileTextsForScan() {
+    const key = ui.agent.files.map(function (file) { return file.name + ":" + file.bytes.length; }).join("|");
+    if (key !== ui.fileScanKey) {
+        ui.fileScanKey = key;
+        ui.fileTexts = ui.agent.files.map(function (file) { return { name: file.name, text: attachedFileText(file) }; }).filter(function (file) { return file.text; });
+    }
+    return ui.fileTexts;
+}
+
+/** One line for a finding: where it was, what it looks like, how often, and a masked sample. */
+function reviewLine(finding) {
+    const what = (finding.kind === "identifier" ? "possible " : "") + finding.patternLabel + " (" + finding.count + ")";
+    return finding.label + ": " + what + (finding.sample ? " " + finding.sample : "");
+}
+
+/** Lists the sharing findings in the sidebar. Each one links to its field when the field has a control. */
+function renderReview() {
+    const box = $("review-box");
+    const list = $("review-list");
+    clearChildren(list);
+    box.hidden = ui.findings.length === 0;
+    ui.findings.forEach(function (finding) {
+        const target = REVIEW_FIELDS[finding.field];
+        if (!target) {
+            list.appendChild(el("li", { text: reviewLine(finding) }));
+            return;
+        }
+        const link = el("a", { href: "#workspace", text: reviewLine(finding) });
+        link.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const control = $(target);
+            const focusable = control.matches("input, textarea, select") ? control : control.querySelector("input, textarea, select");
+            (focusable || control).focus();
+        });
+        list.appendChild(el("li", {}, [link]));
+    });
+}
+
 /** What the app package drops, shown under its download button. */
 function teamsLossItems(agent) {
     const items = [];
@@ -4736,12 +4926,14 @@ function updateDerived() {
     const result = validateAgent(agent);
     ui.problems = result.problems;
     ui.warnings = result.warnings;
+    ui.findings = scanAgent(agent, fileTextsForScan());
     const blocked = ui.problems.length > 0;
     document.querySelectorAll(".download-button").forEach(function (button) {
         button.disabled = blocked;
     });
     renderPreview();
     renderReadiness();
+    renderReview();
     renderCopilotLoss();
     renderBreadcrumb();
     if (ui.view === "details") {
@@ -5023,7 +5215,16 @@ function setupForm() {
 }
 
 // ### Interface: downloads ###
-async function runDownload(format) {
+/** Downloads the chosen format, after one question when the sharing checks found something. */
+function runDownload(format) {
+    if (ui.findings.length === 0) {
+        startDownload(format);
+        return;
+    }
+    openConfirm("Review before sharing", "This assistant may contain personal identifiers or text that tries to steer it. The list under Review before sharing on the Workspace page shows what was found. You can download anyway.", "Download anyway", "Go back", function () { startDownload(format); });
+}
+
+async function startDownload(format) {
     const agent = ui.agent;
     try {
         if (format === "bundle") {

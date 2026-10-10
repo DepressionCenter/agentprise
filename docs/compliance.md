@@ -61,9 +61,23 @@ listed under known gaps.
   still works and the sidebar says the draft will not be kept.
 - No secrets, keys, tokens, or configuration files exist in this repository, so
   there is no `.env` file and no `.env.example`.
-- Agent instructions are the creator's own text. The app does not inspect them,
-  send them anywhere, or act on them. Text inside an uploaded file that looks like
+- Agent instructions are the creator's own text. The app never sends them
+  anywhere or acts on them. Text inside an uploaded file that looks like
   instructions to the app or to an AI is treated as plain text.
+- Before a download, the app matches the assistant's text fields and its
+  plain-text attachments against two short lists of regular expressions: shapes
+  that often mean personal identifiers (Social Security number, phone, email,
+  date, labelled identifiers such as MRN, long digit runs, street address,
+  ZIP+4, IPv4 address, age over 89, card number) and phrases common in prompt
+  injection (orders to ignore or reveal instructions, jailbreak phrases, claims
+  of override, orders to hide things from the person, invisible characters,
+  image links with a query string, HTML comments). Findings are shown in the
+  browser with a masked sample, never stored, never logged, and never sent.
+  They warn and never block. The check is a hint for a person, not a privacy
+  review: it does not detect names and it over-flags ordinary dates and
+  numbers. The first five identifier patterns come from Field Station AI.
+  Evidence: `tests/scan.test.mjs`, with one example and one near miss per
+  pattern and a check that no sample holds two consecutive digits.
 - Exported files carry the creator's own copyright and license first. The
   `.agent` file and the bundle carry a notice naming the creator and then the
   app; the Teams package carries no notice because its schemas reject extra keys.
@@ -73,7 +87,7 @@ listed under known gaps.
 - Uploaded files are untrusted input. Every value read from a file passes through
   `normalizeAgent`, which type-checks and length-caps each field before it reaches
   the form. Evidence: `tests/engine.test.mjs`, `tests/formats.test.mjs`, and
-  `tests/library.test.mjs` (64 tests passing on 2026-10-10).
+  `tests/library.test.mjs` and `tests/scan.test.mjs` (92 tests passing on 2026-10-10).
 - The ZIP reader caps the entry count at 200, each entry at 10 MB, and the whole
   archive at 50 MB. It rejects names containing `..`, a leading slash, a
   backslash, or a drive letter; refuses encrypted and 64-bit archives; refuses
@@ -246,7 +260,9 @@ borders.
 - Uploads to real Gemini, Claude, SharePoint, and Teams accounts are open; see
   the [formats page](formats.md).
 - No statement on this page is a claim of HIPAA compliance. The app handles agent
-  descriptions, not health data, and keeps nothing on a server.
+  descriptions, not health data, and keeps nothing on a server. The sharing
+  check is a short pattern list, not a review of the text, and a clean result
+  does not mean the text holds no personal information.
 
 ### Conclusion
 

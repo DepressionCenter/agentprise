@@ -100,6 +100,11 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   signature and by a hidden extension. Script and data text files are allowed;
   the Teams package writes them as `name.ext.txt` because Copilot accepts only
   document types, and the bundle keeps the real name under `references/`.
+- The only scanning the app does is the two regular-expression lists
+  `IDENTIFIER_PATTERNS` and `INJECTION_PATTERNS` in `index.html`, shown as
+  "Review before sharing". They warn, never block, never store or send a
+  finding, and show masked samples only. Keep them regex-only: the app loads
+  no model and makes no request.
 - Browser storage names carry the `agentprise-` prefix (`agentprise-draft-v1`
   in localStorage, the `agentprise-draft-files` IndexedDB database), because
   every EFDC app on code.depressioncenter.org shares one origin.
