@@ -35,11 +35,11 @@ There are three ways to get there:
 - Pick one of the pictures in the row under the drop box on the start page.
   Choosing a picture opens that assistant right away.
 
-![The row on the start page titled Or start from the library. It shows the Caveman picture with its name, and a link on the right that reads See the whole library.](../../images/guides/start-strip.png)
+![The row on the start page titled Or start from the library. It shows a row of pictures from the library, each with its name over it, such as Admin Ally and Ticket Goblin, an arrow at each end to scroll, and a link on the right that reads See the whole library.](../../images/guides/start-strip.png)
 
 The Library page shows one tile per assistant.
 
-![The Library page. A search box sits at the top right. Under the title is a row of tag buttons: All, copilot, example, and fun. One tile shows the Caveman picture, the name, the author, a one-line summary, its tags, its license, and a Try it button.](../../images/guides/library.png)
+![The Library page. A search box sits at the top right. Under the title is a row of tag buttons, starting with All, research, fun, and operations. A line reads 10 assistants, and the first three tiles show Caveman, Evidence Scout, and Study Planner, each with its picture, the name, the author, a one-line summary, its tags, its license, and a Try it button.](../../images/guides/library.png)
 
 ### Step 2: Find one and choose Try it
 
