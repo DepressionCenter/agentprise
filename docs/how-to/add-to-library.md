@@ -31,9 +31,14 @@ The last section is for the maintainer who adds it to the repository.
    **More**: a picture, your name and website, and the license you want. The
    license is the terms other people may use your assistant under.
 2. Choose **Keep a copy I can edit later**. You get a `.zip` file.
-3. Go to the [new issue page on GitHub](https://github.com/DepressionCenter/agentprise/issues/new),
-   attach the `.zip`, and write one sentence about what the assistant is for.
-   A GitHub account is free.
+3. Go to the [new issue page on GitHub](https://github.com/DepressionCenter/agentprise/issues/new)
+   and choose **Send an assistant to the Library**. The form asks for the
+   name, one sentence about what it is for, and the `.zip` file. A GitHub
+   account is free.
+
+The same form works for an assistant that is already in the Library. Choose
+**Replace one that is already in the Library**, use the same name, and say what
+changed.
 
 Before you send it, check that:
 
@@ -79,12 +84,13 @@ file, so an entry is nothing more than a bundle the app itself made.
    line against it, and check that the picture is 192 by 192 pixels.
 5. Start the local server and open the Library page to see the card.
 
-The page has no copy of any entry inside it. Adding, replacing, or removing a
+To replace an assistant, overwrite its `.zip` and update its catalog line. The
+page has no copy of any entry inside it, so adding, replacing, or removing a
 `.zip` and its catalog line is the whole change.
 
 ### Conclusion
 
-Send a bundle through a GitHub issue and a maintainer takes it from there. If you
+Send a bundle through the GitHub issue form and a maintainer takes it from there. If you
 maintain the repository, drop the bundle in `library/`, add the catalog line, and
 run the tests.
 

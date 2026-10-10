@@ -1,0 +1,81 @@
+# This file is part of Agentprise
+# .github/ISSUE_TEMPLATE/library-assistant.yml
+# Author(s): Gabriel Mongefranco.
+# Created: 2026-10-09
+# Last Modified: 2026-10-09
+# Summary: GitHub issue form for sending an assistant to the Agentprise Library,
+#          either as a new entry or to replace one that is already listed.
+# Notes: See README file for documentation and full license information.
+#
+# Copyright © 2026 The Regents of the University of Michigan
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program. If not, see <https://www.gnu.org/licenses/>.
+
+name: Send an assistant to the Library
+description: Add your assistant to the Library, or replace one that is already there.
+title: "Library: "
+labels: ["library"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing your assistant. In Agentprise, choose **Keep a copy I can edit later** to get the `.zip` file, then fill in the form below. Someone will look it over and reply here.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Is this new, or does it replace one already in the Library?
+      options:
+        - New assistant
+        - Replace one that is already in the Library
+    validations:
+      required: true
+
+  - type: input
+    id: name
+    attributes:
+      label: What is the assistant called?
+      description: If it replaces one in the Library, use the same name so we know which one to swap out.
+      placeholder: Lab Helper
+    validations:
+      required: true
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: What is it for?
+      description: One or two sentences is plenty.
+      placeholder: Answers questions about lab procedures and safety.
+    validations:
+      required: true
+
+  - type: textarea
+    id: file
+    attributes:
+      label: Attach the file
+      description: Drag the `.zip` file from **Keep a copy I can edit later** into this box, or click to pick it. If you are replacing an assistant, you can also say what changed.
+      placeholder: Drop the .zip file here.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you send it
+      options:
+        - label: It contains nothing private. No names of real people, no passwords or keys, no health information, and no internal links.
+          required: true
+        - label: Any SharePoint links are removed, because they only work inside your own organization.
+          required: true
+        - label: Anyone may use and change it under the license chosen in the assistant's settings.
+          required: true
