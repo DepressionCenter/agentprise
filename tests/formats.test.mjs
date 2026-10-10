@@ -310,6 +310,29 @@ describe("Agent Skill bundle", () => {
     assert.ok(notices.some((n) => n.includes("my-skill")));
   });
 
+  test("the plain skill carries only standard fields and no picture", async () => {
+    const agent = sampleAgent(engine);
+    const { fileName, bytes, warnings, skillName } = await engine.formats.skill.export(agent);
+    assert.equal(fileName, "Caveman.skill.zip");
+    assert.equal(skillName, "caveman");
+    assert.equal(warnings.length, 0);
+    const entries = await engine.zip.read(bytes);
+    assert.deepEqual([...entries.keys()], ["caveman/SKILL.md", "caveman/LICENSE.txt", "caveman/README.md", "caveman/references/notes.txt"]);
+    const skillMd = decode(entries.get("caveman/SKILL.md"));
+    const { data, body } = engine.yaml.parseFrontmatter(skillMd);
+    assert.deepEqual(Object.keys(data), ["name", "description", "license"]);
+    assert.equal(data.name, "caveman");
+    assert.equal(data.description, agent.description);
+    assert.equal(body.trim(), agent.instructions);
+    // The plain skill still opens here, as any standard skill does, but without the extras.
+    const result = await engine.formats.bundle.import(bytes);
+    assert.equal(result.error, undefined);
+    assert.equal(result.agent.name, "Caveman");
+    assert.equal(result.agent.instructions, agent.instructions);
+    assert.deepEqual(result.agent.starters, []);
+    assert.equal(result.agent.icon, null);
+  });
+
   test("a ZIP without SKILL.md is rejected with a message", async () => {
     const bytes = engine.zip.write([{ name: "readme.txt", bytes: encode("hi") }]);
     const result = await engine.formats.bundle.import(bytes);

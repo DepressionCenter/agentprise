@@ -65,6 +65,18 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
             --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", Menlo, monospace;
         }
+        /* Bootstrap Icons (MIT, https://icons.getbootstrap.com), embedded as base64 so
+           the page stays one file and each icon is stored once however often it is
+           used. They are drawn through a mask, so they take the surrounding text color. */
+        :root {
+            --bi-download: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMTYgMTYiPjxwYXRoIGQ9Ik0uNSA5LjlhLjUuNSAwIDAgMSAuNS41djIuNWExIDEgMCAwIDAgMSAxaDEyYTEgMSAwIDAgMCAxLTF2LTIuNWEuNS41IDAgMCAxIDEgMHYyLjVhMiAyIDAgMCAxLTIgMkgyYTIgMiAwIDAgMS0yLTJ2LTIuNWEuNS41IDAgMCAxIC41LS41Ii8+PHBhdGggZD0iTTcuNjQ2IDExLjg1NGEuNS41IDAgMCAwIC43MDggMGwzLTNhLjUuNSAwIDAgMC0uNzA4LS43MDhMOC41IDEwLjI5M1YxLjVhLjUuNSAwIDAgMC0xIDB2OC43OTNMNS4zNTQgOC4xNDZhLjUuNSAwIDEgMC0uNzA4LjcwOHoiLz48L3N2Zz4=");
+            --bi-clipboard: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMTYgMTYiPjxwYXRoIGQ9Ik00IDEuNUgzYTIgMiAwIDAgMC0yIDJWMTRhMiAyIDAgMCAwIDIgMmgxMGEyIDIgMCAwIDAgMi0yVjMuNWEyIDIgMCAwIDAtMi0yaC0xdjFoMWExIDEgMCAwIDEgMSAxVjE0YTEgMSAwIDAgMS0xIDFIM2ExIDEgMCAwIDEtMS0xVjMuNWExIDEgMCAwIDEgMS0xaDF6Ii8+PHBhdGggZD0iTTkuNSAxYS41LjUgMCAwIDEgLjUuNXYxYS41LjUgMCAwIDEtLjUuNWgtM2EuNS41IDAgMCAxLS41LS41di0xYS41LjUgMCAwIDEgLjUtLjV6bS0zLTFBMS41IDEuNSAwIDAgMCA1IDEuNXYxQTEuNSAxLjUgMCAwIDAgNi41IDRoM0ExLjUgMS41IDAgMCAwIDExIDIuNXYtMUExLjUgMS41IDAgMCAwIDkuNSAweiIvPjwvc3ZnPg==");
+            --bi-github: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMTYgMTYiPjxwYXRoIGQ9Ik04IDBDMy41OCAwIDAgMy41OCAwIDhjMCAzLjU0IDIuMjkgNi41MyA1LjQ3IDcuNTkuNC4wNy41NS0uMTcuNTUtLjM4IDAtLjE5LS4wMS0uODItLjAxLTEuNDktMi4wMS4zNy0yLjUzLS40OS0yLjY5LS45NC0uMDktLjIzLS40OC0uOTQtLjgyLTEuMTMtLjI4LS4xNS0uNjgtLjUyLS4wMS0uNTMuNjMtLjAxIDEuMDguNTggMS4yMy44Mi43MiAxLjIxIDEuODcuODcgMi4zMy42Ni4wNy0uNTIuMjgtLjg3LjUxLTEuMDctMS43OC0uMi0zLjY0LS44OS0zLjY0LTMuOTUgMC0uODcuMzEtMS41OS44Mi0yLjE1LS4wOC0uMi0uMzYtMS4wMi4wOC0yLjEyIDAgMCAuNjctLjIxIDIuMi44Mi42NC0uMTggMS4zMi0uMjcgMi0uMjdzMS4zNi4wOSAyIC4yN2MxLjUzLTEuMDQgMi4yLS44MiAyLjItLjgyLjQ0IDEuMS4xNiAxLjkyLjA4IDIuMTIuNTEuNTYuODIgMS4yNy44MiAyLjE1IDAgMy4wNy0xLjg3IDMuNzUtMy42NSAzLjk1LjI5LjI1LjU0LjczLjU0IDEuNDggMCAxLjA3LS4wMSAxLjkzLS4wMSAyLjIgMCAuMjEuMTUuNDYuNTUuMzhBOC4wMSA4LjAxIDAgMCAwIDE2IDhjMC00LjQyLTMuNTgtOC04LTgiLz48L3N2Zz4=");
+            --bi-archive: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMTYgMTYiPjxwYXRoIGQ9Ik0wIDJhMSAxIDAgMCAxIDEtMWgxNGExIDEgMCAwIDEgMSAxdjJhMSAxIDAgMCAxLTEgMXY3LjVhMi41IDIuNSAwIDAgMS0yLjUgMi41aC05QTIuNSAyLjUgMCAwIDEgMSAxMi41VjVhMSAxIDAgMCAxLTEtMXptMiAzdjcuNUExLjUgMS41IDAgMCAwIDMuNSAxNGg5YTEuNSAxLjUgMCAwIDAgMS41LTEuNVY1em0xMy0zSDF2MmgxNHpNNSA3LjVhLjUuNSAwIDAgMSAuNS0uNWg1YS41LjUgMCAwIDEgMCAxaC01YS41LjUgMCAwIDEtLjUtLjUiLz48L3N2Zz4=");
+            --bi-file-earmark-zip: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMTYgMTYiPjxwYXRoIGQ9Ik01IDcuNWExIDEgMCAwIDEgMS0xaDFhMSAxIDAgMCAxIDEgMXYuOTM4bC40IDEuNTk5YTEgMSAwIDAgMS0uNDE2IDEuMDc0bC0uOTMuNjJhMSAxIDAgMCAxLTEuMTEgMGwtLjkyOS0uNjJhMSAxIDAgMCAxLS40MTUtMS4wNzRMNSA4LjQzOHptMiAwSDZ2LjkzOGExIDEgMCAwIDEtLjAzLjI0M2wtLjQgMS41OTguOTMuNjIuOTI5LS42Mi0uNC0xLjU5OEExIDEgMCAwIDEgNyA4LjQzOHoiLz48cGF0aCBkPSJNMTQgNC41VjE0YTIgMiAwIDAgMS0yIDJINGEyIDIgMCAwIDEtMi0yVjJhMiAyIDAgMCAxIDItMmg1LjV6bS0zIDBBMS41IDEuNSAwIDAgMSA5LjUgM1YxaC0ydjFoLTF2MWgxdjFoLTF2MWgxdjFINlY1SDVWNGgxVjNINVYyaDFWMUg0YTEgMSAwIDAgMC0xIDF2MTJhMSAxIDAgMCAwIDEgMWg4YTEgMSAwIDAgMCAxLTFWNC41eiIvPjwvc3ZnPg==");
+            --bi-filetype-md: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMTYgMTYiPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE0IDQuNVYxNGEyIDIgMCAwIDEtMiAySDl2LTFoM2ExIDEgMCAwIDAgMS0xVjQuNWgtMkExLjUgMS41IDAgMCAxIDkuNSAzVjFINGExIDEgMCAwIDAtMSAxdjlIMlYyYTIgMiAwIDAgMSAyLTJoNS41ek0uNzA2IDEzLjE4OXYyLjY2SDBWMTEuODVoLjgwNmwxLjE0IDIuNTk2aC4wMjZsMS4xNC0yLjU5NmguOHYzLjk5OWgtLjcxNnYtMi42NmgtLjAzOGwtLjk0NiAyLjE1OWgtLjUxNmwtLjk1Mi0yLjE2SC43MDZabTMuOTE5IDIuNjZWMTEuODVoMS40NTlxLjYwOSAwIDEuMDA1LjIzNHQuNTg5LjY4cS4xOTUuNDQ1LjE5NiAxLjA3NSAwIC42MzQtLjE5NiAxLjA4NC0uMTk3LjQ1MS0uNTk1LjY4OS0uMzk2LjIzNy0xIC4yMzdINC42MjZabTEuMzUzLTMuMzU0aC0uNTYydjIuNzA3aC41NjJxLjI3OSAwIC40ODQtLjA4MmEuOC44IDAgMCAwIC4zMzQtLjI1MiAxLjEgMS4xIDAgMCAwIC4xOTYtLjQyMnEuMDY3LS4yNTIuMDY3LS41OTJhMi4xIDIuMSAwIDAgMC0uMTE3LS43NTMuOS45IDAgMCAwLS4zNTQtLjQ1NHEtLjIzOC0uMTUyLS42MS0uMTUyIi8+PC9zdmc+");
+            --bi-search: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMTYgMTYiPjxwYXRoIGQ9Ik0xMS43NDIgMTAuMzQ0YTYuNSA2LjUgMCAxIDAtMS4zOTcgMS4zOThoLS4wMDFxLjA0NC4wNi4wOTguMTE1bDMuODUgMy44NWExIDEgMCAwIDAgMS40MTUtMS40MTRsLTMuODUtMy44NWExIDEgMCAwIDAtLjExNS0uMXpNMTIgNi41YTUuNSA1LjUgMCAxIDEtMTEgMCA1LjUgNS41IDAgMCAxIDExIDAiLz48L3N2Zz4=");
+        }
         @media (prefers-color-scheme: dark) {
             :root {
                 --page: #0F1216;
@@ -201,6 +213,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         .nav-list a[aria-current="page"] { background: var(--nav-active); font-weight: 500; }
         .sidebar-note { margin-top: auto; padding: 0 8px; font-size: 0.8125rem; color: var(--muted); }
         .sidebar-note .note-title { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 500; margin: 0 0 4px; }
+        .sidebar-note .note-title svg { color: var(--ok); }
         .sidebar-note p { margin: 0; }
         .content { flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; }
         .topbar {
@@ -335,6 +348,15 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         }
         .link-button:hover, button.link-button:hover { background: transparent; text-decoration-thickness: 2px; }
         button:disabled { opacity: 0.55; cursor: not-allowed; }
+        .bi { display: inline-block; flex: none; width: 1em; height: 1em; vertical-align: -0.125em; background-color: currentColor; -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
+        a .bi { margin-right: 4px; }
+        .bi-download { --icon: var(--bi-download); }
+        .bi-clipboard { --icon: var(--bi-clipboard); }
+        .bi-github { --icon: var(--bi-github); }
+        .bi-archive { --icon: var(--bi-archive); }
+        .bi-file-earmark-zip { --icon: var(--bi-file-earmark-zip); }
+        .bi-filetype-md { --icon: var(--bi-filetype-md); }
+        .bi-search { --icon: var(--bi-search); }
         .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
 
         /* ### Start page ### */
@@ -554,7 +576,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         .details-grid { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
         .details-form { flex: 1 1 380px; min-width: 0; }
         .details-files { flex: 1.3 1 460px; min-width: 0; }
-        .product-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; }
+        .product-row { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; align-items: flex-start; margin: 0 0 16px; }
+        .product-tabs, .product-extra { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
         .product-tabs [role="tab"] { font-weight: 400; }
         .product-tabs [role="tab"][aria-selected="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 500; }
         .file-view {
@@ -711,7 +734,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     Library</a></li>
                 <li><a href="#details" id="nav-details">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5"/><path d="m16 7 5 5-5 5"/><path d="m14 4-4 16"/></svg>
-                    Details</a></li>
+                    Inspect</a></li>
                 <li><a href="#help" id="nav-help">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>
                     Help</a></li>
@@ -722,7 +745,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6Z"/><path d="m9 12 2 2 4-4"/></svg>
                 Browser only
             </p>
-            <p id="storage-note-ok">Nothing you type leaves this browser.</p>
+            <p id="storage-note-ok">Your data never leaves this browser.</p>
             <p id="storage-note" hidden>Storage is blocked in this browser, so your draft will not be kept after you close the page.</p>
         </div>
     </nav>
@@ -822,17 +845,17 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                 <button type="button" class="link-button" id="starter-add">Add another question</button>
                             </div>
                             <details class="more" id="more">
-                                <summary>More: a welcome message, a picture, Copilot settings, and your name</summary>
+                                <summary>More settings</summary>
                                 <div id="extras-simple">
                                     <div id="extras">
                                         <div class="field">
                                             <label for="f-welcome">Welcome message</label>
-                                            <p class="hint" id="f-welcome-hint">Optional. The first thing people see when they open it. Used by SharePoint and Teams chats.</p>
+                                            <p class="hint" id="f-welcome-hint">Greeting shown to users. Not all AI products display this.</p>
                                             <textarea id="f-welcome" maxlength="1000" rows="2" aria-describedby="f-welcome-hint"></textarea>
                                         </div>
                                         <fieldset class="field">
                                             <legend>Picture</legend>
-                                            <p class="hint" id="icon-hint">A square PNG or JPG works best. It is resized to 192 by 192 pixels. Without one, the first letter of the name is used.</p>
+                                            <p class="hint" id="icon-hint">A square PNG or JPG, 192 x 192 pixels.</p>
                                             <div class="icon-row">
                                                 <img class="icon-preview" id="icon-preview" alt="Current icon preview" src="">
                                                 <div class="button-row">
@@ -843,8 +866,18 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                             </div>
                                             <p class="error-text" id="icon-error" hidden></p>
                                         </fieldset>
+                                        <fieldset class="field">
+                                            <legend>File attachments</legend>
+                                            <p class="hint" id="file-add-hint">Files used for grounding the agent with specific knowledge. Not all AI providers support this.</p>
+                                            <ul class="item-list" id="file-items" aria-label="Attached files"></ul>
+                                            <div class="button-row">
+                                                <label class="button" for="file-add">Add files</label>
+                                                <input type="file" id="file-add" class="visually-hidden" multiple aria-describedby="file-add-hint">
+                                            </div>
+                                            <p class="error-text" id="file-add-error" hidden></p>
+                                        </fieldset>
                                         <details class="sub">
-                                            <summary>Microsoft 365 Copilot settings: knowledge sources and what Copilot may use</summary>
+                                            <summary>Microsoft Copilot settings</summary>
                                             <div class="field">
                                                 <label for="f-sharepoint">Knowledge from SharePoint</label>
                                                 <p class="hint" id="f-sharepoint-hint">Paste links to SharePoint sites, libraries, folders, or files, one per line. Up to 20. People still need permission to those files.</p>
@@ -855,19 +888,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                                     <ul class="item-list" id="sharepoint-items" aria-labelledby="sharepoint-items-hint"></ul>
                                                 </div>
                                             </div>
-                                            <fieldset class="field">
-                                                <legend>Files it can read</legend>
-                                                <p class="hint" id="file-add-hint">Copilot reads these as knowledge. Up to 20 files: Word, PowerPoint, Excel, PDF, or plain text, including scripts and data files, which Copilot receives as .txt. The app checks each file's contents and refuses programs. The app package and the complete copy carry the files. The Teams Chat file can't.</p>
-                                                <ul class="item-list" id="file-items" aria-label="Attached files"></ul>
-                                                <div class="button-row">
-                                                    <label class="button" for="file-add">Add files</label>
-                                                    <input type="file" id="file-add" class="visually-hidden" multiple aria-describedby="file-add-hint">
-                                                </div>
-                                                <p class="error-text" id="file-add-error" hidden></p>
-                                            </fieldset>
                                             <fieldset>
                                                 <legend>What Copilot may use</legend>
-                                                <p class="hint">Teams messages, email, and meetings belong to the person asking. In a group chat, Teams shows that person a preview to approve before others see an answer that used them.</p>
+                                                <p class="hint">Enable or disable capabilities for the agent. Note that adding messages, emails or meetings may cause even web-based responses to pause for review.</p>
                                                 <div class="check-row"><input type="checkbox" id="c-webSearch"><label for="c-webSearch">Web search: look things up on the public web.</label></div>
                                                 <div class="field">
                                                     <label for="f-websites">Limit web search to these sites</label>
@@ -887,8 +910,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                             </fieldset>
                                         </details>
                                         <details class="sub">
-                                            <summary>About you: your name, copyright, and license</summary>
-                                            <p class="hint">Shown as the creator in the Copilot app. The three links must start with https. Leave blank to use placeholders.</p>
+                                            <summary>Agent publisher details</summary>
                                             <div class="inline-fields">
                                                 <div class="field"><label for="a-name">Your name</label><input type="text" id="a-name" maxlength="200"></div>
                                                 <div class="field"><label for="a-website">Website</label><input type="url" id="a-website" placeholder="https://" aria-describedby="a-website-error"><p class="error-text" id="a-website-error" hidden></p></div>
@@ -909,7 +931,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                 </div>
                             </details>
                         </section>
-                        <aside class="editor-side" aria-label="Preview and where it can go">
+                        <aside class="editor-side" aria-label="Preview and downloads">
                             <section class="card preview" aria-labelledby="preview-heading">
                                 <h2 id="preview-heading" class="visually-hidden">Preview</h2>
                                 <div class="preview-head">
@@ -920,12 +942,12 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                     </div>
                                 </div>
                                 <p class="preview-welcome" id="preview-welcome" hidden></p>
-                                <ul class="preview-starters" id="preview-starters" aria-label="Opening questions" hidden></ul>
+                                <ul class="preview-starters" id="preview-starters" aria-label="Prompt suggestions" hidden></ul>
                                 <p class="ask-pill" aria-hidden="true">Ask anything</p>
                                 <p class="preview-note">Preview. Appearance varies by product.</p>
                             </section>
                             <section class="card destinations" aria-labelledby="where-heading">
-                                <h2 id="where-heading" class="card-title">Where it can go</h2>
+                                <h2 id="where-heading" class="card-title">Download</h2>
                                 <div class="readiness" id="readiness" hidden>
                                     <p>Before it can travel, fill in:</p>
                                     <ul id="readiness-list"></ul>
@@ -938,28 +960,32 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                 <ul class="destination-list">
                                     <li>
                                         <span class="destination-name">Copilot / Teams Apps</span>
-                                        <button type="button" class="download-button" data-format="teamsZip">Download app package</button>
+                                        <button type="button" class="download-button" data-format="teamsZip"><span class="bi bi-download" aria-hidden="true"></span>Download app package</button>
                                         <p class="destination-note" id="copilot-loss" hidden></p>
                                     </li>
                                     <li>
                                         <span class="destination-name">Teams Chat</span>
-                                        <button type="button" class="download-button" data-format="msAgent">Download .agent file</button>
+                                        <button type="button" class="download-button" data-format="msAgent"><span class="bi bi-download" aria-hidden="true"></span>Download .agent file</button>
                                     </li>
                                     <li>
                                         <span class="destination-name">Gemini</span>
-                                        <button type="button" class="download-button" data-format="bundle">Download skill</button>
+                                        <button type="button" class="download-button" data-format="bundle"><span class="bi bi-download" aria-hidden="true"></span>Download skill</button>
                                     </li>
                                     <li>
                                         <span class="destination-name">Claude</span>
-                                        <button type="button" class="download-button" data-format="bundle">Download skill</button>
+                                        <button type="button" class="download-button" data-format="bundle"><span class="bi bi-download" aria-hidden="true"></span>Download skill</button>
                                     </li>
                                     <li>
                                         <span class="destination-name">ChatGPT</span>
-                                        <button type="button" id="chatgpt-copy">Copy text</button>
+                                        <button type="button" id="chatgpt-copy"><span class="bi bi-clipboard" aria-hidden="true"></span>Copy text</button>
+                                    </li>
+                                    <li>
+                                        <span class="destination-name">Gemini Notebook</span>
+                                        <button type="button" class="download-button" data-format="markdown"><span class="bi bi-download" aria-hidden="true"></span>Download .md file</button>
                                     </li>
                                 </ul>
-                                <button type="button" class="primary download-button" data-format="bundle" id="keep-copy">Keep a copy I can edit later</button>
-                                <p class="small muted">A small .zip you can open here any time. <a href="#details">See the files each product receives.</a></p>
+                                <button type="button" class="primary download-button" data-format="bundle" id="keep-copy"><span class="bi bi-archive" aria-hidden="true"></span>Download Backup</button>
+                                <p class="small muted">A small .zip you can open here any time. <a href="#details"><span class="bi bi-search" aria-hidden="true"></span>Inspect output files.</a></p>
                             </section>
                         </aside>
                     </div>
@@ -971,7 +997,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                 <div class="store-head">
                     <div>
                         <h1 id="library-heading" class="page-title" tabindex="-1">Library</h1>
-                        <p class="page-hint">Ready-made assistants you can try, change, and download. Want yours listed here? <a href="https://github.com/DepressionCenter/agentprise/issues/new?template=library-assistant.yml" target="_blank" rel="noopener">Send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
+                        <p class="page-hint">Ready-made assistants you can try, change, and download.<br>Want yours listed here? <a href="https://github.com/DepressionCenter/agentprise/issues/new?template=library-assistant.yml" target="_blank" rel="noopener">Send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
                     </div>
                     <div class="store-search">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -992,12 +1018,12 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             <!-- ### Details ### -->
             <section id="view-details" class="view" aria-labelledby="details-heading" hidden>
                 <div class="page-head">
-                    <h1 id="details-heading" class="page-title" tabindex="-1">Details</h1>
-                    <p class="page-hint">Every field on the left, and exactly what each product receives on the right.</p>
+                    <h1 id="details-heading" class="page-title" tabindex="-1">Inspect</h1>
+                    <p class="page-hint">Configure your agent and inspect the output in detail.</p>
                 </div>
                 <div class="details-grid">
                     <section class="card details-form" aria-labelledby="write-heading">
-                        <h2 id="write-heading" class="card-title">What you write</h2>
+                        <h2 id="write-heading" class="card-title">Agent Details</h2>
                         <form id="details-form" novalidate>
                             <div class="field">
                                 <label for="d-name">Name</label>
@@ -1007,21 +1033,21 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             </div>
                             <div class="field">
                                 <label for="d-description">Description</label>
-                                <p class="hint" id="d-description-hint">One sentence about what it does and when to use it. Up to 1,000 characters.</p>
+                                <p class="hint" id="d-description-hint">Short description, often shown next to the agent's or skill's name.</p>
                                 <textarea id="d-description" maxlength="1000" rows="2" aria-describedby="d-description-hint d-description-error"></textarea>
                                 <p class="error-text" id="d-description-error" hidden></p>
                             </div>
                             <div class="field">
                                 <label for="d-instructions">Instructions</label>
-                                <p class="hint" id="d-instructions-hint">How it should behave, what to focus on, and what to avoid. Plain English is fine.</p>
+                                <p class="hint" id="d-instructions-hint">How it should behave, what to focus on, and what to avoid.</p>
                                 <textarea id="d-instructions" maxlength="8000" rows="8" aria-describedby="d-instructions-hint d-instructions-counter d-instructions-error"></textarea>
                                 <p class="counter" id="d-instructions-counter">0 of 8,000 characters</p>
                                 <p class="error-text" id="d-instructions-error" hidden></p>
                                 <div class="button-row"><button type="button" class="instructions-template">Help me write this</button></div>
                             </div>
                             <div class="field">
-                                <label for="d-starters">Opening questions, one per line</label>
-                                <p class="hint" id="d-starters-hint">Example questions people can click. Up to 12. The order here is the order people see.</p>
+                                <label for="d-starters">Prompt suggestions</label>
+                                <p class="hint" id="d-starters-hint">Example prompts to show to the user. Enter one per line, up to 12 lines.</p>
                                 <textarea id="d-starters" rows="3" aria-describedby="d-starters-hint d-starters-error"></textarea>
                                 <p class="error-text" id="d-starters-error" hidden></p>
                             </div>
@@ -1029,15 +1055,23 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                         </form>
                     </section>
                     <section class="card details-files" aria-labelledby="receive-heading">
-                        <h2 id="receive-heading" class="card-title">What each product receives</h2>
-                        <p class="hint">Pick a product to see its files. Highlighted text comes straight from what you wrote.</p>
-                        <div class="product-tabs" role="tablist" aria-label="Product">
-                            <button type="button" role="tab" id="ptab-bundle" aria-controls="ppanel" aria-selected="true">Gemini and Claude</button>
-                            <button type="button" role="tab" id="ptab-msAgent" aria-controls="ppanel" aria-selected="false" tabindex="-1">Teams Chat</button>
-                            <button type="button" role="tab" id="ptab-teamsZip" aria-controls="ppanel" aria-selected="false" tabindex="-1">Copilot / Teams Apps</button>
-                            <button type="button" role="tab" id="ptab-copy" aria-controls="ppanel" aria-selected="false" tabindex="-1">ChatGPT</button>
+                        <h2 id="receive-heading" class="card-title">Output Format</h2>
+                        <p class="hint">Select an output format to inspect its contents.</p>
+                        <div class="product-row">
+                            <div class="product-tabs" role="tablist" aria-label="Output format">
+                                <button type="button" role="tab" id="ptab-gemini" aria-controls="ppanel" aria-selected="true">Gemini</button>
+                                <button type="button" role="tab" id="ptab-claude" aria-controls="ppanel" aria-selected="false" tabindex="-1">Claude</button>
+                                <button type="button" role="tab" id="ptab-msAgent" aria-controls="ppanel" aria-selected="false" tabindex="-1">Teams Chat</button>
+                                <button type="button" role="tab" id="ptab-teamsZip" aria-controls="ppanel" aria-selected="false" tabindex="-1">Copilot / Teams Apps</button>
+                                <button type="button" role="tab" id="ptab-chatgpt" aria-controls="ppanel" aria-selected="false" tabindex="-1">ChatGPT</button>
+                                <button type="button" role="tab" id="ptab-notebook" aria-controls="ppanel" aria-selected="false" tabindex="-1">Gemini Notebook</button>
+                            </div>
+                            <div class="product-extra" role="group" aria-label="Other downloads">
+                                <button type="button" class="download-button" data-format="skill"><span class="bi bi-filetype-md" aria-hidden="true"></span>Download SKILL.md</button>
+                                <button type="button" class="download-button" data-format="bundle"><span class="bi bi-archive" aria-hidden="true"></span>Download Backup</button>
+                            </div>
                         </div>
-                        <div role="tabpanel" id="ppanel" aria-labelledby="ptab-bundle" tabindex="0">
+                        <div role="tabpanel" id="ppanel" aria-labelledby="ptab-gemini" tabindex="0">
                             <div class="notice" id="product-blocked" hidden>
                                 <p>Before you can download, fill in:</p>
                                 <ul id="product-blocked-list"></ul>
@@ -1052,7 +1086,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                 <button type="button" class="primary download-button" id="product-download" data-format="bundle">Download</button>
                             </div>
                             <div class="after">
-                                <p class="label">After downloading</p>
+                                <p class="label" id="after-label">After downloading</p>
                                 <div id="after-steps"></div>
                             </div>
                         </div>
@@ -1064,21 +1098,21 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             <section id="view-help" class="view" aria-labelledby="help-heading" hidden>
                 <div class="page-head">
                     <h1 id="help-heading" class="page-title" tabindex="-1">Help</h1>
-                    <p class="page-hint">Answers to the questions people ask most.</p>
                 </div>
                 <div class="card help-card">
                     <h2>What is Agentprise?</h2>
-                    <p>A place to describe an AI assistant once and get it in the form each product wants, whether that is Microsoft 365 Copilot, a Teams chat, Gemini, Claude, or ChatGPT. It runs in your browser. Nothing you type is sent anywhere.</p>
+                    <p>Agentprise is an app that lets you define an AI agent or skill once, and export to it to formats compatible across many products: Copilot, Claude, Gemini, ChatGPT, Teams, and more.</p>
                     <h2>Which download do I need?</h2>
                     <p>It depends on where people will use the assistant.</p>
                     <ul>
                         <li><strong>Copilot / Teams Apps</strong> gives you an app package (.zip) for the Agents list in the Microsoft 365 Copilot app and in Teams.</li>
                         <li><strong>Teams Chat</strong> gives you a .agent file for a Teams group chat, channel, or meeting. You put the file in a SharePoint library first.</li>
                         <li><strong>Gemini</strong> and <strong>Claude</strong> each get a skill. It is the same file, and it works in both.</li>
-                        <li><strong>ChatGPT</strong> gets text to copy and paste, because ChatGPT and Gemini Notebook have no file to upload.</li>
+                        <li><strong>ChatGPT</strong> gets text to copy and paste, because it has no file to upload.</li>
+                        <li><strong>Gemini Notebook</strong> gets a .md file to add as a source, or the same text to paste.</li>
                     </ul>
-                    <p>Not sure yet? Keep a copy. You can come back any time and download it for another product.</p>
-                    <h2>What does "Keep a copy" do?</h2>
+                    <p>Not sure yet? Download a backup. You can come back any time and download it for another product.</p>
+                    <h2>What does "Download Backup" do?</h2>
                     <p>It saves a small .zip file to your computer. Drop that file on the Workspace page later to change the assistant or download it for a different product. The same file also works as a skill in Gemini and Claude.</p>
                     <h2>Which files can I attach?</h2>
                     <p>Word, PowerPoint, Excel, PDF, and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, so a script reaches it as a .txt file with the same name. The skill .zip keeps the real name.</p>
@@ -1089,13 +1123,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <h2>Why does my assistant not answer in a Teams chat?</h2>
                     <p>App packages do not work in group chats, channels, or meeting chats. Use the Teams Chat download instead: put the .agent file in a SharePoint library, choose Copy link for Teams, paste the link in the chat, and choose Add to this chat.</p>
                     <h2>Why does Teams ask me to approve the answer?</h2>
-                    <p>In a group chat, Teams shows the person who asked a preview whenever the answer used something the others may not be able to see, such as that person's own chats, mail, or meetings. Turn off Teams messages, email, and meetings under Copilot settings and answers post straight to the chat. Web search does not cause this.</p>
+                    <p>In a group chat, Teams shows the person who asked a preview whenever the answer used something the others may not be able to see, such as that person's own chats, mail, or meetings. Turn off Teams messages, email, and meetings under Copilot settings and answers post straight to the chat.</p>
                     <h2>What does "Review before sharing" check?</h2>
                     <p>Before you download, the app looks through your assistant's text and plain-text files for shapes that often mean personal information, such as Social Security numbers, phone numbers, email addresses, dates, street addresses, and long numbers, and for phrases common in prompt injection, such as "ignore previous instructions" or invisible characters. Each match is listed with where it was found and a masked sample. It is a hint to look, not proof: a help desk assistant may hold a phone number on purpose. It also misses plenty, including people's names, so it is not a privacy review and never blocks a download. The check runs in your browser and nothing is sent anywhere.</p>
                     <h2>Where does my work go?</h2>
-                    <p>It stays in your browser, so you can close the page and pick up later on the same computer. Nothing is uploaded. Start over removes it.</p>
+                    <p>Nowhere! Your Agentprise projects are kept only in your web browser, and are never uploaded to the Internet. It is recommended to download a backup copy since browsers can sometimes clear local storage.</p>
                     <h2>Can other people start from my assistant?</h2>
-                    <p>Yes. The Library holds ready-made assistants anyone can try and change. To add yours, keep a copy and <a href="https://github.com/DepressionCenter/agentprise/issues/new?template=library-assistant.yml" target="_blank" rel="noopener">send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
+                    <p>Yes. The Library holds ready-made assistants anyone can try and change. To add yours, download a backup and <a href="https://github.com/DepressionCenter/agentprise/issues/new?template=library-assistant.yml" target="_blank" rel="noopener">send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
                     <h2>At a glance</h2>
                     <div class="table-wrap">
                         <table>
@@ -1106,8 +1140,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             <tbody>
                                 <tr><th scope="row">App package (.zip)</th><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
                                 <tr><th scope="row">.agent file</th><td>No</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
-                                <tr><th scope="row">Skill, also "Keep a copy" (.zip)</th><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+                                <tr><th scope="row">Skill, also Download Backup (.zip)</th><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
                                 <tr><th scope="row">Copy text</th><td>No</td><td>No</td><td>Notebook only</td><td>No</td><td>Yes</td></tr>
+                                <tr><th scope="row">.md file</th><td>No</td><td>No</td><td>Notebook only</td><td>No</td><td>No</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1116,7 +1151,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         </main>
         <footer class="site-footer">
             <p>&copy; 2026 The Regents of the University of Michigan | <a href="https://depressioncenter.org" target="_blank" rel="noopener">Eisenberg Family Depression Center<span class="visually-hidden"> (opens in a new tab)</span></a></p>
-            <p><a href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener">Source on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a> | <a href="https://github.com/DepressionCenter/agentprise/tree/main/docs" target="_blank" rel="noopener">Documentation<span class="visually-hidden"> (opens in a new tab)</span></a></p>
+            <p><a href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener"><span class="bi bi-github" aria-hidden="true"></span>View Code<span class="visually-hidden"> (opens in a new tab)</span></a> | <a href="https://github.com/DepressionCenter/agentprise/tree/main/docs" target="_blank" rel="noopener">Documentation<span class="visually-hidden"> (opens in a new tab)</span></a></p>
         </footer>
     </div>
 </div>
@@ -1174,15 +1209,17 @@ const ANALYTICS_HOST = "code.depressioncenter.org";
 const ANALYTICS_ID = "G-3Q455XWS5F";
 const DEFAULT_LICENSE = "GPL-3.0-or-later";
 
-// License choices offered in the form. The URL is written into LICENSE.txt for
-// every choice except the default, which gets the full GPL text.
+// License choices offered in the form. Every choice lets people change the
+// assistant and share their version, which is what the Library asks for, so no
+// "no derivatives" or all-rights-reserved option is listed. The URL is written
+// into LICENSE.txt for every choice except the default, which gets the full GPL text.
 const LICENSE_CHOICES = Object.freeze([
     { id: "GPL-3.0-or-later", label: "GNU GPL v3 or later (default)", url: "https://www.gnu.org/licenses/gpl-3.0.html" },
     { id: "MIT", label: "MIT", url: "https://opensource.org/license/mit" },
     { id: "Apache-2.0", label: "Apache 2.0", url: "https://www.apache.org/licenses/LICENSE-2.0" },
     { id: "CC-BY-4.0", label: "Creative Commons Attribution 4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
-    { id: "CC0-1.0", label: "Creative Commons Zero (public domain)", url: "https://creativecommons.org/publicdomain/zero/1.0/" },
-    { id: "Proprietary", label: "All rights reserved", url: "" }
+    { id: "CC-BY-SA-4.0", label: "Creative Commons Attribution-ShareAlike 4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/" },
+    { id: "CC0-1.0", label: "Creative Commons Zero (public domain)", url: "https://creativecommons.org/publicdomain/zero/1.0/" }
 ]);
 
 // Microsoft format constants. The manifest version and valid domains match what the
@@ -2514,7 +2551,7 @@ function validateAgent(agent) {
         warnings.push({ field: "webSites", message: "The web site list only works in Microsoft 365 Copilot. Other products ignore it." });
     }
     if (agent.files.length > 0) {
-        warnings.push({ field: "files", message: "Attached files travel in the app package and the complete copy. The Teams Chat file can't carry them." });
+        warnings.push({ field: "files", message: "Attached files travel in the app package, the skill, and the backup. The Teams Chat file can't carry them." });
     }
     if (agent.files.some(function (file) { return !isCopilotFileName(file.name); })) {
         warnings.push({ field: "files", message: "Script and data files reach Copilot as .txt files with the same name, because Copilot accepts only document types." });
@@ -2581,7 +2618,7 @@ const SCAN_FIELDS = Object.freeze([
         return agent.sharepointLinks.concat(agent.sharepointItems.map(function (item) { return [item.name, item.url].filter(Boolean).join(" "); })).join("\n");
     } },
     { field: "webSites", label: "Web sites", kinds: ["injection"], get: function (agent) { return agent.copilot.webSites.join("\n"); } },
-    { field: "creator", label: "About you", kinds: SCAN_KINDS, get: function (agent) { return [agent.creator.name, agent.creator.website, agent.creator.privacy, agent.creator.terms].join("\n"); } },
+    { field: "creator", label: "Agent publisher details", kinds: SCAN_KINDS, get: function (agent) { return [agent.creator.name, agent.creator.website, agent.creator.privacy, agent.creator.terms].join("\n"); } },
     { field: "copyright", label: "Copyright line", kinds: SCAN_KINDS, get: function (agent) { return agent.copyright; } }
 ]);
 
@@ -3599,7 +3636,7 @@ function bundleReadme(agent) {
         lines.push("Made by " + agent.creator.name + (agent.creator.website ? " (" + agent.creator.website + ")" : "") + ".", "");
     }
     if (agent.files.length > 0) {
-        lines.push("Files it can read are in the references folder: " + agent.files.map(function (file) { return file.name; }).join(", ") + ".", "");
+        lines.push("Attached files are in the references folder: " + agent.files.map(function (file) { return file.name; }).join(", ") + ".", "");
     }
     lines.push(
         "## How to use",
@@ -3651,6 +3688,33 @@ async function bundleExport(agent) {
     // The download is named after the assistant, like every other download.
     // Only the folder inside the ZIP uses the skill name, as the standard asks.
     return { fileName: safeFileName(agent.name, ".zip"), bytes: zipWrite(entries), warnings: warnings, skillName: skillName };
+}
+
+/**
+ * Writes a plain Agent Skill ZIP: the same folder as the bundle, but SKILL.md
+ * carries only the fields the standard defines (name, description, license),
+ * so nothing in it is specific to this app. Opening this file here again loses
+ * the welcome message, the starters, the picture, and the Copilot settings,
+ * which is why the bundle, not this file, is the backup.
+ * @param {object} agent a normalized agent
+ * @returns {Promise<{fileName: string, bytes: Uint8Array, warnings: string[], skillName: string}>}
+ */
+async function skillExport(agent) {
+    const warnings = [];
+    const skillName = toSkillName(agent.name);
+    if (!agent.description) {
+        warnings.push("The description is empty, so the name is used as the description.");
+    }
+    const frontmatter = { name: skillName, description: agent.description || agent.name, license: agent.license + ". See LICENSE.txt." };
+    const skillMd = stringifyFrontmatter(frontmatter, "\n" + agent.instructions + "\n");
+    const entries = [{ name: skillName + "/SKILL.md", bytes: toBytes(skillMd) }];
+    entries.push({ name: skillName + "/LICENSE.txt", bytes: toBytes(bundleLicenseText(agent)) });
+    entries.push({ name: skillName + "/README.md", bytes: toBytes(bundleReadme(agent)) });
+    agent.files.forEach(function (file) {
+        entries.push({ name: skillName + "/" + BUNDLE_FILES_FOLDER + file.name, bytes: file.bytes });
+    });
+    // Named apart from the bundle, so both can sit in one folder without a clash.
+    return { fileName: safeFileName(agent.name, ".skill.zip"), bytes: zipWrite(entries), warnings: warnings, skillName: skillName };
 }
 
 /**
@@ -3825,7 +3889,7 @@ async function teamsZipExport(agent, icons) {
         }
     });
     if (placeholdersUsed.length > 0) {
-        warnings.push("Placeholder values were used for the creator " + placeholdersUsed.join(", ") + ". Fill in About you to replace them.");
+        warnings.push("Placeholder values were used for the creator " + placeholdersUsed.join(", ") + ". Fill in Agent publisher details to replace them.");
     }
     const developerName = truncateWithWarning(creator.name, TEAMS_DEVELOPER_NAME_MAX, "creator name", warnings);
     const shortName = truncateWithWarning(agent.name, TEAMS_SHORT_NAME_MAX, "name shown in the app list", warnings);
@@ -4079,6 +4143,7 @@ globalThis.Agentprise = {
     bytes: { toBase64: bytesToBase64, fromBase64: base64ToBytes, equal: bytesEqual, toText: fromBytes, fromText: toBytes },
     formats: {
         bundle: { export: bundleExport, import: bundleImport },
+        skill: { export: skillExport },
         skillMd: { import: skillMdImport },
         msAgent: { export: msAgentExport, import: msAgentImport },
         teamsZip: { export: teamsZipExport, import: teamsZipImport },
@@ -4091,7 +4156,10 @@ const STORAGE_KEY = "agentprise-draft-v1";
 const VIEW_NAMES = ["workspace", "library", "details", "help"];
 // Links elsewhere may use these hash names; each one opens the matching view.
 const LEGACY_HASHES = { home: "workspace", build: "workspace", check: "details", download: "details" };
-const PRODUCT_NAMES = ["bundle", "msAgent", "teamsZip", "copy"];
+// Tabs on the Inspect page, in order. Gemini and Claude receive the same skill
+// ZIP today but are separate tabs, since the two products' skill support is
+// changing and may diverge.
+const PRODUCT_NAMES = ["gemini", "claude", "msAgent", "teamsZip", "chatgpt", "notebook"];
 // The Workspace editor always shows at least this many blanks for example questions.
 const MIN_STARTER_BLANKS = 2;
 // Products show only a few starters at a time, so the preview shows at most this many.
@@ -4108,14 +4176,18 @@ const REVIEW_FIELDS = { name: "s-name", description: "s-description", instructio
 const WORKSPACE_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions" };
 const DETAILS_FIELDS = { name: "d-name", description: "d-description", instructions: "d-instructions" };
 const PRODUCT_HINTS = {
-    bundle: "This file is also the copy to keep. Open it here later to edit.",
-    msAgent: "One file. Upload it to a SharePoint library, then add it to a chat.",
+    gemini: "A skill ZIP. Gemini reads SKILL.md and the references folder.",
+    claude: "A skill ZIP. Claude reads SKILL.md and the references folder.",
+    msAgent: "Single file for SharePoint, OneDrive and Teams chats.",
     teamsZip: "Keep the same file when you update it, so the app id stays the same.",
-    copy: "No file to upload. Copy each box into the matching field."
+    chatgpt: "No file to upload. Copy each box into the matching field.",
+    notebook: "Add the .md file as a source, or paste the instructions."
 };
 const AFTER_STEPS = {
-    bundle: [
-        ["In Gemini", ["Open Settings, then Skills.", "Choose Upload and pick this .zip file.", "Gemini Skills may need a Google AI subscription."]],
+    gemini: [
+        ["In Gemini", ["Open Settings, then Skills.", "Choose Upload and pick this .zip file.", "Gemini Skills may need a Google AI subscription."]]
+    ],
+    claude: [
         ["In Claude", ["Open Settings, then Capabilities, then Skills.", "Choose Upload and pick this .zip file.", "Turn the skill on. Skills need a paid plan with code execution on."]]
     ],
     msAgent: [
@@ -4124,9 +4196,11 @@ const AFTER_STEPS = {
     teamsZip: [
         ["In the Microsoft 365 Copilot app or in Teams", ["Choose Agents.", "Choose Upload, or Create, then Upload, and pick this .zip file.", "Choose Share to give it to other people. Your admin may need to allow custom agents."]]
     ],
-    copy: [
-        ["In ChatGPT", ["Open Explore GPTs, then Create.", "Open the Configure tab.", "Paste each box into the matching field. Opening questions go in Conversation starters."]],
-        ["In Gemini Notebook", ["Open the notebook, then More, then Notebook settings.", "Paste the instructions into the instructions field.", "Or add the .md download as a source."]]
+    chatgpt: [
+        ["In ChatGPT", ["Open Explore GPTs, then Create.", "Open the Configure tab.", "Paste each box into the matching field. Prompt suggestions go in Conversation starters."]]
+    ],
+    notebook: [
+        ["In Gemini Notebook", ["Open the notebook, then More, then Notebook settings.", "Add the .md download as a source.", "Or paste the instructions into the instructions field."]]
     ]
 };
 const INSTRUCTIONS_TEMPLATE = [
@@ -4168,7 +4242,7 @@ const ui = {
     statusTimer: null,
     productTimer: null,
     productRender: 0,
-    product: "bundle",
+    product: "gemini",
     productFile: "",
     built: null,
     pendingConfirm: null,
@@ -4350,7 +4424,7 @@ function renderBreadcrumb() {
     if (ui.view === "workspace") {
         crumbs = [["Workspace", "#workspace"], [ui.editorMode ? name : "Create", ""]];
     } else if (ui.view === "details") {
-        crumbs = [["Workspace", "#workspace"], [name, "#workspace"], ["Details", ""]];
+        crumbs = [["Workspace", "#workspace"], [name, "#workspace"], ["Inspect", ""]];
     } else if (ui.view === "library") {
         crumbs = [["Library", ""]];
     } else {
@@ -4719,7 +4793,7 @@ function setupFileOpening() {
 }
 
 // ### Interface: form state ###
-// The Workspace editor and the Details form edit the same fields, so each text
+// The Workspace editor and the Inspect form edit the same fields, so each text
 // field lists every control that shows it.
 const TEXT_FIELDS = [
     { ids: ["s-name", "d-name"], get: function (a) { return a.name; }, set: function (a, v) { a.name = v; } },
@@ -5079,7 +5153,7 @@ function readStartersField() {
     showFieldError("d-starters", lines.length > LIMITS.starters ? "Only the first " + LIMITS.starters + " questions are kept." : "");
 }
 
-/** Shows inline errors for the required fields in the Details form. */
+/** Shows inline errors for the required fields in the Inspect form. */
 function showRequiredErrors() {
     const messages = {};
     ui.problems.forEach(function (problem) { messages[problem.field] = problem.message; });
@@ -5245,6 +5319,10 @@ async function startDownload(format) {
             const result = copyTextExport(agent);
             downloadBytes(result.fileName, toBytes(result.markdown), "text/markdown");
             announce("Downloaded " + result.fileName + ".");
+        } else if (format === "skill") {
+            const result = await skillExport(agent);
+            downloadBytes(result.fileName, result.bytes, "application/zip");
+            announce("Downloaded " + result.fileName + "." + (result.warnings.length ? " " + result.warnings.join(" ") : ""));
         }
     } catch (error) {
         announce("The download could not be made: " + error.message, true);
@@ -5267,10 +5345,10 @@ function setupDownloads() {
         button.addEventListener("click", function () { runDownload(button.getAttribute("data-format")); });
     });
     $("chatgpt-copy").addEventListener("click", function () {
-        ui.product = "copy";
+        ui.product = "chatgpt";
         showView("details", false);
-        selectProduct("copy");
-        $("ptab-copy").focus();
+        selectProduct("chatgpt");
+        $("ptab-chatgpt").focus();
     });
 }
 
@@ -5294,6 +5372,13 @@ function highlightNeedles(agent) {
         });
     });
     return needles.sort(function (a, b) { return b.length - a.length; });
+}
+
+/** Gives a button an icon and a text label, replacing whatever it showed before. */
+function labelButton(button, iconClass, text) {
+    clearChildren(button);
+    button.appendChild(el("span", { className: "bi " + iconClass, "aria-hidden": "true" }));
+    button.appendChild(document.createTextNode(text));
 }
 
 /** Appends text to a container with every needle wrapped in a mark element. Text only, never markup. */
@@ -5326,7 +5411,7 @@ function appendHighlighted(container, text, needles) {
  * @returns {Promise<{root: string, files: Array<object>, fileName: string, format: string, notes: string[]}>}
  */
 async function buildProductFiles(agent, product) {
-    if (product === "bundle") {
+    if (product === "gemini" || product === "claude") {
         const skillName = toSkillName(agent.name);
         const files = [{ name: "SKILL.md", text: stringifyFrontmatter(bundleFrontmatter(agent, skillName), "\n" + agent.instructions + "\n") }];
         if (agent.icon) {
@@ -5341,7 +5426,7 @@ async function buildProductFiles(agent, product) {
     }
     if (product === "msAgent") {
         const result = msAgentExport(agent);
-        const text = result.text.replace(/"icon": "data:image\/png;base64,[^"]*"/, "\"icon\": \"data:image/png;base64,(the picture, as text)\"");
+        const text = result.text.replace(/"icon": "data:image\/png;base64,[^"]*"/, "\"icon\": \"data:image/png;base64,...\"");
         return { root: "", files: [{ name: result.fileName, text: text }], fileName: result.fileName, format: "msAgent", notes: result.warnings };
     }
     if (product === "teamsZip") {
@@ -5365,7 +5450,11 @@ async function buildProductFiles(agent, product) {
         return { root: "", files: files, fileName: result.fileName, format: "teamsZip", notes: result.warnings };
     }
     const copy = copyTextExport(agent);
-    return { root: "", files: [{ name: "Copy and paste", copy: copy }, { name: copy.fileName, text: copy.markdown }], fileName: copy.fileName, format: "markdown", notes: [] };
+    if (product === "chatgpt") {
+        // ChatGPT has nothing to upload, so there is no file and no download.
+        return { root: "", files: [{ name: "Copy and paste", copy: copy }], fileName: "", format: "", notes: [] };
+    }
+    return { root: "", files: [{ name: copy.fileName, text: copy.markdown }, { name: "Copy and paste", copy: copy }], fileName: copy.fileName, format: "markdown", notes: [] };
 }
 
 function buildCopyBoxes(copy) {
@@ -5429,6 +5518,8 @@ function renderFileTree() {
 function renderAfterSteps(product) {
     const box = $("after-steps");
     clearChildren(box);
+    // ChatGPT has no file, so its steps follow copying rather than a download.
+    setText($("after-label"), product === "chatgpt" ? "Next steps" : "After downloading");
     AFTER_STEPS[product].forEach(function (group) {
         box.appendChild(el("p", { text: group[0] }));
         const list = el("ol");
@@ -5491,7 +5582,8 @@ async function renderProductPanel() {
     renderFileBody();
     const download = $("product-download");
     download.setAttribute("data-format", built.format);
-    setText(download, built.fileName ? "Download " + built.fileName : "Download");
+    labelButton(download, "bi-download", built.fileName ? "Download " + built.fileName : "Download");
+    download.hidden = !built.format;
     download.disabled = ui.problems.length > 0 || !built.format;
     setText($("product-hint"), PRODUCT_HINTS[ui.product]);
     renderAfterSteps(ui.product);
@@ -5530,7 +5622,7 @@ function setupProductTabs() {
 }
 
 // ### Interface: Library ###
-// The library is a folder of Agentprise bundles (the same zip "Keep a copy" makes)
+// The library is a folder of Agentprise bundles (the same zip Download Backup makes)
 // next to the page, listed in library/catalog.json. Each bundle is opened with the
 // same importer as a dropped file, so adding an entry means dropping the zip in the
 // folder and adding one catalog line. Nothing about an entry lives in this page.
