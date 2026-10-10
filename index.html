@@ -357,6 +357,64 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         .dropzone-title { font-size: 1.25rem; font-weight: 600; }
         .dropzone svg { color: var(--accent-text); }
         .start-cards { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+        .strip { margin-top: 24px; }
+        .strip-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+        .strip-title { font-size: 1rem; font-weight: 600; margin: 0; }
+        .strip-body { display: flex; align-items: center; gap: 8px; }
+        .strip-arrow {
+            flex: none;
+            width: 44px;
+            height: 44px;
+            min-width: 0;
+            padding: 0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* The track scrolls sideways with the arrow buttons, so the scrollbar stays hidden. Tiles stay keyboard reachable. */
+        .strip-track {
+            flex: 1 1 auto;
+            min-width: 0;
+            list-style: none;
+            margin: 0;
+            padding: 4px;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-padding-inline: 4px;
+            scrollbar-width: none;
+        }
+        .strip-track::-webkit-scrollbar { display: none; }
+        .strip-track li { flex: none; scroll-snap-align: start; }
+        .strip-tile {
+            position: relative;
+            width: 132px;
+            height: 132px;
+            min-width: 0;
+            padding: 0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--panel);
+        }
+        .strip-tile img { display: block; width: 100%; height: 100%; object-fit: cover; }
+        .strip-name {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 6px 8px;
+            background: rgba(15, 20, 26, 0.8);
+            color: #FFFFFF;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         .start-card {
             flex: 1 1 auto;
             min-height: 120px;
@@ -653,6 +711,21 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             </button>
                         </div>
                     </div>
+                    <section class="strip" id="strip" aria-labelledby="strip-heading" hidden>
+                        <div class="strip-head">
+                            <h2 id="strip-heading" class="strip-title">Or start from the library</h2>
+                            <a href="#library">See the whole library</a>
+                        </div>
+                        <div class="strip-body">
+                            <button type="button" class="strip-arrow" id="strip-back" aria-label="Scroll back" hidden>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>
+                            </button>
+                            <ul class="strip-track" id="strip-track" aria-label="Sample assistants"></ul>
+                            <button type="button" class="strip-arrow" id="strip-forward" aria-label="Scroll forward" hidden>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                            </button>
+                        </div>
+                    </section>
                 </div>
 
                 <div id="editor" hidden>
@@ -3242,6 +3315,8 @@ const PRODUCT_NAMES = ["bundle", "msAgent", "teamsZip", "copy"];
 const MIN_STARTER_BLANKS = 2;
 // Products show only a few starters at a time, so the preview shows at most this many.
 const PREVIEW_STARTERS = 3;
+// The start page strip shows a random sample of the library, capped so it stays a glance, not a list.
+const STRIP_MAX = 10;
 const STARTER_PLACEHOLDERS = ["How do I calibrate the scale?", "What is the cleanup checklist?"];
 const DEFAULT_ICON_COLOR = "#2B4C7E";
 // Confirmations in the status bar clear themselves after this long. Errors stay.
@@ -3299,8 +3374,10 @@ const ui = {
     editorMode: null,
     starterBlanks: [],
     previewOrder: [],
+    sampleFingerprint: null,
     storageOk: true,
     catalog: [],
+    catalogOk: false,
     problems: [],
     warnings: [],
     saveTimer: null,
@@ -3526,15 +3603,19 @@ function storageBlocked() {
     $("storage-note").hidden = false;
 }
 
+/** The agent as plain JSON text, with the icon as base64. Used for the saved draft and for change detection. */
+function agentRecord(agent) {
+    return JSON.stringify(Object.assign({}, agent, {
+        icon: agent.icon ? bytesToBase64(agent.icon.bytes) : null
+    }));
+}
+
 function saveDraftNow() {
     if (!ui.storageOk) {
         return;
     }
     try {
-        const copy = Object.assign({}, ui.agent, {
-            icon: ui.agent.icon ? bytesToBase64(ui.agent.icon.bytes) : null
-        });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(copy));
+        localStorage.setItem(STORAGE_KEY, agentRecord(ui.agent));
     } catch (error) {
         storageBlocked();
     }
@@ -3586,9 +3667,18 @@ function setAgent(agent) {
     saveDraft();
 }
 
-/** Asks before replacing a draft that has content. Calls proceed() on yes. */
+/**
+ * True while the workspace holds a library entry exactly as it was loaded. Replacing it loses
+ * nothing, because the same entry is still in the library. A reloaded page cannot tell a sample
+ * from a draft, so it asks, which is the safe side.
+ */
+function isUntouchedSample() {
+    return ui.editorMode === "sample" && ui.sampleFingerprint !== null && agentRecord(ui.agent) === ui.sampleFingerprint;
+}
+
+/** Asks before replacing work that could be lost. Calls proceed() on yes, or at once when nothing is at risk. */
 function confirmReplace(message, proceed) {
-    if (!agentHasContent(ui.agent)) {
+    if (!agentHasContent(ui.agent) || isUntouchedSample()) {
         proceed();
         return;
     }
@@ -3856,6 +3946,17 @@ function renderStarterBlanks(focusIndex) {
     }
 }
 
+/** Fisher-Yates shuffle for display order only, so plain Math.random is enough. */
+function shuffleInPlace(list) {
+    for (let i = list.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const swap = list[i];
+        list[i] = list[j];
+        list[j] = swap;
+    }
+    return list;
+}
+
 /** Sizes the name blank to its text, because a short name on a full-width line looks like a mistake. */
 function sizeNameBlank() {
     const input = $("s-name");
@@ -3889,13 +3990,7 @@ function previewStarters(starters) {
         return starters;
     }
     if (ui.previewOrder.length !== starters.length) {
-        ui.previewOrder = starters.map(function (unused, index) { return index; });
-        for (let i = ui.previewOrder.length - 1; i > 0; i -= 1) {
-            const j = Math.floor(Math.random() * (i + 1));
-            const swap = ui.previewOrder[i];
-            ui.previewOrder[i] = ui.previewOrder[j];
-            ui.previewOrder[j] = swap;
-        }
+        ui.previewOrder = shuffleInPlace(starters.map(function (unused, index) { return index; }));
     }
     return ui.previewOrder.slice(0, PREVIEW_STARTERS).map(function (index) { return starters[index]; });
 }
@@ -4511,6 +4606,7 @@ function useLibraryEntry(entry) {
         ui.agent.icon = agent.icon ? { bytes: copyBytes(agent.icon.bytes), mime: "image/png" } : null;
         renderForm();
         saveDraftNow();  // A loaded entry is a complete state, so it is kept at once rather than after the typing delay
+        ui.sampleFingerprint = agentRecord(ui.agent);
         announce("Loaded " + entry.name + ".");
         showView("workspace", true);
     });
@@ -4535,22 +4631,34 @@ function libraryCard(entry) {
     ]);
 }
 
-let libraryLoaded = false;
+/** Fetches the catalog and every bundle once, shared by the Library view and the start page strip. */
+let libraryLoading = null;
+function ensureLibrary() {
+    if (!libraryLoading) {
+        libraryLoading = (async function () {
+            const fetched = await fetchCatalog();
+            ui.catalog = fetched || [];
+            ui.catalogOk = Boolean(fetched);
+            if (fetched) {
+                await loadLibraryEntries(ui.catalog);
+            }
+        })();
+    }
+    return libraryLoading;
+}
+
 async function renderLibrary() {
     const list = $("library-list");
     const status = $("library-status");
-    if (!libraryLoaded) {
-        libraryLoaded = true;
+    if (!libraryLoading) {
         setText(status, "Loading the library...");
-        const fetched = await fetchCatalog();
-        ui.catalog = fetched || [];
-        if (!fetched) {
-            setText(status, libraryAvailable()
-                ? "The library could not be loaded. Try again later."
-                : "The Library needs the app to run from a web address. Use the online version at " + APP_SITE_URL + " or start the included server.");
-            return;
-        }
-        await loadLibraryEntries(ui.catalog);
+    }
+    await ensureLibrary();
+    if (!ui.catalogOk) {
+        setText(status, libraryAvailable()
+            ? "The library could not be loaded. Try again later."
+            : "The Library needs the app to run from a web address. Use the online version at " + APP_SITE_URL + " or start the included server.");
+        return;
     }
     const query = $("library-search").value.trim().toLowerCase();
     const matches = ui.catalog.filter(function (entry) {
@@ -4563,6 +4671,58 @@ async function renderLibrary() {
     clearChildren(list);
     setText(status, matches.length === 0 ? "No assistants match." : matches.length + " assistant(s).");
     matches.forEach(function (entry) { list.appendChild(libraryCard(entry)); });
+}
+
+/** One strip tile: the icon with the name over it. Choosing it opens the entry like Try it does. */
+function stripTile(entry) {
+    const icon = el("img", { alt: "", src: iconPreviewUri(entry.agent) });
+    const button = el("button", { type: "button", className: "strip-tile" }, [
+        icon,
+        el("span", { className: "visually-hidden", text: "Try " }),
+        el("span", { className: "strip-name", text: entry.name })
+    ]);
+    button.addEventListener("click", function () { useLibraryEntry(entry); });
+    return el("li", {}, [button]);
+}
+
+/** Enables each arrow only while there is more track in that direction, and hides both when it all fits. */
+function updateStripArrows() {
+    const track = $("strip-track");
+    const overflow = track.scrollWidth > track.clientWidth + 1;
+    $("strip-back").hidden = !overflow;
+    $("strip-forward").hidden = !overflow;
+    $("strip-back").disabled = track.scrollLeft <= 0;
+    $("strip-forward").disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+}
+
+/** Fills the start page strip with a random sample of the library. Stays hidden when the library is empty or unreachable. */
+async function renderStrip() {
+    await ensureLibrary();
+    const usable = ui.catalog.filter(function (entry) { return entry.agent && !entry.problem; });
+    const strip = $("strip");
+    if (usable.length === 0) {
+        strip.hidden = true;
+        return;
+    }
+    const track = $("strip-track");
+    clearChildren(track);
+    shuffleInPlace(usable.slice()).slice(0, STRIP_MAX).forEach(function (entry) { track.appendChild(stripTile(entry)); });
+    strip.hidden = false;
+    updateStripArrows();
+}
+
+function setupStrip() {
+    const track = $("strip-track");
+    function scrollTrack(direction) {
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        track.scrollBy({ left: direction * Math.max(track.clientWidth * 0.8, 132), behavior: reduced ? "auto" : "smooth" });
+    }
+    $("strip-back").addEventListener("click", function () { scrollTrack(-1); });
+    $("strip-forward").addEventListener("click", function () { scrollTrack(1); });
+    track.addEventListener("scroll", updateStripArrows);
+    window.addEventListener("resize", function () {
+        if (!$("strip").hidden) { updateStripArrows(); }
+    });
 }
 
 // ### Interface: analytics ###
@@ -4589,6 +4749,7 @@ function initApp() {
     setupForm();
     setupDownloads();
     setupProductTabs();
+    setupStrip();
     $("library-search").addEventListener("input", function () { renderLibrary(); });
     $("start-new").addEventListener("click", function () {
         ui.editorMode = "new";
@@ -4627,6 +4788,7 @@ function initApp() {
     }
     renderForm();
     showView(viewFromHash(location.hash), false);
+    renderStrip();
 }
 
 // The engine above has no DOM dependency so the test suite can load it in Node.

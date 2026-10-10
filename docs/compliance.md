@@ -32,8 +32,9 @@ listed under known gaps.
 - Nothing a person types or uploads leaves the browser. The app makes no network
   request except to its own `library/` folder and, on the production host only,
   to Google Analytics. Evidence: the script contains two `fetch` calls, for
-  `library/catalog.json` and for the `.zip` files it lists, and one dynamically
-  added analytics script. A review of the script on 2026-10-09 found no other
+  `library/catalog.json` and for the `.zip` files it lists, made once when the
+  page opens so the start page can show a sample of the library, and one
+  dynamically added analytics script. A review of the script on 2026-10-09 found no other
   request, and a served browser walkthrough the same day recorded only
   `library/catalog.json` and `library/caveman.zip` as library requests and no
   request to another host.

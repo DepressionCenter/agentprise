@@ -87,6 +87,8 @@ the editor. Agentprise opens:
 - Any Agent Skill `.zip` or `SKILL.md` file, from Gemini, Claude, or elsewhere.
 
 If you are already working on something, the app asks before replacing it.
+The one exception is a Library sample you have not changed, which is replaced
+without asking, because the same sample is still in the Library.
 
 ### Start from the Library
 
@@ -94,6 +96,10 @@ If you are already working on something, the app asks before replacing it.
 2. Search by name, summary, or tag if the list is long.
 3. Choose **Try it**. The assistant opens in the Workspace, ready to change
    or download.
+
+The start page also shows a strip of up to ten assistants from the Library,
+in a random order, under the drop area. Choose one to open it. The arrows on
+each side scroll the strip when it does not fit.
 
 The copy is yours to change. The original in the Library stays as it was. The
 Library needs the app to run from a web address, so it is empty when you open
