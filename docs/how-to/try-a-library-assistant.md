@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/try-a-library-assistant.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: Step-by-step guide with screenshots: pick a ready-made assistant from
          the Library, change it, and download it.
 Notes: See README file for documentation and full license information.
@@ -62,7 +62,7 @@ Choose **Keep my work** to go back, or **Replace it** to load the sample.
 The sample opens in the Workspace with everything filled in. A note at the
 top says it loaded.
 
-![The editor with Caveman loaded. The questions on the left are filled in, and the preview on the right shows the Caveman picture, the name, the description, and two example questions. A note at the top reads Loaded Caveman.](../../images/guides/editor-caveman.png)
+![The editor with Caveman loaded. The questions on the left are filled in, and the preview on the right shows the Caveman picture, the name, the description, and three example questions, starting with Caveman, what can you do. A note at the top reads Loaded Caveman.](../../images/guides/editor-caveman.png)
 
 Read the four answers to see how the sample is written. The behavior answer
 is the longest, and it is a good example of how to tell an assistant what to
@@ -76,9 +76,9 @@ separate from the Library, so the original stays as it was.
 For example, click the first example question and replace it with your own.
 The preview updates as you type.
 
-![The editor questions for Caveman, with the first example question changed to Caveman, how do I make fire. The second question still reads Tell me more about.](../../images/guides/editor-caveman-changed.png)
+![The editor questions for Caveman, with the first example question changed to Caveman, how do I make fire. The other three questions are unchanged, and the second still reads Weather good for smash rock today.](../../images/guides/editor-caveman-changed.png)
 
-![The preview card showing the Caveman picture and name, with the first example question now reading Caveman, how do I make fire.](../../images/guides/preview-caveman.png)
+![The preview card showing the Caveman picture and name, with the first example question now reading Caveman, how do I make fire, followed by the next two questions from the sample.](../../images/guides/preview-caveman.png)
 
 If you change the name, the file names change with it. Open **More** under
 the questions to change the picture, add a welcome message, or put your own
