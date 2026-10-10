@@ -299,7 +299,7 @@ Checked on 2026-10-09 unless a line says otherwise.
 
 ### Tests run in this repository
 
-- `npm test` on 2026-10-10: 64 tests pass, including a round trip of a sample
+- `npm test` on 2026-10-10: 92 tests pass, including a round trip of a sample
   agent through bundle, `.agent`, bundle, Teams package, and bundle, and a check
   that every bundle listed in `library/catalog.json` opens and matches its
   catalog line.
