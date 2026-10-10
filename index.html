@@ -855,11 +855,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                             </div>
                                             <fieldset class="field">
                                                 <legend>Files it can read</legend>
-                                                <p class="hint" id="file-add-hint">Copilot reads these as knowledge. Up to 20 Word, PowerPoint, Excel, PDF, or text files. The app package and the complete copy carry them. The Teams Chat file can't.</p>
+                                                <p class="hint" id="file-add-hint">Copilot reads these as knowledge. Up to 20 files: Word, PowerPoint, Excel, PDF, or plain text, including scripts and data files, which Copilot receives as .txt. The app checks each file's contents and refuses programs. The app package and the complete copy carry the files. The Teams Chat file can't.</p>
                                                 <ul class="item-list" id="file-items" aria-label="Attached files"></ul>
                                                 <div class="button-row">
                                                     <label class="button" for="file-add">Add files</label>
-                                                    <input type="file" id="file-add" class="visually-hidden" multiple accept=".doc,.docx,.ppt,.pptx,.xls,.xlsx,.pdf,.txt" aria-describedby="file-add-hint">
+                                                    <input type="file" id="file-add" class="visually-hidden" multiple aria-describedby="file-add-hint">
                                                 </div>
                                                 <p class="error-text" id="file-add-error" hidden></p>
                                             </fieldset>
@@ -1073,6 +1073,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <p>Not sure yet? Keep a copy. You can come back any time and download it for another product.</p>
                     <h2>What does "Keep a copy" do?</h2>
                     <p>It saves a small .zip file to your computer. Drop that file on the Workspace page later to change the assistant or download it for a different product. The same file also works as a skill in Gemini and Claude.</p>
+                    <h2>Which files can I attach?</h2>
+                    <p>Word, PowerPoint, Excel, PDF, and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, so a script reaches it as a .txt file with the same name. The skill .zip keeps the real name.</p>
                     <h2>Who can use my assistant?</h2>
                     <p>In Microsoft 365, people need a Copilot license and permission to any files you linked. Guests cannot use it in Teams chats. Gemini skills may need a paid Google AI plan, and Claude skills need a paid Claude plan.</p>
                     <h2>How do I change an assistant I already shared?</h2>
@@ -1224,12 +1226,59 @@ const SHAREPOINT_ID_KEYS = Object.freeze(["site_id", "web_id", "list_id", "uniqu
 const SHAREPOINT_SCHEMA_ID_KEYS = Object.freeze(["site_id", "web_id", "list_id", "unique_id", "part_type", "part_id"]);
 const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// File types Microsoft accepts as agent knowledge. Attached files travel in the
-// Teams package, at the ZIP root as the Copilot app places them, and in the
-// bundle under this folder, which the Agent Skills standard sets aside for
-// reference material.
-const FILE_EXTENSIONS = Object.freeze([".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".pdf", ".txt"]);
+// File types accepted as attached knowledge, each with the kind of content
+// check its bytes must pass, because a name proves nothing about what a file
+// holds. Attached files travel in the Teams package, at the ZIP root as the
+// Copilot app places them, and in the bundle under the references folder,
+// which the Agent Skills standard sets aside for reference material.
+const FILE_TYPES = Object.freeze([
+    { ext: ".pdf", kind: "pdf" },
+    { ext: ".docx", kind: "office" }, { ext: ".pptx", kind: "office" }, { ext: ".xlsx", kind: "office" },
+    { ext: ".doc", kind: "legacy" }, { ext: ".ppt", kind: "legacy" }, { ext: ".xls", kind: "legacy" },
+    { ext: ".txt", kind: "text" }, { ext: ".md", kind: "text" }, { ext: ".csv", kind: "text" }, { ext: ".json", kind: "text" },
+    { ext: ".yaml", kind: "text" }, { ext: ".yml", kind: "text" }, { ext: ".xml", kind: "text" }, { ext: ".html", kind: "text" },
+    { ext: ".ps1", kind: "text" }, { ext: ".psm1", kind: "text" }, { ext: ".sh", kind: "text" }, { ext: ".bash", kind: "text" },
+    { ext: ".py", kind: "text" }, { ext: ".r", kind: "text" }, { ext: ".js", kind: "text" }, { ext: ".mjs", kind: "text" },
+    { ext: ".ts", kind: "text" }, { ext: ".sql", kind: "text" }, { ext: ".bat", kind: "text" }, { ext: ".cmd", kind: "text" }
+]);
+const FILE_EXTENSIONS = Object.freeze(FILE_TYPES.map(function (type) { return type.ext; }));
+// The only names Copilot's Agent Builder accepts as uploads. Every other text
+// type goes into the Teams package as plain text under its own name plus ".txt".
+const COPILOT_FILE_EXTENSIONS = Object.freeze([".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".pdf", ".txt"]);
 const BUNDLE_FILES_FOLDER = "references/";
+
+// Program file types a name may not hide before its last extension, as in
+// "setup.exe.pdf". Script types are not listed: scripts are plain text and are
+// accepted as text above.
+const EXECUTABLE_EXTENSIONS = Object.freeze(["exe", "dll", "msi", "scr", "com", "cpl", "sys", "ocx", "pif", "jar", "class", "app", "dmg", "pkg", "so", "dylib", "deb", "rpm", "appimage", "bin"]);
+
+// Leading bytes of compiled programs for Windows, Linux and FreeBSD, macOS,
+// and Java. An attached file that starts with one is refused whatever its name says.
+const EXECUTABLE_SIGNATURES = Object.freeze([
+    { label: "a Windows program", bytes: [0x4D, 0x5A] },
+    { label: "a Linux or FreeBSD program", bytes: [0x7F, 0x45, 0x4C, 0x46] },
+    { label: "a macOS program", bytes: [0xFE, 0xED, 0xFA, 0xCE] },
+    { label: "a macOS program", bytes: [0xFE, 0xED, 0xFA, 0xCF] },
+    { label: "a macOS program", bytes: [0xCE, 0xFA, 0xED, 0xFE] },
+    { label: "a macOS program", bytes: [0xCF, 0xFA, 0xED, 0xFE] },
+    { label: "a macOS or Java program", bytes: [0xCA, 0xFE, 0xBA, 0xBE] }
+]);
+
+// What the bytes of each accepted document kind begin with. The PDF standard
+// allows a short prefix before "%PDF-", so that marker may sit anywhere in the
+// first kilobyte. Office Open XML files are ZIPs that always hold a
+// [Content_Types].xml part, which a renamed JAR or plain ZIP does not.
+const PDF_MARKER = "%PDF-";
+const PDF_MARKER_WINDOW = 1024;
+const ZIP_LOCAL_HEADER = [0x50, 0x4B, 0x03, 0x04];
+const OFFICE_PART_NAME = "[Content_Types].xml";
+const OLE_HEADER = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+const FILE_KIND_PROBLEMS = Object.freeze({
+    pdf: "its contents are not a PDF",
+    office: "it is not an Office file",
+    legacy: "it is not an Office file",
+    text: "it is not plain text"
+});
 
 // Metadata keys used inside SKILL.md frontmatter. Values are always strings because
 // the Agent Skills specification defines metadata as a string-to-string map.
@@ -2008,10 +2057,98 @@ function isWebSearchSite(value) {
     return parts.length <= 2;
 }
 
-/** Returns true when the name ends in a file type Copilot reads as knowledge. */
-function hasFileExtension(name) {
+/** Returns the content kind for the name's last extension, or "" when the type is not accepted. */
+function fileKind(name) {
     const lower = String(name || "").toLowerCase();
-    return FILE_EXTENSIONS.some(function (extension) { return lower.endsWith(extension); });
+    const found = FILE_TYPES.find(function (type) { return lower.endsWith(type.ext); });
+    return found ? found.kind : "";
+}
+
+/** Returns true when Copilot's Agent Builder accepts the name as an upload. */
+function isCopilotFileName(name) {
+    const lower = String(name || "").toLowerCase();
+    return COPILOT_FILE_EXTENSIONS.some(function (extension) { return lower.endsWith(extension); });
+}
+
+/** Returns true when a part of the name before its last extension is a program type, as in "setup.exe.pdf". */
+function hidesExecutableExtension(name) {
+    const parts = String(name || "").toLowerCase().split(".");
+    return parts.slice(1, -1).some(function (part) { return EXECUTABLE_EXTENSIONS.indexOf(part) >= 0; });
+}
+
+/** Returns true when the bytes start with the given values. */
+function bytesStartWith(bytes, values) {
+    return values.every(function (value, index) { return bytes[index] === value; });
+}
+
+/** Returns true when ASCII text occurs in the first limit bytes. */
+function bytesContainAscii(bytes, text, limit) {
+    const needle = toBytes(text);
+    const last = Math.min(bytes.length, limit) - needle.length;
+    for (let start = 0; start <= last; start++) {
+        let matched = true;
+        for (let i = 0; i < needle.length && matched; i++) {
+            matched = bytes[start + i] === needle[i];
+        }
+        if (matched) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** Names the kind of program the bytes begin with, or "" when they begin with none. */
+function executableSignature(bytes) {
+    const match = EXECUTABLE_SIGNATURES.find(function (signature) { return bytesStartWith(bytes, signature.bytes); });
+    return match ? match.label : "";
+}
+
+/** Returns true when the bytes decode as UTF-8 and hold no NUL byte, the mark of a binary file. */
+function isUtf8Text(bytes) {
+    try {
+        new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch (error) {
+        return false;
+    }
+    return bytes.indexOf(0) < 0;
+}
+
+/** Returns true when the bytes look like the kind the file name claims. */
+function fileContentMatches(kind, bytes) {
+    if (kind === "pdf") {
+        return bytesContainAscii(bytes, PDF_MARKER, PDF_MARKER_WINDOW);
+    }
+    if (kind === "office") {
+        return bytesStartWith(bytes, ZIP_LOCAL_HEADER) && bytesContainAscii(bytes, OFFICE_PART_NAME, bytes.length);
+    }
+    if (kind === "legacy") {
+        return bytesStartWith(bytes, OLE_HEADER);
+    }
+    return kind === "text" && isUtf8Text(bytes);
+}
+
+/**
+ * Explains why an attached file is refused, or returns "" when it passes.
+ * Checks run from the clearest problem to the subtlest: an unknown type, a
+ * program type hidden in the name, program bytes, then a mismatch between the
+ * bytes and the claimed kind.
+ * @param {string} name a cleaned file name
+ * @param {Uint8Array} bytes the file contents
+ * @returns {string} a short reason in plain words, or ""
+ */
+function attachedFileProblem(name, bytes) {
+    const kind = fileKind(name);
+    if (!kind) {
+        return "its type is not one this app accepts";
+    }
+    if (hidesExecutableExtension(name)) {
+        return "its name hides a program type";
+    }
+    const program = executableSignature(bytes);
+    if (program) {
+        return "it is " + program;
+    }
+    return fileContentMatches(kind, bytes) ? "" : FILE_KIND_PROBLEMS[kind];
 }
 
 /** Converts bytes to base64 without building one huge argument list. */
@@ -2171,25 +2308,36 @@ function attachedFileName(name) {
 }
 
 /**
- * Copies one untrusted attached file. Returns null when the name, type, or
- * size is not something Copilot accepts, or when the name repeats one in seen.
+ * Copies one untrusted attached file, or explains why it is refused: a bad
+ * name, an empty or oversize file, a type or content this app does not accept,
+ * or a name that repeats one in seen.
  * @param {*} value {name, bytes}
  * @param {object} seen lower-case names already taken, updated on success
- * @returns {{name: string, bytes: Uint8Array}|null}
+ * @returns {{file: {name: string, bytes: Uint8Array}}|{name: string, problem: string}}
  */
 function cleanAttachedFile(value, seen) {
+    const name = attachedFileName(isPlainObject(value) ? value.name : "");
     if (!isPlainObject(value) || !(value.bytes instanceof Uint8Array)) {
-        return null;
+        return { name: name, problem: "it could not be read" };
     }
-    const name = attachedFileName(value.name);
-    if (!name || !hasFileExtension(name) || value.bytes.length === 0 || value.bytes.length > LIMITS.fileBytes) {
-        return null;
+    if (!name) {
+        return { name: name, problem: "it has no usable name" };
+    }
+    if (value.bytes.length === 0) {
+        return { name: name, problem: "it is empty" };
+    }
+    if (value.bytes.length > LIMITS.fileBytes) {
+        return { name: name, problem: "it is larger than " + Math.round(LIMITS.fileBytes / 1024 / 1024) + " MB" };
+    }
+    const problem = attachedFileProblem(name, value.bytes);
+    if (problem) {
+        return { name: name, problem: problem };
     }
     if (seen[name.toLowerCase()]) {
-        return null;
+        return { name: name, problem: "another file has the same name" };
     }
     seen[name.toLowerCase()] = true;
-    return { name: name, bytes: copyBytes(value.bytes) };
+    return { file: { name: name, bytes: copyBytes(value.bytes) } };
 }
 
 /**
@@ -2249,18 +2397,23 @@ function normalizeAgent(input) {
 
     const files = Array.isArray(source.files) ? source.files : [];
     const seenNames = {};
-    let droppedFiles = 0;
+    const refused = [];
     agent.files = [];
     files.forEach(function (file) {
-        const cleaned = agent.files.length < LIMITS.files ? cleanAttachedFile(file, seenNames) : null;
-        if (cleaned) {
-            agent.files.push(cleaned);
+        if (agent.files.length >= LIMITS.files) {
+            refused.push({ name: attachedFileName(isPlainObject(file) ? file.name : ""), problem: "only " + LIMITS.files + " files fit" });
+            return;
+        }
+        const result = cleanAttachedFile(file, seenNames);
+        if (result.file) {
+            agent.files.push(result.file);
         } else {
-            droppedFiles += 1;
+            refused.push(result);
         }
     });
-    if (droppedFiles > 0) {
-        notices.push(droppedFiles + " attached file(s) were left out. Copilot takes up to " + LIMITS.files + " files of these types, each under " + Math.round(LIMITS.fileBytes / 1024 / 1024) + " MB, with no two names alike: " + FILE_EXTENSIONS.join(", ") + ".");
+    if (refused.length > 0) {
+        const reasons = refused.map(function (entry) { return (entry.name || "a file").slice(0, 40) + " (" + entry.problem + ")"; });
+        notices.push(refused.length + " attached file(s) were left out: " + listNames(reasons) + ". This app takes up to " + LIMITS.files + " files of these types, each under " + Math.round(LIMITS.fileBytes / 1024 / 1024) + " MB: " + FILE_EXTENSIONS.join(", ") + ".");
     }
 
     if (isPlainObject(source.icon) && source.icon.bytes instanceof Uint8Array && source.icon.bytes.length > 0) {
@@ -2352,6 +2505,9 @@ function validateAgent(agent) {
     }
     if (agent.files.length > 0) {
         warnings.push({ field: "files", message: "Attached files travel in the app package and the complete copy. The Teams Chat file can't carry them." });
+    }
+    if (agent.files.some(function (file) { return !isCopilotFileName(file.name); })) {
+        warnings.push({ field: "files", message: "Script and data files reach Copilot as .txt files with the same name, because Copilot accepts only document types." });
     }
     const missingCreator = ["name", "website", "privacy", "terms"].filter(function (key) { return !agent.creator[key]; });
     if (missingCreator.length > 0) {
@@ -2965,7 +3121,7 @@ function parseJsonArray(text) {
 
 /** Joins untrusted file names for a notice, capping their number and length. */
 function listNames(names) {
-    const shown = names.slice(0, 5).map(function (name) { return String(name).slice(0, 60); });
+    const shown = names.slice(0, 5).map(function (name) { return String(name).slice(0, 90); });
     return shown.join(", ") + (names.length > 5 ? ", and " + (names.length - 5) + " more" : "");
 }
 
@@ -3425,14 +3581,14 @@ async function bundleImport(bytes) {
             return;
         }
         const fileName = name.slice(filesFolder.length);
-        if (hasFileExtension(fileName)) {
+        if (fileKind(fileName)) {
             files.push({ name: fileName, bytes: bytes });
         } else {
             skipped.push(fileName);
         }
     });
     if (skipped.length > 0) {
-        notices.push("The skill has " + skipped.length + " file(s) under references that Copilot can't use, so they were left out: " + listNames(skipped) + ".");
+        notices.push("The skill has " + skipped.length + " file(s) under references of types this app can't use, so they were left out: " + listNames(skipped) + ".");
     }
     if (files.length > 0) {
         const normalized = normalizeAgent({ files: files });
@@ -3563,11 +3719,19 @@ async function teamsZipExport(agent, icons) {
         { name: "outline.png", bytes: icons.outline }
     ];
     // Attached files sit at the ZIP root with no manifest entry, which is how
-    // the Copilot app's own export carries files uploaded as knowledge.
+    // the Copilot app's own export carries files uploaded as knowledge. Agent
+    // Builder accepts only document types, so a script or data file goes out
+    // as plain text under its own name plus ".txt".
     agent.files.forEach(function (file) {
-        entries.push({ name: file.name, bytes: file.bytes });
+        entries.push({ name: isCopilotFileName(file.name) ? file.name : file.name + ".txt", bytes: file.bytes });
     });
     return { fileName: safeFileName(agent.name + " Copilot app", ".zip"), bytes: zipWrite(entries), warnings: warnings, appId: appId };
+}
+
+/** Returns "deploy.ps1" for "deploy.ps1.txt" when the inner name is an accepted text type that Copilot cannot take as is. */
+function originalTextName(name) {
+    const stem = /\.txt$/i.test(name) ? name.slice(0, -4) : "";
+    return stem && fileKind(stem) === "text" && !isCopilotFileName(stem) ? stem : name;
 }
 
 /**
@@ -3630,17 +3794,19 @@ async function teamsZipImport(bytes) {
     const iconBytes = entries.get(typeof colorFile === "string" ? colorFile : "color.png");
     raw.icon = iconFromBytes(iconBytes, notices);
     // Everything else in the package is an attached file, or a file for actions
-    // and languages, which this app does not carry.
+    // and languages, which this app does not carry. JSON and YAML entries are
+    // package metadata, not knowledge, so they are passed over without a notice.
+    // A text file this app wrote as "name.ext.txt" gets its real name back.
     const reserved = ["manifest.json", declarativeFile, colorFile, outlineFile, "color.png", "outline.png"];
     const skipped = [];
     raw.files = [];
     entries.forEach(function (bytes, name) {
-        if (reserved.indexOf(name) >= 0) {
+        if (reserved.indexOf(name) >= 0 || /\.(json|ya?ml)$/i.test(name)) {
             return;
         }
-        if (hasFileExtension(name) && name.indexOf("/") < 0) {
-            raw.files.push({ name: name, bytes: bytes });
-        } else if (!/\.(json|ya?ml)$/i.test(name)) {
+        if (fileKind(name) && name.indexOf("/") < 0) {
+            raw.files.push({ name: originalTextName(name), bytes: bytes });
+        } else {
             skipped.push(name);
         }
     });
@@ -3736,6 +3902,7 @@ globalThis.Agentprise = {
     yaml: { parseFrontmatter: parseFrontmatter, stringifyFrontmatter: stringifyFrontmatter },
     zip: { read: zipRead, write: zipWrite, ZipError: ZipError },
     png: { dimensions: pngDimensions },
+    files: { kind: fileKind, problem: attachedFileProblem, isCopilotName: isCopilotFileName, originalTextName: originalTextName },
     bytes: { toBase64: bytesToBase64, fromBase64: base64ToBytes, equal: bytesEqual, toText: fromBytes, fromText: toBytes },
     formats: {
         bundle: { export: bundleExport, import: bundleImport },
@@ -4751,6 +4918,7 @@ function setupForm() {
         updateDerived();
         saveDraft();
     });
+    $("file-add").setAttribute("accept", FILE_EXTENSIONS.join(","));
     $("file-add").addEventListener("change", function (event) {
         const input = event.target;
         addFiles(input.files).then(function () { input.value = ""; });

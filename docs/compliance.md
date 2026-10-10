@@ -73,7 +73,7 @@ listed under known gaps.
 - Uploaded files are untrusted input. Every value read from a file passes through
   `normalizeAgent`, which type-checks and length-caps each field before it reaches
   the form. Evidence: `tests/engine.test.mjs`, `tests/formats.test.mjs`, and
-  `tests/library.test.mjs` (57 tests passing on 2026-10-10).
+  `tests/library.test.mjs` (61 tests passing on 2026-10-10).
 - The ZIP reader caps the entry count at 200, each entry at 10 MB, and the whole
   archive at 50 MB. It rejects names containing `..`, a leading slash, a
   backslash, or a drive letter; refuses encrypted and 64-bit archives; verifies
@@ -91,13 +91,20 @@ listed under known gaps.
 - Icons are decoded through an `Image` element and redrawn on a canvas, which
   strips any embedded content. Only PNG and JPG uploads are accepted; SVG is not.
   Imported icons are checked against the PNG signature and header.
-- Attached files are carried as bytes and never opened, decoded, or run. Only
-  the name and type are checked: the name loses any folder part and any
-  character outside letters, digits, spaces, dots, hyphens, underscores, and
-  parentheses; the type must be one Microsoft lists for agent knowledge; and
-  each file must fit one ZIP entry. SharePoint items keep only known keys, with
-  ids checked against the GUID pattern and links required to be https.
-  Evidence: `tests/engine.test.mjs`.
+- Attached files are carried as bytes and never opened, decoded, or run. The
+  name loses any folder part and any character outside letters, digits, spaces,
+  dots, hyphens, underscores, and parentheses, and may not hide a program type
+  before its last extension (`setup.exe.pdf`). The type must be a document
+  type Microsoft lists for agent knowledge or a plain-text type such as a
+  script. The contents must match the name: a PDF marker in the first kilobyte,
+  the ZIP header plus the `[Content_Types].xml` part for Office Open XML, the
+  OLE header for older Office files, and valid UTF-8 with no NUL byte for text.
+  A file that begins with the signature of a Windows, Linux, FreeBSD, macOS, or
+  Java program is refused whatever its name. Each file must fit one ZIP entry.
+  SharePoint items keep only known keys, with ids checked against the GUID
+  pattern and links required to be https. Evidence: `tests/engine.test.mjs`
+  and `tests/formats.test.mjs`, which feed each program signature, a plain ZIP
+  named `.docx`, UTF-16 text, text with a NUL byte, and double extensions.
 - Exported file names are reduced to letters, digits, spaces, dots, hyphens, and
   underscores.
 - There are no dependencies at runtime. The test tooling uses only the Node

@@ -53,6 +53,15 @@ It saves a small `.zip` file to your computer. Drop that file on the Workspace
 page later to change the assistant or download it for a different product. The
 same file also works as a skill in Gemini and Claude.
 
+### Which files can I attach?
+
+Word, PowerPoint, Excel, PDF, and plain text files, including scripts and data
+files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files,
+each under 10 MB. The app reads the start of every file and refuses programs,
+including ones renamed to look like a document. Copilot accepts only document
+types, so a script reaches it as a `.txt` file with the same name. The skill
+`.zip` keeps the real name.
+
 ### Who can use my assistant?
 
 In Microsoft 365, people need a Copilot license and permission to any files you

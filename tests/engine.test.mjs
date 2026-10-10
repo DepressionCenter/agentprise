@@ -22,7 +22,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { loadEngine } from "./load-engine.mjs";
-import { makePng, makeDeflatedZip, findCentralDirectory, sampleAgent } from "./helpers.mjs";
+import { makePng, makeDeflatedZip, makeOfficeZip, findCentralDirectory, sampleAgent, BYTE_SHAPES } from "./helpers.mjs";
 
 const engine = loadEngine();
 const encode = (text) => new TextEncoder().encode(text);
@@ -124,12 +124,12 @@ describe("normalizeAgent", () => {
     assert.ok(notices.some((n) => n.includes("first 4")));
   });
 
-  test("keeps attached files Copilot accepts and drops the rest", () => {
+  test("keeps attached files of accepted types and names every file it refuses", () => {
     const small = encode("hello");
     const files = [
-      { name: "../plan.docx", bytes: small },
-      { name: "tool.exe", bytes: small },
-      { name: "PLAN.docx", bytes: small },
+      { name: "../plan.docx", bytes: makeOfficeZip() },
+      { name: "tool.exe", bytes: BYTE_SHAPES.windows },
+      { name: "PLAN.docx", bytes: makeOfficeZip() },
       { name: "empty.txt", bytes: new Uint8Array(0) },
       { name: "big.pdf", bytes: new Uint8Array(engine.LIMITS.fileBytes + 1) },
       { name: "no bytes.txt" },
@@ -140,7 +140,68 @@ describe("normalizeAgent", () => {
     assert.equal(agent.files[0].name, "plan.docx");
     assert.ok(agent.files.every((f) => f.name.endsWith(".docx") || f.name.endsWith(".txt")));
     assert.ok(agent.files.every((f) => !f.name.includes("..")));
-    assert.ok(notices.some((n) => n.includes("11 attached file(s) were left out")));
+    const notice = notices.find((n) => n.includes("11 attached file(s) were left out"));
+    assert.ok(notice);
+    assert.ok(notice.includes("tool.exe (its type is not one this app accepts)"));
+    assert.ok(notice.includes("PLAN.docx (another file has the same name)"));
+    assert.ok(notice.includes("empty.txt (it is empty)"));
+    assert.ok(notice.includes("big.pdf (it is larger than 10 MB)"));
+  });
+
+  test("accepts each document kind and plain text only when the bytes match the name", () => {
+    const accepted = [
+      { name: "report.pdf", bytes: BYTE_SHAPES.pdf },
+      { name: "scan.pdf", bytes: BYTE_SHAPES.pdfWithPrefix },
+      { name: "plan.docx", bytes: makeOfficeZip() },
+      { name: "deck.pptx", bytes: makeOfficeZip() },
+      { name: "old.doc", bytes: BYTE_SHAPES.ole },
+      { name: "old.xls", bytes: BYTE_SHAPES.ole },
+      { name: "notes.txt", bytes: BYTE_SHAPES.utf8WithBom },
+      { name: "deploy.ps1", bytes: encode("Write-Host 'hi'") },
+      { name: "readme.md", bytes: encode("# Title") },
+      { name: "rows.csv", bytes: encode("a,b\n1,2") },
+      { name: "config.json", bytes: encode("{}") },
+      { name: "setup.sh", bytes: encode("#!/bin/sh\necho hi") },
+    ];
+    const { agent, notices } = engine.normalizeAgent({ files: accepted });
+    assert.deepEqual(agent.files.map((f) => f.name), accepted.map((f) => f.name));
+    assert.deepEqual(notices, []);
+  });
+
+  test("refuses programs and mismatched contents, whatever the name says", () => {
+    const refused = [
+      { name: "report.pdf", bytes: BYTE_SHAPES.windows, reason: "it is a Windows program" },
+      { name: "notes.txt", bytes: BYTE_SHAPES.elf, reason: "it is a Linux or FreeBSD program" },
+      { name: "plan.docx", bytes: BYTE_SHAPES.machO32, reason: "it is a macOS program" },
+      { name: "plan2.docx", bytes: BYTE_SHAPES.machO64, reason: "it is a macOS program" },
+      { name: "plan3.docx", bytes: BYTE_SHAPES.machO32Swapped, reason: "it is a macOS program" },
+      { name: "plan4.docx", bytes: BYTE_SHAPES.machO64Swapped, reason: "it is a macOS program" },
+      { name: "plan5.docx", bytes: BYTE_SHAPES.javaOrFat, reason: "it is a macOS or Java program" },
+      { name: "archive.docx", bytes: makeDeflatedZip([{ name: "a.txt", bytes: encode("x") }]), reason: "it is not an Office file" },
+      { name: "old.doc", bytes: encode("just text"), reason: "it is not an Office file" },
+      { name: "wide.txt", bytes: BYTE_SHAPES.utf16Text, reason: "it is not plain text" },
+      { name: "rows.csv", bytes: BYTE_SHAPES.textWithNul, reason: "it is not plain text" },
+      { name: "text.pdf", bytes: encode("hello"), reason: "its contents are not a PDF" },
+      { name: "setup.exe.pdf", bytes: BYTE_SHAPES.pdf, reason: "its name hides a program type" },
+      { name: "tool.dll.txt", bytes: encode("plain"), reason: "its name hides a program type" },
+      { name: "installer.dmg", bytes: encode("plain"), reason: "its type is not one this app accepts" },
+    ];
+    const { agent, notices } = engine.normalizeAgent({ files: refused });
+    assert.deepEqual(agent.files, []);
+    for (const entry of refused) {
+      assert.equal(engine.files.problem(entry.name, entry.bytes), entry.reason, entry.name);
+    }
+    assert.ok(notices[0].includes(refused.length + " attached file(s) were left out"));
+    assert.ok(notices[0].includes("and " + (refused.length - 5) + " more"));
+  });
+
+  test("tells Copilot names from script names and restores a script name from the package form", () => {
+    assert.equal(engine.files.isCopilotName("notes.txt"), true);
+    assert.equal(engine.files.isCopilotName("deploy.ps1"), false);
+    assert.equal(engine.files.originalTextName("deploy.ps1.txt"), "deploy.ps1");
+    assert.equal(engine.files.originalTextName("notes.txt.txt"), "notes.txt.txt");
+    assert.equal(engine.files.originalTextName("notes.txt"), "notes.txt");
+    assert.equal(engine.files.originalTextName("report.pdf"), "report.pdf");
   });
 
   test("keeps script tags as literal text", () => {
@@ -163,6 +224,9 @@ describe("validateAgent", () => {
     assert.ok(warnings.some((w) => w.field === "welcome"));
     assert.ok(warnings.some((w) => w.field === "sharepointLinks"));
     assert.ok(!warnings.some((w) => w.field === "creator"));
+    assert.equal(warnings.filter((w) => w.field === "files").length, 1);
+    agent.files.push({ name: "deploy.ps1", bytes: encode("Write-Host 1") });
+    assert.ok(engine.validateAgent(agent).warnings.some((w) => w.message.includes(".txt files with the same name")));
     agent.creator.terms = "";
     assert.ok(engine.validateAgent(agent).warnings.some((w) => w.field === "creator"));
   });

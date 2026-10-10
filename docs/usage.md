@@ -77,8 +77,11 @@ required.
   a blue square.
 - **Copilot settings.** Here you choose what the assistant may use in Microsoft
   365 and give it knowledge: paste links to SharePoint sites, folders, or
-  files, and add Word, PowerPoint, Excel, PDF, or text files from your computer
-  (up to 20). Sources that came with a file you opened are listed under the
+  files, and add up to 20 files from your computer: Word, PowerPoint, Excel,
+  PDF, or plain text, including scripts and data files. The app checks each
+  file's contents and refuses programs, even ones renamed to look like a
+  document. Copilot receives scripts as `.txt` files under the same name.
+  Sources that came with a file you opened are listed under the
   links with a Remove button; they keep the ids SharePoint gave them. You can
   limit web search to up to four sites and tell the assistant to prefer its
   sources over its own knowledge. Web search starts on. Teams messages, email,

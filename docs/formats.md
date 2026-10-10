@@ -57,6 +57,14 @@ Settings that only Microsoft 365 Copilot understands, such as SharePoint
 sources, the web site list, attached files, and what Copilot may use, travel in
 every download that has room for them but are ignored by the other products.
 
+Attached files can be Word, PowerPoint, Excel, PDF, or plain text, including
+scripts and data files such as `.ps1`, `.py`, `.sql`, `.md`, `.csv`, and
+`.json`. The app reads the first bytes of every file and refuses anything
+that does not match its name, so a program renamed to `.pdf` never gets in.
+Copilot accepts only the document types and `.txt` as uploads, so the app
+package carries a script as plain text under its own name plus `.txt`, for
+example `deploy.ps1.txt`. The skill `.zip` keeps the real name.
+
 ### What to do with the file
 
 **Copilot / Teams Apps.** In the Microsoft 365 Copilot app or in Teams, choose
@@ -121,7 +129,7 @@ caveman/
   icon.png       The full-color icon, when one was set.
   LICENSE.txt    The full GPL v3 text for the default license, or a short notice.
   README.md      Name, description, creator, and how to use the file.
-  references/    Attached files, when there are any. Copilot reads them as knowledge.
+  references/    Attached files, when there are any, under their real names.
 ```
 
 `SKILL.md` keeps the fields the Agent Skills standard defines (`name`,
@@ -225,7 +233,13 @@ declarativeAgent_0.json  Declarative agent, schema v1.8
 color.png                192 by 192 full-color icon
 outline.png              32 by 32 white icon on a transparent background
 guide.pdf                Any attached files, at the root, with no manifest entry
+deploy.ps1.txt           A script or data file, renamed so Copilot accepts it
 ```
+
+JSON and YAML entries at the root of a package are read as package metadata,
+never as attached files. On import, a root file named `name.ext.txt` whose
+inner type is an accepted text type gets its real name back, so a package this
+app wrote round-trips exactly.
 
 Both JSON files are validated against their schemas, and the declarative agent
 schema says that unrecognized properties make the whole document invalid. So the
@@ -285,7 +299,7 @@ Checked on 2026-10-09 unless a line says otherwise.
 
 ### Tests run in this repository
 
-- `npm test` on 2026-10-10: 57 tests pass, including a round trip of a sample
+- `npm test` on 2026-10-10: 61 tests pass, including a round trip of a sample
   agent through bundle, `.agent`, bundle, Teams package, and bundle, and a check
   that every bundle listed in `library/catalog.json` opens and matches its
   catalog line.
@@ -313,6 +327,8 @@ These are open. Record the date and result here when someone runs them.
 - Upload a package that carries an attached file to the Copilot app and check
   whether the agent lists the file as knowledge. If it does not, the next step is
   the schema's `EmbeddedKnowledge` entry.
+- Upload a package that carries a script, such as `deploy.ps1.txt`, to the
+  Copilot app and check whether the agent lists it and can quote from it.
 
 ### Conclusion
 

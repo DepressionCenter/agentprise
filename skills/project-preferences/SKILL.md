@@ -94,6 +94,12 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   only the schema's keys for each SharePoint item. The `.agent` file loses
   attached files. Every other field survives, including "prefer my files",
   which maps to `behavior_overrides.special_instructions.discourage_model_knowledge`.
+- Attached files are accepted by content, never by name alone. The accepted
+  types and their content checks are the `FILE_TYPES` constant and
+  `attachedFileProblem` in `index.html`. Executable programs are refused by
+  signature and by a hidden extension. Script and data text files are allowed;
+  the Teams package writes them as `name.ext.txt` because Copilot accepts only
+  document types, and the bundle keeps the real name under `references/`.
 - Browser storage names carry the `agentprise-` prefix (`agentprise-draft-v1`
   in localStorage, the `agentprise-draft-files` IndexedDB database), because
   every EFDC app on code.depressioncenter.org shares one origin.
