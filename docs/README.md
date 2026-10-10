@@ -66,8 +66,6 @@ screen you will see along the way.
 
 ### For developers
 
-- [Implementation plans](implementation-plans/README.md): how the app was built,
-  in phases, for anyone changing the code.
 - [Documentation template](doc-template.md) and
   [skill authoring examples](skill-examples.md): guides that came with the
   repository template, kept for reference.
