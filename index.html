@@ -1056,16 +1056,16 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                         <h2 id="receive-heading" class="card-title">Output Format</h2>
                         <p class="hint">Select an output format to inspect its contents.</p>
                         <div class="product-tabs" role="tablist" aria-label="Output format">
-                            <button type="button" role="tab" id="ptab-backup" aria-controls="ppanel" aria-selected="false" tabindex="-1">Agentprise Backup</button>
+                            <button type="button" role="tab" id="ptab-backup" aria-controls="ppanel" aria-selected="true">Agentprise Backup</button>
                             <button type="button" role="tab" id="ptab-chatgpt" aria-controls="ppanel" aria-selected="false" tabindex="-1">ChatGPT</button>
                             <button type="button" role="tab" id="ptab-claude" aria-controls="ppanel" aria-selected="false" tabindex="-1">Claude</button>
                             <button type="button" role="tab" id="ptab-teamsZip" aria-controls="ppanel" aria-selected="false" tabindex="-1">Copilot / Teams Apps</button>
-                            <button type="button" role="tab" id="ptab-gemini" aria-controls="ppanel" aria-selected="true">Gemini</button>
+                            <button type="button" role="tab" id="ptab-gemini" aria-controls="ppanel" aria-selected="false" tabindex="-1">Gemini</button>
                             <button type="button" role="tab" id="ptab-notebook" aria-controls="ppanel" aria-selected="false" tabindex="-1">Gemini Notebook</button>
                             <button type="button" role="tab" id="ptab-skill" aria-controls="ppanel" aria-selected="false" tabindex="-1">SKILL.md</button>
                             <button type="button" role="tab" id="ptab-msAgent" aria-controls="ppanel" aria-selected="false" tabindex="-1">Teams Chat</button>
                         </div>
-                        <div role="tabpanel" id="ppanel" aria-labelledby="ptab-gemini" tabindex="0">
+                        <div role="tabpanel" id="ppanel" aria-labelledby="ptab-backup" tabindex="0">
                             <div class="notice" id="product-blocked" hidden>
                                 <p>Before you can download, fill in:</p>
                                 <ul id="product-blocked-list"></ul>
@@ -4156,7 +4156,8 @@ const VIEW_NAMES = ["workspace", "library", "details", "help"];
 // Links elsewhere may use these hash names; each one opens the matching view.
 const LEGACY_HASHES = { home: "workspace", build: "workspace", check: "details", download: "details" };
 // Tabs on the Inspect page, in the alphabetical order of their labels, which the
-// arrow keys follow. Gemini and Claude receive the same skill ZIP today but are
+// arrow keys follow. The backup opens first because it shows everything the
+// assistant holds. Gemini and Claude receive the same skill ZIP today but are
 // separate tabs, since the two products' skill support is changing and may diverge.
 const PRODUCT_NAMES = ["backup", "chatgpt", "claude", "teamsZip", "gemini", "notebook", "skill", "msAgent"];
 // The Workspace editor always shows at least this many blanks for example questions.
@@ -4249,7 +4250,7 @@ const ui = {
     statusTimer: null,
     productTimer: null,
     productRender: 0,
-    product: "gemini",
+    product: "backup",
     productFile: "",
     built: null,
     pendingConfirm: null,

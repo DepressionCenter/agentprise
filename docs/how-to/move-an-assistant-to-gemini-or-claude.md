@@ -89,9 +89,9 @@ To see what is inside, choose **Inspect** on the left. The Inspect page shows
 every field as a plain form on the left, and the files for one product on the
 right.
 
-![The Inspect page. The left card, titled Agent Details, shows the name, description, and instructions as form fields. The right card, titled Output Format, has eight tabs in alphabetical order: Agentprise Backup, ChatGPT, Claude, Copilot / Teams Apps, Gemini, Gemini Notebook, SKILL.md, and Teams Chat, with Gemini selected and its files listed below.](../../images/guides/details.png)
+![The Inspect page. The left card, titled Agent Details, shows the name, description, and instructions as form fields. The right card, titled Output Format, has eight tabs in alphabetical order: Agentprise Backup, ChatGPT, Claude, Copilot / Teams Apps, Gemini, Gemini Notebook, SKILL.md, and Teams Chat, with Agentprise Backup selected and its files listed below.](../../images/guides/details.png)
 
-The **Gemini** tab lists the files, with your own words
+Choose the **Gemini** tab. It lists the files, with your own words
 highlighted.
 
 ![The Inspect page on the Gemini tab. The files SKILL.md, LICENSE.txt, and README.md are listed inside a folder named caveman, with the contents of SKILL.md shown. Below are a Download button and the steps for Gemini and for Claude.](../../images/guides/details-gemini-claude.png)
