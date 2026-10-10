@@ -2758,6 +2758,63 @@ function humanizeSkillName(skillName) {
     }).join(" ");
 }
 
+// ### Copilot capabilities shared by the .agent file and the Teams package ###
+// Both formats spell capabilities the way the declarative agent schema does.
+// Copilot honors a switch only when its capability is in that list. A switch
+// kept anywhere else, such as a private key, leaves the agent without web
+// search once it is uploaded.
+
+/**
+ * Lists the capability entries for the Copilot switches that are on.
+ * @param {object} agent a normalized agent
+ * @returns {Array<{name: string}>} in the order Copilot writes them
+ */
+function copilotCapabilities(agent) {
+    const capabilities = [];
+    COPILOT_CAPABILITIES.forEach(function (cap) {
+        if (agent.copilot[cap.key]) {
+            capabilities.push({ name: cap.name });
+        }
+    });
+    return capabilities;
+}
+
+/**
+ * Reads a capabilities list into the agent's Copilot switches and SharePoint
+ * links. A switch is on only when its capability is listed, so a list without
+ * WebSearch means web search is off.
+ * @param {*} list the capabilities array from the file, untrusted
+ * @param {object} raw the agent fields being assembled; copilot and sharepointLinks are filled in
+ * @param {string[]} notices gets a line for anything the app cannot carry
+ */
+function readCopilotCapabilities(list, raw, notices) {
+    let idOnlySources = 0;
+    (Array.isArray(list) ? list : []).forEach(function (capability) {
+        if (!isPlainObject(capability)) {
+            return;
+        }
+        const known = COPILOT_CAPABILITIES.find(function (cap) { return cap.name === capability.name; });
+        if (known) {
+            raw.copilot[known.key] = true;
+            if (known.key === "webSearch" && Array.isArray(capability.sites) && capability.sites.length > 0) {
+                notices.push("Web search was limited to " + capability.sites.length + " site(s). This app can't carry that list, so web search will cover the whole web.");
+            }
+        } else if (capability.name === "OneDriveAndSharePoint") {
+            (Array.isArray(capability.items_by_url) ? capability.items_by_url : []).forEach(function (item) {
+                if (isPlainObject(item)) {
+                    raw.sharepointLinks.push(item.url);
+                }
+            });
+            idOnlySources += Array.isArray(capability.items_by_sharepoint_ids) ? capability.items_by_sharepoint_ids.length : 0;
+        } else if (typeof capability.name === "string") {
+            notices.push("The capability \"" + capability.name + "\" is not one this app can carry and was left out.");
+        }
+    });
+    if (idOnlySources > 0) {
+        notices.push(idOnlySources + " SharePoint source(s) were stored by ID, which this app can't carry. Add them again as links.");
+    }
+}
+
 // ### Format: Microsoft 365 Copilot .agent file (SharePoint and Teams chats) ###
 // Schema 0.2.0 is undocumented. The shape below matches a file exported by the
 // SharePoint agent builder on 2026-10-09. The reader ignores keys it does not
@@ -2777,17 +2834,19 @@ function msAgentExport(agent) {
     if (agent.welcome) {
         starters.welcomeMessage = { text: agent.welcome };
     }
+    // The SharePoint builder always writes OneDriveAndSharePoint, even with no
+    // sources, so it stays last in the list.
+    const capabilities = copilotCapabilities(agent);
+    capabilities.push({
+        name: "OneDriveAndSharePoint",
+        items_by_sharepoint_ids: [],
+        items_by_url: agent.sharepointLinks.map(function (url) { return { url: url }; })
+    });
     const definition = {
         name: agent.name,
         description: agent.description,
         instructions: agent.instructions,
-        capabilities: [
-            {
-                name: "OneDriveAndSharePoint",
-                items_by_sharepoint_ids: [],
-                items_by_url: agent.sharepointLinks.map(function (url) { return { url: url }; })
-            }
-        ],
+        capabilities: capabilities,
         behavior_overrides: {
             special_instructions: { discourage_model_knowledge: agent.copilot.preferMyFiles === true }
         }
@@ -2801,14 +2860,7 @@ function msAgentExport(agent) {
         _agentprise: {
             version: APP_VERSION,
             display_name: agent.name,
-            copilot: {
-                web_search: agent.copilot.webSearch,
-                teams_messages: agent.copilot.teamsMessages,
-                meetings: agent.copilot.meetings,
-                code_interpreter: agent.copilot.codeInterpreter,
-                image_generation: agent.copilot.imageGeneration,
-                app_id: agent.copilot.appId
-            },
+            copilot: { app_id: agent.copilot.appId },
             creator: {
                 name: agent.creator.name,
                 website: agent.creator.website,
@@ -2853,33 +2905,26 @@ function msAgentImport(text) {
             .map(function (item) { return isPlainObject(item) ? item.text : ""; }),
         sharepointLinks: [],
         copilot: {
+            webSearch: false,
+            teamsMessages: false,
+            meetings: false,
+            codeInterpreter: false,
+            imageGeneration: false,
             preferMyFiles: readPath(definition, ["behavior_overrides", "special_instructions", "discourage_model_knowledge"])
         },
         icon: iconFromDataUri(config.icon, notices)
     };
-    let idOnlySources = 0;
-    (Array.isArray(definition.capabilities) ? definition.capabilities : []).forEach(function (capability) {
-        if (!isPlainObject(capability) || capability.name !== "OneDriveAndSharePoint") {
-            return;
-        }
-        (Array.isArray(capability.items_by_url) ? capability.items_by_url : []).forEach(function (item) {
-            if (isPlainObject(item)) {
-                raw.sharepointLinks.push(item.url);
-            }
-        });
-        idOnlySources += Array.isArray(capability.items_by_sharepoint_ids) ? capability.items_by_sharepoint_ids.length : 0;
-    });
-    if (idOnlySources > 0) {
-        notices.push(idOnlySources + " SharePoint source(s) were stored by ID, which this app can't carry. Add them again as links.");
-    }
+    readCopilotCapabilities(definition.capabilities, raw, notices);
     const extra = isPlainObject(parsed._agentprise) ? parsed._agentprise : null;
     if (extra) {
         const copilot = isPlainObject(extra.copilot) ? extra.copilot : {};
-        raw.copilot.webSearch = copilot.web_search;
-        raw.copilot.teamsMessages = copilot.teams_messages;
-        raw.copilot.meetings = copilot.meetings;
-        raw.copilot.codeInterpreter = copilot.code_interpreter;
-        raw.copilot.imageGeneration = copilot.image_generation;
+        // Files from earlier versions kept the switches here instead of in the
+        // capabilities list, so a switch that is on there still counts.
+        if (copilot.web_search === true) { raw.copilot.webSearch = true; }
+        if (copilot.teams_messages === true) { raw.copilot.teamsMessages = true; }
+        if (copilot.meetings === true) { raw.copilot.meetings = true; }
+        if (copilot.code_interpreter === true) { raw.copilot.codeInterpreter = true; }
+        if (copilot.image_generation === true) { raw.copilot.imageGeneration = true; }
         raw.copilot.appId = copilot.app_id;
         raw.creator = extra.creator;
         raw.copyright = extra.copyright;
@@ -3169,12 +3214,7 @@ async function teamsZipExport(agent, icons) {
     if (agent.starters.length > 0) {
         declarative.conversation_starters = agent.starters.map(function (text) { return { text: text }; });
     }
-    const capabilities = [];
-    COPILOT_CAPABILITIES.forEach(function (cap) {
-        if (agent.copilot[cap.key]) {
-            capabilities.push({ name: cap.name });
-        }
-    });
+    const capabilities = copilotCapabilities(agent);
     if (agent.sharepointLinks.length > 0) {
         capabilities.push({
             name: "OneDriveAndSharePoint",
@@ -3239,23 +3279,7 @@ async function teamsZipImport(bytes) {
         },
         creator: {}
     };
-    (Array.isArray(declarative.capabilities) ? declarative.capabilities : []).forEach(function (capability) {
-        if (!isPlainObject(capability)) {
-            return;
-        }
-        const known = COPILOT_CAPABILITIES.find(function (cap) { return cap.name === capability.name; });
-        if (known) {
-            raw.copilot[known.key] = true;
-        } else if (capability.name === "OneDriveAndSharePoint") {
-            (Array.isArray(capability.items_by_url) ? capability.items_by_url : []).forEach(function (item) {
-                if (isPlainObject(item)) {
-                    raw.sharepointLinks.push(item.url);
-                }
-            });
-        } else if (typeof capability.name === "string") {
-            notices.push("The capability \"" + capability.name + "\" is not one this app can carry and was left out.");
-        }
-    });
+    readCopilotCapabilities(declarative.capabilities, raw, notices);
     if (Array.isArray(declarative.actions) && declarative.actions.length > 0) {
         notices.push("This package has " + declarative.actions.length + " action(s) (plugins) that this app can't carry. They were left out.");
     }

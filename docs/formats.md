@@ -155,14 +155,14 @@ builder exported on 2026-10-09, plus two extra top-level keys placed before
 `schemaVersion`:
 
 - `_license`: one line naming the creator's copyright and license, then Agentprise.
-- `_agentprise`: the display name, the five Copilot capability switches, the Teams
-  app id, the creator fields, the copyright line, and the license name.
+- `_agentprise`: the display name, the Teams app id, the creator fields, the
+  copyright line, and the license name.
 
 The SharePoint reader ignores keys it does not know. A `.agent` file with an extra
 top-level key was loaded and used in a Teams chat in a real tenant on 2026-10-09.
 When Agentprise opens a `.agent` file made in SharePoint, the key is absent, so the
-Copilot switches take their defaults and nothing the file ever had is lost. The
-importer never requires the key.
+creator fields stay blank and nothing the file ever had is lost. The importer
+never requires the key.
 
 | Field | Where it lives in the `.agent` file |
 |---|---|
@@ -171,12 +171,21 @@ importer never requires the key.
 | Welcome message | `customCopilotConfig.conversationStarters.welcomeMessage.text` (omitted when empty) |
 | Icon | `customCopilotConfig.icon` as a `data:image/png;base64,` URI |
 | SharePoint links | `gptDefinition.capabilities[OneDriveAndSharePoint].items_by_url[].url` |
+| Web search, Teams messages, meetings, code interpreter, image generation | `gptDefinition.capabilities[]` named `WebSearch`, `TeamsMessages`, `Meetings`, `CodeInterpreter`, `GraphicArt`, listed only when on |
 | Prefer my files | `gptDefinition.behavior_overrides.special_instructions.discourage_model_knowledge` |
 | Everything else | `_agentprise` |
 
 SharePoint can also store sources by ID in `items_by_sharepoint_ids`. Agentprise
 cannot carry those, so the importer reports how many it skipped and asks for them
 as links.
+
+Copilot honors a switch only when its capability is in the list, so a list
+without `WebSearch` means web search is off, and the importer reads it that way.
+Copilot can also limit web search to a few sites with a `sites` list. Agentprise
+cannot carry that list, so the importer says so and web search covers the whole
+web. Files written by earlier versions of Agentprise kept the five switches
+inside `_agentprise` instead of the list, and the importer still reads a switch
+that is on there.
 
 ### The Teams app package
 
@@ -239,7 +248,7 @@ Checked on 2026-10-09 unless a line says otherwise.
 
 ### Tests run in this repository
 
-- `npm test` on 2026-10-09: 48 tests pass, including a round trip of a sample
+- `npm test` on 2026-10-09: 50 tests pass, including a round trip of a sample
   agent through bundle, `.agent`, bundle, Teams package, and bundle, and a check
   that every bundle listed in `library/catalog.json` opens and matches its
   catalog line.
