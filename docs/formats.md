@@ -33,12 +33,12 @@ maintainers", holds the technical details behind each file.
 |---|---|---|
 | The Agents list in the Microsoft 365 Copilot app or in Teams | Copilot / Teams Apps | An app package (`.zip`) |
 | A Teams group chat, channel, or meeting | Teams Chat | One `.agent` file |
-| Gemini | Gemini, Download skill | A skill (`.zip`) |
-| Claude | Claude, Download skill | The same skill (`.zip`) |
-| ChatGPT | ChatGPT, Copy text | Text to paste |
-| Gemini Notebook | Gemini Notebook, Download .md file | A `.md` file to add as a source |
-| Another tool that reads Agent Skills | SKILL.md, Download plain skill | A plain skill (`.skill.zip`) with nothing specific to this app |
-| Nowhere yet, or you want to edit it later | Download Backup | The same `.zip` as Download skill |
+| Gemini | Gemini | A skill (`.zip`) |
+| Claude | Claude | The same skill (`.zip`) |
+| ChatGPT | ChatGPT, Copy | Text to paste |
+| Gemini Notebook | Gemini Notebook | A `.md` file to add as a source |
+| Another tool that reads Agent Skills | SKILL.md | A plain skill (`.skill.zip`) with nothing specific to this app |
+| Nowhere yet, or you want to edit it later | Download Backup | The same `.zip` as the Gemini and Claude skill |
 
 The skill `.zip` is the complete copy. Drop it on the Workspace page any time to
 change the assistant or download it for another product. The plain skill drops
@@ -54,7 +54,7 @@ cannot carry two things, and the app tells you so before you download it:
 - The welcome message. Copilot has no place for it in an app package.
 - Your copyright line and license name. The package's files reject extra fields.
 
-Copy text carries the name, description, instructions, and example questions,
+The ChatGPT text carries the name, description, instructions, and example questions,
 which is everything ChatGPT and Gemini Notebook can take.
 
 Settings that only Microsoft 365 Copilot understands, such as SharePoint
@@ -81,12 +81,12 @@ the file's menu, choose Copy link for Teams, paste the link in a Teams chat, and
 choose Add to this chat. People in the chat need a Copilot license and permission
 to any files you linked.
 
-**Download skill.** In Gemini, open Settings, then Skills, then Upload. In
+**Skill (.zip).** In Gemini, open Settings, then Skills, then Upload. In
 Claude, open Settings, then Capabilities, then Skills, then Upload. Pick the
 `.zip` file. Gemini skills may need a paid Google AI plan, and Claude skills need
 a paid Claude plan.
 
-**Copy text.** In ChatGPT, open Explore GPTs, then Create, then the Configure tab,
+**Copy.** In ChatGPT, open Explore GPTs, then Create, then the Configure tab,
 and paste each box into the matching field. In Gemini Notebook, open the
 notebook, then More, then Notebook settings, and paste the instructions, or add
 the `.md` file as a source.
@@ -114,8 +114,8 @@ a real account. Read it before changing any converter in `index.html`.
 | Copy-ready text | none, or `.md` | No | Copy buttons and a `.md` download | Not applicable | ChatGPT custom GPTs and Gemini Notebook |
 
 The bundle, the Gemini upload, and the Claude upload are the same bytes, so
-"Download skill" for Gemini, "Download skill" for Claude, and "Download Backup"
-all produce the same file. Gemini and Claude have separate tabs on the Inspect
+the Gemini row, the Claude row, and "Download Backup" all produce the same
+file. Gemini and Claude have separate tabs on the Inspect
 page because their skill support may diverge. In the app, the Teams app package
 is labeled "Copilot / Teams Apps" and the `.agent` file is labeled "Teams Chat".
 
