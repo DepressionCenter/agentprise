@@ -76,12 +76,12 @@ Every source file that supports comments starts with this, in the language's own
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <https://www.gnu.org/licenses/>.
 
-Reference copies are in this repository under `src/` (`code-sample-generic.txt`, `code-sample-json.json`). Read the local file; do not fetch it from the internet. If `src/` is missing, use the text above verbatim.
+Use the text above verbatim. For Markdown pages, `docs/doc-template.md` shows the same header as a hidden comment. Do not fetch a copy from the internet.
 
 - Use the language's comment syntax. Never fabricate authors or dates; use obvious placeholders.
 - Update `Last Modified` on material changes.
 - **License authority:** default to GNU GPL v3.0 or later for code and GNU FDL v1.3 or later for data and documentation. Where the repository declares a different license, preserve it. Never select, change, or remove a declared license; ask only when the declaration is contradictory or ambiguous (for example, the LICENSE file and existing file headers disagree). Always link the full license text.
-- **No comment syntax available:** JSON carries the notice in a leading `"_license"` string key, per `src/code-sample-json.json`. Use the same approach wherever an extra key is harmless. Never alter or break a machine-readable file to carry a license: where an added key would violate a schema, fail validation, or confuse a consumer, use a sibling `<filename>.LICENSE.txt` and note it in the README instead. The same caution applies to any format with strict structure.
+- **No comment syntax available:** JSON carries the notice in a leading `"_license"` string key, as `package.json` and `library/catalog.json` in this repository do. Use the same approach wherever an extra key is harmless. Never alter or break a machine-readable file to carry a license: where an added key would violate a schema, fail validation, or confuse a consumer, use a sibling `<filename>.LICENSE.txt` and note it in the README instead. The same caution applies to any format with strict structure.
 - **Markdown and docs:** hidden HTML comment at the top (section 16).
 
 ## 4. CODE COMMENTS
