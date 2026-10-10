@@ -35,7 +35,7 @@ procedures and safety. Use your own idea in its place.
    The Workspace start page opens.
 2. Choose **Create new** on the right.
 
-![The Agentprise start page. The menu on the left lists Workspace, Library, Details, and Help. The main area has a dotted box for dropping a file, and two cards on the right: Create new and Use a sample. A row at the bottom shows the Caveman sample from the library.](../../images/guides/workspace-start.png)
+![The Agentprise start page. The menu on the left lists Workspace, Library, Details, and Help. The main area has a dotted box for dropping a file, and two cards on the right: Create new and Use a sample. A row at the bottom shows pictures of sample assistants from the library.](../../images/guides/workspace-start.png)
 
 ### Step 2: Answer the four questions
 

@@ -128,6 +128,5 @@ Keep the single-file, zero-dependency shape, keep the bundle lossless, and run
 ### Additional resources
 
 - [Project instructions](../../AGENTS.md)
-- [Implementation plans](../../docs/implementation-plans/README.md)
 - [Formats and verified vendor facts](../../docs/formats.md)
 - [Agent Skills specification](https://agentskills.io/specification)

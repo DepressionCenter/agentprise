@@ -659,7 +659,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         @media (prefers-reduced-motion: no-preference) { .store-card { transition: box-shadow 150ms ease, border-color 150ms ease; } }
         .store-card:hover { border-color: var(--border); box-shadow: var(--lift); }
         .store-card img { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16); }
-        .store-card h3 { margin: 6px 0 0; font-size: 1.0625rem; }
+        .store-card h2 { margin: 6px 0 0; font-size: 1.0625rem; }
         .store-card .by { margin: -6px 0 0; font-size: 0.875rem; color: var(--muted); }
         .store-card .summary { margin: 0; font-size: 0.9375rem; }
         .store-tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
@@ -4693,7 +4693,7 @@ function storeCard(entry) {
     });
     const tryButton = el("button", { type: "button", className: "primary" }, ["Try it", el("span", { className: "visually-hidden", text: ": " + entry.name })]);
     tryButton.addEventListener("click", function () { useLibraryEntry(entry); });
-    const body = [icon, el("h3", { text: entry.name })];
+    const body = [icon, el("h2", { text: entry.name })];
     if (entry.author) {
         body.push(el("p", { className: "by", text: "By " + entry.author }));
     }

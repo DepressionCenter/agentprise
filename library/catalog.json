@@ -12,6 +12,123 @@
       ],
       "author": "Gabriel Mongefranco",
       "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "evidence-scout.zip",
+      "name": "Evidence Scout",
+      "summary": "Find and compare research evidence, trace claims to sources, and prepare useful literature briefs for interdisciplinary teams.",
+      "tags": [
+        "research",
+        "literature",
+        "evidence",
+        "interdisciplinary"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "study-planner.zip",
+      "name": "Study Planner",
+      "summary": "Turn a research idea into a feasible study outline, analysis plan, and team workplan with explicit assumptions and review points.",
+      "tags": [
+        "research",
+        "study-design",
+        "protocols",
+        "project-planning"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "funding-scout.zip",
+      "name": "Funding Scout",
+      "summary": "Discover and verify funding opportunities, assess eligibility and interdisciplinary fit, and build a realistic application plan.",
+      "tags": [
+        "research",
+        "grants",
+        "funding",
+        "research-administration"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "admin-ally.zip",
+      "name": "Admin Ally",
+      "summary": "Turn meeting notes, budgets, and policy documents into clear action plans, decision briefs, and administrative drafts.",
+      "tags": [
+        "administration",
+        "operations",
+        "budgets",
+        "meetings"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "data-lens.zip",
+      "name": "Data Lens",
+      "summary": "Audit data quality, validate joins and measures, and build reproducible analyses and accessible dashboards with clear definitions.",
+      "tags": [
+        "data",
+        "analytics",
+        "sql",
+        "power-bi"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "course-architect.zip",
+      "name": "Course Architect",
+      "summary": "Build aligned lessons, authentic assignments, and fair rubrics with accessible materials and clear expectations for AI use.",
+      "tags": [
+        "teaching",
+        "faculty",
+        "course-design",
+        "accessibility"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "study-coach.zip",
+      "name": "Study Coach",
+      "summary": "Help students understand difficult material, practice retrieval, and plan realistic study sessions while respecting course rules.",
+      "tags": [
+        "students",
+        "learning",
+        "tutoring",
+        "study-planning"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "workflow-mapper.zip",
+      "name": "Workflow Mapper",
+      "summary": "Map administrative and research workflows, find handoff failures, and draft measurable improvements with clear human review points.",
+      "tags": [
+        "operations",
+        "process-improvement",
+        "healthcare",
+        "workflows"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "ticket-goblin.zip",
+      "name": "Ticket Goblin",
+      "summary": "A mischievous but meticulous IT helper for ticket triage, safe troubleshooting, incident updates, and reusable runbooks.",
+      "tags": [
+        "it",
+        "support",
+        "troubleshooting",
+        "fun"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
     }
   ]
 }

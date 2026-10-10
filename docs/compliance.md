@@ -37,7 +37,9 @@ listed under known gaps.
   dynamically added analytics script. A review of the script on 2026-10-09 found no other
   request, and a served browser walkthrough the same day recorded only
   `library/catalog.json` and `library/caveman.zip` as library requests and no
-  request to another host.
+  request to another host. A later walkthrough on 2026-10-09 with ten entries
+  recorded `library/catalog.json` and the ten `.zip` files it lists, and nothing
+  else.
 - Library entries are untrusted input like any dropped file. Each catalog line
   is type-checked and capped, its file name must be a plain name ending in
   `.zip` so it cannot point outside the folder, and each bundle goes through the
@@ -103,8 +105,10 @@ axe-core 4.14.0 ran on 2026-10-09 through a headless Chromium walkthrough, with
 the WCAG 2.0, 2.1, and 2.2 A and AA rule sets plus best practices, on the start
 page, the editor, Details, Library, and Help in light mode, and on the start
 page, the editor, Details, and Help in dark mode. A second run the same day
-scanned the Library with the Caveman card in light and dark mode. Zero
-violations.
+scanned the Library with the Caveman card in light and dark mode. A third run
+the same day scanned the Library with ten cards in light and dark mode; each
+card name is a second-level heading under the page title, so the heading order
+rule passes. Zero violations in every run.
 
 #### Keyboard and reflow checks run in the walkthrough
 

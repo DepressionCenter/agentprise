@@ -55,6 +55,11 @@ describe("library catalog", () => {
       assert.ok(entry.author.length > 0);
       assert.ok(entry.license.length > 0);
     }
+    // Two lines for one file or one name would make the page show the same card twice.
+    const files = catalog.agents.map((entry) => entry.file);
+    assert.equal(new Set(files).size, files.length, "a file is listed more than once");
+    const names = catalog.agents.map((entry) => entry.name);
+    assert.equal(new Set(names).size, names.length, "two entries share a name");
   });
 
   test("every bundle opens cleanly and matches its catalog line", async () => {
@@ -66,6 +71,13 @@ describe("library catalog", () => {
       assert.equal(agent.creator.name, entry.author);
       assert.equal(agent.license, entry.license);
       assert.ok(agent.instructions.length > 0);
+      // Every entry carries the same safety limits: no legal or medical advice, and the 988 Lifeline notice for anyone in crisis.
+      assert.ok(agent.instructions.includes("Give no legal or medical advice."), entry.file + " must refuse legal and medical advice");
+      assert.ok(agent.instructions.includes("Call or text 988 to reach the 988 Lifeline"), entry.file + " must carry the 988 Lifeline notice");
+      assert.ok(agent.instructions.includes("https://chat.988lifeline.org/"), entry.file + " must link the 988 Lifeline chat");
+      // No entry reads meetings or files unless the person adds them; chat and web search are the author's choice.
+      assert.equal(agent.copilot.meetings, false, entry.file + " must not read meetings by default");
+      assert.deepEqual(agent.sharepointLinks, [], entry.file + " must not link files by default");
       assert.deepEqual(engine.validateAgent(agent).problems, []);
       assert.ok(agent.icon, entry.file + " should carry an icon so the card and the Teams package have one");
       const size = engine.png.dimensions(agent.icon.bytes);

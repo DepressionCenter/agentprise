@@ -51,6 +51,13 @@ A maintainer reads every file before it goes in. Assistants that could mislead
 people, that target a person or group, or that carry anything private are not
 added.
 
+Every assistant in the Library also carries the same short safety section in
+its instructions. It gives no legal or medical advice, and it answers anyone who
+seems to be in a mental health crisis with the 988 Lifeline notice. If yours
+does not have that section yet, the maintainer adds it before listing. No entry
+reads meetings or SharePoint files unless the person who downloads it turns
+that on; chat and web search are up to the author.
+
 ### For maintainers: adding an entry
 
 The Library is the `library/` folder next to `index.html`. It holds one `.zip`
@@ -80,7 +87,8 @@ file, so an entry is nothing more than a bundle the app itself made.
    The name, summary, author, and license must match what the bundle says, and
    the tests check that they do. Tags are free text for the search box.
 4. Run `npm test`. The library tests open every listed bundle, check the catalog
-   line against it, and check that the picture is 192 by 192 pixels.
+   line against it, check that the picture is 192 by 192 pixels, and check that
+   the instructions carry the safety section.
 5. Start the local server and open the Library page to see the card.
 
 To replace an assistant, overwrite its `.zip` and update its catalog line. The

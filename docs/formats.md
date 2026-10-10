@@ -274,6 +274,5 @@ changes.
 - [Manifest developer object](https://learn.microsoft.com/microsoft-365/extensibility/schema/root-developer)
 - [Gemini productivity overview](https://gemini.google/overview/productivity/)
 - [Claude skills documentation](https://claude.com/docs/skills/how-to)
-- [Implementation plans](implementation-plans/README.md)
 
 [Back to project README](../README.md)
