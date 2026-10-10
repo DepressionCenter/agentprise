@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/compliance.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
          the controls in place, the evidence behind them, and the known gaps.
 Notes: See README file for documentation and full license information.
@@ -113,16 +113,27 @@ listed under known gaps.
   name loses any folder part and any character outside letters, digits, spaces,
   dots, hyphens, underscores, and parentheses, and may not hide a program type
   before its last extension (`setup.exe.pdf`). The type must be a document
-  type Microsoft lists for agent knowledge or a plain-text type such as a
-  script. The contents must match the name: a PDF marker in the first kilobyte,
-  the ZIP header plus the `[Content_Types].xml` part for Office Open XML, the
-  OLE header for older Office files, and valid UTF-8 with no NUL byte for text.
-  A file that begins with the signature of a Windows, Linux, FreeBSD, macOS, or
-  Java program is refused whatever its name. Each file must fit one ZIP entry.
-  SharePoint items keep only known keys, with ids checked against the GUID
-  pattern and links required to be https. Evidence: `tests/engine.test.mjs`
-  and `tests/formats.test.mjs`, which feed each program signature, a plain ZIP
-  named `.docx`, UTF-16 text, text with a NUL byte, and double extensions.
+  type Microsoft lists for agent knowledge, a OneNote file (`.one` or
+  `.onepart`), or a plain-text type such as a script. The contents must match
+  the name: a PDF marker in the first kilobyte, the ZIP header plus the
+  `[Content_Types].xml` part for Office Open XML, the OLE header for older
+  Office files, the OneNote file type and file format GUIDs at bytes 0 and 48,
+  and valid UTF-8 with no NUL byte for text. A file that begins with the
+  signature of a Windows, Linux, FreeBSD, macOS, or Java program is refused
+  whatever its name. Each file must fit one ZIP entry. SharePoint items keep
+  only known keys, with ids checked against the GUID pattern. Every list that
+  limits a Copilot source is checked against an allowlist of what it may hold:
+  SharePoint links must be https on a `sharepoint.com`, `sharepoint.us`,
+  `sharepoint-mil.us`, or `sharepoint.cn` tenant host, Teams links must be
+  https on a Teams client host with an `/l/` path, mailboxes must look like
+  `name@host.tld`, meeting ids must be short alphanumeric strings, and the
+  response mode must be one of three fixed values. A file whose only SharePoint
+  sources fail the host check opens with the SharePoint switch off, so a refused
+  link never widens the agent to every file the person can see. Evidence:
+  `tests/engine.test.mjs` and `tests/formats.test.mjs`, which feed each program
+  signature, a plain ZIP named `.docx`, UTF-16 text, text with a NUL byte,
+  double extensions, a OneNote header with the wrong format GUID, and links on
+  the wrong hosts.
 - Exported file names are reduced to letters, digits, spaces, dots, hyphens, and
   underscores.
 - There are no dependencies at runtime. The test tooling uses only the Node

@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/usage.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: How to use Agentprise, job by job: create an assistant, open one you
          have, start from the Library, download it for each product, and download a backup.
 Notes: See README file for documentation and full license information.
@@ -76,20 +76,27 @@ of them are required.
   product wants. If you skip it, the app draws the first letter of the name on
   a blue square.
 - **File attachments.** Add up to 20 files from your computer: Word,
-  PowerPoint, Excel, PDF, or plain text, including scripts and data files. The
-  app checks each file's contents and refuses programs, even ones renamed to
-  look like a document. The files travel in the Copilot app package, the
-  skill, and the backup. Copilot receives scripts as `.txt` files under the
-  same name. The Teams Chat file cannot carry them.
+  PowerPoint, Excel, PDF, OneNote, or plain text, including scripts and data
+  files. The app checks each file's contents and refuses programs, even ones
+  renamed to look like a document. The files travel in the skill and the
+  backup. The Copilot app package carries the types Copilot accepts: documents,
+  `.onepart`, and `.txt`. Scripts reach it as `.txt` files under the same name,
+  and a `.one` file is left out with a warning. The Teams Chat file cannot
+  carry files.
 - **Microsoft Copilot settings.** Here you choose what the assistant may use
-  in Microsoft 365 and give it knowledge: paste links to SharePoint sites,
-  folders, or files. Sources that came with a file you opened are listed under
-  the links with a Remove button; they keep the ids SharePoint gave them. You
-  can limit web search to up to four sites and tell the assistant to prefer
-  its sources over its own knowledge. Web search starts on. Teams messages,
-  email, and meetings start off, because in a group chat Teams asks the person
-  who asked to approve any answer that used their own chats, mail, or meetings
-  before others can see it. Other products ignore these settings.
+  in Microsoft 365. Each source is a switch, and the box under it limits the
+  source to a few places: up to four web sites, up to 20 SharePoint or
+  OneDrive links, up to five Teams chats or channels, and up to 25 shared or
+  group mailboxes. A box is greyed out while its switch is off, and an empty
+  box means everything the person can see. Sources that came with a file you
+  opened, such as SharePoint items, meetings, or a shared mailbox, are listed
+  with a Remove button and travel with every Copilot download. You can also
+  tell the assistant to prefer its sources over its own knowledge and pick a
+  response mode (Auto, Quick response, or Think deeper). Web search starts on.
+  SharePoint, Teams messages, email, and meetings start off, because in a group
+  chat Teams asks the person who asked to approve any answer that used their
+  own files, chats, mail, or meetings before others can see it. Other products
+  ignore these settings.
 - **Agent publisher details.** Fill in your name, your website, and links to
   your privacy and terms pages. The Copilot app package needs all four, so the app fills in
   placeholders if you leave them blank. The copyright line and license travel

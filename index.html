@@ -3,7 +3,7 @@ This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: The whole Agentprise web app in one file. Lets a person describe an AI
          assistant once, then download it as an Agent Skill bundle (Gemini and
          Claude), a Microsoft 365 Copilot .agent file, a Teams app package, or
@@ -889,19 +889,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         </fieldset>
                                         <details class="sub">
                                             <summary>Microsoft Copilot settings</summary>
-                                            <div class="field">
-                                                <label for="f-sharepoint">Knowledge from SharePoint</label>
-                                                <p class="hint" id="f-sharepoint-hint">Paste links to SharePoint sites, libraries, folders, or files, one per line. Up to 20. People still need permission to those files.</p>
-                                                <textarea id="f-sharepoint" rows="3" aria-describedby="f-sharepoint-hint f-sharepoint-error"></textarea>
-                                                <p class="error-text" id="f-sharepoint-error" hidden></p>
-                                                <div id="sharepoint-items-wrap" hidden>
-                                                    <p class="hint" id="sharepoint-items-hint">These sources came with the file you opened. They can't be edited here, but they travel with every Copilot download.</p>
-                                                    <ul class="item-list" id="sharepoint-items" aria-labelledby="sharepoint-items-hint"></ul>
-                                                </div>
-                                            </div>
                                             <fieldset>
                                                 <legend>What Copilot may use</legend>
-                                                <p class="hint">Enable or disable capabilities for the agent. Note that adding messages, emails or meetings may cause even web-based responses to pause for review.</p>
+                                                <p class="hint">Turn each source on or off. The box under a source limits it to a few places and is used only while the source is on. Note that SharePoint, messages, email, and meetings belong to the person asking, so in a group chat Teams may pause answers for that person to approve.</p>
                                                 <div class="check-row"><input type="checkbox" id="c-webSearch"><label for="c-webSearch">Web search: look things up on the public web.</label></div>
                                                 <div class="field">
                                                     <label for="f-websites">Limit web search to these sites</label>
@@ -909,15 +899,51 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                                     <textarea id="f-websites" rows="2" aria-describedby="f-websites-hint f-websites-error"></textarea>
                                                     <p class="error-text" id="f-websites-error" hidden></p>
                                                 </div>
+                                                <div class="check-row"><input type="checkbox" id="c-sharepoint"><label for="c-sharepoint">SharePoint and OneDrive: read the files, folders, and sites the person can see.</label></div>
+                                                <div class="field">
+                                                    <label for="f-sharepoint">Limit to these SharePoint or OneDrive links</label>
+                                                    <p class="hint" id="f-sharepoint-hint">Optional. Up to 20 links to SharePoint sites, libraries, folders, lists, or files, or OneDrive shared links, one per line. Leave empty to use everything the person can see. People still need permission to those files.</p>
+                                                    <textarea id="f-sharepoint" rows="3" aria-describedby="f-sharepoint-hint f-sharepoint-error"></textarea>
+                                                    <p class="error-text" id="f-sharepoint-error" hidden></p>
+                                                    <div id="sharepoint-items-wrap" hidden>
+                                                        <p class="hint" id="sharepoint-items-hint">These sources came with the file you opened. They can't be edited here, but they travel with every Copilot download.</p>
+                                                        <ul class="item-list" id="sharepoint-items" aria-labelledby="sharepoint-items-hint"></ul>
+                                                    </div>
+                                                </div>
                                                 <div class="check-row"><input type="checkbox" id="c-teamsMessages"><label for="c-teamsMessages">Teams messages: read the chats and channels the person can see.</label></div>
+                                                <div class="field">
+                                                    <label for="f-teams">Limit Teams messages to these chats</label>
+                                                    <p class="hint" id="f-teams-hint">Optional. Up to 5 links to teams, channels, group chats, or meeting chats, one per line. In Teams, open the menu next to the chat or channel and choose Get link. Leave empty to use every chat the person can see.</p>
+                                                    <textarea id="f-teams" rows="2" aria-describedby="f-teams-hint f-teams-error"></textarea>
+                                                    <p class="error-text" id="f-teams-error" hidden></p>
+                                                </div>
                                                 <div class="check-row"><input type="checkbox" id="c-email"><label for="c-email">Email: read the mail the person can see.</label></div>
+                                                <div class="field">
+                                                    <label for="f-mailboxes">Limit email to these shared or group mailboxes</label>
+                                                    <p class="hint" id="f-mailboxes-hint">Optional. Up to 25 addresses, one per line, such as team@example.org. Leave empty to use the person's own mailbox.</p>
+                                                    <textarea id="f-mailboxes" rows="2" aria-describedby="f-mailboxes-hint f-mailboxes-error"></textarea>
+                                                    <p class="error-text" id="f-mailboxes-error" hidden></p>
+                                                    <div id="email-items-wrap" hidden>
+                                                        <p class="hint" id="email-items-hint">These email limits came with the file you opened. They can't be edited here, but they travel with every Copilot download.</p>
+                                                        <ul class="item-list" id="email-items" aria-labelledby="email-items-hint"></ul>
+                                                    </div>
+                                                </div>
                                                 <div class="check-row"><input type="checkbox" id="c-meetings"><label for="c-meetings">Meetings: read meeting notes and transcripts the person can see.</label></div>
+                                                <div id="meeting-items-wrap" class="field" hidden>
+                                                    <p class="hint" id="meeting-items-hint">These meetings came with the file you opened and limit this source to them. They can't be edited here, but they travel with every Copilot download.</p>
+                                                    <ul class="item-list" id="meeting-items" aria-labelledby="meeting-items-hint"></ul>
+                                                </div>
                                                 <div class="check-row"><input type="checkbox" id="c-codeInterpreter"><label for="c-codeInterpreter">Code interpreter: run code to analyze data and make charts.</label></div>
                                                 <div class="check-row"><input type="checkbox" id="c-imageGeneration"><label for="c-imageGeneration">Image generation: make pictures from text.</label></div>
                                             </fieldset>
                                             <fieldset>
                                                 <legend>How Copilot answers</legend>
                                                 <div class="check-row"><input type="checkbox" id="c-preferMyFiles"><label for="c-preferMyFiles">Prefer my files: answer from the sources above instead of general knowledge.</label></div>
+                                                <div class="field">
+                                                    <label for="f-responseMode">Response mode</label>
+                                                    <p class="hint" id="f-responseMode-hint">Only Microsoft 365 Copilot uses this. Think deeper takes longer but reasons more. People can still change it in the model picker.</p>
+                                                    <select id="f-responseMode" aria-describedby="f-responseMode-hint"></select>
+                                                </div>
                                             </fieldset>
                                         </details>
                                         <details class="sub">
@@ -1146,7 +1172,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <h2>What does "Download Backup" do?</h2>
                     <p>It saves a small .zip file to your computer. Drop that file on the Workspace page later to change the assistant or download it for a different product. The same file also works as a skill in Gemini and Claude.</p>
                     <h2>Which files can I attach?</h2>
-                    <p>Word, PowerPoint, Excel, PDF, and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, so a script reaches it as a .txt file with the same name. The skill .zip keeps the real name.</p>
+                    <p>Word, PowerPoint, Excel, PDF, OneNote (.one and .onepart), and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, .onepart, and .txt, so a script reaches it as a .txt file with the same name, and a .one file stays out of the app package. The skill .zip keeps every file under its real name.</p>
+                    <h2>Where do links go?</h2>
+                    <p>Each Copilot source has its own box under Copilot settings. Web sites go under Web search, up to 4. SharePoint and OneDrive links go under SharePoint and OneDrive, up to 20. Links to teams, channels, group chats, or meeting chats go under Teams messages, up to 5. Shared or group mailbox addresses go under Email. A box only matters while its source is on, and leaving it empty means Copilot may use everything the person can see.</p>
                     <h2>Who can use my assistant?</h2>
                     <p>In Microsoft 365, people need a Copilot license and permission to any files you linked. Guests cannot use it in Teams chats. Gemini skills may need a paid Google AI plan, and Claude skills need a paid Claude plan.</p>
                     <h2>How do I change an assistant I already shared?</h2>
@@ -1218,6 +1246,11 @@ const LIMITS = Object.freeze({
     sharepointItems: 100,
     sharepointItemText: 255,
     webSites: 4,
+    teamsLinks: 5,
+    mailboxes: 25,
+    mailboxText: 320,
+    meetingItems: 5,
+    meetingIdText: 1024,
     files: 20,
     fileBytes: 10 * 1024 * 1024,
     creatorText: 2048,
@@ -1282,9 +1315,13 @@ const CREATOR_PLACEHOLDERS = Object.freeze({
 });
 
 // Copilot capability names as the declarative agent schema spells them, in the
-// order the Copilot app writes them.
+// order the Copilot app wrote them in an export checked on 2026-10-10. Each one
+// is a switch in the agent model; the first four may also carry a list that
+// limits the source (web sites, SharePoint items, Teams chats, mailboxes, or
+// meetings).
 const COPILOT_CAPABILITIES = Object.freeze([
     { key: "webSearch", name: "WebSearch" },
+    { key: "sharepoint", name: "OneDriveAndSharePoint" },
     { key: "teamsMessages", name: "TeamsMessages" },
     { key: "email", name: "Email" },
     { key: "meetings", name: "Meetings" },
@@ -1292,9 +1329,20 @@ const COPILOT_CAPABILITIES = Object.freeze([
     { key: "imageGeneration", name: "GraphicArt" }
 ]);
 
-// Capability properties that limit a source to certain chats, folders,
-// mailboxes, or meetings. The app keeps the switch and reports the lost scope.
-const CAPABILITY_SCOPE_KEYS = Object.freeze(["urls", "folders", "shared_mailbox", "group_mailboxes", "items_by_id"]);
+// Response modes the declarative agent schema (1.7 and later) accepts under
+// behavior_overrides.default_response_mode. The first is the schema default
+// and is never written out.
+const RESPONSE_MODES = Object.freeze(["Auto", "Quick response", "Think deeper"]);
+
+// Hosts of links Copilot accepts as Teams chat, channel, team, or meeting
+// sources: the Teams client host of each Microsoft cloud, as listed on the
+// "Plan for sovereign clouds" page on learn.microsoft.com (checked 2026-10-10).
+const TEAMS_LINK_HOSTS = Object.freeze(["teams.microsoft.com", "gov.teams.microsoft.us", "dod.teams.microsoft.us", "teams.microsoftonline.cn"]);
+
+// Hosts of SharePoint and OneDrive for Business links, one tenant label in
+// front of the SharePoint domain of each Microsoft cloud (commercial, GCC
+// High, DoD, and 21Vianet). OneDrive for Business lives on the "-my" tenant.
+const SHAREPOINT_HOST_PATTERN = /^[a-z0-9-]+\.sharepoint(-mil)?\.(com|us|cn)$/i;
 
 // One OneDrive or SharePoint item, in the key order the SharePoint builder
 // writes. The declarative agent schema allows only the ID keys (plus
@@ -1318,12 +1366,15 @@ const FILE_TYPES = Object.freeze([
     { ext: ".yaml", kind: "text" }, { ext: ".yml", kind: "text" }, { ext: ".xml", kind: "text" }, { ext: ".html", kind: "text" },
     { ext: ".ps1", kind: "text" }, { ext: ".psm1", kind: "text" }, { ext: ".sh", kind: "text" }, { ext: ".bash", kind: "text" },
     { ext: ".py", kind: "text" }, { ext: ".r", kind: "text" }, { ext: ".js", kind: "text" }, { ext: ".mjs", kind: "text" },
-    { ext: ".ts", kind: "text" }, { ext: ".sql", kind: "text" }, { ext: ".bat", kind: "text" }, { ext: ".cmd", kind: "text" }
+    { ext: ".ts", kind: "text" }, { ext: ".sql", kind: "text" }, { ext: ".bat", kind: "text" }, { ext: ".cmd", kind: "text" },
+    { ext: ".one", kind: "onenote" }, { ext: ".onepart", kind: "onenote" }
 ]);
 const FILE_EXTENSIONS = Object.freeze(FILE_TYPES.map(function (type) { return type.ext; }));
-// The only names Copilot's Agent Builder accepts as uploads. Every other text
-// type goes into the Teams package as plain text under its own name plus ".txt".
-const COPILOT_FILE_EXTENSIONS = Object.freeze([".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".pdf", ".txt"]);
+// The only names Copilot's Agent Builder accepts as uploads: the document types
+// its documentation lists plus ".onepart", which the Copilot app accepted in a
+// tenant check on 2026-10-10. Every other text type goes into the Teams package
+// as plain text under its own name plus ".txt"; any other type stays out of it.
+const COPILOT_FILE_EXTENSIONS = Object.freeze([".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".pdf", ".txt", ".onepart"]);
 const BUNDLE_FILES_FOLDER = "references/";
 
 // Program file types a name may not hide before its last extension, as in
@@ -1352,11 +1403,21 @@ const PDF_MARKER_WINDOW = 1024;
 const ZIP_LOCAL_HEADER = [0x50, 0x4B, 0x03, 0x04];
 const OFFICE_PART_NAME = "[Content_Types].xml";
 const OLE_HEADER = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+// A OneNote section file (MS-ONESTORE) starts with the file type GUID
+// {7B5C52E4-D88C-4DA7-AEB1-5378D02996D3} and holds the file format GUID
+// {109ADD3F-911B-49F5-A5D0-1791EDC8AED8} at byte 48, after the file and legacy
+// version GUIDs. GUIDs are stored mixed-endian, which the byte arrays reflect.
+// A ".onepart" file has no public specification; it is checked the same way
+// because OneNote writes it, and a real one that fails the check is refused.
+const ONENOTE_FILE_TYPE_GUID = [0xE4, 0x52, 0x5C, 0x7B, 0x8C, 0xD8, 0xA7, 0x4D, 0xAE, 0xB1, 0x53, 0x78, 0xD0, 0x29, 0x96, 0xD3];
+const ONENOTE_FILE_FORMAT_GUID = [0x3F, 0xDD, 0x9A, 0x10, 0x1B, 0x91, 0xF5, 0x49, 0xA5, 0xD0, 0x17, 0x91, 0xED, 0xC8, 0xAE, 0xD8];
+const ONENOTE_FORMAT_OFFSET = 48;
 const FILE_KIND_PROBLEMS = Object.freeze({
     pdf: "its contents are not a PDF",
     office: "it is not an Office file",
     legacy: "it is not an Office file",
-    text: "it is not plain text"
+    text: "it is not plain text",
+    onenote: "it is not a OneNote file"
 });
 
 // Metadata keys used inside SKILL.md frontmatter. Values are always strings because
@@ -1370,12 +1431,19 @@ const META = Object.freeze({
     sharepointItems: "sharepoint-items",
     webSearch: "copilot-web-search",
     webSites: "copilot-web-sites",
+    sharepointSwitch: "copilot-sharepoint",
     teamsMessages: "copilot-teams-messages",
+    teamsLinks: "copilot-teams-links",
     email: "copilot-email",
+    mailboxes: "copilot-mailboxes",
+    sharedMailbox: "copilot-shared-mailbox",
+    emailFolders: "copilot-email-folders",
     meetings: "copilot-meetings",
+    meetingItems: "copilot-meeting-items",
     codeInterpreter: "copilot-code-interpreter",
     imageGeneration: "copilot-image-generation",
     preferMyFiles: "copilot-prefer-my-files",
+    responseMode: "copilot-response-mode",
     appId: "copilot-app-id",
     creatorName: "creator-name",
     creatorWebsite: "creator-website",
@@ -2136,6 +2204,40 @@ function isWebSearchSite(value) {
     return parts.length <= 2;
 }
 
+/** Parses an https URL, or returns null when the value is not one. */
+function parseHttpsUrl(value) {
+    if (!isHttpsUrl(value)) {
+        return null;
+    }
+    try {
+        return new URL(value);
+    } catch (error) {
+        return null;
+    }
+}
+
+/** Returns true for a link to a SharePoint or OneDrive for Business site, library, folder, list, or file. */
+function isSharepointLink(value) {
+    const url = parseHttpsUrl(value);
+    return url !== null && SHAREPOINT_HOST_PATTERN.test(url.hostname);
+}
+
+/** Returns true for a Teams link to a team, channel, group chat, or meeting chat, as Teams copies them. */
+function isTeamsLink(value) {
+    const url = parseHttpsUrl(value);
+    return url !== null && TEAMS_LINK_HOSTS.indexOf(url.hostname.toLowerCase()) >= 0 && url.pathname.indexOf("/l/") === 0;
+}
+
+/** Returns true for a mailbox address of the plain shape name@host.tld with no spaces. */
+function isMailboxAddress(value) {
+    return typeof value === "string" && value.length <= LIMITS.mailboxText && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+/** Returns the value when it is a response mode the schema accepts, otherwise the schema default. */
+function asResponseMode(value) {
+    return RESPONSE_MODES.indexOf(value) >= 0 ? value : RESPONSE_MODES[0];
+}
+
 /** Returns the content kind for the name's last extension, or "" when the type is not accepted. */
 function fileKind(name) {
     const lower = String(name || "").toLowerCase();
@@ -2155,9 +2257,14 @@ function hidesExecutableExtension(name) {
     return parts.slice(1, -1).some(function (part) { return EXECUTABLE_EXTENSIONS.indexOf(part) >= 0; });
 }
 
+/** Returns true when the bytes hold the given values starting at offset. */
+function bytesAt(bytes, offset, values) {
+    return values.every(function (value, index) { return bytes[offset + index] === value; });
+}
+
 /** Returns true when the bytes start with the given values. */
 function bytesStartWith(bytes, values) {
-    return values.every(function (value, index) { return bytes[index] === value; });
+    return bytesAt(bytes, 0, values);
 }
 
 /** Returns true when ASCII text occurs in the first limit bytes. */
@@ -2202,6 +2309,9 @@ function fileContentMatches(kind, bytes) {
     }
     if (kind === "legacy") {
         return bytesStartWith(bytes, OLE_HEADER);
+    }
+    if (kind === "onenote") {
+        return bytesStartWith(bytes, ONENOTE_FILE_TYPE_GUID) && bytesAt(bytes, ONENOTE_FORMAT_OFFSET, ONENOTE_FILE_FORMAT_GUID);
     }
     return kind === "text" && isUtf8Text(bytes);
 }
@@ -2308,18 +2418,28 @@ function createAgent() {
         sharepointLinks: [],
         sharepointItems: [],
         files: [],
-        // Teams messages, email, and meetings belong to the person asking. In a
-        // group chat, Teams shows that person a preview to approve before anyone
-        // else sees an answer built on them, so all three start off.
+        // SharePoint, Teams messages, email, and meetings belong to the person
+        // asking. In a group chat, Teams shows that person a preview to approve
+        // before anyone else sees an answer built on them, so all four start off.
+        // Each list under a switch limits that source and is written out only
+        // while the switch is on. The shared mailbox, email folders, and meeting
+        // items can only arrive inside a file; the page has no box for typing them.
         copilot: {
             webSearch: true,
             webSites: [],
+            sharepoint: false,
             teamsMessages: false,
+            teamsLinks: [],
             email: false,
+            mailboxes: [],
+            sharedMailbox: "",
+            emailFolders: [],
             meetings: false,
+            meetingItems: [],
             codeInterpreter: true,
             imageGeneration: true,
             preferMyFiles: false,
+            responseMode: RESPONSE_MODES[0],
             appId: ""
         },
         creator: { name: "", website: "", privacy: "", terms: "" },
@@ -2380,6 +2500,23 @@ function cleanSharepointItem(value) {
     return item;
 }
 
+/**
+ * Copies one untrusted meeting item as the declarative agent schema shapes it:
+ * an id and whether it is a series. Returns null when there is no usable id.
+ * @param {*} value an item read from a file
+ * @returns {{id: string, is_series: boolean}|null}
+ */
+function cleanMeetingItem(value) {
+    if (!isPlainObject(value) || typeof value.id !== "string") {
+        return null;
+    }
+    const id = value.id.trim();
+    if (!/^[A-Za-z0-9+/=_-]{8,}$/.test(id) || id.length > LIMITS.meetingIdText) {
+        return null;
+    }
+    return { id: id, is_series: value.is_series === true };
+}
+
 /** Builds a plain file name from an untrusted one: no folders, safe characters only. */
 function attachedFileName(name) {
     const leaf = String(name || "").split(/[\\/]/).pop();
@@ -2420,6 +2557,41 @@ function cleanAttachedFile(value, seen) {
 }
 
 /**
+ * Cleans an untrusted list of short texts: trims and caps each entry, drops
+ * empty ones and any the check refuses, then caps the list length. Each kind of
+ * loss adds one plain-language notice.
+ * @param {*} value the list read from a file, untrusted
+ * @param {string[]} notices gets a line for anything dropped
+ * @param {{label: string, plural: string, textLimit: number, max: number, check: function(string): boolean, rule: string}} options
+ *   label names one entry in a notice; rule explains, in one sentence, what the check wants
+ * @returns {string[]} the entries that passed, in order
+ */
+function asCheckedList(value, notices, options) {
+    const items = Array.isArray(value) ? value : [];
+    let dropped = 0;
+    let kept = items
+        .map(function (item) { return asText(item, options.textLimit, options.label, notices); })
+        .filter(function (item) {
+            if (!item) {
+                return false;
+            }
+            if (!options.check(item)) {
+                dropped += 1;
+                return false;
+            }
+            return true;
+        });
+    if (dropped > 0) {
+        notices.push(dropped + " " + options.label + "(s) were removed. " + options.rule);
+    }
+    if (kept.length > options.max) {
+        notices.push("Only the first " + options.max + " " + options.plural + " were kept.");
+        kept = kept.slice(0, options.max);
+    }
+    return kept;
+}
+
+/**
  * Copies an untrusted agent-shaped value into a clean agent, trimming text,
  * enforcing every limit, and dropping empty list items. Use it on anything read
  * from a file or from storage before it reaches the form.
@@ -2445,27 +2617,10 @@ function normalizeAgent(input) {
         agent.starters = agent.starters.slice(0, LIMITS.starters);
     }
 
-    const links = Array.isArray(source.sharepointLinks) ? source.sharepointLinks : [];
-    let droppedLinks = 0;
-    agent.sharepointLinks = links
-        .map(function (item) { return asText(item, LIMITS.sharepointLinkText, "SharePoint link", notices); })
-        .filter(function (item) {
-            if (!item) {
-                return false;
-            }
-            if (!isHttpsUrl(item)) {
-                droppedLinks += 1;
-                return false;
-            }
-            return true;
-        });
-    if (droppedLinks > 0) {
-        notices.push(droppedLinks + " SharePoint link(s) were removed because they were not https addresses.");
-    }
-    if (agent.sharepointLinks.length > LIMITS.sharepointLinks) {
-        notices.push("Only the first " + LIMITS.sharepointLinks + " SharePoint links were kept.");
-        agent.sharepointLinks = agent.sharepointLinks.slice(0, LIMITS.sharepointLinks);
-    }
+    agent.sharepointLinks = asCheckedList(source.sharepointLinks, notices, {
+        label: "SharePoint link", plural: "SharePoint links", textLimit: LIMITS.sharepointLinkText, max: LIMITS.sharepointLinks, check: isSharepointLink,
+        rule: "A SharePoint link is an https address on a SharePoint or OneDrive site. Web sites belong under web search and Teams chats under Teams messages."
+    });
 
     const items = Array.isArray(source.sharepointItems) ? source.sharepointItems : [];
     agent.sharepointItems = items.map(cleanSharepointItem).filter(Boolean);
@@ -2509,27 +2664,35 @@ function normalizeAgent(input) {
     COPILOT_CAPABILITIES.forEach(function (cap) {
         agent.copilot[cap.key] = asBool(copilot[cap.key], agent.copilot[cap.key]);
     });
+    // Files and drafts written before the SharePoint switch existed carry only
+    // the links and items, so the switch follows them when the file is silent.
+    // It is decided after the lists are cleaned, so a file whose only sources
+    // were refused links opens with the switch off rather than wide open.
+    agent.copilot.sharepoint = asBool(copilot.sharepoint, agent.sharepointLinks.length > 0 || agent.sharepointItems.length > 0);
     agent.copilot.preferMyFiles = asBool(copilot.preferMyFiles, false);
-    const sites = Array.isArray(copilot.webSites) ? copilot.webSites : [];
-    let droppedSites = 0;
-    agent.copilot.webSites = sites
-        .map(function (item) { return asText(item, LIMITS.sharepointLinkText, "web site", notices); })
-        .filter(function (item) {
-            if (!item) {
-                return false;
-            }
-            if (!isWebSearchSite(item)) {
-                droppedSites += 1;
-                return false;
-            }
-            return true;
-        });
-    if (droppedSites > 0) {
-        notices.push(droppedSites + " web site(s) were removed. A site is an https address with no question mark and at most two parts after the site name.");
-    }
-    if (agent.copilot.webSites.length > LIMITS.webSites) {
-        notices.push("Only the first " + LIMITS.webSites + " web sites were kept.");
-        agent.copilot.webSites = agent.copilot.webSites.slice(0, LIMITS.webSites);
+    agent.copilot.responseMode = asResponseMode(copilot.responseMode);
+    agent.copilot.webSites = asCheckedList(copilot.webSites, notices, {
+        label: "web site", plural: "web sites", textLimit: LIMITS.sharepointLinkText, max: LIMITS.webSites, check: isWebSearchSite,
+        rule: "A site is an https address with no question mark and at most two parts after the site name."
+    });
+    agent.copilot.teamsLinks = asCheckedList(copilot.teamsLinks, notices, {
+        label: "Teams link", plural: "Teams links", textLimit: LIMITS.sharepointLinkText, max: LIMITS.teamsLinks, check: isTeamsLink,
+        rule: "A Teams link is an https address on teams.microsoft.com, copied from a team, channel, group chat, or meeting chat."
+    });
+    agent.copilot.mailboxes = asCheckedList(copilot.mailboxes, notices, {
+        label: "mailbox", plural: "mailboxes", textLimit: LIMITS.mailboxText, max: LIMITS.mailboxes, check: isMailboxAddress,
+        rule: "A mailbox is an email address such as team@example.org."
+    });
+    const sharedMailbox = asText(copilot.sharedMailbox, LIMITS.mailboxText, "shared mailbox", notices);
+    agent.copilot.sharedMailbox = isMailboxAddress(sharedMailbox) ? sharedMailbox : "";
+    agent.copilot.emailFolders = asCheckedList(copilot.emailFolders, notices, {
+        label: "email folder", plural: "email folders", textLimit: LIMITS.sharepointItemText, max: LIMITS.mailboxes, check: function () { return true; }, rule: ""
+    });
+    const meetingItems = Array.isArray(copilot.meetingItems) ? copilot.meetingItems : [];
+    agent.copilot.meetingItems = meetingItems.map(cleanMeetingItem).filter(Boolean);
+    if (agent.copilot.meetingItems.length > LIMITS.meetingItems) {
+        notices.push("Only the first " + LIMITS.meetingItems + " meetings were kept.");
+        agent.copilot.meetingItems = agent.copilot.meetingItems.slice(0, LIMITS.meetingItems);
     }
     const appId = asText(copilot.appId, 64, "app id", notices);
     agent.copilot.appId = /^[0-9a-f-]{36}$/i.test(appId) ? appId.toLowerCase() : "";
@@ -2576,17 +2739,27 @@ function validateAgent(agent) {
     if (agent.copyright || agent.license !== DEFAULT_LICENSE) {
         warnings.push({ field: "copyright", message: "The Copilot app package can't carry a copyright line or license name. The other downloads keep them." });
     }
-    if (agent.sharepointLinks.length > 0 || agent.sharepointItems.length > 0) {
+    if (agent.copilot.sharepoint || agent.sharepointLinks.length > 0 || agent.sharepointItems.length > 0) {
         warnings.push({ field: "sharepointLinks", message: "SharePoint knowledge only works in Microsoft 365 Copilot. Other products ignore it." });
     }
     if (agent.copilot.webSites.length > 0) {
         warnings.push({ field: "webSites", message: "The web site list only works in Microsoft 365 Copilot. Other products ignore it." });
     }
+    if (agent.copilot.teamsLinks.length > 0) {
+        warnings.push({ field: "teamsLinks", message: "The Teams chat list only works in Microsoft 365 Copilot. Other products ignore it." });
+    }
+    if (agent.copilot.mailboxes.length > 0) {
+        warnings.push({ field: "mailboxes", message: "The mailbox list only works in Microsoft 365 Copilot. Other products ignore it." });
+    }
     if (agent.files.length > 0) {
         warnings.push({ field: "files", message: "Attached files travel in the app package, the skill, and the backup. The Teams Chat file can't carry them." });
     }
-    if (agent.files.some(function (file) { return !isCopilotFileName(file.name); })) {
+    if (agent.files.some(function (file) { return !isCopilotFileName(file.name) && fileKind(file.name) === "text"; })) {
         warnings.push({ field: "files", message: "Script and data files reach Copilot as .txt files with the same name, because Copilot accepts only document types." });
+    }
+    const leftOut = agent.files.filter(function (file) { return !isCopilotFileName(file.name) && fileKind(file.name) !== "text"; });
+    if (leftOut.length > 0) {
+        warnings.push({ field: "files", message: "The Copilot app package can't carry " + listNames(leftOut.map(function (file) { return file.name; })) + ", because Copilot doesn't accept that type. The skill and the backup keep it." });
     }
     const missingCreator = ["name", "website", "privacy", "terms"].filter(function (key) { return !agent.creator[key]; });
     if (missingCreator.length > 0) {
@@ -2650,6 +2823,8 @@ const SCAN_FIELDS = Object.freeze([
         return agent.sharepointLinks.concat(agent.sharepointItems.map(function (item) { return [item.name, item.url].filter(Boolean).join(" "); })).join("\n");
     } },
     { field: "webSites", label: "Web sites", kinds: ["injection"], get: function (agent) { return agent.copilot.webSites.join("\n"); } },
+    { field: "teamsLinks", label: "Teams chats", kinds: ["injection"], get: function (agent) { return agent.copilot.teamsLinks.join("\n"); } },
+    { field: "mailboxes", label: "Mailboxes", kinds: ["injection"], get: function (agent) { return agent.copilot.mailboxes.concat(agent.copilot.sharedMailbox ? [agent.copilot.sharedMailbox] : []).join("\n"); } },
     { field: "creator", label: "Agent publisher details", kinds: SCAN_KINDS, get: function (agent) { return [agent.creator.name, agent.creator.website, agent.creator.privacy, agent.creator.terms].join("\n"); } },
     { field: "copyright", label: "Copyright line", kinds: SCAN_KINDS, get: function (agent) { return agent.copyright; } }
 ]);
@@ -3380,23 +3555,110 @@ function humanizeSkillName(skillName) {
 // search once it is uploaded.
 
 /**
- * Lists the capability entries for the Copilot switches that are on.
+ * Builds the OneDriveAndSharePoint entry, or null when the format omits it.
+ * A bare entry with no lists means every file the person can see. The
+ * SharePoint builder always writes the entry, with empty lists when the agent
+ * has no sources, so the .agent file keeps that shape for an agent whose
+ * switch is off. The Teams package omits the entry instead.
  * @param {object} agent a normalized agent
- * @returns {Array<{name: string}>} in the order Copilot writes them
+ * @param {"agent"|"package"} format which file the entry is for
+ * @returns {object|null}
  */
-function copilotCapabilities(agent) {
+function sharepointCapability(agent, format) {
+    const schemaOnly = format === "package";
+    const entry = { name: "OneDriveAndSharePoint" };
+    if (!agent.copilot.sharepoint) {
+        if (schemaOnly) {
+            return null;
+        }
+        entry.items_by_sharepoint_ids = [];
+        entry.items_by_url = [];
+        return entry;
+    }
+    const itemsById = sharepointEntries(agent, "id", schemaOnly);
+    const itemsByUrl = sharepointEntries(agent, "url", schemaOnly).concat(agent.sharepointLinks.map(function (url) { return { url: url }; }));
+    if (itemsById.length === 0 && itemsByUrl.length === 0) {
+        return entry;
+    }
+    if (itemsById.length > 0 || !schemaOnly) {
+        entry.items_by_sharepoint_ids = itemsById;
+    }
+    if (itemsByUrl.length > 0 || !schemaOnly) {
+        entry.items_by_url = itemsByUrl;
+    }
+    return entry;
+}
+
+/**
+ * Lists the capability entries for the Copilot switches that are on, each with
+ * the list that limits it when one is set. The Teams package follows the order
+ * the Copilot app writes; the .agent file keeps OneDriveAndSharePoint last,
+ * the shape that was loaded in a Teams chat on 2026-10-10.
+ * @param {object} agent a normalized agent
+ * @param {"agent"|"package"} format which file the list is for
+ * @returns {Array<{name: string}>}
+ */
+function copilotCapabilities(agent, format) {
     const capabilities = [];
+    const toUrls = function (list) { return list.map(function (url) { return { url: url }; }); };
     COPILOT_CAPABILITIES.forEach(function (cap) {
+        if (cap.key === "sharepoint") {
+            const sharepoint = format === "package" ? sharepointCapability(agent, format) : null;
+            if (sharepoint) {
+                capabilities.push(sharepoint);
+            }
+            return;
+        }
         if (!agent.copilot[cap.key]) {
             return;
         }
         const entry = { name: cap.name };
         if (cap.key === "webSearch" && agent.copilot.webSites.length > 0) {
-            entry.sites = agent.copilot.webSites.map(function (url) { return { url: url }; });
+            entry.sites = toUrls(agent.copilot.webSites);
+        }
+        if (cap.key === "teamsMessages" && agent.copilot.teamsLinks.length > 0) {
+            entry.urls = toUrls(agent.copilot.teamsLinks);
+        }
+        if (cap.key === "email") {
+            if (agent.copilot.sharedMailbox) {
+                entry.shared_mailbox = agent.copilot.sharedMailbox;
+            }
+            if (agent.copilot.mailboxes.length > 0) {
+                entry.group_mailboxes = agent.copilot.mailboxes.slice();
+            }
+            if (agent.copilot.emailFolders.length > 0) {
+                entry.folders = agent.copilot.emailFolders.map(function (id) { return { folder_id: id }; });
+            }
+        }
+        if (cap.key === "meetings" && agent.copilot.meetingItems.length > 0) {
+            entry.items_by_id = agent.copilot.meetingItems.map(function (item) { return { id: item.id, is_series: item.is_series }; });
         }
         capabilities.push(entry);
     });
+    if (format !== "package") {
+        capabilities.push(sharepointCapability(agent, format));
+    }
     return capabilities;
+}
+
+/**
+ * Builds behavior_overrides for both Microsoft files, or null when nothing
+ * needs saying. The .agent file always states discourage_model_knowledge, as
+ * the SharePoint builder does; the package states it only when it is on. The
+ * response mode is written only when it is not the schema default.
+ * @param {object} agent a normalized agent
+ * @param {"agent"|"package"} format which file the object is for
+ * @returns {object|null}
+ */
+function behaviorOverrides(agent, format) {
+    const overrides = {};
+    if (agent.copilot.preferMyFiles || format !== "package") {
+        overrides.special_instructions = { discourage_model_knowledge: agent.copilot.preferMyFiles === true };
+    }
+    if (agent.copilot.responseMode !== RESPONSE_MODES[0]) {
+        overrides.default_response_mode = agent.copilot.responseMode;
+    }
+    return Object.keys(overrides).length > 0 ? overrides : null;
 }
 
 /**
@@ -3440,46 +3702,65 @@ function readSharepointItems(list, by, raw) {
 }
 
 /**
- * Reads a capabilities list into the agent's Copilot switches, web sites, typed
- * links, and SharePoint items. A switch is on only when its capability is
- * listed, so a list without WebSearch means web search is off. The .agent
- * importer makes one exception for SharePoint-made files, which never list a
- * switch.
+ * Reads a capabilities list into the agent's Copilot switches and the lists
+ * that limit them: web sites, SharePoint links and items, Teams chats,
+ * mailboxes and folders, and meetings. A switch is on only when its capability
+ * is listed, so a list without WebSearch means web search is off. The .agent
+ * importer makes one exception for SharePoint-made files, which list only
+ * OneDriveAndSharePoint, so that entry never counts as a switch here.
  * @param {*} list the capabilities array from the file, untrusted
  * @param {object} raw the agent fields being assembled; copilot, sharepointLinks, and sharepointItems are filled in
  * @param {string[]} notices gets a line for anything the app cannot carry
- * @returns {number} how many switch capabilities the list named
+ * @returns {number} how many switch capabilities other than OneDriveAndSharePoint the list named
  */
 function readCopilotCapabilities(list, raw, notices) {
     let switchesListed = 0;
-    const scoped = [];
+    // The Copilot app writes null for a list it did not scope, so null and a
+    // missing list both mean the whole source.
+    const urlsOf = function (value) {
+        return (Array.isArray(value) ? value : []).filter(isPlainObject).map(function (item) { return item.url; });
+    };
     (Array.isArray(list) ? list : []).forEach(function (capability) {
         if (!isPlainObject(capability)) {
             return;
         }
         const known = COPILOT_CAPABILITIES.find(function (cap) { return cap.name === capability.name; });
-        if (known) {
-            raw.copilot[known.key] = true;
-            switchesListed += 1;
-            if (known.key === "webSearch") {
-                (Array.isArray(capability.sites) ? capability.sites : []).forEach(function (site) {
-                    if (isPlainObject(site)) {
-                        raw.copilot.webSites.push(site.url);
-                    }
-                });
-            } else if (CAPABILITY_SCOPE_KEYS.some(function (key) { return Array.isArray(capability[key]) ? capability[key].length > 0 : (typeof capability[key] === "string" && capability[key] !== ""); })) {
-                scoped.push(known.name);
+        if (!known) {
+            if (typeof capability.name === "string") {
+                notices.push("The capability \"" + capability.name + "\" is not one this app can carry and was left out.");
             }
-        } else if (capability.name === "OneDriveAndSharePoint") {
+            return;
+        }
+        if (known.key === "sharepoint") {
+            // Both lists present and empty is how the SharePoint builder spells
+            // "no sources", so that reads as off. No lists at all means every
+            // file the person can see. Lists with entries leave the switch to
+            // normalizeAgent, which turns it on only for entries that survive.
+            const hasIds = Array.isArray(capability.items_by_sharepoint_ids);
+            const hasUrls = Array.isArray(capability.items_by_url);
+            if (!hasIds && !hasUrls) {
+                raw.copilot.sharepoint = true;
+            } else if ((!hasIds || capability.items_by_sharepoint_ids.length === 0) && (!hasUrls || capability.items_by_url.length === 0)) {
+                raw.copilot.sharepoint = false;
+            }
             readSharepointItems(capability.items_by_sharepoint_ids, "id", raw);
             readSharepointItems(capability.items_by_url, "url", raw);
-        } else if (typeof capability.name === "string") {
-            notices.push("The capability \"" + capability.name + "\" is not one this app can carry and was left out.");
+            return;
+        }
+        raw.copilot[known.key] = true;
+        switchesListed += 1;
+        if (known.key === "webSearch") {
+            raw.copilot.webSites = urlsOf(capability.sites);
+        } else if (known.key === "teamsMessages") {
+            raw.copilot.teamsLinks = urlsOf(capability.urls);
+        } else if (known.key === "email") {
+            raw.copilot.sharedMailbox = capability.shared_mailbox;
+            raw.copilot.mailboxes = Array.isArray(capability.group_mailboxes) ? capability.group_mailboxes : [];
+            raw.copilot.emailFolders = (Array.isArray(capability.folders) ? capability.folders : []).filter(isPlainObject).map(function (folder) { return folder.folder_id; });
+        } else if (known.key === "meetings") {
+            raw.copilot.meetingItems = Array.isArray(capability.items_by_id) ? capability.items_by_id : [];
         }
     });
-    if (scoped.length > 0) {
-        notices.push("The file limited " + scoped.join(", ") + " to certain chats, folders, mailboxes, or meetings. This app can't carry those lists, so the whole source is used.");
-    }
     return switchesListed;
 }
 
@@ -3503,14 +3784,6 @@ function msAgentExport(agent) {
     if (agent.welcome) {
         starters.welcomeMessage = { text: agent.welcome };
     }
-    // The SharePoint builder always writes OneDriveAndSharePoint, even with no
-    // sources, so it stays last in the list.
-    const capabilities = copilotCapabilities(agent);
-    capabilities.push({
-        name: "OneDriveAndSharePoint",
-        items_by_sharepoint_ids: sharepointEntries(agent, "id", false),
-        items_by_url: sharepointEntries(agent, "url", false).concat(agent.sharepointLinks.map(function (url) { return { url: url }; }))
-    });
     if (agent.files.length > 0) {
         warnings.push("The Teams Chat file can't carry attached files, so they were left out.");
     }
@@ -3518,10 +3791,8 @@ function msAgentExport(agent) {
         name: agent.name,
         description: agent.description,
         instructions: agent.instructions,
-        capabilities: capabilities,
-        behavior_overrides: {
-            special_instructions: { discourage_model_knowledge: agent.copilot.preferMyFiles === true }
-        }
+        capabilities: copilotCapabilities(agent, "agent"),
+        behavior_overrides: behaviorOverrides(agent, "agent")
     };
     const config = { conversationStarters: starters, gptDefinition: definition };
     if (agent.icon) {
@@ -3579,13 +3850,13 @@ function msAgentImport(text) {
         sharepointItems: [],
         copilot: {
             webSearch: false,
-            webSites: [],
             teamsMessages: false,
             email: false,
             meetings: false,
             codeInterpreter: false,
             imageGeneration: false,
-            preferMyFiles: readPath(definition, ["behavior_overrides", "special_instructions", "discourage_model_knowledge"])
+            preferMyFiles: readPath(definition, ["behavior_overrides", "special_instructions", "discourage_model_knowledge"]),
+            responseMode: readPath(definition, ["behavior_overrides", "default_response_mode"])
         },
         icon: iconFromDataUri(config.icon, notices)
     };
@@ -3631,12 +3902,19 @@ function bundleFrontmatter(agent, skillName) {
     metadata[META.sharepointItems] = agent.sharepointItems.length > 0 ? JSON.stringify(agent.sharepointItems) : "";
     metadata[META.webSearch] = String(agent.copilot.webSearch);
     metadata[META.webSites] = agent.copilot.webSites.join("\n");
+    metadata[META.sharepointSwitch] = String(agent.copilot.sharepoint);
     metadata[META.teamsMessages] = String(agent.copilot.teamsMessages);
+    metadata[META.teamsLinks] = agent.copilot.teamsLinks.join("\n");
     metadata[META.email] = String(agent.copilot.email);
+    metadata[META.mailboxes] = agent.copilot.mailboxes.join("\n");
+    metadata[META.sharedMailbox] = agent.copilot.sharedMailbox;
+    metadata[META.emailFolders] = agent.copilot.emailFolders.join("\n");
     metadata[META.meetings] = String(agent.copilot.meetings);
+    metadata[META.meetingItems] = agent.copilot.meetingItems.length > 0 ? JSON.stringify(agent.copilot.meetingItems) : "";
     metadata[META.codeInterpreter] = String(agent.copilot.codeInterpreter);
     metadata[META.imageGeneration] = String(agent.copilot.imageGeneration);
     metadata[META.preferMyFiles] = String(agent.copilot.preferMyFiles);
+    metadata[META.responseMode] = agent.copilot.responseMode;
     metadata[META.appId] = agent.copilot.appId;
     metadata[META.creatorName] = agent.creator.name;
     metadata[META.creatorWebsite] = agent.creator.website;
@@ -3795,12 +4073,19 @@ function skillMdImport(text) {
         copilot: {
             webSearch: meta[META.webSearch],
             webSites: splitLines(meta[META.webSites]),
+            sharepoint: meta[META.sharepointSwitch],
             teamsMessages: meta[META.teamsMessages],
+            teamsLinks: splitLines(meta[META.teamsLinks]),
             email: meta[META.email],
+            mailboxes: splitLines(meta[META.mailboxes]),
+            sharedMailbox: meta[META.sharedMailbox],
+            emailFolders: splitLines(meta[META.emailFolders]),
             meetings: meta[META.meetings],
+            meetingItems: parseJsonArray(meta[META.meetingItems]),
             codeInterpreter: meta[META.codeInterpreter],
             imageGeneration: meta[META.imageGeneration],
             preferMyFiles: meta[META.preferMyFiles],
+            responseMode: meta[META.responseMode],
             appId: meta[META.appId]
         },
         creator: {
@@ -3964,24 +4249,13 @@ async function teamsZipExport(agent, icons) {
     if (agent.starters.length > 0) {
         declarative.conversation_starters = agent.starters.map(function (text) { return { text: text }; });
     }
-    const capabilities = copilotCapabilities(agent);
-    const itemsById = sharepointEntries(agent, "id", true);
-    const itemsByUrl = sharepointEntries(agent, "url", true).concat(agent.sharepointLinks.map(function (url) { return { url: url }; }));
-    if (itemsById.length > 0 || itemsByUrl.length > 0) {
-        const sharepoint = { name: "OneDriveAndSharePoint" };
-        if (itemsById.length > 0) {
-            sharepoint.items_by_sharepoint_ids = itemsById;
-        }
-        if (itemsByUrl.length > 0) {
-            sharepoint.items_by_url = itemsByUrl;
-        }
-        capabilities.push(sharepoint);
-    }
+    const capabilities = copilotCapabilities(agent, "package");
     if (capabilities.length > 0) {
         declarative.capabilities = capabilities;
     }
-    if (agent.copilot.preferMyFiles) {
-        declarative.behavior_overrides = { special_instructions: { discourage_model_knowledge: true } };
+    const overrides = behaviorOverrides(agent, "package");
+    if (overrides) {
+        declarative.behavior_overrides = overrides;
     }
 
     const entries = [
@@ -3993,10 +4267,21 @@ async function teamsZipExport(agent, icons) {
     // Attached files sit at the ZIP root with no manifest entry, which is how
     // the Copilot app's own export carries files uploaded as knowledge. Agent
     // Builder accepts only document types, so a script or data file goes out
-    // as plain text under its own name plus ".txt".
+    // as plain text under its own name plus ".txt", and any other type stays
+    // in the skill and the backup only.
+    const leftOut = [];
     agent.files.forEach(function (file) {
-        entries.push({ name: isCopilotFileName(file.name) ? file.name : file.name + ".txt", bytes: file.bytes });
+        if (isCopilotFileName(file.name)) {
+            entries.push({ name: file.name, bytes: file.bytes });
+        } else if (fileKind(file.name) === "text") {
+            entries.push({ name: file.name + ".txt", bytes: file.bytes });
+        } else {
+            leftOut.push(file.name);
+        }
     });
+    if (leftOut.length > 0) {
+        warnings.push("The Copilot app package can't carry " + listNames(leftOut) + ", because Copilot doesn't accept that type. The skill and the backup keep it.");
+    }
     return { fileName: safeFileName(agent.name + " Copilot app", ".zip"), bytes: zipWrite(entries), warnings: warnings, appId: appId };
 }
 
@@ -4040,13 +4325,13 @@ async function teamsZipImport(bytes) {
         sharepointItems: [],
         copilot: {
             webSearch: false,
-            webSites: [],
             teamsMessages: false,
             email: false,
             meetings: false,
             codeInterpreter: false,
             imageGeneration: false,
             preferMyFiles: readPath(declarative, ["behavior_overrides", "special_instructions", "discourage_model_knowledge"]),
+            responseMode: readPath(declarative, ["behavior_overrides", "default_response_mode"]),
             appId: manifest ? manifest.id : ""
         },
         creator: {}
@@ -4165,6 +4450,8 @@ globalThis.Agentprise = {
     LICENSE_CHOICES: LICENSE_CHOICES,
     CREATOR_PLACEHOLDERS: CREATOR_PLACEHOLDERS,
     META: META,
+    RESPONSE_MODES: RESPONSE_MODES,
+    links: { isSharepoint: isSharepointLink, isTeams: isTeamsLink, isMailbox: isMailboxAddress, isWebSearchSite: isWebSearchSite },
     createAgent: createAgent,
     normalizeAgent: normalizeAgent,
     validateAgent: validateAgent,
@@ -4209,7 +4496,7 @@ const DEFAULT_ICON_COLOR = "#2B4C7E";
 const STATUS_SECONDS = 8;
 const READINESS_LABELS = { name: "a name", description: "what it does", instructions: "how it should behave" };
 // Where a review finding sends focus. Attached files have no control, so their findings are plain text.
-const REVIEW_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions", starters: "s-starters", welcome: "f-welcome", sharepointLinks: "f-sharepoint", webSites: "f-websites", creator: "a-name", copyright: "a-copyright" };
+const REVIEW_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions", starters: "s-starters", welcome: "f-welcome", sharepointLinks: "f-sharepoint", webSites: "f-websites", teamsLinks: "f-teams", mailboxes: "f-mailboxes", creator: "a-name", copyright: "a-copyright" };
 const WORKSPACE_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions" };
 const DETAILS_FIELDS = { name: "d-name", description: "d-description", instructions: "d-instructions" };
 const PRODUCT_HINTS = {
@@ -4534,7 +4821,12 @@ function saveDraft() {
     ui.saveTimer = setTimeout(saveDraftNow, 300);
 }
 
-/** Loads the draft from storage through normalizeAgent, so stored data is never trusted. */
+/**
+ * Loads the draft from storage through normalizeAgent, so stored data is never
+ * trusted. Returns the clean agent with the notices normalizeAgent produced, or
+ * null when there is no draft or storage is blocked.
+ * @returns {{agent: object, notices: string[]}|null}
+ */
 function loadDraft() {
     try {
         const text = localStorage.getItem(STORAGE_KEY);
@@ -4551,7 +4843,7 @@ function loadDraft() {
         }
         // Attached files come back from IndexedDB through loadFiles, not from here.
         parsed.files = [];
-        return normalizeAgent(parsed).agent;
+        return normalizeAgent(parsed);
     } catch (error) {
         storageBlocked();
         return null;
@@ -4857,7 +5149,11 @@ const TEXT_FIELDS = [
     { ids: ["a-terms"], get: function (a) { return a.creator.terms; }, set: function (a, v) { a.creator.terms = v; } },
     { ids: ["a-copyright"], get: function (a) { return a.copyright; }, set: function (a, v) { a.copyright = v; } }
 ];
-const CHECKBOX_KEYS = ["webSearch", "teamsMessages", "email", "meetings", "codeInterpreter", "imageGeneration", "preferMyFiles"];
+const CHECKBOX_KEYS = ["webSearch", "sharepoint", "teamsMessages", "email", "meetings", "codeInterpreter", "imageGeneration", "preferMyFiles"];
+// Each box that limits a Copilot source, keyed by the switch it belongs to.
+// A box is disabled while its switch is off, since the list is written out
+// only when the source is on; the text stays so turning it back on restores it.
+const SCOPE_BOXES = { webSearch: "f-websites", sharepoint: "f-sharepoint", teamsMessages: "f-teams", email: "f-mailboxes" };
 const LINK_FIELDS = ["a-website", "a-privacy", "a-terms"];
 
 function showFieldError(id, message) {
@@ -5062,7 +5358,13 @@ function renderForm() {
     });
     $("f-sharepoint").value = ui.agent.sharepointLinks.join("\n");
     $("f-websites").value = ui.agent.copilot.webSites.join("\n");
+    $("f-teams").value = ui.agent.copilot.teamsLinks.join("\n");
+    $("f-mailboxes").value = ui.agent.copilot.mailboxes.join("\n");
+    $("f-responseMode").value = ui.agent.copilot.responseMode;
+    syncScopeBoxes();
     renderSharepointItems();
+    renderEmailItems();
+    renderMeetingItems();
     renderFiles();
     const select = $("a-license");
     const known = LICENSE_CHOICES.some(function (choice) { return choice.id === ui.agent.license; });
@@ -5072,7 +5374,7 @@ function renderForm() {
     ui.starterBlanks = paddedBlanks(ui.agent.starters);
     renderStarterBlanks();
     $("d-starters").value = ui.agent.starters.join("\n");
-    ["d-name", "d-description", "d-instructions", "d-starters", "f-sharepoint", "f-websites", "file-add", "a-website", "a-privacy", "a-terms", "icon"].forEach(function (id) {
+    ["d-name", "d-description", "d-instructions", "d-starters", "f-sharepoint", "f-websites", "f-teams", "f-mailboxes", "file-add", "a-website", "a-privacy", "a-terms", "icon"].forEach(function (id) {
         showFieldError(id, "");
     });
     updateDerived();
@@ -5087,30 +5389,103 @@ function validateLinkField(id, value) {
     return true;
 }
 
-function readSharepointField() {
-    const lines = $("f-sharepoint").value.split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
-    const bad = lines.filter(function (line) { return !isHttpsUrl(line); });
-    ui.agent.sharepointLinks = lines.filter(isHttpsUrl).slice(0, LIMITS.sharepointLinks);
+/**
+ * Reads one list box into the agent: one entry per line, each checked, the
+ * list capped. The error line under the box names what was left out.
+ * @param {string} id the textarea id
+ * @param {function(string): boolean} check accepts one entry
+ * @param {number} max how many entries are kept
+ * @param {string} rule one sentence saying what an entry must look like
+ * @returns {string[]} the entries kept
+ */
+function readListField(id, check, max, rule) {
+    const lines = $(id).value.split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
+    const bad = lines.filter(function (line) { return !check(line); });
+    const kept = lines.filter(check).slice(0, max);
     if (bad.length > 0) {
-        showFieldError("f-sharepoint", bad.length + " line(s) are not https links and will be left out.");
-    } else if (lines.length > LIMITS.sharepointLinks) {
-        showFieldError("f-sharepoint", "Only the first " + LIMITS.sharepointLinks + " links are kept.");
+        showFieldError(id, bad.length + " line(s) will be left out. " + rule);
+    } else if (lines.length > max) {
+        showFieldError(id, "Only the first " + max + " are kept.");
     } else {
-        showFieldError("f-sharepoint", "");
+        showFieldError(id, "");
     }
+    return kept;
+}
+
+function readSharepointField() {
+    ui.agent.sharepointLinks = readListField("f-sharepoint", isSharepointLink, LIMITS.sharepointLinks, "A SharePoint or OneDrive link starts with https:// and is on a sharepoint.com site. Web sites go under Web search and Teams chats under Teams messages.");
 }
 
 function readWebSitesField() {
-    const lines = $("f-websites").value.split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
-    const bad = lines.filter(function (line) { return !isWebSearchSite(line); });
-    ui.agent.copilot.webSites = lines.filter(isWebSearchSite).slice(0, LIMITS.webSites);
-    if (bad.length > 0) {
-        showFieldError("f-websites", bad.length + " line(s) will be left out. A site address starts with https://, has no question mark, and has at most two parts after the site name.");
-    } else if (lines.length > LIMITS.webSites) {
-        showFieldError("f-websites", "Only the first " + LIMITS.webSites + " sites are kept.");
-    } else {
-        showFieldError("f-websites", "");
+    ui.agent.copilot.webSites = readListField("f-websites", isWebSearchSite, LIMITS.webSites, "A site address starts with https://, has no question mark, and has at most two parts after the site name.");
+}
+
+function readTeamsField() {
+    ui.agent.copilot.teamsLinks = readListField("f-teams", isTeamsLink, LIMITS.teamsLinks, "A Teams link starts with https://teams.microsoft.com/l/ and comes from Get link in Teams.");
+}
+
+function readMailboxesField() {
+    ui.agent.copilot.mailboxes = readListField("f-mailboxes", isMailboxAddress, LIMITS.mailboxes, "A mailbox is an email address such as team@example.org.");
+}
+
+/** Disables each limit box while its switch is off, so the page shows which lists Copilot will get. */
+function syncScopeBoxes() {
+    Object.keys(SCOPE_BOXES).forEach(function (key) {
+        $(SCOPE_BOXES[key]).disabled = ui.agent.copilot[key] !== true;
+    });
+}
+
+/**
+ * Fills a read-only list of things that arrived inside a file, each with a
+ * Remove button, and hides the wrapper when the list is empty.
+ * @param {string} listId the ul id; the wrapper is listId plus "-wrap"
+ * @param {Array<{text: string, kind: string, label: string}>} rows what to show; label names the row for the Remove button
+ * @param {function(number): void} remove drops the row at an index from the agent
+ */
+function renderFileItems(listId, rows, remove) {
+    const list = $(listId);
+    clearChildren(list);
+    $(listId + "-wrap").hidden = rows.length === 0;
+    rows.forEach(function (row, index) {
+        const button = el("button", { type: "button", text: "Remove", "aria-label": "Remove " + row.label });
+        button.addEventListener("click", function () {
+            remove(index);
+            renderForm();
+            updateDerived();
+            saveDraft();
+            announce("Removed " + row.label + ".");
+        });
+        list.appendChild(el("li", {}, [el("span", { className: "item-text", text: row.text }), el("span", { className: "item-kind", text: row.kind }), button]));
+    });
+}
+
+/** Shows the shared mailbox and email folders that came from a file. */
+function renderEmailItems() {
+    const copilot = ui.agent.copilot;
+    const rows = [];
+    if (copilot.sharedMailbox) {
+        rows.push({ text: copilot.sharedMailbox, kind: "Shared mailbox", label: "shared mailbox " + copilot.sharedMailbox, key: "sharedMailbox", index: -1 });
     }
+    copilot.emailFolders.forEach(function (folder, index) {
+        rows.push({ text: folder, kind: "Folder", label: "email folder " + folder, key: "emailFolders", index: index });
+    });
+    renderFileItems("email-items", rows, function (at) {
+        const row = rows[at];
+        if (row.key === "sharedMailbox") {
+            copilot.sharedMailbox = "";
+        } else {
+            copilot.emailFolders.splice(row.index, 1);
+        }
+    });
+}
+
+/** Shows the meetings that came from a file. Ids are long and opaque, so the Remove button counts them instead. */
+function renderMeetingItems() {
+    const items = ui.agent.copilot.meetingItems;
+    const rows = items.map(function (item, index) {
+        return { text: "Meeting " + (index + 1) + (item.is_series ? " (series)" : ""), kind: "ID " + item.id.slice(0, 12) + "...", label: "meeting " + (index + 1) + " of " + items.length };
+    });
+    renderFileItems("meeting-items", rows, function (at) { items.splice(at, 1); });
 }
 
 /** Shows the SharePoint items that came from a file, each with a Remove button. */
@@ -5242,17 +5617,25 @@ function setupForm() {
     CHECKBOX_KEYS.forEach(function (key) {
         $("c-" + key).addEventListener("change", function (event) {
             ui.agent.copilot[key] = event.target.checked;
+            syncScopeBoxes();
             updateDerived();
             saveDraft();
         });
     });
-    $("f-sharepoint").addEventListener("input", function () {
-        readSharepointField();
-        updateDerived();
-        saveDraft();
+    const listReaders = { "f-sharepoint": readSharepointField, "f-websites": readWebSitesField, "f-teams": readTeamsField, "f-mailboxes": readMailboxesField };
+    Object.keys(listReaders).forEach(function (id) {
+        $(id).addEventListener("input", function () {
+            listReaders[id]();
+            updateDerived();
+            saveDraft();
+        });
     });
-    $("f-websites").addEventListener("input", function () {
-        readWebSitesField();
+    const modeSelect = $("f-responseMode");
+    RESPONSE_MODES.forEach(function (mode) {
+        modeSelect.appendChild(el("option", { value: mode, text: mode === RESPONSE_MODES[0] ? mode + " (default)" : mode }));
+    });
+    modeSelect.addEventListener("change", function () {
+        ui.agent.copilot.responseMode = asResponseMode(modeSelect.value);
         updateDerived();
         saveDraft();
     });
@@ -5391,8 +5774,8 @@ function setupDownloads() {
 /** The person's own words, longest first, so the code view can highlight them. */
 function highlightNeedles(agent) {
     const values = [agent.name, toSkillName(agent.name), agent.description, agent.instructions, agent.welcome, agent.copyright,
-        agent.creator.name, agent.creator.website, agent.creator.privacy, agent.creator.terms]
-        .concat(agent.starters, agent.sharepointLinks);
+        agent.creator.name, agent.creator.website, agent.creator.privacy, agent.creator.terms, agent.copilot.sharedMailbox]
+        .concat(agent.starters, agent.sharepointLinks, agent.copilot.webSites, agent.copilot.teamsLinks, agent.copilot.mailboxes);
     const needles = [];
     values.forEach(function (value) {
         const text = String(value || "").trim();
@@ -6007,10 +6390,16 @@ function initApp() {
     });
     dialog.addEventListener("close", function () { ui.pendingConfirm = null; });
 
-    const draft = loadDraft();
+    const stored = loadDraft();
+    const draft = stored ? stored.agent : null;
     if (draft && agentHasContent(draft)) {
         ui.agent = draft;
         ui.editorMode = "draft";
+        // A draft saved by an earlier version may hold entries this version
+        // refuses, such as a web link in the SharePoint list, so say so once.
+        if (stored.notices.length > 0) {
+            announce("Some saved settings were changed when the draft was opened. " + stored.notices.join(" "));
+        }
         loadFiles().then(function (files) {
             // Restore only while the draft is still the assistant on screen.
             if (ui.agent === draft && files.length > 0) {

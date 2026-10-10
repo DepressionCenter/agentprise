@@ -2,7 +2,7 @@
 // tests/scan.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-10
+// Last Modified: 2026-10-11
 // Summary: Tests for the sharing checks inside index.html: the identifier and
 //          injection patterns, the masked samples, and the whole-agent scan.
 // Notes: See README file for documentation and full license information.
@@ -116,8 +116,10 @@ describe("scanAgent", () => {
     const agent = sampleAgent(engine);
     agent.sharepointLinks = ["https://example.sharepoint.com/sites/a/12345678", "https://example.sharepoint.com/sites/b​"];
     agent.copilot.webSites = ["https://example.org/4111111111111111"];
+    agent.copilot.teamsLinks = ["https://teams.microsoft.com/l/chat/19:5551234567@thread.v2​"];
+    agent.copilot.mailboxes = ["billing-9876543210@example.org"];
     const findings = engine.scan.agent(agent, []);
-    assert.deepEqual(findings.map((f) => [f.field, f.kind]), [["sharepointLinks", "injection"]]);
+    assert.deepEqual(findings.map((f) => [f.field, f.kind]), [["sharepointLinks", "injection"], ["teamsLinks", "injection"]]);
   });
 
   test("plain-text attachments are decoded and scanned, documents are not", () => {

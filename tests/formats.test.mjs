@@ -2,7 +2,7 @@
 // tests/formats.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-10
+// Last Modified: 2026-10-11
 // Summary: Tests for the format converters inside index.html: the Agent Skill
 //          bundle, the Microsoft .agent file, the Teams app package, copy-ready
 //          text, format detection, and full round trips between them.
@@ -46,15 +46,19 @@ describe("Microsoft .agent", () => {
     assert.equal(config.conversationStarters.welcomeMessage.text, agent.welcome);
     assert.equal(config.conversationStarters.conversationStarterList.length, 3);
     const capabilities = config.gptDefinition.capabilities;
-    assert.deepEqual(capabilities.map((c) => c.name), ["WebSearch", "Email", "Meetings", "GraphicArt", "OneDriveAndSharePoint"]);
+    // OneDriveAndSharePoint stays last, the shape that was loaded in a Teams chat on 2026-10-10.
+    assert.deepEqual(capabilities.map((c) => c.name), ["WebSearch", "TeamsMessages", "Email", "Meetings", "GraphicArt", "OneDriveAndSharePoint"]);
     assert.deepEqual(capabilities[0].sites, [{ url: "https://example.org" }, { url: "https://example.net/docs/guide" }]);
+    assert.deepEqual(capabilities[1].urls, agent.copilot.teamsLinks.map((url) => ({ url })));
+    assert.deepEqual(capabilities[2], { name: "Email", shared_mailbox: "front-desk@example.org", group_mailboxes: ["lab-team@example.org"], folders: [{ folder_id: "inbox" }] });
+    assert.deepEqual(capabilities[3], { name: "Meetings", items_by_id: [{ id: "AAMkAGExampleMeetingId0123456789==", is_series: true }] });
     // Items keep every field in the SharePoint builder's key order; typed links follow as url-only entries.
-    assert.deepEqual(Object.keys(capabilities[4].items_by_sharepoint_ids[0]), ["url", "name", "site_id", "web_id", "list_id", "unique_id", "type"]);
-    assert.equal(capabilities[4].items_by_sharepoint_ids[0].type, "File");
-    assert.equal(capabilities[4].items_by_url.length, 3);
-    assert.equal(capabilities[4].items_by_url[0].name, "Team site");
-    assert.deepEqual(capabilities[4].items_by_url[1], { url: agent.sharepointLinks[0] });
-    assert.equal(config.gptDefinition.behavior_overrides.special_instructions.discourage_model_knowledge, true);
+    assert.deepEqual(Object.keys(capabilities[5].items_by_sharepoint_ids[0]), ["url", "name", "site_id", "web_id", "list_id", "unique_id", "type"]);
+    assert.equal(capabilities[5].items_by_sharepoint_ids[0].type, "File");
+    assert.equal(capabilities[5].items_by_url.length, 3);
+    assert.equal(capabilities[5].items_by_url[0].name, "Team site");
+    assert.deepEqual(capabilities[5].items_by_url[1], { url: agent.sharepointLinks[0] });
+    assert.deepEqual(config.gptDefinition.behavior_overrides, { special_instructions: { discourage_model_knowledge: true }, default_response_mode: "Think deeper" });
     assert.ok(config.icon.startsWith("data:image/png;base64,"));
     assert.deepEqual(Object.keys(doc._agentprise.copilot), ["app_id"]);
     assert.equal(doc._agentprise.creator.website, "https://example.org");
@@ -152,6 +156,49 @@ describe("Microsoft .agent", () => {
     assert.equal(agent.copilot.webSearch, false);
   });
 
+  test("the SharePoint switch decides the OneDriveAndSharePoint entry and reads back the same way", () => {
+    const agent = sampleAgent(engine);
+    agent.sharepointLinks = [];
+    agent.sharepointItems = [];
+    const entryOf = (text) => JSON.parse(text).customCopilotConfig.gptDefinition.capabilities.find((c) => c.name === "OneDriveAndSharePoint");
+    // Off: the SharePoint builder's own shape for an agent with no sources.
+    agent.copilot.sharepoint = false;
+    assert.deepEqual(entryOf(engine.formats.msAgent.export(agent).text), { name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [], items_by_url: [] });
+    assert.equal(engine.formats.msAgent.import(engine.formats.msAgent.export(agent).text).agent.copilot.sharepoint, false);
+    // On with no limit: a bare entry, which the schema reads as every file the person can see.
+    agent.copilot.sharepoint = true;
+    assert.deepEqual(entryOf(engine.formats.msAgent.export(agent).text), { name: "OneDriveAndSharePoint" });
+    assert.equal(engine.formats.msAgent.import(engine.formats.msAgent.export(agent).text).agent.copilot.sharepoint, true);
+    // On with links: both lists, as the builder writes them.
+    agent.sharepointLinks = ["https://example.sharepoint.com/sites/demo"];
+    assert.deepEqual(entryOf(engine.formats.msAgent.export(agent).text), { name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [], items_by_url: [{ url: "https://example.sharepoint.com/sites/demo" }] });
+    const back = engine.formats.msAgent.import(engine.formats.msAgent.export(agent).text).agent;
+    assert.equal(back.copilot.sharepoint, true);
+    assert.deepEqual(back.sharepointLinks, ["https://example.sharepoint.com/sites/demo"]);
+  });
+
+  test("a file whose only SharePoint sources are links on other hosts opens with the switch off", () => {
+    const text = JSON.stringify({
+      _agentprise: { version: "1", copilot: { app_id: "" } },
+      schemaVersion: "0.2.0",
+      customCopilotConfig: {
+        gptDefinition: {
+          name: "Old links",
+          description: "Written before links were checked",
+          instructions: "Be helpful.",
+          capabilities: [{ name: "WebSearch" }, { name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [], items_by_url: [{ url: "https://example.org/wiki" }, { url: "https://teams.microsoft.com/l/chat/19:abc@thread.v2" }] }],
+        },
+      },
+    });
+    const { agent, notices } = engine.formats.msAgent.import(text);
+    assert.equal(agent.copilot.sharepoint, false);
+    assert.deepEqual(agent.sharepointLinks, []);
+    assert.ok(notices.some((n) => n.includes("2 SharePoint link(s) were removed")));
+    // Writing it back never widens the agent to every SharePoint file.
+    const entry = JSON.parse(engine.formats.msAgent.export(agent).text).customCopilotConfig.gptDefinition.capabilities.find((c) => c.name === "OneDriveAndSharePoint");
+    assert.deepEqual(entry, { name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [], items_by_url: [] });
+  });
+
   test("a SharePoint-made file that lists no switch opens with web search on and personal sources off", () => {
     const text = JSON.stringify({
       schemaVersion: "0.2.0",
@@ -169,13 +216,16 @@ describe("Microsoft .agent", () => {
     });
     const { agent } = engine.formats.msAgent.import(text);
     assert.equal(agent.copilot.webSearch, true);
+    assert.equal(agent.copilot.sharepoint, false);
     assert.equal(agent.copilot.teamsMessages, false);
     assert.equal(agent.copilot.meetings, false);
     assert.equal(agent.copilot.codeInterpreter, false);
     assert.equal(agent.copilot.preferMyFiles, true);
+    assert.equal(agent.copilot.responseMode, "Auto");
     // Writing it back lists WebSearch, so the file keeps the web in a Teams chat.
     const doc = JSON.parse(engine.formats.msAgent.export(agent).text);
     assert.deepEqual(doc.customCopilotConfig.gptDefinition.capabilities.map((c) => c.name), ["WebSearch", "OneDriveAndSharePoint"]);
+    assert.deepEqual(doc.customCopilotConfig.gptDefinition.behavior_overrides, { special_instructions: { discourage_model_knowledge: true } });
   });
 
   test("a file from an earlier version still reads its switches from the extra key", () => {
@@ -241,6 +291,13 @@ describe("Agent Skill bundle", () => {
     assert.equal(data.metadata["copilot-prefer-my-files"], "true");
     assert.equal(data.metadata["copilot-email"], "true");
     assert.equal(data.metadata["copilot-web-sites"], "https://example.org\nhttps://example.net/docs/guide");
+    assert.equal(data.metadata["copilot-sharepoint"], "true");
+    assert.equal(data.metadata["copilot-teams-links"], agent.copilot.teamsLinks.join("\n"));
+    assert.equal(data.metadata["copilot-mailboxes"], "lab-team@example.org");
+    assert.equal(data.metadata["copilot-shared-mailbox"], "front-desk@example.org");
+    assert.equal(data.metadata["copilot-email-folders"], "inbox");
+    assert.deepEqual(JSON.parse(data.metadata["copilot-meeting-items"]), agent.copilot.meetingItems);
+    assert.equal(data.metadata["copilot-response-mode"], "Think deeper");
     assert.deepEqual(JSON.parse(data.metadata["sharepoint-items"]), agent.sharepointItems);
     assert.equal(body.trim(), agent.instructions);
     assert.ok(decode(entries.get("caveman/LICENSE.txt")).includes("GNU GENERAL PUBLIC LICENSE"));
@@ -274,6 +331,17 @@ describe("Agent Skill bundle", () => {
     assert.deepEqual(result.agent.files.map((f) => f.name), ["deploy.ps1", "data.txt"]);
     assert.ok(result.notices.some((n) => n.includes("photo.png")));
     assert.ok(result.notices.some((n) => n.includes("fake.pdf (it is a Windows program)")));
+  });
+
+  test("a bundle written before the SharePoint switch opens with it on when links exist", () => {
+    const withLinks = "---\nname: old\ndescription: d\nmetadata:\n  sharepoint-sources: https://example.sharepoint.com/sites/a\n---\nbody";
+    assert.equal(engine.formats.skillMd.import(withLinks).agent.copilot.sharepoint, true);
+    const withoutLinks = "---\nname: old\ndescription: d\nmetadata:\n  sharepoint-sources: \"\"\n---\nbody";
+    assert.equal(engine.formats.skillMd.import(withoutLinks).agent.copilot.sharepoint, false);
+    const withTeamsLink = "---\nname: old\ndescription: d\nmetadata:\n  sharepoint-sources: https://teams.microsoft.com/l/chat/19:abc@thread.v2\n---\nbody";
+    const moved = engine.formats.skillMd.import(withTeamsLink);
+    assert.equal(moved.agent.copilot.sharepoint, false);
+    assert.ok(moved.notices.some((n) => n.includes("Teams chats under Teams messages")));
   });
 
   test("non-default license writes a short notice", async () => {
@@ -362,13 +430,17 @@ describe("Teams app package", () => {
     assert.equal(manifest.copilotAgents.declarativeAgents[0].file, "declarativeAgent_0.json");
     const declarative = JSON.parse(decode(entries.get("declarativeAgent_0.json")));
     assert.equal(declarative.version, "v1.8");
-    assert.deepEqual(declarative.capabilities.map((c) => c.name), ["WebSearch", "Email", "Meetings", "GraphicArt", "OneDriveAndSharePoint"]);
+    // The order the Copilot app wrote in its own export on 2026-10-10.
+    assert.deepEqual(declarative.capabilities.map((c) => c.name), ["WebSearch", "OneDriveAndSharePoint", "TeamsMessages", "Email", "Meetings", "GraphicArt"]);
     assert.deepEqual(declarative.capabilities[0].sites, [{ url: "https://example.org" }, { url: "https://example.net/docs/guide" }]);
     // The schema allows only ids under items_by_sharepoint_ids and only url under items_by_url.
-    assert.deepEqual(declarative.capabilities[4].items_by_sharepoint_ids, [{ site_id: "11111111-1111-4111-8111-111111111111", web_id: "22222222-2222-4222-8222-222222222222", list_id: "33333333-3333-4333-8333-333333333333", unique_id: "44444444-4444-4444-8444-444444444444" }]);
-    assert.deepEqual(declarative.capabilities[4].items_by_url, [{ url: "https://example.sharepoint.com/sites/team" }, { url: agent.sharepointLinks[0] }, { url: agent.sharepointLinks[1] }]);
+    assert.deepEqual(declarative.capabilities[1].items_by_sharepoint_ids, [{ site_id: "11111111-1111-4111-8111-111111111111", web_id: "22222222-2222-4222-8222-222222222222", list_id: "33333333-3333-4333-8333-333333333333", unique_id: "44444444-4444-4444-8444-444444444444" }]);
+    assert.deepEqual(declarative.capabilities[1].items_by_url, [{ url: "https://example.sharepoint.com/sites/team" }, { url: agent.sharepointLinks[0] }, { url: agent.sharepointLinks[1] }]);
+    assert.deepEqual(declarative.capabilities[2].urls, agent.copilot.teamsLinks.map((url) => ({ url })));
+    assert.deepEqual(declarative.capabilities[3], { name: "Email", shared_mailbox: "front-desk@example.org", group_mailboxes: ["lab-team@example.org"], folders: [{ folder_id: "inbox" }] });
+    assert.deepEqual(declarative.capabilities[4].items_by_id, [{ id: "AAMkAGExampleMeetingId0123456789==", is_series: true }]);
     assert.equal(decode(entries.get("notes.txt")), "Lab notes for the demo.");
-    assert.equal(declarative.behavior_overrides.special_instructions.discourage_model_knowledge, true);
+    assert.deepEqual(declarative.behavior_overrides, { special_instructions: { discourage_model_knowledge: true }, default_response_mode: "Think deeper" });
     assert.equal(declarative.conversation_starters.length, 3);
     assert.equal("welcome" in declarative, false);
     assert.equal("_license" in declarative, false);
@@ -385,6 +457,7 @@ describe("Teams app package", () => {
     const agent = sampleAgent(engine);
     agent.creator = { name: "", website: "", privacy: "", terms: "" };
     agent.copilot.preferMyFiles = false;
+    agent.copilot.responseMode = "Auto";
     const { bytes, warnings } = await engine.formats.teamsZip.export(agent, teamsIcons());
     assert.equal(warnings.filter((w) => w.includes("Placeholder")).length, 1);
     const entries = await engine.zip.read(bytes);
@@ -437,6 +510,82 @@ describe("Teams app package", () => {
     const bundle = await engine.formats.bundle.export(back.agent);
     const bundleEntries = await engine.zip.read(bundle.bytes);
     assert.ok(bundleEntries.has("caveman/references/deploy.ps1"));
+  });
+
+  test("the SharePoint switch decides whether the package lists OneDriveAndSharePoint", async () => {
+    const agent = sampleAgent(engine);
+    agent.sharepointLinks = [];
+    agent.sharepointItems = [];
+    const entryOf = async (built) => JSON.parse(decode((await engine.zip.read(built.bytes)).get("declarativeAgent_0.json"))).capabilities.find((c) => c.name === "OneDriveAndSharePoint");
+    agent.copilot.sharepoint = false;
+    assert.equal(await entryOf(await engine.formats.teamsZip.export(agent, teamsIcons())), undefined);
+    assert.equal((await engine.formats.teamsZip.import((await engine.formats.teamsZip.export(agent, teamsIcons())).bytes)).agent.copilot.sharepoint, false);
+    agent.copilot.sharepoint = true;
+    assert.deepEqual(await entryOf(await engine.formats.teamsZip.export(agent, teamsIcons())), { name: "OneDriveAndSharePoint" });
+    assert.equal((await engine.formats.teamsZip.import((await engine.formats.teamsZip.export(agent, teamsIcons())).bytes)).agent.copilot.sharepoint, true);
+    agent.sharepointLinks = ["https://example-my.sharepoint.com/:f:/g/personal/someone/folder"];
+    assert.deepEqual(await entryOf(await engine.formats.teamsZip.export(agent, teamsIcons())), { name: "OneDriveAndSharePoint", items_by_url: [{ url: agent.sharepointLinks[0] }] });
+  });
+
+  test("imports the shape the Copilot app exported on 2026-10-10 without losing a source", async () => {
+    // A synthetic copy of a real export: made-up ids, every list the app wrote, and the null values it uses for unscoped lists.
+    const declarative = {
+      version: "v1.8",
+      id: "0a95bfd2-3fda-451a-8344-95443dcd5297.gpt.11111111-1111-4111-8111-111111111111",
+      actions: [],
+      conversation_starters: [],
+      name: "Test Agent",
+      description: "Set to think deeper, with links and a file.",
+      instructions: "Be friendly and helpful.",
+      behavior_overrides: { special_instructions: null, default_response_mode: "Think deeper" },
+      capabilities: [
+        { name: "WebSearch", sites: [{ url: "https://example.org/" }] },
+        { name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [{ site_id: "11111111-1111-4111-8111-111111111111", web_id: "22222222-2222-4222-8222-222222222222", list_id: "33333333-3333-4333-8333-333333333333", unique_id: "44444444-4444-4444-8444-444444444444" }], items_by_url: [], additional_search_terms: null },
+        { name: "TeamsMessages", urls: [{ url: "https://teams.microsoft.com/l/team/19:abc@thread.tacv2/General?groupId=55555555-5555-4555-8555-555555555555" }, { url: "https://teams.microsoft.com/l/chat/19:meeting_abc@thread.v2" }] },
+        { name: "Email", group_mailboxes: ["lab-team@example.org"] },
+        { name: "Meetings", items_by_id: [{ id: "040000008200E00074C5B7101A82E008000000000000000000000000000000000000000000000000", is_series: true }] },
+        { name: "CodeInterpreter" },
+        { name: "GraphicArt" },
+      ],
+    };
+    const manifest = { version: "1.0.0", id: "0a95bfd2-3fda-451a-8344-95443dcd5297", developer: { name: "Example", websiteUrl: "https://example.org", privacyUrl: "https://example.org/p", termsOfUseUrl: "https://example.org/t" }, name: { short: "Test Agent", full: "Test Agent" }, description: { short: "s", full: "f" }, icons: { outline: "outline.png", color: "color.png" }, accentColor: "#E0F6FC", validDomains: [], manifestVersion: "1.28", copilotAgents: { declarativeAgents: [{ id: declarative.id, file: "declarativeAgent_0.json" }] } };
+    const bytes = engine.zip.write([
+      { name: "manifest.json", bytes: encode(JSON.stringify(manifest)) },
+      { name: "color.png", bytes: makePng(192, 192) },
+      { name: "outline.png", bytes: makePng(32, 32) },
+      { name: "declarativeAgent_0.json", bytes: encode(JSON.stringify(declarative)) },
+      { name: "TestFile.txt", bytes: encode("abc\ndef") },
+    ]);
+    const { agent, notices } = await engine.formats.teamsZip.import(bytes);
+    assert.deepEqual(notices.filter((n) => !n.includes("welcome")), []);
+    assert.equal(agent.copilot.responseMode, "Think deeper");
+    assert.equal(agent.copilot.preferMyFiles, false);
+    assert.equal(agent.copilot.sharepoint, true);
+    assert.deepEqual(agent.copilot.webSites, ["https://example.org/"]);
+    assert.deepEqual(agent.copilot.teamsLinks, declarative.capabilities[2].urls.map((u) => u.url));
+    assert.deepEqual(agent.copilot.mailboxes, ["lab-team@example.org"]);
+    assert.equal(agent.copilot.sharedMailbox, "");
+    assert.deepEqual(agent.copilot.meetingItems, declarative.capabilities[4].items_by_id);
+    assert.deepEqual(agent.copilot.emailFolders, []);
+    assert.equal(agent.sharepointItems.length, 1);
+    assert.deepEqual(agent.files.map((f) => f.name), ["TestFile.txt"]);
+    // A null list means an unscoped source, which is how the app writes TeamsMessages when no chat is chosen.
+    declarative.capabilities[2].urls = null;
+    const nullList = await engine.formats.teamsZip.import(engine.zip.write([{ name: "declarativeAgent_0.json", bytes: encode(JSON.stringify(declarative)) }]));
+    assert.equal(nullList.agent.copilot.teamsMessages, true);
+    assert.deepEqual(nullList.agent.copilot.teamsLinks, []);
+    assert.deepEqual(nullList.notices.filter((n) => !n.includes("welcome") && !n.includes("icon")), []);
+  });
+
+  test("a package leaves out a file Copilot does not accept and says so", async () => {
+    const agent = sampleAgent(engine);
+    agent.files = [{ name: "notes.one", bytes: BYTE_SHAPES.onenote }, { name: "page.onepart", bytes: BYTE_SHAPES.onenote }, { name: "deploy.ps1", bytes: encode("Write-Host 'hi'") }];
+    const { bytes, warnings } = await engine.formats.teamsZip.export(agent, teamsIcons());
+    const entries = await engine.zip.read(bytes);
+    assert.deepEqual([...entries.keys()].slice(4), ["page.onepart", "deploy.ps1.txt"]);
+    assert.ok(warnings.some((w) => w.includes("notes.one") && w.includes("can't carry")));
+    const bundle = await engine.zip.read((await engine.formats.bundle.export(agent)).bytes);
+    assert.ok(bundle.has("caveman/references/notes.one"));
   });
 
   test("placeholder creator values import as blank", async () => {

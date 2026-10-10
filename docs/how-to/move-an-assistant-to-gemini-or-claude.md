@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/move-an-assistant-to-gemini-or-claude.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Step-by-step guide with screenshots: open an assistant file you already
          have, check it, and download it as a skill for Gemini or Claude.
 Notes: See README file for documentation and full license information.
@@ -67,11 +67,13 @@ Agent publisher details section.
 
 Two things are worth knowing when the file came from Microsoft:
 
-- Sources from SharePoint stay with the assistant, whether they are links you
-  pasted or files SharePoint stored by an internal id. Files uploaded to the
-  Copilot app come along too, inside a `references` folder in the skill.
-- Settings that only Copilot understands, such as SharePoint sources and what
-  Copilot may use, stay in the file but Gemini and Claude ignore them.
+- Sources from Microsoft 365 stay with the assistant: SharePoint links you
+  pasted, files SharePoint stored by an internal id, Teams chats, mailboxes,
+  and meetings. Files uploaded to the Copilot app come along too, inside a
+  `references` folder in the skill.
+- Settings that only Copilot understands, such as those sources, what Copilot
+  may use, and the response mode, stay in the file but Gemini and Claude
+  ignore them.
 
 ### Step 3: Download the skill
 
