@@ -81,7 +81,7 @@ same computer. Nothing is uploaded. Start over removes it.
 
 Yes. The Library holds ready-made assistants anyone can try and change. To add
 yours, keep a copy and
-[send it to us on GitHub](https://github.com/DepressionCenter/agentprise/issues/new).
+[send it to us on GitHub](https://github.com/DepressionCenter/agentprise/issues/new?template=library-assistant.yml).
 The [how-to page](how-to/add-to-library.md) explains what to include.
 
 ### Why is the Library empty on my computer?
