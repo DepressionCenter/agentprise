@@ -239,8 +239,10 @@ Checked on 2026-10-09 unless a line says otherwise.
 
 ### Tests run in this repository
 
-- `npm test` on 2026-10-09: 44 tests pass, including a round trip of a sample
-  agent through bundle, `.agent`, bundle, Teams package, and bundle.
+- `npm test` on 2026-10-09: 48 tests pass, including a round trip of a sample
+  agent through bundle, `.agent`, bundle, Teams package, and bundle, and a check
+  that every bundle listed in `library/catalog.json` opens and matches its
+  catalog line.
 - The real Caveman `.agent` and Teams package exports both import. The `.agent`
   import returns every field, and the Teams import returns every field except the
   welcome message and starters (that export had none).

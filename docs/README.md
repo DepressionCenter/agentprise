@@ -32,9 +32,15 @@ The quickest way to learn the app is to open it and choose Create new. The Help
 page inside the app answers the common questions: which download you need, who
 can use your assistant, and where your work is kept.
 
+- [Using Agentprise](usage.md): a walkthrough of each thing you can do, from
+  creating an assistant to downloading it for a product.
+- [Frequently asked questions](faq.md): the same answers as the Help page inside
+  the app, in one place you can link to.
 - [Formats](formats.md): what each download is for, what each one keeps, and what
   to do with the file once you have it. The second half of the page holds the
   technical details for maintainers.
+- [Add your assistant to the Library](how-to/add-to-library.md): what to send and
+  what happens next, with a section for the maintainer who adds it.
 
 ### Trust and privacy
 

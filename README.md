@@ -40,12 +40,12 @@ Describe your assistant once: what it is called, what it does, how it should beh
   + Linux: run `./run-linux.sh` in a terminal.
 
   Your browser opens the app at `http://localhost:8010`. Close the server window when you are done.
-+ **Open the page directly.** You can also open `index.html` from the unzipped folder, with no server at all. Everything works; the Library shows only the assistants built into the page.
++ **Open the page directly.** You can also open `index.html` from the unzipped folder, with no server at all. Everything works except the Library, which needs a web address to read its files.
 
 
 
 ## Documentation
-+ **Complete documentation:** See the [`/docs`](./docs) folder in this repository for which download goes where, how your work stays private, and the technical details.
++ **Complete documentation:** See the [`/docs`](./docs) folder in this repository for a walkthrough of the app, the questions people ask, which download goes where, how to add an assistant to the Library, how your work stays private, and the technical details.
 + **Overview for researchers and developers:** Visit the [Health Research Resource Library](https://michmed.org/efdc-kb) for a high-level summary, key features, and important assumptions.
 
 

@@ -21,7 +21,7 @@
   "custom": {
     "code:codeRepository": "https://github.com/DepressionCenter/agentprise",
     "code:developmentStatus": { "id": "active" },
-    "code:programmingLanguage": [ { "id": "python" } ]
+    "code:programmingLanguage": [ { "id": "javascript" } ]
   },
   "communities": [
     {
