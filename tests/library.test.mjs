@@ -2,7 +2,7 @@
 // tests/library.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-10
+// Last Modified: 2026-10-11
 // Summary: Tests for the agent library: the catalog and each bundle it lists,
 //          opened with the same importer the app uses for dropped files.
 // Notes: See README file for documentation and full license information.
@@ -39,6 +39,9 @@ async function openEntry(entry) {
   assert.equal(result.error, undefined, entry.file + ": " + result.error);
   return result;
 }
+
+// Caveman is the reference entry: the other bundles share its publisher details.
+const caveman = (await openEntry(catalog.agents.find((item) => item.file === "caveman.zip"))).agent;
 
 describe("library catalog", () => {
   test("carries the license key and well-formed entries", () => {
@@ -77,6 +80,12 @@ describe("library catalog", () => {
       assert.ok(agent.instructions.includes("https://chat.988lifeline.org/"), entry.file + " must link the 988 Lifeline chat");
       // No entry reads meetings or files unless the person adds them; chat and web search are the author's choice.
       assert.equal(agent.copilot.webSearch, true, entry.file + " must have web search on");
+      assert.equal(agent.copilot.imageGeneration, true, entry.file + " must have image creation on");
+      // Every entry is published by the same person with the same links, so the
+      // Copilot store shows one publisher for the whole Library.
+      assert.deepEqual(agent.creator, caveman.creator, entry.file + " must carry the same publisher details as Caveman");
+      const words = [agent.name, agent.description, agent.welcome, agent.instructions, ...agent.starters].join("\n");
+      assert.ok(!/onedrive/i.test(words), entry.file + " must not mention OneDrive");
       assert.equal(agent.copilot.teamsMessages, false, entry.file + " must not read Teams messages by default");
       assert.equal(agent.copilot.email, false, entry.file + " must not read email by default");
       assert.equal(agent.copilot.meetings, false, entry.file + " must not read meetings by default");
