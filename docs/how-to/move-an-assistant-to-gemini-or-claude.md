@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/move-an-assistant-to-gemini-or-claude.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: Step-by-step guide with screenshots: open an assistant file you already
          have, check it, and download it as a skill for Gemini or Claude.
 Notes: See README file for documentation and full license information.
@@ -78,7 +78,7 @@ Two things are worth knowing when the file came from Microsoft:
 Under **Where it can go**, choose **Download skill** next to Gemini or next
 to Claude. Both buttons give the same file, so one download works for both
 products. The file is a `.zip` named after the assistant, such as
-`caveman.zip`.
+`Caveman.zip`.
 
 ![The Where it can go card. Gemini and Claude each have a Download skill button.](../../images/guides/where-it-can-go.png)
 

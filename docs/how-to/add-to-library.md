@@ -68,10 +68,10 @@ file, so an entry is nothing more than a bundle the app itself made.
 
 1. Open the submitted `.zip` in the app and check every field. If anything needs
    to change, change it and choose **Keep a copy** to get a clean bundle.
-2. Copy the `.zip` into `library/`. Keep the file name the app gave it, which is
-   the skill name, such as `caveman.zip`. The name must be plain letters,
-   digits, spaces, dots, hyphens, or underscores, ending in `.zip`, because the
-   app refuses anything else.
+2. Copy the `.zip` into `library/` and rename it to the skill name shown on
+   the Details page, such as `caveman.zip`, so every Library file follows one
+   rule. The name must be plain letters, digits, spaces, dots, hyphens, or
+   underscores, ending in `.zip`, because the app refuses anything else.
 3. Add a line to `library/catalog.json`:
 
    ```json

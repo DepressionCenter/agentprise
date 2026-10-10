@@ -3043,7 +3043,9 @@ async function bundleExport(agent) {
     }
     entries.push({ name: skillName + "/LICENSE.txt", bytes: toBytes(bundleLicenseText(agent)) });
     entries.push({ name: skillName + "/README.md", bytes: toBytes(bundleReadme(agent)) });
-    return { fileName: safeFileName(skillName, ".zip"), bytes: zipWrite(entries), warnings: warnings, skillName: skillName };
+    // The download is named after the assistant, like every other download.
+    // Only the folder inside the ZIP uses the skill name, as the standard asks.
+    return { fileName: safeFileName(agent.name, ".zip"), bytes: zipWrite(entries), warnings: warnings, skillName: skillName };
 }
 
 /**
@@ -3339,7 +3341,7 @@ function copyTextExport(agent) {
         instructions: agent.instructions,
         starters: agent.starters.join("\n"),
         markdown: lines.join("\n"),
-        fileName: safeFileName(toSkillName(agent.name), ".md")
+        fileName: safeFileName(agent.name, ".md")
     };
 }
 
@@ -4444,7 +4446,7 @@ async function buildProductFiles(agent, product) {
         }
         files.push({ name: "LICENSE.txt", text: bundleLicenseText(agent) });
         files.push({ name: "README.md", text: bundleReadme(agent) });
-        return { root: skillName + "/", files: files, fileName: safeFileName(skillName, ".zip"), format: "bundle", notes: [] };
+        return { root: skillName + "/", files: files, fileName: safeFileName(agent.name, ".zip"), format: "bundle", notes: [] };
     }
     if (product === "msAgent") {
         const result = msAgentExport(agent);

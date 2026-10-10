@@ -106,6 +106,11 @@ The bundle, the Gemini upload, and the Claude upload are the same bytes, so
 produce the same file. In the app, the Teams app package is labeled "Copilot /
 Teams Apps" and the `.agent` file is labeled "Teams Chat".
 
+Every download is named after the assistant, such as `Caveman.zip`,
+`Caveman.agent`, and `Caveman.md`. The app package adds "Copilot app" to its
+name, as in `Caveman Copilot app.zip`, so the two `.zip` downloads never
+overwrite each other. Inside the skill `.zip`, the folder keeps the skill name.
+
 ### The Agentprise bundle
 
 The bundle is a ZIP holding one folder named after the skill:

@@ -190,7 +190,7 @@ describe("Agent Skill bundle", () => {
   test("export writes the four files in one skill folder", async () => {
     const agent = sampleAgent(engine);
     const { fileName, bytes, warnings, skillName } = await engine.formats.bundle.export(agent);
-    assert.equal(fileName, "caveman.zip");
+    assert.equal(fileName, "Caveman.zip");
     assert.equal(skillName, "caveman");
     assert.equal(warnings.length, 0);
     const entries = await engine.zip.read(bytes);
@@ -350,7 +350,7 @@ describe("copy text and detection", () => {
     assert.equal(copy.starters.split("\n").length, 3);
     assert.ok(copy.markdown.startsWith("# Caveman\n\nMe agent"));
     assert.ok(copy.markdown.includes("## Conversation starters\n\n- Caveman, what can you do?"));
-    assert.equal(copy.fileName, "caveman.md");
+    assert.equal(copy.fileName, "Caveman.md");
   });
 
   test("detectFormat picks the right importer", async () => {
