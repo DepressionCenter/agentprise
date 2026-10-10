@@ -59,7 +59,7 @@ A short note at the top confirms the file opened.
 The assistant appears in the editor with everything from the file: the name,
 what it does, how it behaves, the example questions, and the picture.
 
-![The editor with Caveman loaded. The name, description, and behavior are filled in. The preview on the right shows the Caveman picture, the name, and two example questions. A note at the top says Loaded Caveman.](../../images/guides/editor-caveman.png)
+![The editor with Caveman loaded. The name, description, and behavior are filled in. The preview on the right shows the Caveman picture, the name, and three example questions. A note at the top says Loaded Caveman.](../../images/guides/editor-caveman.png)
 
 Read through the four questions and fix anything you want to change. Then
 open **More** under the questions and check the picture and the About you

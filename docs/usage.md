@@ -140,6 +140,22 @@ Under **Where it can go**, choose the product people will use:
 The [formats page](formats.md) explains what to do with each file once you have
 it, and what the app package leaves out.
 
+### Review before sharing
+
+Before you download, look at the **Review before sharing** box under **Where it
+can go**. It appears only when the app finds something. The app looks through
+your assistant's text and its plain-text files for shapes that often mean
+personal information, such as Social Security numbers, phone numbers, email
+addresses, dates, street addresses, and long numbers, and for phrases common in
+prompt injection, such as "ignore previous instructions", invisible characters,
+and hidden HTML comments. Each line says where the match is and shows a masked
+sample, and clicking it takes you to the field.
+
+A match is a hint, not proof. A help desk assistant may hold a phone number on
+purpose. The check also misses plenty, including people's names, so it is not a
+privacy review. It never blocks a download: the download button asks once, and
+you can go ahead. Everything runs in your browser and nothing is sent anywhere.
+
 ### Keep a copy you can edit later
 
 Choose **Keep a copy I can edit later**. You get a small `.zip` that holds

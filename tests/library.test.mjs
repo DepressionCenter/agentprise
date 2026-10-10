@@ -102,7 +102,7 @@ describe("Caveman entry", () => {
     const { agent } = await openEntry(entry);
     assert.equal(agent.name, "Caveman");
     assert.equal(agent.welcome, "Me agent, answer questions, big brain.");
-    assert.deepEqual(agent.starters, ["Caveman, what can you do?", "Tell me more about..."]);
+    assert.deepEqual(agent.starters, ["Caveman, what can you do?", "Weather good for smash rock today?", "Ugh! Tell me more about... [topic] like I’m five and just discovered fire.", "Me invent wheel today. You proud? (Or me do it wrong?)"]);
     assert.equal(agent.copilot.preferMyFiles, true);
     assert.deepEqual(agent.sharepointLinks, []);
     assert.equal(agent.creator.website, "https://gabriel.mongefranco.com");

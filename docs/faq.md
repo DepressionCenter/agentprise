@@ -89,6 +89,18 @@ chats, mail, or meetings. Turn off Teams messages, email, and meetings under
 Copilot settings and answers post straight to the chat. Web search does not
 cause this.
 
+### What does "Review before sharing" check?
+
+Before you download, the app looks through your assistant's text and plain-text
+files for shapes that often mean personal information, such as Social Security
+numbers, phone numbers, email addresses, dates, street addresses, and long
+numbers, and for phrases common in prompt injection, such as "ignore previous
+instructions" or invisible characters. Each match is listed with where it was
+found and a masked sample. It is a hint to look, not proof: a help desk
+assistant may hold a phone number on purpose. It also misses plenty, including
+people's names, so it is not a privacy review and never blocks a download. The
+check runs in your browser and nothing is sent anywhere.
+
 ### Where does my work go?
 
 It stays in your browser, so you can close the page and pick up later on the
