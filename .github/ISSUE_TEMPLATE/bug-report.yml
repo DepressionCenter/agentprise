@@ -1,0 +1,90 @@
+# This file is part of Agentprise
+# .github/ISSUE_TEMPLATE/bug-report.yml
+# Author(s): Gabriel Mongefranco.
+# Created: 2026-10-09
+# Last Modified: 2026-10-09
+# Summary: GitHub issue form for reporting something in the Agentprise app that
+#          does not work the way it should.
+# Notes: See README file for documentation and full license information.
+#
+# Copyright © 2026 The Regents of the University of Michigan
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program. If not, see <https://www.gnu.org/licenses/>.
+
+name: Something is not working
+description: Tell us about a problem with the Agentprise app itself.
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form is for problems with the Agentprise app: a button that does nothing, a download that fails, a page that looks wrong. If an assistant you made is giving odd answers in Copilot, Gemini, Claude, or ChatGPT, that is a question for that product, not for this app.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Tell us what you saw. If there was an error message, copy it here.
+      placeholder: I chose Download app package and nothing happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+      placeholder: A .zip file should have been saved.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you do before it happened?
+      description: List the steps so we can try the same thing.
+      placeholder: |
+        1. Opened the app and chose Create new.
+        2. Filled in the name and the two text boxes.
+        3. Chose Download app package.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where were you using the app?
+      options:
+        - On the website (code.depressioncenter.org/agentprise)
+        - On my own computer
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Which browser?
+      options:
+        - Chrome
+        - Edge
+        - Firefox
+        - Safari
+        - Other or not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: A screenshot helps a lot. Drag it into this box. Please do not include anything private.
