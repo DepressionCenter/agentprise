@@ -35,11 +35,15 @@ maintainers", holds the technical details behind each file.
 | A Teams group chat, channel, or meeting | Teams Chat | One `.agent` file |
 | Gemini | Gemini, Download skill | A skill (`.zip`) |
 | Claude | Claude, Download skill | The same skill (`.zip`) |
-| ChatGPT or Gemini Notebook | ChatGPT, Copy text | Text to paste, and a `.md` file if you want one |
-| Nowhere yet, or you want to edit it later | Keep a copy I can edit later | The same `.zip` as Download skill |
+| ChatGPT | ChatGPT, Copy text | Text to paste |
+| Gemini Notebook | Gemini Notebook, Download .md file | A `.md` file to add as a source |
+| Another tool that reads Agent Skills | SKILL.md, Download plain skill | A plain skill (`.skill.zip`) with nothing specific to this app |
+| Nowhere yet, or you want to edit it later | Download Backup | The same `.zip` as Download skill |
 
 The skill `.zip` is the complete copy. Drop it on the Workspace page any time to
-change the assistant or download it for another product.
+change the assistant or download it for another product. The plain skill drops
+the welcome message, the starters, the picture, and the Copilot settings, so it
+is not a backup.
 
 ### What each download keeps
 
@@ -110,9 +114,10 @@ a real account. Read it before changing any converter in `index.html`.
 | Copy-ready text | none, or `.md` | No | Copy buttons and a `.md` download | Not applicable | ChatGPT custom GPTs and Gemini Notebook |
 
 The bundle, the Gemini upload, and the Claude upload are the same bytes, so
-"Download skill" for Gemini, "Download skill" for Claude, and "Keep a copy" all
-produce the same file. In the app, the Teams app package is labeled "Copilot /
-Teams Apps" and the `.agent` file is labeled "Teams Chat".
+"Download skill" for Gemini, "Download skill" for Claude, and "Download Backup"
+all produce the same file. Gemini and Claude have separate tabs on the Inspect
+page because their skill support may diverge. In the app, the Teams app package
+is labeled "Copilot / Teams Apps" and the `.agent` file is labeled "Teams Chat".
 
 Every download is named after the assistant, such as `Caveman.zip`,
 `Caveman.agent`, and `Caveman.md`. The app package adds "Copilot app" to its
@@ -332,7 +337,7 @@ These are open. Record the date and result here when someone runs them.
 
 ### Conclusion
 
-Pick the download for the product you use, and keep a copy if you are unsure.
+Pick the download for the product you use, and download a backup if you are unsure.
 Maintainers: keep the bundle lossless, keep the Microsoft files free of extra keys
 where their schemas forbid them, and update the tables above whenever a converter
 changes.

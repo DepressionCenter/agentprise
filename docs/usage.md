@@ -5,7 +5,7 @@ Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
 Last Modified: 2026-10-10
 Summary: How to use Agentprise, job by job: create an assistant, open one you
-         have, start from the Library, download it for each product, and keep a copy.
+         have, start from the Library, download it for each product, and download a backup.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -60,14 +60,14 @@ The page has four parts, listed down the left side:
    shows three of them at random, because most products show only a few at a
    time.
 
-The buttons under **Where it can go** stay off until the name, the description,
+The buttons under **Download** stay off until the name, the description,
 and the behavior are filled in. The card tells you what is still missing, and
 each item is a link that takes you to that blank.
 
 ### Add more detail
 
-Choose **More** under the questions to open the extra settings. None of them are
-required.
+Choose **More settings** under the questions to open the extra settings. None
+of them are required.
 
 - **Welcome message.** This is the first thing people see when they open the
   assistant in a Teams chat or in SharePoint. The Copilot app package has no
@@ -75,22 +75,23 @@ required.
 - **Picture.** Choose a square PNG or JPG. The app resizes it to the sizes each
   product wants. If you skip it, the app draws the first letter of the name on
   a blue square.
-- **Copilot settings.** Here you choose what the assistant may use in Microsoft
-  365 and give it knowledge: paste links to SharePoint sites, folders, or
-  files, and add up to 20 files from your computer: Word, PowerPoint, Excel,
-  PDF, or plain text, including scripts and data files. The app checks each
-  file's contents and refuses programs, even ones renamed to look like a
-  document. Copilot receives scripts as `.txt` files under the same name.
-  Sources that came with a file you opened are listed under the
-  links with a Remove button; they keep the ids SharePoint gave them. You can
-  limit web search to up to four sites and tell the assistant to prefer its
-  sources over its own knowledge. Web search starts on. Teams messages, email,
-  and meetings start off, because in a group chat Teams asks the person who
-  asked to approve any answer that used their own chats, mail, or meetings
-  before others can see it. Other products ignore these settings, and the Teams
-  Chat file cannot carry attached files.
-- **About you.** Fill in your name, your website, and links to your privacy and
-  terms pages. The Copilot app package needs all four, so the app fills in
+- **File attachments.** Add up to 20 files from your computer: Word,
+  PowerPoint, Excel, PDF, or plain text, including scripts and data files. The
+  app checks each file's contents and refuses programs, even ones renamed to
+  look like a document. The files travel in the Copilot app package, the
+  skill, and the backup. Copilot receives scripts as `.txt` files under the
+  same name. The Teams Chat file cannot carry them.
+- **Microsoft Copilot settings.** Here you choose what the assistant may use
+  in Microsoft 365 and give it knowledge: paste links to SharePoint sites,
+  folders, or files. Sources that came with a file you opened are listed under
+  the links with a Remove button; they keep the ids SharePoint gave them. You
+  can limit web search to up to four sites and tell the assistant to prefer
+  its sources over its own knowledge. Web search starts on. Teams messages,
+  email, and meetings start off, because in a group chat Teams asks the person
+  who asked to approve any answer that used their own chats, mail, or meetings
+  before others can see it. Other products ignore these settings.
+- **Agent publisher details.** Fill in your name, your website, and links to
+  your privacy and terms pages. The Copilot app package needs all four, so the app fills in
   placeholders if you leave them blank. The copyright line and license travel
   with the assistant.
 
@@ -128,22 +129,24 @@ Library needs the app to run from a web address, so it is empty when you open
 
 ### Download it for a product
 
-Under **Where it can go**, choose the product people will use:
+Under **Download**, choose the product people will use:
 
 | Product | Button | What you get |
 |---|---|---|
 | The Agents list in the Microsoft 365 Copilot app or in Teams | Copilot / Teams Apps, **Download app package** | An app package (`.zip`) |
 | A Teams group chat, channel, or meeting | Teams Chat, **Download .agent file** | One `.agent` file |
 | Gemini or Claude | **Download skill** | A skill (`.zip`), the same file for both |
-| ChatGPT or Gemini Notebook | ChatGPT, **Copy text** | Text to paste, with a `.md` file if you want one |
+| ChatGPT | ChatGPT, **Copy text** | Text to paste |
+| Gemini Notebook | Gemini Notebook, **Download .md file** | A `.md` file to add as a source |
+| Any other tool that reads Agent Skills | SKILL.md, **Download plain skill** | A plain skill (`.skill.zip`) with nothing specific to this app |
 
 The [formats page](formats.md) explains what to do with each file once you have
 it, and what the app package leaves out.
 
 ### Review before sharing
 
-Before you download, look at the **Review before sharing** box under **Where it
-can go**. It appears only when the app finds something. The app looks through
+Before you download, look at the **Review before sharing** box under
+**Download**. It appears only when the app finds something. The app looks through
 your assistant's text and its plain-text files for shapes that often mean
 personal information, such as Social Security numbers, phone numbers, email
 addresses, dates, street addresses, and long numbers, and for phrases common in
@@ -156,19 +159,23 @@ purpose. The check also misses plenty, including people's names, so it is not a
 privacy review. It never blocks a download: the download button asks once, and
 you can go ahead. Everything runs in your browser and nothing is sent anywhere.
 
-### Keep a copy you can edit later
+### Download a backup you can edit later
 
-Choose **Keep a copy I can edit later**. You get a small `.zip` that holds
-everything you wrote, including the picture. Drop it on the Workspace page any
-time to pick up where you left off or to download it for another product. The
-same file also works as a skill in Gemini and Claude.
+Choose **Download Backup**. You get a small `.zip` that holds everything you
+wrote, including the picture. Drop it on the Workspace page any time to pick up
+where you left off or to download it for another product. The same file also
+works as a skill in Gemini and Claude. Browsers can clear what they store, so
+download a backup of anything you want to keep.
 
-### See exactly what each product receives
+### Inspect the output
 
-Choose **Details** on the left, or **See the files each product receives** under
-the download buttons. The left side shows every field as a plain form, and the
-right side shows the files for the product you pick, with your own words
-highlighted. Changes you make here show up in the Workspace too.
+Choose **Inspect** on the left, or **Inspect output files** under the download
+buttons. The left side shows every field as a plain form, and the right side
+shows the files for the output format you pick, with your own words
+highlighted. Changes you make here show up in the Workspace too. The tabs run
+in alphabetical order and include **SKILL.md**, a plain Agent Skill with
+nothing specific to this app, and **Agentprise Backup**, the same backup as on
+the Workspace page. Each tab has its own download button under the files.
 
 ### Come back later
 

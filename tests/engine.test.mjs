@@ -218,6 +218,15 @@ describe("normalizeAgent", () => {
   });
 });
 
+describe("license choices", () => {
+  test("every listed license allows changed versions to be shared", () => {
+    const ids = engine.LICENSE_CHOICES.map((choice) => choice.id);
+    assert.deepEqual(ids, ["GPL-3.0-or-later", "MIT", "Apache-2.0", "CC-BY-4.0", "CC-BY-SA-4.0", "CC0-1.0"]);
+    assert.ok(ids.every((id) => !/ND|Proprietary/i.test(id)));
+    assert.ok(engine.LICENSE_CHOICES.every((choice) => choice.url.startsWith("https://")));
+  });
+});
+
 describe("validateAgent", () => {
   test("reports missing required fields as problems", () => {
     const { problems } = engine.validateAgent(engine.createAgent());

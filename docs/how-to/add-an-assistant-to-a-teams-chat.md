@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/add-an-assistant-to-a-teams-chat.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: Step-by-step guide with screenshots: download the .agent file and add
          an assistant to a Teams group chat, channel, or meeting chat.
 Notes: See README file for documentation and full license information.
@@ -45,17 +45,17 @@ in the **Welcome message** box.
 
 ### Step 2: Download the .agent file
 
-Under **Where it can go**, find **Teams Chat** and choose **Download .agent
+Under **Download**, find **Teams Chat** and choose **Download .agent
 file**. Your browser saves one file named after the assistant, such as
 `Caveman.agent`.
 
-![The Where it can go card. Next to Teams Chat is a button labeled Download .agent file.](../../images/guides/where-it-can-go.png)
+![The Download card. Next to Teams Chat is a button labeled Download .agent file.](../../images/guides/where-it-can-go.png)
 
-To see the file before you download it, choose **Details** on the left and
+To see the file before you download it, choose **Inspect** on the left and
 then the **Teams Chat** tab. Everything you wrote is in this one file,
 including the welcome message and the picture.
 
-![The Details page on the Teams Chat tab. One file, Caveman.agent, is listed, with its contents shown. Below are a Download button and four steps under the heading For a Teams chat.](../../images/guides/details-teams-chat.png)
+![The Inspect page on the Teams Chat tab. One file, Caveman.agent, is listed, with its contents shown. Below are a Download button and four steps under the heading For a Teams chat.](../../images/guides/details-teams-chat.png)
 
 ### Step 3: Put the file in SharePoint
 

@@ -41,14 +41,14 @@ if you need help with that part.
 
 ### Step 2: Choose Copy text
 
-Under **Where it can go**, find **ChatGPT** and choose **Copy text**.
+Under **Download**, find **ChatGPT** and choose **Copy text**.
 
-![The Where it can go card. Next to ChatGPT is a button labeled Copy text.](../../images/guides/where-it-can-go.png)
+![The Download card. Next to ChatGPT is a button labeled Copy text.](../../images/guides/where-it-can-go.png)
 
-The Details page opens on the **ChatGPT** tab. It shows four boxes, one for
+The Inspect page opens on the **ChatGPT** tab. It shows four boxes, one for
 each field, with a copy button under each one.
 
-![The Details page on the ChatGPT tab. Four boxes are stacked: Name, Description, Instructions, and Conversation starters, each with a button such as Copy the name under it. Below them are a button to download a .md file and the steps for ChatGPT and for Gemini Notebook.](../../images/guides/details-chatgpt.png)
+![The Inspect page on the ChatGPT tab. Four boxes are stacked: Name, Description, Instructions, and Conversation starters, each with a button such as Copy the name under it. Below them are the steps for ChatGPT.](../../images/guides/details-chatgpt.png)
 
 If a copy button says copying is blocked, the app selects the text for you.
 Press Ctrl+C on Windows or Command+C on a Mac to copy it.
@@ -69,10 +69,11 @@ These steps happen in ChatGPT, so Agentprise cannot show them.
 2. Choose **More**, then **Notebook settings**.
 3. Paste the **Instructions** box into the instructions field.
 
-If you would rather add the whole assistant as a source, choose the
-**Download** button under the boxes. You get a small `.md` file, such as
-`Caveman.md`, with everything in one place. Add that file to the notebook as
-a source.
+If you would rather add the whole assistant as a source, open the **Gemini
+Notebook** tab on the Inspect page, or choose **Download .md file** next to
+Gemini Notebook under **Download** on the Workspace page. You get a small
+`.md` file, such as `Caveman.md`, with everything in one place. Add that
+file to the notebook as a source.
 
 ### Conclusion
 

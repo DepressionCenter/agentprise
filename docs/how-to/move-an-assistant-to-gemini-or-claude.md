@@ -62,8 +62,8 @@ what it does, how it behaves, the example questions, and the picture.
 ![The editor with Caveman loaded. The name, description, and behavior are filled in. The preview on the right shows the Caveman picture, the name, and three example questions. A note at the top says Loaded Caveman.](../../images/guides/editor-caveman.png)
 
 Read through the four questions and fix anything you want to change. Then
-open **More** under the questions and check the picture and the About you
-section.
+open **More settings** under the questions and check the picture and the
+Agent publisher details section.
 
 Two things are worth knowing when the file came from Microsoft:
 
@@ -75,26 +75,26 @@ Two things are worth knowing when the file came from Microsoft:
 
 ### Step 3: Download the skill
 
-Under **Where it can go**, choose **Download skill** next to Gemini or next
+Under **Download**, choose **Download skill** next to Gemini or next
 to Claude. Both buttons give the same file, so one download works for both
 products. The file is a `.zip` named after the assistant, such as
 `Caveman.zip`.
 
-![The Where it can go card. Gemini and Claude each have a Download skill button.](../../images/guides/where-it-can-go.png)
+![The Download card. Gemini and Claude each have a Download skill button.](../../images/guides/where-it-can-go.png)
 
 This file is also the complete copy of your assistant. Keep it, and drop it on
 the Workspace page any time to edit the assistant again.
 
-To see what is inside, choose **Details** on the left. The Details page shows
+To see what is inside, choose **Inspect** on the left. The Inspect page shows
 every field as a plain form on the left, and the files for one product on the
 right.
 
-![The Details page. The left card, titled What you write, shows the name, description, and instructions as form fields. The right card, titled What each product receives, has four tabs: Gemini and Claude, Teams Chat, Copilot / Teams Apps, and ChatGPT, with the first tab selected and its files listed below.](../../images/guides/details.png)
+![The Inspect page. The left card, titled Agent Details, shows the name, description, and instructions as form fields. The right card, titled Output Format, has eight tabs in alphabetical order: Agentprise Backup, ChatGPT, Claude, Copilot / Teams Apps, Gemini, Gemini Notebook, SKILL.md, and Teams Chat, with Agentprise Backup selected and its files listed below.](../../images/guides/details.png)
 
-The **Gemini and Claude** tab lists the files, with your own words
+Choose the **Gemini** tab. It lists the files, with your own words
 highlighted.
 
-![The Details page on the Gemini and Claude tab. The files SKILL.md, LICENSE.txt, and README.md are listed inside a folder named caveman, with the contents of SKILL.md shown. Below are a Download button and the steps for Gemini and for Claude.](../../images/guides/details-gemini-claude.png)
+![The Inspect page on the Gemini tab. The files SKILL.md, LICENSE.txt, and README.md are listed inside a folder named caveman, with the contents of SKILL.md shown. Below are a Download button and the steps for Gemini and for Claude.](../../images/guides/details-gemini-claude.png)
 
 ### Step 4: Upload it to Gemini
 

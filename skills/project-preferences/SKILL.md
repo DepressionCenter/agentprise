@@ -110,13 +110,20 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   every EFDC app on code.depressioncenter.org shares one origin.
 - The page has four views, routed by hash: Workspace, Library, Details, and Help.
   The Workspace editor asks four plain questions with blanks under them; the
-  Details form shows every field beside the exact files each product receives.
+  Inspect page shows every field beside the exact files each product receives.
   Both edit the same state, and the shared controls (welcome message, picture,
   Copilot settings, creator details) exist once and move between the two.
-- Downloads are the bundle (which also serves Gemini and Claude), the `.agent`
-  file (labeled "Teams Chat"), the Teams app package (labeled "Copilot / Teams
-  Apps"), and the copy boxes plus `.md` file for ChatGPT and Gemini Notebook. Do
-  not add a vendor until it has a real file to download.
+- Downloads are the bundle (which also serves Gemini and Claude, and is the
+  "Download Backup" file), the plain skill (`.skill.zip`, standard fields
+  only), the `.agent` file (labeled "Teams Chat"), the Teams app package
+  (labeled "Copilot / Teams Apps"), the copy boxes for ChatGPT, and the `.md`
+  file for Gemini Notebook. Every download, the plain skill and the backup
+  included, is an Inspect tab with its own file tree and download button.
+  Gemini and Claude have separate tabs even while their files match. Do not
+  add a vendor until it has a real file to download.
+- Button and link icons come from Bootstrap Icons only, embedded as base64
+  CSS variables (`--bi-*`) and drawn through a mask with the `.bi` class, so
+  each icon is stored once. Credit stays in the README.
 - Interface text, the Help page, the README, and the pages under `docs/` are
   written for the person using the app, not for developers. Pages meant for
   maintainers say so at the top. Off-site links open in a new tab, and links to
