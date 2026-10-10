@@ -2,7 +2,7 @@
 // tests/library.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-11
+// Last Modified: 2026-10-10
 // Summary: Tests for the agent library: the catalog and each bundle it lists,
 //          opened with the same importer the app uses for dropped files.
 // Notes: See README file for documentation and full license information.
@@ -40,7 +40,7 @@ async function openEntry(entry) {
   return result;
 }
 
-// Caveman is the reference entry: the other bundles share its publisher details.
+// Caveman supplies the publisher details for the original maintainer's entries.
 const caveman = (await openEntry(catalog.agents.find((item) => item.file === "caveman.zip"))).agent;
 
 describe("library catalog", () => {
@@ -81,9 +81,10 @@ describe("library catalog", () => {
       // No entry reads meetings or files unless the person adds them; chat and web search are the author's choice.
       assert.equal(agent.copilot.webSearch, true, entry.file + " must have web search on");
       assert.equal(agent.copilot.imageGeneration, true, entry.file + " must have image creation on");
-      // Every entry is published by the same person with the same links, so the
-      // Copilot store shows one publisher for the whole Library.
-      assert.deepEqual(agent.creator, caveman.creator, entry.file + " must carry the same publisher details as Caveman");
+      // Community entries retain their own attribution and publisher links.
+      if (entry.author === caveman.creator.name) {
+        assert.deepEqual(agent.creator, caveman.creator, entry.file + " must carry the same publisher details as Caveman");
+      }
       const words = [agent.name, agent.description, agent.welcome, agent.instructions, ...agent.starters].join("\n");
       assert.ok(!/onedrive/i.test(words), entry.file + " must not mention OneDrive");
       assert.equal(agent.copilot.teamsMessages, false, entry.file + " must not read Teams messages by default");
@@ -102,6 +103,27 @@ describe("library catalog", () => {
       assert.equal(FILE_NAME.test(bad), false, bad);
     }
   });
+});
+
+describe("community persona entries", () => {
+  const contributors = [
+    { file: "pirate-first-mate.zip", name: "Beth Plotts", website: "https://mcommunity.umich.edu/person/eplotts", copyright: "Copyright (C) 2026 Beth Plotts" },
+    { file: "dude.zip", name: "Jeremy Gluskin", website: "https://mcommunity.umich.edu/person/jgluskin", copyright: "Copyright \u00a9 Jeremy Gluskin, 2026" },
+    { file: "aussie-battler.zip", name: "Shelley Boa", website: "https://mcommunity.umich.edu/person/sboa", copyright: "Copyright (C) 2026 Shelley Boa" }
+  ];
+
+  for (const contributor of contributors) {
+    test(contributor.file + " preserves its contributor attribution", async () => {
+      const entry = catalog.agents.find((item) => item.file === contributor.file);
+      assert.ok(entry, contributor.file + " must be listed");
+      assert.deepEqual(entry.tags, ["fun", "persona", "copilot"]);
+      const { agent } = await openEntry(entry);
+      assert.deepEqual(agent.creator, { name: contributor.name, website: contributor.website, privacy: "", terms: "" });
+      assert.equal(agent.copyright, contributor.copyright);
+      assert.equal(agent.license, "GPL-3.0-or-later");
+      assert.equal(agent.copilot.appId, "", "downloads must not reuse a contributor's app identity");
+    });
+  }
 });
 
 describe("Caveman entry", () => {

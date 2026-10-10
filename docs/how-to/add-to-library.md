@@ -87,7 +87,10 @@ file, so an entry is nothing more than a bundle the app itself made.
    ```
 
    The name, summary, author, and license must match what the bundle says, and
-   the tests check that they do. Tags are free text for the search box.
+   the tests check that they do. Preserve each contributor's name, website,
+   copyright, and license. Leave missing privacy and terms links blank; the
+   app warns that Copilot app packages will use placeholders for those links.
+   Tags are free text for the search box.
 4. Run `npm test`. The library tests open every listed bundle, check the catalog
    line against it, check that the picture is 192 by 192 pixels, and check that
    the instructions carry the safety section, that web search and image

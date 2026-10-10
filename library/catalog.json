@@ -14,6 +14,42 @@
       "license": "GPL-3.0-or-later"
     },
     {
+      "file": "pirate-first-mate.zip",
+      "name": "Pirate First Mate",
+      "summary": "Arrr, your trusty AI first mate—sharp of mind, ready to answer questions and tackle tasks.",
+      "tags": [
+        "fun",
+        "persona",
+        "copilot"
+      ],
+      "author": "Beth Plotts",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "dude.zip",
+      "name": "Dude",
+      "summary": "Relax and catch a wave... Radical!",
+      "tags": [
+        "fun",
+        "persona",
+        "copilot"
+      ],
+      "author": "Jeremy Gluskin",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "aussie-battler.zip",
+      "name": "Aussie Battler",
+      "summary": "Aussie Battler, a capable AI mate who helps users answer questions, complete tasks, research information and work with Microsoft 365 content.",
+      "tags": [
+        "fun",
+        "persona",
+        "copilot"
+      ],
+      "author": "Shelley Boa",
+      "license": "GPL-3.0-or-later"
+    },
+    {
       "file": "evidence-scout.zip",
       "name": "Evidence Scout",
       "summary": "Find and compare research evidence, trace claims to sources, and prepare useful literature briefs for interdisciplinary teams.",
