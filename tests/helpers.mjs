@@ -2,7 +2,7 @@
 // tests/helpers.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-09
+// Last Modified: 2026-10-10
 // Summary: Builders for synthetic test data: a valid PNG of any size, a deflated
 //          ZIP archive, and a sample agent with every field filled.
 // Notes: See README file for documentation and full license information.
@@ -166,9 +166,17 @@ export function sampleAgent(engine) {
   agent.starters = ["Caveman, what can you do?", "Tell me more about...", "What's new today?"];
   agent.icon = { bytes: makePng(192, 192), mime: "image/png" };
   agent.sharepointLinks = ["https://example.sharepoint.com/sites/demo", "https://example.sharepoint.com/sites/demo/Shared%20Documents/guide.docx"];
+  // One item by ID and one by URL, shaped the way the SharePoint builder writes them, with made-up ids.
+  agent.sharepointItems = [
+    { by: "id", url: "https://example-my.sharepoint.com/personal/someone/Documents/plan.docx", name: "plan.docx", site_id: "11111111-1111-4111-8111-111111111111", web_id: "22222222-2222-4222-8222-222222222222", list_id: "33333333-3333-4333-8333-333333333333", unique_id: "44444444-4444-4444-8444-444444444444", type: "File" },
+    { by: "url", url: "https://example.sharepoint.com/sites/team", name: "Team site", site_id: "55555555-5555-4555-8555-555555555555", web_id: "66666666-6666-4666-8666-666666666666", list_id: "00000000-0000-0000-0000-000000000000", unique_id: "00000000-0000-0000-0000-000000000000", type: "Site" },
+  ];
+  agent.files = [{ name: "notes.txt", bytes: new TextEncoder().encode("Lab notes for the demo.") }];
   agent.copilot = {
     webSearch: true,
+    webSites: ["https://example.org", "https://example.net/docs/guide"],
     teamsMessages: false,
+    email: true,
     meetings: true,
     codeInterpreter: false,
     imageGeneration: true,
@@ -191,5 +199,6 @@ export function agentFields(agent) {
   return {
     ...agent,
     icon: agent.icon ? Array.from(agent.icon.bytes) : null,
+    files: agent.files.map((file) => ({ name: file.name, bytes: Array.from(file.bytes) })),
   };
 }

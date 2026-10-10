@@ -3,7 +3,7 @@ This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: The whole Agentprise web app in one file. Lets a person describe an AI
          assistant once, then download it as an Agent Skill bundle (Gemini and
          Claude), a Microsoft 365 Copilot .agent file, a Teams app package, or
@@ -542,6 +542,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         @media (min-width: 40rem) { .inline-fields { grid-template-columns: 1fr 1fr; } }
         .icon-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
         .icon-preview { width: 64px; height: 64px; border-radius: 12px; border: 1px solid var(--border-soft); object-fit: cover; display: block; }
+        .item-list { list-style: none; margin: 0 0 10px; padding: 0; }
+        .item-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-top: 1px solid var(--border-soft); font-size: 0.875rem; }
+        .item-list li:last-child { border-bottom: 1px solid var(--border-soft); }
+        .item-list .item-text { flex: 1 1 200px; overflow-wrap: anywhere; }
+        .item-list .item-kind { color: var(--muted); }
 
         /* ### Details view ### */
         .details-grid { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
@@ -837,17 +842,39 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                             <p class="error-text" id="icon-error" hidden></p>
                                         </fieldset>
                                         <details class="sub">
-                                            <summary>Microsoft 365 Copilot settings: SharePoint files and what Copilot may use</summary>
+                                            <summary>Microsoft 365 Copilot settings: knowledge sources and what Copilot may use</summary>
                                             <div class="field">
                                                 <label for="f-sharepoint">Knowledge from SharePoint</label>
                                                 <p class="hint" id="f-sharepoint-hint">Paste links to SharePoint sites, libraries, folders, or files, one per line. Up to 20. People still need permission to those files.</p>
                                                 <textarea id="f-sharepoint" rows="3" aria-describedby="f-sharepoint-hint f-sharepoint-error"></textarea>
                                                 <p class="error-text" id="f-sharepoint-error" hidden></p>
+                                                <div id="sharepoint-items-wrap" hidden>
+                                                    <p class="hint" id="sharepoint-items-hint">These sources came with the file you opened. They can't be edited here, but they travel with every Copilot download.</p>
+                                                    <ul class="item-list" id="sharepoint-items" aria-labelledby="sharepoint-items-hint"></ul>
+                                                </div>
                                             </div>
+                                            <fieldset class="field">
+                                                <legend>Files it can read</legend>
+                                                <p class="hint" id="file-add-hint">Copilot reads these as knowledge. Up to 20 Word, PowerPoint, Excel, PDF, or text files. The app package and the complete copy carry them. The Teams Chat file can't.</p>
+                                                <ul class="item-list" id="file-items" aria-label="Attached files"></ul>
+                                                <div class="button-row">
+                                                    <label class="button" for="file-add">Add files</label>
+                                                    <input type="file" id="file-add" class="visually-hidden" multiple accept=".doc,.docx,.ppt,.pptx,.xls,.xlsx,.pdf,.txt" aria-describedby="file-add-hint">
+                                                </div>
+                                                <p class="error-text" id="file-add-error" hidden></p>
+                                            </fieldset>
                                             <fieldset>
-                                                <legend>What Copilot may use (Copilot app only)</legend>
+                                                <legend>What Copilot may use</legend>
+                                                <p class="hint">Teams messages, email, and meetings belong to the person asking. In a group chat, Teams shows that person a preview to approve before others see an answer that used them.</p>
                                                 <div class="check-row"><input type="checkbox" id="c-webSearch"><label for="c-webSearch">Web search: look things up on the public web.</label></div>
+                                                <div class="field">
+                                                    <label for="f-websites">Limit web search to these sites</label>
+                                                    <p class="hint" id="f-websites-hint">Optional. Up to 4 site addresses, one per line, such as https://example.org. Leave empty to search the whole web.</p>
+                                                    <textarea id="f-websites" rows="2" aria-describedby="f-websites-hint f-websites-error"></textarea>
+                                                    <p class="error-text" id="f-websites-error" hidden></p>
+                                                </div>
                                                 <div class="check-row"><input type="checkbox" id="c-teamsMessages"><label for="c-teamsMessages">Teams messages: read the chats and channels the person can see.</label></div>
+                                                <div class="check-row"><input type="checkbox" id="c-email"><label for="c-email">Email: read the mail the person can see.</label></div>
                                                 <div class="check-row"><input type="checkbox" id="c-meetings"><label for="c-meetings">Meetings: read meeting notes and transcripts the person can see.</label></div>
                                                 <div class="check-row"><input type="checkbox" id="c-codeInterpreter"><label for="c-codeInterpreter">Code interpreter: run code to analyze data and make charts.</label></div>
                                                 <div class="check-row"><input type="checkbox" id="c-imageGeneration"><label for="c-imageGeneration">Image generation: make pictures from text.</label></div>
@@ -1052,6 +1079,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <p>Drop the file you downloaded before on the Workspace page, make your changes, and download it again. For an app package, upload the new file in place of the old one. It keeps the same id, so Copilot treats it as an update.</p>
                     <h2>Why does my assistant not answer in a Teams chat?</h2>
                     <p>App packages do not work in group chats, channels, or meeting chats. Use the Teams Chat download instead: put the .agent file in a SharePoint library, choose Copy link for Teams, paste the link in the chat, and choose Add to this chat.</p>
+                    <h2>Why does Teams ask me to approve the answer?</h2>
+                    <p>In a group chat, Teams shows the person who asked a preview whenever the answer used something the others may not be able to see, such as that person's own chats, mail, or meetings. Turn off Teams messages, email, and meetings under Copilot settings and answers post straight to the chat. Web search does not cause this.</p>
                     <h2>Where does my work go?</h2>
                     <p>It stays in your browser, so you can close the page and pick up later on the same computer. Nothing is uploaded. Start over removes it.</p>
                     <h2>Can other people start from my assistant?</h2>
@@ -1094,8 +1123,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
 // ### Configuration ###
 // Limits come from the strictest vendor that must accept the value. Microsoft's
 // declarative agent schema caps name at 100, description at 1,000, instructions at
-// 8,000, and conversation starters at 12. The Agent Skills specification caps the
-// skill name at 64 characters. ZIP caps guard against decompression bombs.
+// 8,000, conversation starters at 12, and web search sites at 4. Agent Builder
+// caps SharePoint sources at 100 and attached files at 20. The Agent Skills
+// specification caps the skill name at 64 characters. ZIP caps guard against
+// decompression bombs, and an attached file may not exceed one ZIP entry.
 const LIMITS = Object.freeze({
     name: 100,
     skillName: 64,
@@ -1106,6 +1137,11 @@ const LIMITS = Object.freeze({
     starterText: 500,
     sharepointLinks: 20,
     sharepointLinkText: 2048,
+    sharepointItems: 100,
+    sharepointItemText: 255,
+    webSites: 4,
+    files: 20,
+    fileBytes: 10 * 1024 * 1024,
     creatorText: 2048,
     copyrightText: 500,
     licenseText: 200,
@@ -1169,10 +1205,31 @@ const CREATOR_PLACEHOLDERS = Object.freeze({
 const COPILOT_CAPABILITIES = Object.freeze([
     { key: "webSearch", name: "WebSearch" },
     { key: "teamsMessages", name: "TeamsMessages" },
+    { key: "email", name: "Email" },
     { key: "meetings", name: "Meetings" },
     { key: "codeInterpreter", name: "CodeInterpreter" },
     { key: "imageGeneration", name: "GraphicArt" }
 ]);
+
+// Capability properties that limit a source to certain chats, folders,
+// mailboxes, or meetings. The app keeps the switch and reports the lost scope.
+const CAPABILITY_SCOPE_KEYS = Object.freeze(["urls", "folders", "shared_mailbox", "group_mailboxes", "items_by_id"]);
+
+// One OneDrive or SharePoint item, in the key order the SharePoint builder
+// writes. The declarative agent schema allows only the ID keys (plus
+// search_associated_sites) under items_by_sharepoint_ids and only url under
+// items_by_url, so the Teams package writes those subsets.
+const SHAREPOINT_ITEM_KEYS = Object.freeze(["url", "name", "site_id", "web_id", "list_id", "unique_id", "type", "part_type", "part_id"]);
+const SHAREPOINT_ID_KEYS = Object.freeze(["site_id", "web_id", "list_id", "unique_id", "part_id"]);
+const SHAREPOINT_SCHEMA_ID_KEYS = Object.freeze(["site_id", "web_id", "list_id", "unique_id", "part_type", "part_id"]);
+const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// File types Microsoft accepts as agent knowledge. Attached files travel in the
+// Teams package, at the ZIP root as the Copilot app places them, and in the
+// bundle under this folder, which the Agent Skills standard sets aside for
+// reference material.
+const FILE_EXTENSIONS = Object.freeze([".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".pdf", ".txt"]);
+const BUNDLE_FILES_FOLDER = "references/";
 
 // Metadata keys used inside SKILL.md frontmatter. Values are always strings because
 // the Agent Skills specification defines metadata as a string-to-string map.
@@ -1182,8 +1239,11 @@ const META = Object.freeze({
     welcome: "welcome",
     starters: "starters",
     sharepoint: "sharepoint-sources",
+    sharepointItems: "sharepoint-items",
     webSearch: "copilot-web-search",
+    webSites: "copilot-web-sites",
     teamsMessages: "copilot-teams-messages",
+    email: "copilot-email",
     meetings: "copilot-meetings",
     codeInterpreter: "copilot-code-interpreter",
     imageGeneration: "copilot-image-generation",
@@ -1935,6 +1995,25 @@ function isHttpsUrl(value) {
     return typeof value === "string" && /^https:\/\/[^\s]+$/i.test(value);
 }
 
+/**
+ * Returns true for a site the declarative agent schema accepts under WebSearch:
+ * https, no query string, and at most two path parts after the host.
+ */
+function isWebSearchSite(value) {
+    if (!isHttpsUrl(value) || value.indexOf("?") >= 0 || value.indexOf("#") >= 0) {
+        return false;
+    }
+    const slash = value.indexOf("/", "https://".length);
+    const parts = slash < 0 ? [] : value.slice(slash + 1).split("/").filter(Boolean);
+    return parts.length <= 2;
+}
+
+/** Returns true when the name ends in a file type Copilot reads as knowledge. */
+function hasFileExtension(name) {
+    const lower = String(name || "").toLowerCase();
+    return FILE_EXTENSIONS.some(function (extension) { return lower.endsWith(extension); });
+}
+
 /** Converts bytes to base64 without building one huge argument list. */
 function bytesToBase64(bytes) {
     let binary = "";
@@ -2011,10 +2090,17 @@ function createAgent() {
         starters: [],
         icon: null,
         sharepointLinks: [],
+        sharepointItems: [],
+        files: [],
+        // Teams messages, email, and meetings belong to the person asking. In a
+        // group chat, Teams shows that person a preview to approve before anyone
+        // else sees an answer built on them, so all three start off.
         copilot: {
             webSearch: true,
-            teamsMessages: true,
-            meetings: true,
+            webSites: [],
+            teamsMessages: false,
+            email: false,
+            meetings: false,
             codeInterpreter: true,
             imageGeneration: true,
             preferMyFiles: false,
@@ -2038,6 +2124,72 @@ function toSkillName(displayName) {
     name = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     name = name.slice(0, LIMITS.skillName).replace(/-+$/g, "");
     return name || "agent";
+}
+
+/**
+ * Copies one untrusted SharePoint item, keeping only the keys the Microsoft
+ * formats use. Returns null when nothing usable remains.
+ * @param {*} value an item read from a file
+ * @returns {object|null} the item with by ("id" or "url") and only the keys that were present
+ */
+function cleanSharepointItem(value) {
+    if (!isPlainObject(value)) {
+        return null;
+    }
+    const item = { by: value.by === "id" ? "id" : "url" };
+    SHAREPOINT_ITEM_KEYS.forEach(function (key) {
+        const text = typeof value[key] === "string" ? value[key].trim() : "";
+        if (!text) {
+            return;
+        }
+        if (key === "url") {
+            if (isHttpsUrl(text) && text.length <= LIMITS.sharepointLinkText) {
+                item.url = text;
+            }
+        } else if (SHAREPOINT_ID_KEYS.indexOf(key) >= 0) {
+            if (GUID_PATTERN.test(text)) {
+                item[key] = text;
+            }
+        } else {
+            item[key] = text.slice(0, LIMITS.sharepointItemText);
+        }
+    });
+    if (value.search_associated_sites === true) {
+        item.search_associated_sites = true;
+    }
+    const hasId = SHAREPOINT_ID_KEYS.some(function (key) { return key in item; });
+    if (item.by === "url" ? !item.url : !hasId) {
+        return null;
+    }
+    return item;
+}
+
+/** Builds a plain file name from an untrusted one: no folders, safe characters only. */
+function attachedFileName(name) {
+    const leaf = String(name || "").split(/[\\/]/).pop();
+    return leaf.replace(/[^A-Za-z0-9 ._()-]+/g, " ").replace(/\s+/g, " ").trim().replace(/^[. ]+/, "").slice(0, 120);
+}
+
+/**
+ * Copies one untrusted attached file. Returns null when the name, type, or
+ * size is not something Copilot accepts, or when the name repeats one in seen.
+ * @param {*} value {name, bytes}
+ * @param {object} seen lower-case names already taken, updated on success
+ * @returns {{name: string, bytes: Uint8Array}|null}
+ */
+function cleanAttachedFile(value, seen) {
+    if (!isPlainObject(value) || !(value.bytes instanceof Uint8Array)) {
+        return null;
+    }
+    const name = attachedFileName(value.name);
+    if (!name || !hasFileExtension(name) || value.bytes.length === 0 || value.bytes.length > LIMITS.fileBytes) {
+        return null;
+    }
+    if (seen[name.toLowerCase()]) {
+        return null;
+    }
+    seen[name.toLowerCase()] = true;
+    return { name: name, bytes: copyBytes(value.bytes) };
 }
 
 /**
@@ -2088,6 +2240,29 @@ function normalizeAgent(input) {
         agent.sharepointLinks = agent.sharepointLinks.slice(0, LIMITS.sharepointLinks);
     }
 
+    const items = Array.isArray(source.sharepointItems) ? source.sharepointItems : [];
+    agent.sharepointItems = items.map(cleanSharepointItem).filter(Boolean);
+    if (agent.sharepointItems.length > LIMITS.sharepointItems) {
+        notices.push("Only the first " + LIMITS.sharepointItems + " SharePoint items were kept.");
+        agent.sharepointItems = agent.sharepointItems.slice(0, LIMITS.sharepointItems);
+    }
+
+    const files = Array.isArray(source.files) ? source.files : [];
+    const seenNames = {};
+    let droppedFiles = 0;
+    agent.files = [];
+    files.forEach(function (file) {
+        const cleaned = agent.files.length < LIMITS.files ? cleanAttachedFile(file, seenNames) : null;
+        if (cleaned) {
+            agent.files.push(cleaned);
+        } else {
+            droppedFiles += 1;
+        }
+    });
+    if (droppedFiles > 0) {
+        notices.push(droppedFiles + " attached file(s) were left out. Copilot takes up to " + LIMITS.files + " files of these types, each under " + Math.round(LIMITS.fileBytes / 1024 / 1024) + " MB, with no two names alike: " + FILE_EXTENSIONS.join(", ") + ".");
+    }
+
     if (isPlainObject(source.icon) && source.icon.bytes instanceof Uint8Array && source.icon.bytes.length > 0) {
         if (source.icon.bytes.length > LIMITS.iconBytes) {
             notices.push("The icon was larger than " + Math.round(LIMITS.iconBytes / 1024 / 1024) + " MB and was removed.");
@@ -2103,6 +2278,27 @@ function normalizeAgent(input) {
         agent.copilot[cap.key] = asBool(copilot[cap.key], agent.copilot[cap.key]);
     });
     agent.copilot.preferMyFiles = asBool(copilot.preferMyFiles, false);
+    const sites = Array.isArray(copilot.webSites) ? copilot.webSites : [];
+    let droppedSites = 0;
+    agent.copilot.webSites = sites
+        .map(function (item) { return asText(item, LIMITS.sharepointLinkText, "web site", notices); })
+        .filter(function (item) {
+            if (!item) {
+                return false;
+            }
+            if (!isWebSearchSite(item)) {
+                droppedSites += 1;
+                return false;
+            }
+            return true;
+        });
+    if (droppedSites > 0) {
+        notices.push(droppedSites + " web site(s) were removed. A site is an https address with no question mark and at most two parts after the site name.");
+    }
+    if (agent.copilot.webSites.length > LIMITS.webSites) {
+        notices.push("Only the first " + LIMITS.webSites + " web sites were kept.");
+        agent.copilot.webSites = agent.copilot.webSites.slice(0, LIMITS.webSites);
+    }
     const appId = asText(copilot.appId, 64, "app id", notices);
     agent.copilot.appId = /^[0-9a-f-]{36}$/i.test(appId) ? appId.toLowerCase() : "";
 
@@ -2148,8 +2344,14 @@ function validateAgent(agent) {
     if (agent.copyright || agent.license !== DEFAULT_LICENSE) {
         warnings.push({ field: "copyright", message: "The Copilot app package can't carry a copyright line or license name. The other downloads keep them." });
     }
-    if (agent.sharepointLinks.length > 0) {
+    if (agent.sharepointLinks.length > 0 || agent.sharepointItems.length > 0) {
         warnings.push({ field: "sharepointLinks", message: "SharePoint knowledge only works in Microsoft 365 Copilot. Other products ignore it." });
+    }
+    if (agent.copilot.webSites.length > 0) {
+        warnings.push({ field: "webSites", message: "The web site list only works in Microsoft 365 Copilot. Other products ignore it." });
+    }
+    if (agent.files.length > 0) {
+        warnings.push({ field: "files", message: "Attached files travel in the app package and the complete copy. The Teams Chat file can't carry them." });
     }
     const missingCreator = ["name", "website", "privacy", "terms"].filter(function (key) { return !agent.creator[key]; });
     if (missingCreator.length > 0) {
@@ -2751,6 +2953,22 @@ function parseJsonObject(text) {
     }
 }
 
+/** Parses a JSON array from an untrusted string, or returns an empty array. */
+function parseJsonArray(text) {
+    try {
+        const value = JSON.parse(String(text || "[]"));
+        return Array.isArray(value) ? value : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+/** Joins untrusted file names for a notice, capping their number and length. */
+function listNames(names) {
+    const shown = names.slice(0, 5).map(function (name) { return String(name).slice(0, 60); });
+    return shown.join(", ") + (names.length > 5 ? ", and " + (names.length - 5) + " more" : "");
+}
+
 /** Makes a readable display name from a skill name such as "pdf-processing". */
 function humanizeSkillName(skillName) {
     return String(skillName || "").split("-").filter(Boolean).map(function (word) {
@@ -2772,23 +2990,72 @@ function humanizeSkillName(skillName) {
 function copilotCapabilities(agent) {
     const capabilities = [];
     COPILOT_CAPABILITIES.forEach(function (cap) {
-        if (agent.copilot[cap.key]) {
-            capabilities.push({ name: cap.name });
+        if (!agent.copilot[cap.key]) {
+            return;
         }
+        const entry = { name: cap.name };
+        if (cap.key === "webSearch" && agent.copilot.webSites.length > 0) {
+            entry.sites = agent.copilot.webSites.map(function (url) { return { url: url }; });
+        }
+        capabilities.push(entry);
     });
     return capabilities;
 }
 
 /**
- * Reads a capabilities list into the agent's Copilot switches and SharePoint
- * links. A switch is on only when its capability is listed, so a list without
- * WebSearch means web search is off.
+ * Lists the SharePoint items that go under one list of the OneDriveAndSharePoint
+ * capability. The .agent file takes every key; the Teams package takes only the
+ * keys its schema allows.
+ * @param {object} agent a normalized agent
+ * @param {"id"|"url"} by which list to fill
+ * @param {boolean} schemaOnly true for the Teams package
+ * @returns {object[]}
+ */
+function sharepointEntries(agent, by, schemaOnly) {
+    const keys = schemaOnly ? (by === "id" ? SHAREPOINT_SCHEMA_ID_KEYS : ["url"]) : SHAREPOINT_ITEM_KEYS;
+    return agent.sharepointItems.filter(function (item) { return item.by === by; }).map(function (item) {
+        const entry = {};
+        keys.forEach(function (key) {
+            if (item[key] !== undefined) {
+                entry[key] = item[key];
+            }
+        });
+        if (item.search_associated_sites && (!schemaOnly || by === "id")) {
+            entry.search_associated_sites = true;
+        }
+        return entry;
+    });
+}
+
+/** Reads one items list from a file into typed links and SharePoint items. */
+function readSharepointItems(list, by, raw) {
+    (Array.isArray(list) ? list : []).forEach(function (item) {
+        if (!isPlainObject(item)) {
+            return;
+        }
+        const onlyUrl = Object.keys(item).every(function (key) { return key === "url"; });
+        if (by === "url" && onlyUrl) {
+            raw.sharepointLinks.push(item.url);
+        } else {
+            raw.sharepointItems.push(Object.assign({}, item, { by: by }));
+        }
+    });
+}
+
+/**
+ * Reads a capabilities list into the agent's Copilot switches, web sites, typed
+ * links, and SharePoint items. A switch is on only when its capability is
+ * listed, so a list without WebSearch means web search is off. The .agent
+ * importer makes one exception for SharePoint-made files, which never list a
+ * switch.
  * @param {*} list the capabilities array from the file, untrusted
- * @param {object} raw the agent fields being assembled; copilot and sharepointLinks are filled in
+ * @param {object} raw the agent fields being assembled; copilot, sharepointLinks, and sharepointItems are filled in
  * @param {string[]} notices gets a line for anything the app cannot carry
+ * @returns {number} how many switch capabilities the list named
  */
 function readCopilotCapabilities(list, raw, notices) {
-    let idOnlySources = 0;
+    let switchesListed = 0;
+    const scoped = [];
     (Array.isArray(list) ? list : []).forEach(function (capability) {
         if (!isPlainObject(capability)) {
             return;
@@ -2796,23 +3063,27 @@ function readCopilotCapabilities(list, raw, notices) {
         const known = COPILOT_CAPABILITIES.find(function (cap) { return cap.name === capability.name; });
         if (known) {
             raw.copilot[known.key] = true;
-            if (known.key === "webSearch" && Array.isArray(capability.sites) && capability.sites.length > 0) {
-                notices.push("Web search was limited to " + capability.sites.length + " site(s). This app can't carry that list, so web search will cover the whole web.");
+            switchesListed += 1;
+            if (known.key === "webSearch") {
+                (Array.isArray(capability.sites) ? capability.sites : []).forEach(function (site) {
+                    if (isPlainObject(site)) {
+                        raw.copilot.webSites.push(site.url);
+                    }
+                });
+            } else if (CAPABILITY_SCOPE_KEYS.some(function (key) { return Array.isArray(capability[key]) ? capability[key].length > 0 : (typeof capability[key] === "string" && capability[key] !== ""); })) {
+                scoped.push(known.name);
             }
         } else if (capability.name === "OneDriveAndSharePoint") {
-            (Array.isArray(capability.items_by_url) ? capability.items_by_url : []).forEach(function (item) {
-                if (isPlainObject(item)) {
-                    raw.sharepointLinks.push(item.url);
-                }
-            });
-            idOnlySources += Array.isArray(capability.items_by_sharepoint_ids) ? capability.items_by_sharepoint_ids.length : 0;
+            readSharepointItems(capability.items_by_sharepoint_ids, "id", raw);
+            readSharepointItems(capability.items_by_url, "url", raw);
         } else if (typeof capability.name === "string") {
             notices.push("The capability \"" + capability.name + "\" is not one this app can carry and was left out.");
         }
     });
-    if (idOnlySources > 0) {
-        notices.push(idOnlySources + " SharePoint source(s) were stored by ID, which this app can't carry. Add them again as links.");
+    if (scoped.length > 0) {
+        notices.push("The file limited " + scoped.join(", ") + " to certain chats, folders, mailboxes, or meetings. This app can't carry those lists, so the whole source is used.");
     }
+    return switchesListed;
 }
 
 // ### Format: Microsoft 365 Copilot .agent file (SharePoint and Teams chats) ###
@@ -2822,7 +3093,8 @@ function readCopilotCapabilities(list, raw, notices) {
 // and the fields the format itself lacks.
 
 /**
- * Writes the .agent JSON for SharePoint libraries and Teams chats. Lossless.
+ * Writes the .agent JSON for SharePoint libraries and Teams chats. Lossless,
+ * except for attached files, which the format has no place for.
  * @param {object} agent a normalized agent
  * @returns {{fileName: string, text: string, warnings: string[]}}
  */
@@ -2839,9 +3111,12 @@ function msAgentExport(agent) {
     const capabilities = copilotCapabilities(agent);
     capabilities.push({
         name: "OneDriveAndSharePoint",
-        items_by_sharepoint_ids: [],
-        items_by_url: agent.sharepointLinks.map(function (url) { return { url: url }; })
+        items_by_sharepoint_ids: sharepointEntries(agent, "id", false),
+        items_by_url: sharepointEntries(agent, "url", false).concat(agent.sharepointLinks.map(function (url) { return { url: url }; }))
     });
+    if (agent.files.length > 0) {
+        warnings.push("The Teams Chat file can't carry attached files, so they were left out.");
+    }
     const definition = {
         name: agent.name,
         description: agent.description,
@@ -2877,8 +3152,8 @@ function msAgentExport(agent) {
 }
 
 /**
- * Reads a .agent file. Files made in SharePoint lack the _agentprise key, so the
- * Copilot options fall back to their defaults.
+ * Reads a .agent file. Files made in SharePoint lack the _agentprise key and list
+ * no switch capability; those open with web search on and the other switches off.
  * @param {string} text file contents
  * @returns {{agent: object, notices: string[]}|{error: string}}
  */
@@ -2904,9 +3179,12 @@ function msAgentImport(text) {
         starters: (Array.isArray(starters.conversationStarterList) ? starters.conversationStarterList : [])
             .map(function (item) { return isPlainObject(item) ? item.text : ""; }),
         sharepointLinks: [],
+        sharepointItems: [],
         copilot: {
             webSearch: false,
+            webSites: [],
             teamsMessages: false,
+            email: false,
             meetings: false,
             codeInterpreter: false,
             imageGeneration: false,
@@ -2914,8 +3192,14 @@ function msAgentImport(text) {
         },
         icon: iconFromDataUri(config.icon, notices)
     };
-    readCopilotCapabilities(definition.capabilities, raw, notices);
+    const switchesListed = readCopilotCapabilities(definition.capabilities, raw, notices);
     const extra = isPlainObject(parsed._agentprise) ? parsed._agentprise : null;
+    // The SharePoint builder never lists a switch capability, so a file with
+    // none and no _agentprise key was made there. Those open with web search
+    // on: Teams honors WebSearch in a .agent file, and people expect it.
+    if (!extra && switchesListed === 0) {
+        raw.copilot.webSearch = true;
+    }
     if (extra) {
         const copilot = isPlainObject(extra.copilot) ? extra.copilot : {};
         // Files from earlier versions kept the switches here instead of in the
@@ -2947,8 +3231,11 @@ function bundleFrontmatter(agent, skillName) {
     metadata[META.welcome] = agent.welcome;
     metadata[META.starters] = agent.starters.join("\n");
     metadata[META.sharepoint] = agent.sharepointLinks.join("\n");
+    metadata[META.sharepointItems] = agent.sharepointItems.length > 0 ? JSON.stringify(agent.sharepointItems) : "";
     metadata[META.webSearch] = String(agent.copilot.webSearch);
+    metadata[META.webSites] = agent.copilot.webSites.join("\n");
     metadata[META.teamsMessages] = String(agent.copilot.teamsMessages);
+    metadata[META.email] = String(agent.copilot.email);
     metadata[META.meetings] = String(agent.copilot.meetings);
     metadata[META.codeInterpreter] = String(agent.copilot.codeInterpreter);
     metadata[META.imageGeneration] = String(agent.copilot.imageGeneration);
@@ -2983,6 +3270,9 @@ function bundleReadme(agent) {
     if (agent.creator.name) {
         lines.push("Made by " + agent.creator.name + (agent.creator.website ? " (" + agent.creator.website + ")" : "") + ".", "");
     }
+    if (agent.files.length > 0) {
+        lines.push("Files it can read are in the references folder: " + agent.files.map(function (file) { return file.name; }).join(", ") + ".", "");
+    }
     lines.push(
         "## How to use",
         "",
@@ -3009,7 +3299,8 @@ function bundleLicenseText(agent) {
 
 /**
  * Writes the bundle: a ZIP holding one skill folder with SKILL.md, icon.png,
- * LICENSE.txt, and README.md. Uploads unchanged to Gemini and Claude.
+ * LICENSE.txt, README.md, and any attached files under references/. Uploads
+ * unchanged to Gemini and Claude.
  * @param {object} agent a normalized agent
  * @returns {Promise<{fileName: string, bytes: Uint8Array, warnings: string[], skillName: string}>}
  */
@@ -3026,7 +3317,12 @@ async function bundleExport(agent) {
     }
     entries.push({ name: skillName + "/LICENSE.txt", bytes: toBytes(bundleLicenseText(agent)) });
     entries.push({ name: skillName + "/README.md", bytes: toBytes(bundleReadme(agent)) });
-    return { fileName: safeFileName(skillName, ".zip"), bytes: zipWrite(entries), warnings: warnings, skillName: skillName };
+    agent.files.forEach(function (file) {
+        entries.push({ name: skillName + "/" + BUNDLE_FILES_FOLDER + file.name, bytes: file.bytes });
+    });
+    // The download is named after the assistant, like every other download.
+    // Only the folder inside the ZIP uses the skill name, as the standard asks.
+    return { fileName: safeFileName(agent.name, ".zip"), bytes: zipWrite(entries), warnings: warnings, skillName: skillName };
 }
 
 /**
@@ -3067,9 +3363,12 @@ function skillMdImport(text) {
         welcome: meta[META.welcome],
         starters: splitLines(meta[META.starters]),
         sharepointLinks: splitLines(meta[META.sharepoint]),
+        sharepointItems: parseJsonArray(meta[META.sharepointItems]),
         copilot: {
             webSearch: meta[META.webSearch],
+            webSites: splitLines(meta[META.webSites]),
             teamsMessages: meta[META.teamsMessages],
+            email: meta[META.email],
             meetings: meta[META.meetings],
             codeInterpreter: meta[META.codeInterpreter],
             imageGeneration: meta[META.imageGeneration],
@@ -3118,11 +3417,34 @@ async function bundleImport(bytes) {
         agent.icon = normalized.agent.icon;
         notices.push.apply(notices, normalized.notices);
     }
+    const filesFolder = folder + BUNDLE_FILES_FOLDER;
+    const files = [];
+    const skipped = [];
+    entries.forEach(function (bytes, name) {
+        if (name.indexOf(filesFolder) !== 0 || name.length === filesFolder.length || name.indexOf("/", filesFolder.length) >= 0) {
+            return;
+        }
+        const fileName = name.slice(filesFolder.length);
+        if (hasFileExtension(fileName)) {
+            files.push({ name: fileName, bytes: bytes });
+        } else {
+            skipped.push(fileName);
+        }
+    });
+    if (skipped.length > 0) {
+        notices.push("The skill has " + skipped.length + " file(s) under references that Copilot can't use, so they were left out: " + listNames(skipped) + ".");
+    }
+    if (files.length > 0) {
+        const normalized = normalizeAgent({ files: files });
+        agent.files = normalized.agent.files;
+        notices.push.apply(notices, normalized.notices);
+    }
     return { agent: agent, notices: notices };
 }
 
 // ### Format: Teams app package (the Copilot app) ###
-// A ZIP with manifest.json, declarativeAgent_0.json, color.png, and outline.png.
+// A ZIP with manifest.json, declarativeAgent_0.json, color.png, and outline.png,
+// plus any attached files at the root.
 // Both JSON files are schema-validated and reject unknown keys, so nothing extra
 // goes in them. The welcome message has no home here and is reported as lost.
 
@@ -3215,11 +3537,17 @@ async function teamsZipExport(agent, icons) {
         declarative.conversation_starters = agent.starters.map(function (text) { return { text: text }; });
     }
     const capabilities = copilotCapabilities(agent);
-    if (agent.sharepointLinks.length > 0) {
-        capabilities.push({
-            name: "OneDriveAndSharePoint",
-            items_by_url: agent.sharepointLinks.map(function (url) { return { url: url }; })
-        });
+    const itemsById = sharepointEntries(agent, "id", true);
+    const itemsByUrl = sharepointEntries(agent, "url", true).concat(agent.sharepointLinks.map(function (url) { return { url: url }; }));
+    if (itemsById.length > 0 || itemsByUrl.length > 0) {
+        const sharepoint = { name: "OneDriveAndSharePoint" };
+        if (itemsById.length > 0) {
+            sharepoint.items_by_sharepoint_ids = itemsById;
+        }
+        if (itemsByUrl.length > 0) {
+            sharepoint.items_by_url = itemsByUrl;
+        }
+        capabilities.push(sharepoint);
     }
     if (capabilities.length > 0) {
         declarative.capabilities = capabilities;
@@ -3234,6 +3562,11 @@ async function teamsZipExport(agent, icons) {
         { name: "color.png", bytes: icons.color },
         { name: "outline.png", bytes: icons.outline }
     ];
+    // Attached files sit at the ZIP root with no manifest entry, which is how
+    // the Copilot app's own export carries files uploaded as knowledge.
+    agent.files.forEach(function (file) {
+        entries.push({ name: file.name, bytes: file.bytes });
+    });
     return { fileName: safeFileName(agent.name + " Copilot app", ".zip"), bytes: zipWrite(entries), warnings: warnings, appId: appId };
 }
 
@@ -3268,9 +3601,12 @@ async function teamsZipImport(bytes) {
         starters: (Array.isArray(declarative.conversation_starters) ? declarative.conversation_starters : [])
             .map(function (item) { return isPlainObject(item) ? item.text : ""; }),
         sharepointLinks: [],
+        sharepointItems: [],
         copilot: {
             webSearch: false,
+            webSites: [],
             teamsMessages: false,
+            email: false,
             meetings: false,
             codeInterpreter: false,
             imageGeneration: false,
@@ -3290,8 +3626,27 @@ async function teamsZipImport(bytes) {
         raw.creator[key] = value === CREATOR_PLACEHOLDERS[key] ? "" : value;
     });
     const colorFile = readPath(manifest || {}, ["icons", "color"]);
+    const outlineFile = readPath(manifest || {}, ["icons", "outline"]);
     const iconBytes = entries.get(typeof colorFile === "string" ? colorFile : "color.png");
     raw.icon = iconFromBytes(iconBytes, notices);
+    // Everything else in the package is an attached file, or a file for actions
+    // and languages, which this app does not carry.
+    const reserved = ["manifest.json", declarativeFile, colorFile, outlineFile, "color.png", "outline.png"];
+    const skipped = [];
+    raw.files = [];
+    entries.forEach(function (bytes, name) {
+        if (reserved.indexOf(name) >= 0) {
+            return;
+        }
+        if (hasFileExtension(name) && name.indexOf("/") < 0) {
+            raw.files.push({ name: name, bytes: bytes });
+        } else if (!/\.(json|ya?ml)$/i.test(name)) {
+            skipped.push(name);
+        }
+    });
+    if (skipped.length > 0) {
+        notices.push("The package has " + skipped.length + " file(s) this app can't use, so they were left out: " + listNames(skipped) + ".");
+    }
     notices.push("Copilot app packages don't carry a welcome message, so that field is empty.");
     const result = normalizeAgent(raw);
     return { agent: result.agent, notices: notices.concat(result.notices) };
@@ -3322,7 +3677,7 @@ function copyTextExport(agent) {
         instructions: agent.instructions,
         starters: agent.starters.join("\n"),
         markdown: lines.join("\n"),
-        fileName: safeFileName(toSkillName(agent.name), ".md")
+        fileName: safeFileName(agent.name, ".md")
     };
 }
 
@@ -3693,7 +4048,9 @@ function storageBlocked() {
 /** The agent as plain JSON text, with the icon as base64. Used for the saved draft and for change detection. */
 function agentRecord(agent) {
     return JSON.stringify(Object.assign({}, agent, {
-        icon: agent.icon ? bytesToBase64(agent.icon.bytes) : null
+        icon: agent.icon ? bytesToBase64(agent.icon.bytes) : null,
+        // File bytes live in IndexedDB; the record keeps enough to notice a change.
+        files: agent.files.map(function (file) { return { name: file.name, size: file.bytes.length }; })
     }));
 }
 
@@ -3728,6 +4085,8 @@ function loadDraft() {
             const bytes = base64ToBytes(parsed.icon);
             parsed.icon = bytes ? { bytes: bytes, mime: "image/png" } : null;
         }
+        // Attached files come back from IndexedDB through loadFiles, not from here.
+        parsed.files = [];
         return normalizeAgent(parsed).agent;
     } catch (error) {
         storageBlocked();
@@ -3741,10 +4100,57 @@ function clearDraft() {
     } catch (error) {
         storageBlocked();
     }
+    clearFiles();
+}
+
+// Attached files are too large for localStorage, so they live in IndexedDB.
+// Every name carries the app name because other apps share this origin.
+const FILES_DB_NAME = "agentprise-draft-files";
+const FILES_STORE = "files";
+const FILES_KEY = "draft";
+
+/** Runs one transaction against the files store. Rejects when IndexedDB is unavailable. */
+function filesStore(mode, action) {
+    return new Promise(function (resolve, reject) {
+        if (typeof indexedDB === "undefined") {
+            reject(new Error("IndexedDB is not available."));
+            return;
+        }
+        const request = indexedDB.open(FILES_DB_NAME, 1);
+        request.onupgradeneeded = function () { request.result.createObjectStore(FILES_STORE); };
+        request.onerror = function () { reject(request.error); };
+        request.onsuccess = function () {
+            const db = request.result;
+            const transaction = db.transaction(FILES_STORE, mode);
+            const result = action(transaction.objectStore(FILES_STORE));
+            transaction.oncomplete = function () { db.close(); resolve(result ? result.result : undefined); };
+            transaction.onerror = function () { db.close(); reject(transaction.error); };
+            transaction.onabort = function () { db.close(); reject(transaction.error); };
+        };
+    });
+}
+
+/** Saves the attached files with the draft. A failure only means they last for this visit. */
+function saveFilesNow() {
+    const files = ui.agent.files.map(function (file) { return { name: file.name, bytes: file.bytes }; });
+    filesStore("readwrite", function (store) {
+        return files.length > 0 ? store.put(files, FILES_KEY) : store.delete(FILES_KEY);
+    }).catch(function () { return null; });
+}
+
+/** Loads the attached files saved with the draft, or an empty list. */
+function loadFiles() {
+    return filesStore("readonly", function (store) { return store.get(FILES_KEY); })
+        .then(function (value) { return Array.isArray(value) ? value : []; })
+        .catch(function () { return []; });
+}
+
+function clearFiles() {
+    filesStore("readwrite", function (store) { return store.clear(); }).catch(function () { return null; });
 }
 
 function agentHasContent(agent) {
-    return Boolean(agent.name || agent.description || agent.instructions || agent.starters.length || agent.icon);
+    return Boolean(agent.name || agent.description || agent.instructions || agent.starters.length || agent.icon || agent.files.length);
 }
 
 /** Replaces the working agent, saves it, and refreshes every control. */
@@ -3752,6 +4158,7 @@ function setAgent(agent) {
     ui.agent = agent;
     renderForm();
     saveDraft();
+    saveFilesNow();
 }
 
 /**
@@ -3971,7 +4378,7 @@ const TEXT_FIELDS = [
     { ids: ["a-terms"], get: function (a) { return a.creator.terms; }, set: function (a, v) { a.creator.terms = v; } },
     { ids: ["a-copyright"], get: function (a) { return a.copyright; }, set: function (a, v) { a.copyright = v; } }
 ];
-const CHECKBOX_KEYS = ["webSearch", "teamsMessages", "meetings", "codeInterpreter", "imageGeneration", "preferMyFiles"];
+const CHECKBOX_KEYS = ["webSearch", "teamsMessages", "email", "meetings", "codeInterpreter", "imageGeneration", "preferMyFiles"];
 const LINK_FIELDS = ["a-website", "a-privacy", "a-terms"];
 
 function showFieldError(id, message) {
@@ -4149,6 +4556,9 @@ function renderForm() {
         $("c-" + key).checked = ui.agent.copilot[key] === true;
     });
     $("f-sharepoint").value = ui.agent.sharepointLinks.join("\n");
+    $("f-websites").value = ui.agent.copilot.webSites.join("\n");
+    renderSharepointItems();
+    renderFiles();
     const select = $("a-license");
     const known = LICENSE_CHOICES.some(function (choice) { return choice.id === ui.agent.license; });
     select.value = known ? ui.agent.license : "other";
@@ -4157,7 +4567,7 @@ function renderForm() {
     ui.starterBlanks = paddedBlanks(ui.agent.starters);
     renderStarterBlanks();
     $("d-starters").value = ui.agent.starters.join("\n");
-    ["d-name", "d-description", "d-instructions", "d-starters", "f-sharepoint", "a-website", "a-privacy", "a-terms", "icon"].forEach(function (id) {
+    ["d-name", "d-description", "d-instructions", "d-starters", "f-sharepoint", "f-websites", "file-add", "a-website", "a-privacy", "a-terms", "icon"].forEach(function (id) {
         showFieldError(id, "");
     });
     updateDerived();
@@ -4183,6 +4593,88 @@ function readSharepointField() {
     } else {
         showFieldError("f-sharepoint", "");
     }
+}
+
+function readWebSitesField() {
+    const lines = $("f-websites").value.split("\n").map(function (line) { return line.trim(); }).filter(Boolean);
+    const bad = lines.filter(function (line) { return !isWebSearchSite(line); });
+    ui.agent.copilot.webSites = lines.filter(isWebSearchSite).slice(0, LIMITS.webSites);
+    if (bad.length > 0) {
+        showFieldError("f-websites", bad.length + " line(s) will be left out. A site address starts with https://, has no question mark, and has at most two parts after the site name.");
+    } else if (lines.length > LIMITS.webSites) {
+        showFieldError("f-websites", "Only the first " + LIMITS.webSites + " sites are kept.");
+    } else {
+        showFieldError("f-websites", "");
+    }
+}
+
+/** Shows the SharePoint items that came from a file, each with a Remove button. */
+function renderSharepointItems() {
+    const list = $("sharepoint-items");
+    clearChildren(list);
+    const items = ui.agent.sharepointItems;
+    $("sharepoint-items-wrap").hidden = items.length === 0;
+    items.forEach(function (item, index) {
+        const text = item.name || item.url || "SharePoint item stored by ID";
+        const kind = item.type || (item.by === "id" ? "File" : "Link");
+        const remove = el("button", { type: "button", text: "Remove", "aria-label": "Remove " + text });
+        remove.addEventListener("click", function () {
+            ui.agent.sharepointItems.splice(index, 1);
+            renderSharepointItems();
+            updateDerived();
+            saveDraft();
+            announce("Removed " + text + ".");
+        });
+        list.appendChild(el("li", {}, [el("span", { className: "item-text", text: text }), el("span", { className: "item-kind", text: kind }), remove]));
+    });
+}
+
+/** Shows the attached files with their sizes, each with a Remove button. */
+function renderFiles() {
+    const list = $("file-items");
+    clearChildren(list);
+    ui.agent.files.forEach(function (file, index) {
+        const remove = el("button", { type: "button", text: "Remove", "aria-label": "Remove " + file.name });
+        remove.addEventListener("click", function () {
+            ui.agent.files.splice(index, 1);
+            renderFiles();
+            updateDerived();
+            saveDraft();
+            saveFilesNow();
+            announce("Removed " + file.name + ".");
+        });
+        list.appendChild(el("li", {}, [el("span", { className: "item-text", text: file.name }), el("span", { className: "item-kind", text: formatSize(file.bytes.length) }), remove]));
+    });
+}
+
+/** Formats a byte count the way people read it. */
+function formatSize(bytes) {
+    return bytes < 1024 * 1024 ? Math.max(1, Math.round(bytes / 1024)) + " KB" : (bytes / 1024 / 1024).toFixed(1) + " MB";
+}
+
+/** Adds files chosen in the file picker, keeping the ones Copilot accepts. */
+async function addFiles(fileList) {
+    const chosen = Array.from(fileList || []);
+    if (chosen.length === 0) {
+        return;
+    }
+    const candidates = ui.agent.files.slice();
+    for (const file of chosen) {
+        try {
+            candidates.push({ name: file.name, bytes: await readFileBytes(file) });
+        } catch (error) {
+            candidates.push({ name: file.name, bytes: new Uint8Array(0) });
+        }
+    }
+    const result = normalizeAgent({ files: candidates });
+    const added = result.agent.files.length - ui.agent.files.length;
+    ui.agent.files = result.agent.files;
+    showFieldError("file-add", result.notices.join(" "));
+    renderFiles();
+    updateDerived();
+    saveDraft();
+    saveFilesNow();
+    announce(added > 0 ? "Added " + added + " file(s)." : "No files were added.", added === 0);
 }
 
 function readStartersField() {
@@ -4253,6 +4745,15 @@ function setupForm() {
         readSharepointField();
         updateDerived();
         saveDraft();
+    });
+    $("f-websites").addEventListener("input", function () {
+        readWebSitesField();
+        updateDerived();
+        saveDraft();
+    });
+    $("file-add").addEventListener("change", function (event) {
+        const input = event.target;
+        addFiles(input.files).then(function () { input.value = ""; });
     });
     $("d-starters").addEventListener("input", function () {
         readStartersField();
@@ -4427,7 +4928,10 @@ async function buildProductFiles(agent, product) {
         }
         files.push({ name: "LICENSE.txt", text: bundleLicenseText(agent) });
         files.push({ name: "README.md", text: bundleReadme(agent) });
-        return { root: skillName + "/", files: files, fileName: safeFileName(skillName, ".zip"), format: "bundle", notes: [] };
+        agent.files.forEach(function (file) {
+            files.push({ name: BUNDLE_FILES_FOLDER + file.name, size: file.bytes.length });
+        });
+        return { root: skillName + "/", files: files, fileName: safeFileName(agent.name, ".zip"), format: "bundle", notes: [] };
     }
     if (product === "msAgent") {
         const result = msAgentExport(agent);
@@ -4444,7 +4948,13 @@ async function buildProductFiles(agent, product) {
         const entries = await zipRead(result.bytes);
         const files = [];
         entries.forEach(function (bytes, name) {
-            files.push(name.endsWith(".png") ? { name: name, image: bytes } : { name: name, text: fromBytes(bytes) });
+            if (name.endsWith(".png")) {
+                files.push({ name: name, image: bytes });
+            } else if (name.endsWith(".json")) {
+                files.push({ name: name, text: fromBytes(bytes) });
+            } else {
+                files.push({ name: name, size: bytes.length });
+            }
         });
         return { root: "", files: files, fileName: result.fileName, format: "teamsZip", notes: result.warnings };
     }
@@ -4477,6 +4987,10 @@ function renderFileBody() {
         const size = pngDimensions(file.image);
         const image = el("img", { className: "file-image", alt: file.name + (size ? ", " + size.width + " by " + size.height + " pixels" : ""), src: PNG_DATA_URI_PREFIX + bytesToBase64(file.image) });
         body.appendChild(el("div", { className: "file-image-wrap" }, [image]));
+        return;
+    }
+    if (file.size !== undefined) {
+        body.appendChild(el("p", { className: "muted", text: file.name + ", " + formatSize(file.size) + ". An attached file, carried exactly as you added it." }));
         return;
     }
     const pre = el("pre", { className: "file-text", tabindex: "0", role: "region", "aria-label": "Contents of " + file.name });
@@ -4954,6 +5468,14 @@ function initApp() {
     if (draft && agentHasContent(draft)) {
         ui.agent = draft;
         ui.editorMode = "draft";
+        loadFiles().then(function (files) {
+            // Restore only while the draft is still the assistant on screen.
+            if (ui.agent === draft && files.length > 0) {
+                draft.files = normalizeAgent({ files: files }).agent.files;
+                renderFiles();
+                updateDerived();
+            }
+        });
     }
     renderForm();
     showView(viewFromHash(location.hash), false);

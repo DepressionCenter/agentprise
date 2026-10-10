@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/copy-an-assistant-into-chatgpt.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: Step-by-step guide with screenshots: copy an assistant's text into a
          ChatGPT custom GPT or a Gemini Notebook.
 Notes: See README file for documentation and full license information.
@@ -71,7 +71,7 @@ These steps happen in ChatGPT, so Agentprise cannot show them.
 
 If you would rather add the whole assistant as a source, choose the
 **Download** button under the boxes. You get a small `.md` file, such as
-`caveman.md`, with everything in one place. Add that file to the notebook as
+`Caveman.md`, with everything in one place. Add that file to the notebook as
 a source.
 
 ### Conclusion

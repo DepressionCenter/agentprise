@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/add-to-library.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: How to get an assistant listed in the Agentprise Library, and how a
          maintainer adds one to the repository.
 Notes: See README file for documentation and full license information.
@@ -43,8 +43,8 @@ Before you send it, check that:
 
 - The instructions contain nothing private: no names of real people, no
   internal links, no passwords or keys, and no health information.
-- Any SharePoint links are removed, because they only work inside your own
-  organization.
+- Any SharePoint sources are removed, because they only work inside your own
+  organization, and any attached files hold nothing private.
 - You are happy for anyone to use and change it under the license you chose.
 
 A maintainer reads every file before it goes in. Assistants that could mislead
@@ -56,8 +56,9 @@ its instructions. It gives no legal or medical advice, and it answers anyone who
 seems to be in a mental health crisis with the 988 Lifeline notice. If yours
 does not have that section yet, the maintainer adds it before listing. Web
 search is on for every entry, so each one can look things up. No entry reads
-meetings or SharePoint files unless the person who downloads it turns that on;
-chat is up to the author.
+Teams messages, email, meetings, or SharePoint files unless the person who
+downloads it turns that on, so answers post to a group chat without an approval
+step.
 
 ### For maintainers: adding an entry
 
@@ -68,10 +69,10 @@ file, so an entry is nothing more than a bundle the app itself made.
 
 1. Open the submitted `.zip` in the app and check every field. If anything needs
    to change, change it and choose **Keep a copy** to get a clean bundle.
-2. Copy the `.zip` into `library/`. Keep the file name the app gave it, which is
-   the skill name, such as `caveman.zip`. The name must be plain letters,
-   digits, spaces, dots, hyphens, or underscores, ending in `.zip`, because the
-   app refuses anything else.
+2. Copy the `.zip` into `library/` and rename it to the skill name shown on
+   the Details page, such as `caveman.zip`, so every Library file follows one
+   rule. The name must be plain letters, digits, spaces, dots, hyphens, or
+   underscores, ending in `.zip`, because the app refuses anything else.
 3. Add a line to `library/catalog.json`:
 
    ```json
@@ -79,7 +80,7 @@ file, so an entry is nothing more than a bundle the app itself made.
      "file": "caveman.zip",
      "name": "Caveman",
      "summary": "Me agent, answer questions, big brain.",
-     "tags": ["fun", "example", "copilot"],
+     "tags": ["fun", "persona", "copilot"],
      "author": "Gabriel Mongefranco",
      "license": "GPL-3.0-or-later"
    }
@@ -89,7 +90,8 @@ file, so an entry is nothing more than a bundle the app itself made.
    the tests check that they do. Tags are free text for the search box.
 4. Run `npm test`. The library tests open every listed bundle, check the catalog
    line against it, check that the picture is 192 by 192 pixels, and check that
-   the instructions carry the safety section and that web search is on.
+   the instructions carry the safety section, that web search is on, and that
+   Teams messages and meetings are off.
 5. Start the local server and open the Library page to see the card.
 
 To replace an assistant, overwrite its `.zip` and update its catalog line. The
