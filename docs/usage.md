@@ -172,10 +172,10 @@ download a backup of anything you want to keep.
 Choose **Inspect** on the left, or **Inspect output files** under the download
 buttons. The left side shows every field as a plain form, and the right side
 shows the files for the output format you pick, with your own words
-highlighted. Changes you make here show up in the Workspace too. The last two
-tabs are **SKILL.md**, a plain Agent Skill with nothing specific to this app,
-and **Agentprise Backup**, the same backup as on the Workspace page. Each tab
-has its own download button under the files.
+highlighted. Changes you make here show up in the Workspace too. The tabs run
+in alphabetical order and include **SKILL.md**, a plain Agent Skill with
+nothing specific to this app, and **Agentprise Backup**, the same backup as on
+the Workspace page. Each tab has its own download button under the files.
 
 ### Come back later
 
