@@ -33,11 +33,34 @@ and the knowledge base article.
 
 ### Guides to write
 
-1. Make a new agent and download it for Microsoft 365 Copilot.
-2. Open an agent you already have and move it to Gemini or Claude.
-3. Put an agent in a Teams group chat with the `.agent` file.
-4. Copy an agent into ChatGPT or Gemini Notebook.
-5. Try a library agent and change it.
+1. Make a new agent and download it for Microsoft 365 Copilot
+   (`how-to/make-an-assistant-for-copilot.md`).
+2. Open an agent you already have and move it to Gemini or Claude
+   (`how-to/move-an-assistant-to-gemini-or-claude.md`).
+3. Put an agent in a Teams group chat with the `.agent` file
+   (`how-to/add-an-assistant-to-a-teams-chat.md`).
+4. Copy an agent into ChatGPT or Gemini Notebook
+   (`how-to/copy-an-assistant-into-chatgpt.md`).
+5. Try a library agent and change it (`how-to/try-a-library-assistant.md`).
+
+### Changes from the design
+
+- The guides say "assistant" rather than "agent", because that is the word the
+  app and the other pages use. "Agent" appears only where a product uses it,
+  such as the Agents list in Copilot and the `.agent` file.
+- The screenshots are taken at 1280 pixels wide, since the app's layout is
+  designed for that width, and they are saved under `images/guides/`. Full
+  screens are captured for the start page, the editor, the Library, and the
+  Details page. Single cards and dialogs are captured on their own so a step
+  can point at one thing.
+- The first guide uses a synthetic assistant named Lab Helper, because it
+  starts from a blank page. The other four use the Caveman sample.
+- Steps that happen inside Copilot, Teams, SharePoint, Gemini, Claude, or
+  ChatGPT are written as text only. Their screens change often and differ
+  between organizations, and the text matches what the app itself shows under
+  "After downloading" on the Details page.
+- The knowledge base article lives outside this repository, so linking the
+  guides from it is a separate step for whoever maintains that article.
 
 ### Screenshot rules
 
@@ -55,14 +78,15 @@ and the knowledge base article.
 
 ### Tasks
 
-- [ ] Serve the app locally and load the Caveman library agent.
-- [ ] Write each guide from the "Page structure" in the documentation skill:
+- [x] Serve the app locally and load the Caveman library agent.
+- [x] Write each guide from the "Page structure" in the documentation skill:
       hidden header, title, subtitle, link back, summary, numbered steps with
       screenshots, conclusion, additional resources.
-- [ ] Add the guides to `docs/README.md` and to the knowledge base article.
+- [x] Add the guides to `docs/README.md`. The knowledge base article is
+      updated outside this repository.
 - [ ] Have someone who has not used the app follow one guide cold and fix what
       confused them.
-- [ ] Open the pull request.
+- [x] Open the pull request.
 
 ### Conclusion
 

@@ -45,7 +45,7 @@ Describe your assistant once: what it is called, what it does, how it should beh
 
 
 ## Documentation
-+ **Complete documentation:** See the [`/docs`](./docs) folder in this repository for a walkthrough of the app, the questions people ask, which download goes where, how to add an assistant to the Library, how your work stays private, and the technical details.
++ **Complete documentation:** See the [`/docs`](./docs) folder in this repository for a walkthrough of the app, step-by-step guides with screenshots, the questions people ask, which download goes where, how to add an assistant to the Library, how your work stays private, and the technical details.
 + **Overview for researchers and developers:** Visit the [Health Research Resource Library](https://michmed.org/efdc-kb) for a high-level summary, key features, and important assumptions.
 
 

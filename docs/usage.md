@@ -24,7 +24,9 @@ See <https://www.gnu.org/licenses/fdl-1.3.html>. See README for full license inf
 This page walks through each thing you can do in Agentprise, in the order most
 people do them. It is written for the person making an assistant, not for a
 developer. If you only want to know which download to pick, the
-[formats page](formats.md) is shorter.
+[formats page](formats.md) is shorter. If you would rather follow pictures,
+the [step-by-step guides](README.md#step-by-step-guides) cover the same jobs
+with a screenshot for each screen.
 
 ### Open the app
 
@@ -43,13 +45,16 @@ The page has four parts, listed down the left side:
 
 1. On the Workspace page, choose **Create new**.
 2. Answer the four questions. Each one has a blank under it.
-   - **What should it be called?** The name people see.
-   - **What does it do?** One sentence is enough.
-   - **How should it behave?** Write how it should answer, what to focus on,
-     and what to avoid. Plain English is fine. Choose **Help me write this** to
-     start from a template.
-   - **What might people ask it first?** A few example questions people can
-     click. Choose **Add another question** for more, up to twelve.
+   - Under **What should it be called?**, type a short name. This is how the
+     assistant will be listed wherever you send it.
+   - Under **What does it do?**, write one sentence that says what it is for.
+   - Under **How should it behave?**, describe how you want it to answer, what
+     it should focus on, and what it should avoid. Plain English is fine. If
+     you are not sure where to start, choose **Help me write this** to get a
+     template.
+   - Under **What might people ask it first?**, type a few questions people
+     might ask. They will be able to click these instead of typing. Choose
+     **Add another question** to add more, up to twelve.
 3. Watch the preview on the right. It updates as you type and shows roughly
    what people will see. When you write more than three questions, the preview
    shows three of them at random, because most products show only a few at a
@@ -64,16 +69,20 @@ each item is a link that takes you to that blank.
 Choose **More** under the questions to open the extra settings. None of them are
 required.
 
-- **Welcome message.** The first thing people see in a Teams chat or in
-  SharePoint. Copilot app packages have no place for it.
-- **Picture.** A square PNG. The app resizes it to the sizes each product wants.
-  Without one, the app draws a letter on a blue square.
-- **Copilot settings.** Which Microsoft 365 abilities the assistant may use,
-  SharePoint files or folders it should read, and whether it should prefer those
-  files over its own knowledge. Other products ignore these settings.
-- **About you.** Your name and website, and privacy and terms links. The Copilot
-  app package needs all four, so the app fills in placeholders if you leave them
-  blank. The copyright line and license travel with the assistant.
+- **Welcome message.** This is the first thing people see when they open the
+  assistant in a Teams chat or in SharePoint. The Copilot app package has no
+  place for it.
+- **Picture.** Choose a square PNG or JPG. The app resizes it to the sizes each
+  product wants. If you skip it, the app draws the first letter of the name on
+  a blue square.
+- **Copilot settings.** Here you choose what the assistant may use in Microsoft
+  365 and paste links to SharePoint files or folders it should read. You can
+  also tell it to prefer those files over its own knowledge. Other products
+  ignore these settings.
+- **About you.** Fill in your name, your website, and links to your privacy and
+  terms pages. The Copilot app package needs all four, so the app fills in
+  placeholders if you leave them blank. The copyright line and license travel
+  with the assistant.
 
 ### Open a file you already have
 
@@ -153,6 +162,7 @@ each file afterwards, see the formats page. For questions, see the FAQ.
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
 - [Formats: which download goes where](formats.md)
 - [Frequently asked questions](faq.md)
+- [Step-by-step guides with screenshots](README.md#step-by-step-guides)
 - [Add your assistant to the Library](how-to/add-to-library.md)
 
 [Back to project README](../README.md)

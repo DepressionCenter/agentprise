@@ -54,8 +54,8 @@ plan says so under a heading named "Changes from the design" and gives the reaso
 
 Each phase is built on its own branch, named after the phase
 (`feature/phase-1-core-engine`, `feature/phase-2-user-interface`,
-`feature/phase-2-5-interface-redesign`, `feature/phase-3-library-and-release`),
-and merged through its own pull request.
+`feature/phase-2-5-interface-redesign`, `feature/phase-3-library-and-release`,
+`feature/phase-4-user-guides`), and merged through its own pull request.
 The next phase starts only after the previous one has been reviewed and merged.
 
 ### Conclusion
