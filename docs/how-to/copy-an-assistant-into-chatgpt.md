@@ -39,11 +39,11 @@ or
 [Open an assistant you have](move-an-assistant-to-gemini-or-claude.md)
 if you need help with that part.
 
-### Step 2: Choose Copy text
+### Step 2: Choose Copy
 
-Under **Download**, find **ChatGPT** and choose **Copy text**.
+Under **Download**, find the **ChatGPT** row and choose **Copy**.
 
-![The Download card. Next to ChatGPT is a button labeled Copy text.](../../images/guides/where-it-can-go.png)
+![The Download card. The ChatGPT row says Text to paste and has a Copy button on the right.](../../images/guides/where-it-can-go.png)
 
 The Inspect page opens on the **ChatGPT** tab. It shows four boxes, one for
 each field, with a copy button under each one.
@@ -70,8 +70,8 @@ These steps happen in ChatGPT, so Agentprise cannot show them.
 3. Paste the **Instructions** box into the instructions field.
 
 If you would rather add the whole assistant as a source, open the **Gemini
-Notebook** tab on the Inspect page, or choose **Download .md file** next to
-Gemini Notebook under **Download** on the Workspace page. You get a small
+Notebook** tab on the Inspect page, or choose **Download** on the Gemini
+Notebook row under **Download** on the Workspace page. You get a small
 `.md` file, such as `Caveman.md`, with everything in one place. Add that
 file to the notebook as a source.
 

@@ -45,11 +45,11 @@ in the **Welcome message** box.
 
 ### Step 2: Download the .agent file
 
-Under **Download**, find **Teams Chat** and choose **Download .agent
-file**. Your browser saves one file named after the assistant, such as
+Under **Download**, find the **Teams Chat** row and choose **Download**.
+Your browser saves one file named after the assistant, such as
 `Caveman.agent`.
 
-![The Download card. Next to Teams Chat is a button labeled Download .agent file.](../../images/guides/where-it-can-go.png)
+![The Download card. The Teams Chat row says .agent file and has a Download button on the right.](../../images/guides/where-it-can-go.png)
 
 To see the file before you download it, choose **Inspect** on the left and
 then the **Teams Chat** tab. Everything you wrote is in this one file,

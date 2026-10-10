@@ -69,11 +69,11 @@ description, or the behavior is still empty, the card lists what is missing
 and the download buttons stay gray. Each item in the list is a link that takes
 you to that blank.
 
-![The Download card before the assistant is ready. A gray box says Before it can travel, fill in, followed by three links: a name, what it does, and how it should behave. The download buttons under it are grayed out.](../../images/guides/where-not-ready.png)
+![The Download card before the assistant is ready. A gray box says Required information, followed by three links: a name, what it does, and how it should behave. The download buttons under it are grayed out.](../../images/guides/where-not-ready.png)
 
 Once all three are filled in, the buttons turn on.
 
-![The Download card when the assistant is ready. It lists Copilot / Teams Apps with a Download app package button, Teams Chat with a Download .agent file button, Gemini and Claude each with a Download skill button, and ChatGPT with a Copy text button. A blue button at the bottom says Keep a copy I can edit later.](../../images/guides/where-it-can-go.png)
+![The Download card when the assistant is ready. Each row names a product and its file, with a small Download button on the right: Copilot / Teams Apps, Teams Chat, Gemini, Gemini Notebook, Claude, ChatGPT with a Copy button, and SKILL.md. A blue button at the bottom says Download Backup.](../../images/guides/where-it-can-go.png)
 
 ### Step 4: Add a picture and your name
 
@@ -104,8 +104,8 @@ Copilot. Choose **More settings** under the questions to open them.
 
 ### Step 5: Download the app package
 
-1. Under **Download**, find **Copilot / Teams Apps** and choose
-   **Download app package**.
+1. Under **Download**, find the **Copilot / Teams Apps** row and choose
+   **Download**.
 2. Your browser saves a `.zip` file named after the assistant, such as
    `Lab Helper Copilot app.zip`. Leave it zipped. Copilot wants the whole
    package.
