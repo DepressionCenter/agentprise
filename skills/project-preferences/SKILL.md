@@ -117,9 +117,10 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   "Download Backup" file), the plain skill (`.skill.zip`, standard fields
   only), the `.agent` file (labeled "Teams Chat"), the Teams app package
   (labeled "Copilot / Teams Apps"), the copy boxes for ChatGPT, and the `.md`
-  file for Gemini Notebook. Gemini and Claude have separate Inspect tabs even
-  while their files match. Do not add a vendor until it has a real file to
-  download.
+  file for Gemini Notebook. Every download, the plain skill and the backup
+  included, is an Inspect tab with its own file tree and download button.
+  Gemini and Claude have separate tabs even while their files match. Do not
+  add a vendor until it has a real file to download.
 - Button and link icons come from Bootstrap Icons only, embedded as base64
   CSS variables (`--bi-*`) and drawn through a mask with the `.bi` class, so
   each icon is stored once. Credit stays in the README.

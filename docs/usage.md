@@ -138,6 +138,7 @@ Under **Download**, choose the product people will use:
 | Gemini or Claude | **Download skill** | A skill (`.zip`), the same file for both |
 | ChatGPT | ChatGPT, **Copy text** | Text to paste |
 | Gemini Notebook | Gemini Notebook, **Download .md file** | A `.md` file to add as a source |
+| Any other tool that reads Agent Skills | SKILL.md, **Download plain skill** | A plain skill (`.skill.zip`) with nothing specific to this app |
 
 The [formats page](formats.md) explains what to do with each file once you have
 it, and what the app package leaves out.
@@ -171,10 +172,10 @@ download a backup of anything you want to keep.
 Choose **Inspect** on the left, or **Inspect output files** under the download
 buttons. The left side shows every field as a plain form, and the right side
 shows the files for the output format you pick, with your own words
-highlighted. Changes you make here show up in the Workspace too. Two more
-buttons sit next to the tabs: **Download SKILL.md** gives you a plain Agent
-Skill with nothing specific to this app, and **Download Backup** is the same
-backup as on the Workspace page.
+highlighted. Changes you make here show up in the Workspace too. The last two
+tabs are **SKILL.md**, a plain Agent Skill with nothing specific to this app,
+and **Agentprise Backup**, the same backup as on the Workspace page. Each tab
+has its own download button under the files.
 
 ### Come back later
 

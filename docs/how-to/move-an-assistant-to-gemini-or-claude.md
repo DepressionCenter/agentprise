@@ -89,7 +89,7 @@ To see what is inside, choose **Inspect** on the left. The Inspect page shows
 every field as a plain form on the left, and the files for one product on the
 right.
 
-![The Inspect page. The left card, titled Agent Details, shows the name, description, and instructions as form fields. The right card, titled Output Format, has six tabs: Gemini, Claude, Teams Chat, Copilot / Teams Apps, ChatGPT, and Gemini Notebook, with the first tab selected and its files listed below. Two more buttons, Download SKILL.md and Download Backup, sit to the right of the tabs.](../../images/guides/details.png)
+![The Inspect page. The left card, titled Agent Details, shows the name, description, and instructions as form fields. The right card, titled Output Format, has eight tabs: Gemini, Claude, Teams Chat, Copilot / Teams Apps, ChatGPT, Gemini Notebook, SKILL.md, and Agentprise Backup, with the first tab selected and its files listed below.](../../images/guides/details.png)
 
 The **Gemini** tab lists the files, with your own words
 highlighted.

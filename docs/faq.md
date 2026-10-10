@@ -129,6 +129,7 @@ or start the included server as the README describes.
 | App package (`.zip`) | Yes | No | No | No | No |
 | `.agent` file | No | Yes | No | No | No |
 | Skill, also Download Backup (`.zip`) | No | No | Yes | Yes | No |
+| Plain skill, SKILL.md (`.skill.zip`) | No | No | Yes | Yes | No |
 | Copy text | No | No | Notebook only | No | Yes |
 | `.md` file | No | No | Notebook only | No | No |
 

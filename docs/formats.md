@@ -37,7 +37,7 @@ maintainers", holds the technical details behind each file.
 | Claude | Claude, Download skill | The same skill (`.zip`) |
 | ChatGPT | ChatGPT, Copy text | Text to paste |
 | Gemini Notebook | Gemini Notebook, Download .md file | A `.md` file to add as a source |
-| Another tool that reads Agent Skills | Download SKILL.md, on the Inspect page | A plain skill (`.skill.zip`) with nothing specific to this app |
+| Another tool that reads Agent Skills | SKILL.md, Download plain skill | A plain skill (`.skill.zip`) with nothing specific to this app |
 | Nowhere yet, or you want to edit it later | Download Backup | The same `.zip` as Download skill |
 
 The skill `.zip` is the complete copy. Drop it on the Workspace page any time to
