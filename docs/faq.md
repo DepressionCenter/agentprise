@@ -41,13 +41,14 @@ It depends on where people will use the assistant.
   meeting. You put the file in a SharePoint library first.
 - **Gemini** and **Claude** each get a skill. It is the same file, and it works
   in both.
-- **ChatGPT** gets text to copy and paste, because ChatGPT and Gemini Notebook
-  have no file to upload.
+- **ChatGPT** gets text to copy and paste, because it has no file to upload.
+- **Gemini Notebook** gets a `.md` file to add as a source, or the same text
+  to paste.
 
-Not sure yet? Keep a copy. You can come back any time and download it for
-another product.
+Not sure yet? Download a backup. You can come back any time and download it
+for another product.
 
-### What does "Keep a copy" do?
+### What does "Download Backup" do?
 
 It saves a small `.zip` file to your computer. Drop that file on the Workspace
 page later to change the assistant or download it for a different product. The
@@ -103,13 +104,14 @@ check runs in your browser and nothing is sent anywhere.
 
 ### Where does my work go?
 
-It stays in your browser, so you can close the page and pick up later on the
-same computer. Nothing is uploaded. Start over removes it.
+Nowhere! Your Agentprise projects are kept only in your web browser, and are
+never uploaded to the Internet. It is recommended to download a backup copy
+since browsers can sometimes clear local storage.
 
 ### Can other people start from my assistant?
 
 Yes. The Library holds ready-made assistants anyone can try and change. To add
-yours, keep a copy and
+yours, download a backup and
 [send it to us on GitHub](https://github.com/DepressionCenter/agentprise/issues/new?template=library-assistant.yml).
 The [how-to page](how-to/add-to-library.md) explains what to include.
 
@@ -126,8 +128,9 @@ or start the included server as the README describes.
 |---|---|---|---|---|---|
 | App package (`.zip`) | Yes | No | No | No | No |
 | `.agent` file | No | Yes | No | No | No |
-| Skill, also "Keep a copy" (`.zip`) | No | No | Yes | Yes | No |
+| Skill, also Download Backup (`.zip`) | No | No | Yes | Yes | No |
 | Copy text | No | No | Notebook only | No | Yes |
+| `.md` file | No | No | Notebook only | No | No |
 
 ### Conclusion
 

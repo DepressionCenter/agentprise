@@ -35,7 +35,7 @@ procedures and safety. Use your own idea in its place.
    The Workspace start page opens.
 2. Choose **Create new** on the right.
 
-![The Agentprise start page. The menu on the left lists Workspace, Library, Details, and Help. The main area has a dotted box for dropping a file, and two cards on the right: Create new and Use a sample. A row at the bottom shows pictures of sample assistants from the library.](../../images/guides/workspace-start.png)
+![The Agentprise start page. The menu on the left lists Workspace, Library, Inspect, and Help. The main area has a dotted box for dropping a file, and two cards on the right: Create new and Use a sample. A row at the bottom shows pictures of sample assistants from the library.](../../images/guides/workspace-start.png)
 
 ### Step 2: Answer the four questions
 
@@ -43,7 +43,7 @@ The editor shows four questions with a blank under each one. Gray example text
 in a blank shows the kind of answer that goes there. It disappears when you
 type.
 
-![The empty editor. The four questions are What should it be called, What does it do, How should it behave, and What might people ask it first, each with gray example text. On the right, a gray box titled Where it can go lists what is still missing: a name, what it does, and how it should behave.](../../images/guides/editor-blank.png)
+![The empty editor. The four questions are What should it be called, What does it do, How should it behave, and What might people ask it first, each with gray example text. On the right, a gray box titled Download lists what is still missing: a name, what it does, and how it should behave.](../../images/guides/editor-blank.png)
 
 1. Under **What should it be called?**, type a short name. This is how the
    assistant will be listed in Copilot. The example is Lab Helper.
@@ -64,58 +64,58 @@ people will get.
 
 ### Step 3: Check that it is ready to travel
 
-Look at the **Where it can go** card under the preview. While the name, the
+Look at the **Download** card under the preview. While the name, the
 description, or the behavior is still empty, the card lists what is missing
 and the download buttons stay gray. Each item in the list is a link that takes
 you to that blank.
 
-![The Where it can go card before the assistant is ready. A gray box says Before it can travel, fill in, followed by three links: a name, what it does, and how it should behave. The download buttons under it are grayed out.](../../images/guides/where-not-ready.png)
+![The Download card before the assistant is ready. A gray box says Before it can travel, fill in, followed by three links: a name, what it does, and how it should behave. The download buttons under it are grayed out.](../../images/guides/where-not-ready.png)
 
 Once all three are filled in, the buttons turn on.
 
-![The Where it can go card when the assistant is ready. It lists Copilot / Teams Apps with a Download app package button, Teams Chat with a Download .agent file button, Gemini and Claude each with a Download skill button, and ChatGPT with a Copy text button. A blue button at the bottom says Keep a copy I can edit later.](../../images/guides/where-it-can-go.png)
+![The Download card when the assistant is ready. It lists Copilot / Teams Apps with a Download app package button, Teams Chat with a Download .agent file button, Gemini and Claude each with a Download skill button, and ChatGPT with a Copy text button. A blue button at the bottom says Keep a copy I can edit later.](../../images/guides/where-it-can-go.png)
 
 ### Step 4: Add a picture and your name
 
 These settings are optional, but they make the assistant look finished in
-Copilot. Choose **More: a welcome message, a picture, Copilot settings, and
-your name** under the questions to open them.
+Copilot. Choose **More settings** under the questions to open them.
 
-![The More section opened. It shows a Welcome message box, a Picture area with a blue square showing the letter L and the buttons Choose an image and Use the default, and two closed sections: Microsoft 365 Copilot settings, and About you.](../../images/guides/more-settings.png)
+![The More section opened. It shows a Welcome message box, a Picture area with a blue square showing the letter L and the buttons Choose an image and Use the default, a File attachments area with an Add files button, and two closed sections: Microsoft Copilot settings, and Agent publisher details.](../../images/guides/more-settings.png)
 
 - **Picture.** Choose **Choose an image** and pick a square PNG or JPG. The
   app resizes it to the sizes Copilot wants. Without one, Copilot shows the
   first letter of the name on a blue square.
-- **About you.** Open this section and fill in your name, your website, and
+- **Agent publisher details.** Open this section and fill in your name, your website, and
   links to a privacy page and a terms page. The Copilot app package needs all
   four. If you leave any blank, the app fills in placeholder values and tells
   you so before you download.
-- **Microsoft 365 Copilot settings.** Open this section to paste links to
-  SharePoint files the assistant should read, add files from your computer,
-  or limit web search to a few sites. Files can be documents or plain text,
-  including scripts, which Copilot receives as `.txt`; the app refuses
-  programs by reading their contents. It also lets you choose what Copilot may
-  use. Web search is on to start. Teams messages, email, and meetings are off,
-  because they make Teams ask for approval before each answer in a group chat.
-  Leave these as they are if you are not sure.
+- **File attachments.** Add files from your computer. Files can be documents
+  or plain text, including scripts, which Copilot receives as `.txt`; the app
+  refuses programs by reading their contents.
+- **Microsoft Copilot settings.** Open this section to paste links to
+  SharePoint files the assistant should read or to limit web search to a few
+  sites. It also lets you choose what Copilot may use. Web search is on to
+  start. Teams messages, email, and meetings are off, because they make Teams
+  ask for approval before each answer in a group chat. Leave these as they are
+  if you are not sure.
 - **Welcome message.** Teams chats and SharePoint show this when someone opens
   the assistant. The Copilot app package has no place for it, so you can skip
   it for this guide.
 
 ### Step 5: Download the app package
 
-1. Under **Where it can go**, find **Copilot / Teams Apps** and choose
+1. Under **Download**, find **Copilot / Teams Apps** and choose
    **Download app package**.
 2. Your browser saves a `.zip` file named after the assistant, such as
    `Lab Helper Copilot app.zip`. Leave it zipped. Copilot wants the whole
    package.
 
-If you want to see what is inside first, choose **Details** on the left and
+If you want to see what is inside first, choose **Inspect** on the left and
 then the **Copilot / Teams Apps** tab. The files are listed on the right, and
 the words you wrote are highlighted. The same **Download** button is there
 too.
 
-![The Details page on the Copilot / Teams Apps tab. A yellow note explains that placeholder values were used for the creator name and links. Below it the files manifest.json, declarativeAgent_0.json, color.png, and outline.png are listed, with the contents of manifest.json shown and Lab Helper highlighted. At the bottom is a Download button and the steps to follow after downloading.](../../images/guides/details-copilot-teams-apps.png)
+![The Inspect page on the Copilot / Teams Apps tab. A yellow note explains that placeholder values were used for the creator name and links. Below it the files manifest.json, declarativeAgent_0.json, color.png, and outline.png are listed, with the contents of manifest.json shown and Lab Helper highlighted. At the bottom is a Download button and the steps to follow after downloading.](../../images/guides/details-copilot-teams-apps.png)
 
 ### Step 6: Upload it to Copilot
 
@@ -133,9 +133,9 @@ If the upload is refused, your Microsoft 365 admin may need to allow custom
 agents for your organization. People who use the assistant need a Copilot
 license and permission to any SharePoint files you linked.
 
-### Step 7: Keep a copy
+### Step 7: Download a backup
 
-Choose **Keep a copy I can edit later** at the bottom of the **Where it can
+Choose **Download Backup** at the bottom of the **Download
 go** card. You get a small `.zip` file, such as `lab-helper.zip`. Keep it
 somewhere safe.
 

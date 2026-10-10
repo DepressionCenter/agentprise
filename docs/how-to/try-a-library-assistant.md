@@ -84,9 +84,9 @@ If you change the name, the file names change with it. Open **More** under
 the questions to change the picture, add a welcome message, or put your own
 name and license on it.
 
-### Step 5: Download it or keep a copy
+### Step 5: Download it or download a backup
 
-Use the **Where it can go** card on the right, the same as for any assistant.
+Use the **Download** card on the right, the same as for any assistant.
 The guides for each product walk through the rest:
 
 - [Make a new assistant for Microsoft 365 Copilot](make-an-assistant-for-copilot.md),
@@ -96,7 +96,7 @@ The guides for each product walk through the rest:
   from Step 3 onward.
 - [Copy an assistant into ChatGPT or Gemini Notebook](copy-an-assistant-into-chatgpt.md).
 
-Choose **Keep a copy I can edit later** to save your version as a small
+Choose **Download Backup** to save your version as a small
 `.zip` you can open here again.
 
 ### If the Library is empty

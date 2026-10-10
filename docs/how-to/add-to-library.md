@@ -30,7 +30,7 @@ The last section is for the maintainer who adds it to the repository.
 1. Open your assistant in Agentprise and fill in the extra settings under
    **More**: a picture, your name and website, and the license you want. The
    license is the terms other people may use your assistant under.
-2. Choose **Keep a copy I can edit later**. You get a `.zip` file.
+2. Choose **Download Backup**. You get a `.zip` file.
 3. Open the [Library form on GitHub](https://github.com/DepressionCenter/agentprise/issues/new?template=library-assistant.yml).
    It asks for the name, one sentence about what it is for, and the `.zip`
    file. A GitHub account is free.
@@ -68,9 +68,9 @@ fetches each `.zip`, and opens it with the same importer it uses for a dropped
 file, so an entry is nothing more than a bundle the app itself made.
 
 1. Open the submitted `.zip` in the app and check every field. If anything needs
-   to change, change it and choose **Keep a copy** to get a clean bundle.
+   to change, change it and choose **Download Backup** to get a clean bundle.
 2. Copy the `.zip` into `library/` and rename it to the skill name shown on
-   the Details page, such as `caveman.zip`, so every Library file follows one
+   the Inspect page, such as `caveman.zip`, so every Library file follows one
    rule. The name must be plain letters, digits, spaces, dots, hyphens, or
    underscores, ending in `.zip`, because the app refuses anything else.
 3. Add a line to `library/catalog.json`:

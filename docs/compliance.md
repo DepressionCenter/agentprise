@@ -245,8 +245,8 @@ borders.
 - Text is 16 pixels at the base size with a 1.5 line height. Help text is capped
   at about 72 characters per line and left aligned.
 - Dropping a file has a button alternative (Choose a file on the start page, Open
-  a file in the editor). Reordering opening questions is done by editing the
-  list, one question per line, in the Details form.
+  a file in the editor). Reordering prompt suggestions is done by editing the
+  list, one per line, on the Inspect page.
 - Interface text aims at a grade 7 to 9 reading level and avoids exclamation
   marks in system messages.
 
