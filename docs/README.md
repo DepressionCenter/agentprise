@@ -42,6 +42,22 @@ can use your assistant, and where your work is kept.
 - [Add your assistant to the Library](how-to/add-to-library.md): what to send and
   what happens next, with a section for the maintainer who adds it.
 
+### Step-by-step guides
+
+Each guide covers one job from start to finish, with a screenshot for every
+screen you will see along the way.
+
+- [Make a new assistant for Microsoft 365 Copilot](how-to/make-an-assistant-for-copilot.md):
+  go from a blank page to the Agents list in Copilot or Teams.
+- [Open an assistant you have and move it to Gemini or Claude](how-to/move-an-assistant-to-gemini-or-claude.md):
+  open a file you already have and download it as a skill.
+- [Put an assistant in a Teams group chat](how-to/add-an-assistant-to-a-teams-chat.md):
+  download the `.agent` file, put it in SharePoint, and add it to the chat.
+- [Copy an assistant into ChatGPT or Gemini Notebook](how-to/copy-an-assistant-into-chatgpt.md):
+  find the text to copy and see which field each piece goes in.
+- [Try a library assistant and change it](how-to/try-a-library-assistant.md):
+  start from the Caveman sample and make it your own.
+
 ### Trust and privacy
 
 - [Compliance](compliance.md): what the app does to keep your work private and
