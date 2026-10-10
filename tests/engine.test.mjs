@@ -2,7 +2,7 @@
 // tests/engine.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-09
+// Last Modified: 2026-10-10
 // Summary: Tests for the engine inside index.html: the agent model, validation,
 //          YAML frontmatter, ZIP reading and writing, and PNG header checks.
 // Notes: See README file for documentation and full license information.
@@ -37,6 +37,11 @@ describe("model", () => {
     assert.equal(agent.license, "GPL-3.0-or-later");
     assert.equal(agent.copilot.webSearch, true);
     assert.equal(agent.copilot.preferMyFiles, false);
+    assert.equal(agent.copilot.teamsMessages, false);
+    assert.equal(agent.copilot.email, false);
+    assert.deepEqual(agent.copilot.webSites, []);
+    assert.deepEqual(agent.sharepointItems, []);
+    assert.deepEqual(agent.files, []);
   });
 
   test("toSkillName follows the Agent Skills rules", () => {
@@ -94,6 +99,48 @@ describe("normalizeAgent", () => {
     assert.equal(agent.copilot.appId, "");
     const uuid = "0A95BFD2-3FDA-451A-8344-95443DCD5297";
     assert.equal(engine.normalizeAgent({ copilot: { appId: uuid } }).agent.copilot.appId, uuid.toLowerCase());
+    assert.equal(engine.normalizeAgent({ copilot: { email: "true" } }).agent.copilot.email, true);
+  });
+
+  test("keeps SharePoint items with only the known keys", () => {
+    const { agent } = engine.normalizeAgent({ sharepointItems: [
+      { by: "id", url: "https://example.sharepoint.com/sites/a/doc.docx", name: "<b>doc</b>", site_id: "11111111-1111-4111-8111-111111111111", list_id: "not a guid", type: "File", evil: "x" },
+      { by: "weird", url: "javascript:alert(1)", name: "no address" },
+      { by: "url", url: "https://example.sharepoint.com/sites/b", search_associated_sites: true },
+      "not an object",
+    ] });
+    assert.deepEqual(agent.sharepointItems, [
+      { by: "id", url: "https://example.sharepoint.com/sites/a/doc.docx", name: "<b>doc</b>", site_id: "11111111-1111-4111-8111-111111111111", type: "File" },
+      { by: "url", url: "https://example.sharepoint.com/sites/b", search_associated_sites: true },
+    ]);
+  });
+
+  test("keeps at most four web sites of the allowed shape", () => {
+    const { agent, notices } = engine.normalizeAgent({ copilot: { webSites: [
+      "https://example.org", "https://example.org/a/b", "https://example.org/a/b/c", "https://example.org/?q=1", "http://example.org", "https://example.net", "https://example.com", "https://example.edu",
+    ] } });
+    assert.deepEqual(agent.copilot.webSites, ["https://example.org", "https://example.org/a/b", "https://example.net", "https://example.com"]);
+    assert.ok(notices.some((n) => n.includes("3 web site(s) were removed")));
+    assert.ok(notices.some((n) => n.includes("first 4")));
+  });
+
+  test("keeps attached files Copilot accepts and drops the rest", () => {
+    const small = encode("hello");
+    const files = [
+      { name: "../plan.docx", bytes: small },
+      { name: "tool.exe", bytes: small },
+      { name: "PLAN.docx", bytes: small },
+      { name: "empty.txt", bytes: new Uint8Array(0) },
+      { name: "big.pdf", bytes: new Uint8Array(engine.LIMITS.fileBytes + 1) },
+      { name: "no bytes.txt" },
+    ];
+    for (let i = 0; i < 25; i++) { files.push({ name: "note" + i + ".txt", bytes: small }); }
+    const { agent, notices } = engine.normalizeAgent({ files });
+    assert.equal(agent.files.length, 20);
+    assert.equal(agent.files[0].name, "plan.docx");
+    assert.ok(agent.files.every((f) => f.name.endsWith(".docx") || f.name.endsWith(".txt")));
+    assert.ok(agent.files.every((f) => !f.name.includes("..")));
+    assert.ok(notices.some((n) => n.includes("11 attached file(s) were left out")));
   });
 
   test("keeps script tags as literal text", () => {

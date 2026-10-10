@@ -43,8 +43,8 @@ Before you send it, check that:
 
 - The instructions contain nothing private: no names of real people, no
   internal links, no passwords or keys, and no health information.
-- Any SharePoint links are removed, because they only work inside your own
-  organization.
+- Any SharePoint sources are removed, because they only work inside your own
+  organization, and any attached files hold nothing private.
 - You are happy for anyone to use and change it under the license you chose.
 
 A maintainer reads every file before it goes in. Assistants that could mislead
@@ -56,8 +56,9 @@ its instructions. It gives no legal or medical advice, and it answers anyone who
 seems to be in a mental health crisis with the 988 Lifeline notice. If yours
 does not have that section yet, the maintainer adds it before listing. Web
 search is on for every entry, so each one can look things up. No entry reads
-Teams messages, meetings, or SharePoint files unless the person who downloads it
-turns that on, so answers post to a group chat without an approval step.
+Teams messages, email, meetings, or SharePoint files unless the person who
+downloads it turns that on, so answers post to a group chat without an approval
+step.
 
 ### For maintainers: adding an entry
 

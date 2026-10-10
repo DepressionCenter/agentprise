@@ -8,7 +8,7 @@ This file is part of Agentprise
 skills/project-preferences/SKILL.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: Project-specific preferences for Agentprise: the single-file build, the
          bundle format, the download cards, and how to test.
 Notes: See README file for documentation and full license information.
@@ -40,7 +40,7 @@ served by GitHub Pages from the root of the main branch.
 
 - The whole app is one file, `index.html`, with one `<style>` block and one
   `<script>` block. There is no build step, no framework, no CDN, and no web font.
-  The page should stay under 250 KB.
+  The page should stay under 500 KB.
 - Google Analytics loads only when the page is served from
   `code.depressioncenter.org`, the production host. Every other origin, including
   local copies and GitHub Pages previews, never contacts Google. The host name and
@@ -78,19 +78,25 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
 ### Project constraints
 
 - The canonical, lossless format is the Agentprise bundle: a ZIP that is a valid
-  Agent Skill (one folder holding `SKILL.md`, `icon.png`, `LICENSE.txt`, and
-  `README.md`). It uploads unchanged to Gemini and Claude. Fields the skill
-  standard lacks live under frontmatter `metadata` as flat strings with
-  `copilot-` or `creator-` prefixes. The key names are the `META` constant in
-  `index.html` and the table in [docs/formats.md](../../docs/formats.md).
+  Agent Skill (one folder holding `SKILL.md`, `icon.png`, `LICENSE.txt`,
+  `README.md`, and attached files under `references/`). It uploads unchanged to
+  Gemini and Claude. Fields the skill standard lacks live under frontmatter
+  `metadata` as flat strings with `copilot-`, `sharepoint-`, or `creator-`
+  prefixes; SharePoint items are one JSON array string. The key names are the
+  `META` constant in `index.html` and the table in
+  [docs/formats.md](../../docs/formats.md).
 - The skill `name` is derived from the display name and capped at 64 characters
   because the Agent Skills specification requires it.
 - The Microsoft `.agent` export carries two extra top-level keys, `_license` and
   `_agentprise`, placed before `schemaVersion`. Teams package files carry no extra
   keys because their schemas reject them.
-- The Teams package loses the welcome message and the copyright line. Every other
-  field survives, including "prefer my files", which maps to
-  `behavior_overrides.special_instructions.discourage_model_knowledge`.
+- The Teams package loses the welcome message and the copyright line, and keeps
+  only the schema's keys for each SharePoint item. The `.agent` file loses
+  attached files. Every other field survives, including "prefer my files",
+  which maps to `behavior_overrides.special_instructions.discourage_model_knowledge`.
+- Browser storage names carry the `agentprise-` prefix (`agentprise-draft-v1`
+  in localStorage, the `agentprise-draft-files` IndexedDB database), because
+  every EFDC app on code.depressioncenter.org shares one origin.
 - The page has four views, routed by hash: Workspace, Library, Details, and Help.
   The Workspace editor asks four plain questions with blanks under them; the
   Details form shows every field beside the exact files each product receives.

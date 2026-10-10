@@ -78,6 +78,7 @@ describe("library catalog", () => {
       // No entry reads meetings or files unless the person adds them; chat and web search are the author's choice.
       assert.equal(agent.copilot.webSearch, true, entry.file + " must have web search on");
       assert.equal(agent.copilot.teamsMessages, false, entry.file + " must not read Teams messages by default");
+      assert.equal(agent.copilot.email, false, entry.file + " must not read email by default");
       assert.equal(agent.copilot.meetings, false, entry.file + " must not read meetings by default");
       assert.deepEqual(agent.sharepointLinks, [], entry.file + " must not link files by default");
       assert.deepEqual(engine.validateAgent(agent).problems, []);

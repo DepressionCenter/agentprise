@@ -91,10 +91,11 @@ your name** under the questions to open them.
   four. If you leave any blank, the app fills in placeholder values and tells
   you so before you download.
 - **Microsoft 365 Copilot settings.** Open this section to paste links to
-  SharePoint files the assistant should read. It also lets you choose what
-  Copilot may use. Web search is on to start. Teams messages and meetings are
-  off, because they make Teams ask for approval before each answer in a group
-  chat. Leave these as they are if you are not sure.
+  SharePoint files the assistant should read, add files from your computer,
+  or limit web search to a few sites. It also lets you choose what Copilot may
+  use. Web search is on to start. Teams messages, email, and meetings are off,
+  because they make Teams ask for approval before each answer in a group chat.
+  Leave these as they are if you are not sure.
 - **Welcome message.** Teams chats and SharePoint show this when someone opens
   the assistant. The Copilot app package has no place for it, so you can skip
   it for this guide.

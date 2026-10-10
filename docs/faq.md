@@ -76,8 +76,9 @@ chat.
 
 In a group chat, Teams shows the person who asked a preview whenever the answer
 used something the others may not be able to see, such as that person's own
-chats or meetings. Turn off Teams messages and meetings under Copilot settings
-and answers post straight to the chat. Web search does not cause this.
+chats, mail, or meetings. Turn off Teams messages, email, and meetings under
+Copilot settings and answers post straight to the chat. Web search does not
+cause this.
 
 ### Where does my work go?
 

@@ -67,10 +67,10 @@ section.
 
 Two things are worth knowing when the file came from Microsoft:
 
-- SharePoint can store linked files by an internal id instead of a web link.
-  Agentprise cannot carry those, so it tells you how many it skipped and asks
-  you to paste them as links instead.
-- Settings that only Copilot understands, such as SharePoint links and what
+- Sources from SharePoint stay with the assistant, whether they are links you
+  pasted or files SharePoint stored by an internal id. Files uploaded to the
+  Copilot app come along too, inside a `references` folder in the skill.
+- Settings that only Copilot understands, such as SharePoint sources and what
   Copilot may use, stay in the file but Gemini and Claude ignore them.
 
 ### Step 3: Download the skill

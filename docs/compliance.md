@@ -54,9 +54,11 @@ listed under known gaps.
   `index.html` returns before adding the tag on any other host; the headless
   browser walkthrough on `localhost` on 2026-10-09 recorded no request to any host
   other than `localhost`.
-- The draft is kept in the browser's `localStorage` only, under one key. "Start
-  over" on the Workspace page removes it after asking. When storage is blocked,
-  the app still works and the sidebar says the draft will not be kept.
+- The draft is kept in the browser only: the text under one `localStorage` key
+  and attached files in one IndexedDB database, both named with the
+  `agentprise-` prefix because other EFDC apps share the origin. "Start over" on
+  the Workspace page removes both after asking. When storage is blocked, the app
+  still works and the sidebar says the draft will not be kept.
 - No secrets, keys, tokens, or configuration files exist in this repository, so
   there is no `.env` file and no `.env.example`.
 - Agent instructions are the creator's own text. The app does not inspect them,
@@ -71,7 +73,7 @@ listed under known gaps.
 - Uploaded files are untrusted input. Every value read from a file passes through
   `normalizeAgent`, which type-checks and length-caps each field before it reaches
   the form. Evidence: `tests/engine.test.mjs`, `tests/formats.test.mjs`, and
-  `tests/library.test.mjs` (51 tests passing on 2026-10-10).
+  `tests/library.test.mjs` (57 tests passing on 2026-10-10).
 - The ZIP reader caps the entry count at 200, each entry at 10 MB, and the whole
   archive at 50 MB. It rejects names containing `..`, a leading slash, a
   backslash, or a drive letter; refuses encrypted and 64-bit archives; verifies
@@ -89,6 +91,13 @@ listed under known gaps.
 - Icons are decoded through an `Image` element and redrawn on a canvas, which
   strips any embedded content. Only PNG and JPG uploads are accepted; SVG is not.
   Imported icons are checked against the PNG signature and header.
+- Attached files are carried as bytes and never opened, decoded, or run. Only
+  the name and type are checked: the name loses any folder part and any
+  character outside letters, digits, spaces, dots, hyphens, underscores, and
+  parentheses; the type must be one Microsoft lists for agent knowledge; and
+  each file must fit one ZIP entry. SharePoint items keep only known keys, with
+  ids checked against the GUID pattern and links required to be https.
+  Evidence: `tests/engine.test.mjs`.
 - Exported file names are reduced to letters, digits, spaces, dots, hyphens, and
   underscores.
 - There are no dependencies at runtime. The test tooling uses only the Node

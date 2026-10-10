@@ -43,9 +43,9 @@ change the assistant or download it for another product.
 
 ### What each download keeps
 
-Everything you write survives in the skill `.zip` and in the `.agent` file. The
-app package cannot carry two things, and the app tells you so before you
-download it:
+Everything you write survives in the skill `.zip`. The `.agent` file keeps
+everything except attached files, which it has no place for. The app package
+cannot carry two things, and the app tells you so before you download it:
 
 - The welcome message. Copilot has no place for it in an app package.
 - Your copyright line and license name. The package's files reject extra fields.
@@ -53,9 +53,9 @@ download it:
 Copy text carries the name, description, instructions, and example questions,
 which is everything ChatGPT and Gemini Notebook can take.
 
-Settings that only Microsoft 365 Copilot understands, such as SharePoint files
-and what Copilot may use, travel in every download but are ignored by the other
-products.
+Settings that only Microsoft 365 Copilot understands, such as SharePoint
+sources, the web site list, attached files, and what Copilot may use, travel in
+every download that has room for them but are ignored by the other products.
 
 ### What to do with the file
 
@@ -97,7 +97,7 @@ a real account. Read it before changing any converter in `index.html`.
 | Format | File | Opens in Agentprise | Downloads from Agentprise | Keeps every field | Who it is for |
 |---|---|---|---|---|---|
 | Agentprise bundle (Agent Skill) | `.zip` | Yes | Yes | Yes | Gemini, Claude, and keeping a copy to edit later |
-| Microsoft `.agent` | `.agent` | Yes | Yes | Yes | SharePoint libraries and Teams chats |
+| Microsoft `.agent` | `.agent` | Yes | Yes | All but attached files | SharePoint libraries and Teams chats |
 | Teams app package | `.zip` | Yes | Yes | No (see below) | The Microsoft 365 Copilot app |
 | Copy-ready text | none, or `.md` | No | Copy buttons and a `.md` download | Not applicable | ChatGPT custom GPTs and Gemini Notebook |
 
@@ -121,6 +121,7 @@ caveman/
   icon.png       The full-color icon, when one was set.
   LICENSE.txt    The full GPL v3 text for the default license, or a short notice.
   README.md      Name, description, creator, and how to use the file.
+  references/    Attached files, when there are any. Copilot reads them as knowledge.
 ```
 
 `SKILL.md` keeps the fields the Agent Skills standard defines (`name`,
@@ -135,9 +136,12 @@ readers reject anything else. Gemini and Claude ignore metadata they do not know
 | `display-name` | The name people see, with capitals and spaces | `Caveman` |
 | `welcome` | The first message people see in SharePoint and Teams | |
 | `starters` | Conversation starters, one per line | |
-| `sharepoint-sources` | SharePoint links, one per line | |
+| `sharepoint-sources` | SharePoint links a person pasted, one per line | |
+| `sharepoint-items` | SharePoint items that came from a Microsoft file, as one JSON array; each has `by` (`id` or `url`) plus the keys the builder wrote | |
 | `copilot-web-search` | Copilot capability on or off | `"true"` |
+| `copilot-web-sites` | Sites web search is limited to, one per line, at most four | |
 | `copilot-teams-messages` | Copilot capability on or off | `"true"` |
+| `copilot-email` | Copilot capability on or off | `"false"` |
 | `copilot-meetings` | Copilot capability on or off | `"true"` |
 | `copilot-code-interpreter` | Copilot capability on or off | `"true"` |
 | `copilot-image-generation` | Copilot capability on or off | `"true"` |
@@ -175,14 +179,23 @@ never requires the key.
 | Starters | `customCopilotConfig.conversationStarters.conversationStarterList[].text` |
 | Welcome message | `customCopilotConfig.conversationStarters.welcomeMessage.text` (omitted when empty) |
 | Icon | `customCopilotConfig.icon` as a `data:image/png;base64,` URI |
-| SharePoint links | `gptDefinition.capabilities[OneDriveAndSharePoint].items_by_url[].url` |
-| Web search, Teams messages, meetings, code interpreter, image generation | `gptDefinition.capabilities[]` named `WebSearch`, `TeamsMessages`, `Meetings`, `CodeInterpreter`, `GraphicArt`, listed only when on |
+| SharePoint links a person pasted | `gptDefinition.capabilities[OneDriveAndSharePoint].items_by_url[]` as `{url}` |
+| SharePoint items from a Microsoft file | `items_by_sharepoint_ids[]` and `items_by_url[]`, every key as the builder wrote it (`url`, `name`, `site_id`, `web_id`, `list_id`, `unique_id`, `type`) |
+| Web search, Teams messages, email, meetings, code interpreter, image generation | `gptDefinition.capabilities[]` named `WebSearch`, `TeamsMessages`, `Email`, `Meetings`, `CodeInterpreter`, `GraphicArt`, listed only when on |
+| Web search sites | `capabilities[WebSearch].sites[].url`, at most four |
+| Attached files | Nowhere. The export warns and leaves them out. |
 | Prefer my files | `gptDefinition.behavior_overrides.special_instructions.discourage_model_knowledge` |
 | Everything else | `_agentprise` |
 
-SharePoint can also store sources by ID in `items_by_sharepoint_ids`. Agentprise
-cannot carry those, so the importer reports how many it skipped and asks for them
-as links.
+The SharePoint builder writes every source with `url`, `name`, `site_id`,
+`web_id`, `list_id`, `unique_id`, and `type`, files under
+`items_by_sharepoint_ids` and sites under `items_by_url`. Agentprise keeps each
+item whole and writes it back the same way, because a file whose site entry had
+only `url` failed to load in a Teams chat. Links a person pastes go out as
+`{url}` alone, since the app has no way to look up the ids; whether Teams accepts
+those is an open test below. A site that limits a source to certain chats,
+folders, mailboxes, or meetings keeps the switch on and loses the list, with a
+notice.
 
 Copilot honors a switch only when its capability is in the list, so a list
 without `WebSearch` means web search is off, and the importer reads it that way
@@ -190,27 +203,28 @@ for any file that lists a switch or carries the `_agentprise` key. The SharePoin
 builder never lists a switch, so a file with no `_agentprise` key and no switch
 was made there. It opens with web search on and the other switches off, which is
 what people expect once the file reaches a Teams chat. Copilot can also limit
-web search to a few sites with a `sites` list. Agentprise cannot carry that list,
-so the importer says so and web search covers the whole web. Files written by
-earlier versions of Agentprise kept the five switches inside `_agentprise`
-instead of the list, and the importer still reads a switch that is on there.
+web search to at most four sites with a `sites` list, and Agentprise carries it.
+Files written by earlier versions of Agentprise kept the five switches inside
+`_agentprise` instead of the list, and the importer still reads a switch that is
+on there.
 
 New assistants start with web search, code interpreter, and image generation on,
-and with Teams messages and meetings off. Those two read the asker's own chats
-and meetings, and in a group chat Teams shows the asker a preview to approve
-before others see an answer built on them. Microsoft documents that rule for
-Copilot in group chats; see Verified vendor facts.
+and with Teams messages, email, and meetings off. Those three read the asker's
+own chats, mail, and meetings, and in a group chat Teams shows the asker a
+preview to approve before others see an answer built on them. Microsoft documents
+that rule for Copilot in group chats; see Verified vendor facts.
 
 ### The Teams app package
 
-The Microsoft 365 Copilot app exports a ZIP with four files, and that is what
-Agentprise writes:
+The Microsoft 365 Copilot app exports a ZIP with four files, plus any files that
+were uploaded as knowledge, and that is what Agentprise writes:
 
 ```
 manifest.json            Teams app manifest, schema 1.28
 declarativeAgent_0.json  Declarative agent, schema v1.8
 color.png                192 by 192 full-color icon
 outline.png              32 by 32 white icon on a transparent background
+guide.pdf                Any attached files, at the root, with no manifest entry
 ```
 
 Both JSON files are validated against their schemas, and the declarative agent
@@ -224,8 +238,11 @@ package carries no extra keys and no license notice.
 | Welcome message | Nowhere. The export warns and leaves it out. |
 | Copyright line and license name | Nowhere. The export warns and leaves them out. |
 | Icon | `color.png` plus a generated `outline.png` |
-| SharePoint links | `capabilities[OneDriveAndSharePoint].items_by_url[].url` |
-| Web search, Teams messages, meetings, code interpreter, image generation | `capabilities[]` named `WebSearch`, `TeamsMessages`, `Meetings`, `CodeInterpreter`, `GraphicArt` |
+| SharePoint links and sites | `capabilities[OneDriveAndSharePoint].items_by_url[]` as `{url}` only, which is all the schema allows there |
+| SharePoint files and folders stored by id | `items_by_sharepoint_ids[]` with `site_id`, `web_id`, `list_id`, `unique_id`, and the optional part and hub keys |
+| Web search, Teams messages, email, meetings, code interpreter, image generation | `capabilities[]` named `WebSearch`, `TeamsMessages`, `Email`, `Meetings`, `CodeInterpreter`, `GraphicArt` |
+| Web search sites | `capabilities[WebSearch].sites[].url`, at most four |
+| Attached files | At the ZIP root, exactly as the Copilot app's own export places them, with no entry in either JSON file |
 | Prefer my files | `behavior_overrides.special_instructions.discourage_model_knowledge` |
 | Creator | `manifest.json` `developer` (name at most 32 characters, three https links) |
 | App id | `manifest.json` `id`, a UUID generated once and kept in the agent |
@@ -254,6 +271,10 @@ Checked on 2026-10-09 unless a line says otherwise.
 | Gemini uploads a skill from Settings, then Skills, then Upload, as a `SKILL.md` or a ZIP with `SKILL.md` in the root folder; Gems migrate to Skills starting 2026-11-17 for personal accounts | [Gemini productivity overview](https://gemini.google/overview/productivity/) and Google's help pages for Gemini Skills |
 | Claude uploads skills as a ZIP from Settings, then Capabilities, on paid plans with code execution on | [Claude skills documentation](https://claude.com/docs/skills/how-to) |
 | Declarative agent schema 1.8: name up to 100, description up to 1,000, instructions up to 8,000, at most 12 starters, capability names as listed above, `behavior_overrides.special_instructions.discourage_model_knowledge`, unrecognized properties invalidate the document | [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8) |
+| Declarative agent schema 1.8: `WebSearch.sites` holds at most four https URLs with no query and at most two path segments; the items-by-URL object has only `url`; the items-by-IDs object has `site_id`, `web_id`, `list_id`, `unique_id`, `search_associated_sites`, `part_type`, `part_id`; `Email` is a capability; an `EmbeddedKnowledge` object exists but the Copilot app's export does not use it | [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8), checked 2026-10-10 |
+| Agent Builder takes up to four public site URLs, 100 SharePoint files, 50 OneDrive files, and 20 uploaded files of type .doc, .docx, .ppt, .pptx, .xls, .xlsx, .pdf, or .txt | [Add knowledge sources in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge) and [agent details in the admin center](https://learn.microsoft.com/microsoft-365/admin/manage/agent-details), checked 2026-10-10 |
+| The Copilot app's export of an agent with an uploaded file places the file at the ZIP root with no entry in either JSON file; its declarative agent lists `WebSearch` with `sites`, `TeamsMessages` with `urls: null`, `Email`, and a SharePoint file by id with only the four id keys | A test agent exported from the Copilot app on 2026-10-10 |
+| The SharePoint builder writes each source with `url`, `name`, `site_id`, `web_id`, `list_id`, `unique_id`, and `type` (`Site` or `File`), files under `items_by_sharepoint_ids` and sites under `items_by_url`; a `.agent` file whose site entry carried only `url` installed in a Teams chat but answered "this agent is not available" | A test agent exported from SharePoint on 2026-10-10 and a tenant test the same day |
 | The app package needs `manifest.json`, a 192 by 192 `color.png`, and a 32 by 32 transparent `outline.png` | [App package for Microsoft 365](https://learn.microsoft.com/office/dev/add-ins/overview/app-package-for-microsoft-365) |
 | `developer.name` is at most 32 characters; `websiteUrl`, `privacyUrl`, and `termsOfUseUrl` are required | [Manifest developer object](https://learn.microsoft.com/microsoft-365/extensibility/schema/root-developer) |
 | The Copilot app's own export uses manifest 1.28 and the four `validDomains` Agentprise copies | A Caveman package exported from the Copilot app on 2026-10-09 |
@@ -264,7 +285,7 @@ Checked on 2026-10-09 unless a line says otherwise.
 
 ### Tests run in this repository
 
-- `npm test` on 2026-10-10: 51 tests pass, including a round trip of a sample
+- `npm test` on 2026-10-10: 57 tests pass, including a round trip of a sample
   agent through bundle, `.agent`, bundle, Teams package, and bundle, and a check
   that every bundle listed in `library/catalog.json` opens and matches its
   catalog line.
@@ -285,6 +306,13 @@ These are open. Record the date and result here when someone runs them.
 - Load a `.agent` file with `WebSearch` on and `TeamsMessages` and `Meetings`
   off in a Teams group chat, and confirm the answers post without the approve
   step.
+- Open a SharePoint-made `.agent` file that has sources, download it again, and
+  add it to a Teams chat. The items now keep every key the builder wrote.
+- Add a `.agent` file whose only source is a link a person pasted, with no ids,
+  to a Teams chat, to learn whether Teams accepts a link without ids.
+- Upload a package that carries an attached file to the Copilot app and check
+  whether the agent lists the file as knowledge. If it does not, the next step is
+  the schema's `EmbeddedKnowledge` entry.
 
 ### Conclusion
 
