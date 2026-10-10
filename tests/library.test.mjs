@@ -76,6 +76,7 @@ describe("library catalog", () => {
       assert.ok(agent.instructions.includes("Call or text 988 to reach the 988 Lifeline"), entry.file + " must carry the 988 Lifeline notice");
       assert.ok(agent.instructions.includes("https://chat.988lifeline.org/"), entry.file + " must link the 988 Lifeline chat");
       // No entry reads meetings or files unless the person adds them; chat and web search are the author's choice.
+      assert.equal(agent.copilot.webSearch, true, entry.file + " must have web search on");
       assert.equal(agent.copilot.meetings, false, entry.file + " must not read meetings by default");
       assert.deepEqual(agent.sharepointLinks, [], entry.file + " must not link files by default");
       assert.deepEqual(engine.validateAgent(agent).problems, []);

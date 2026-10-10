@@ -45,11 +45,12 @@ describe("Microsoft .agent", () => {
     assert.equal(config.gptDefinition.name, "Caveman");
     assert.equal(config.conversationStarters.welcomeMessage.text, agent.welcome);
     assert.equal(config.conversationStarters.conversationStarterList.length, 3);
-    assert.equal(config.gptDefinition.capabilities[0].name, "OneDriveAndSharePoint");
-    assert.equal(config.gptDefinition.capabilities[0].items_by_url.length, 2);
+    assert.deepEqual(config.gptDefinition.capabilities.map((c) => c.name), ["WebSearch", "Meetings", "GraphicArt", "OneDriveAndSharePoint"]);
+    assert.deepEqual(config.gptDefinition.capabilities[3].items_by_sharepoint_ids, []);
+    assert.equal(config.gptDefinition.capabilities[3].items_by_url.length, 2);
     assert.equal(config.gptDefinition.behavior_overrides.special_instructions.discourage_model_knowledge, true);
     assert.ok(config.icon.startsWith("data:image/png;base64,"));
-    assert.equal(doc._agentprise.copilot.teams_messages, false);
+    assert.deepEqual(Object.keys(doc._agentprise.copilot), ["app_id"]);
     assert.equal(doc._agentprise.creator.website, "https://example.org");
   });
 
@@ -68,7 +69,7 @@ describe("Microsoft .agent", () => {
     assert.equal("welcomeMessage" in doc.customCopilotConfig.conversationStarters, false);
   });
 
-  test("a SharePoint-made file without the extra key gets defaults", () => {
+  test("a SharePoint-made file without the extra key reads its switches from the capabilities", () => {
     const text = JSON.stringify({
       schemaVersion: "0.2.0",
       customCopilotConfig: {
@@ -77,7 +78,11 @@ describe("Microsoft .agent", () => {
           name: "Plain",
           description: "Made in SharePoint",
           instructions: "Be helpful.",
-          capabilities: [{ name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [{ site_id: "abc" }], items_by_url: [] }],
+          capabilities: [
+            { name: "WebSearch", sites: [{ url: "https://example.org/" }] },
+            { name: "CodeInterpreter" },
+            { name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [{ site_id: "abc" }], items_by_url: [] },
+          ],
           behavior_overrides: { special_instructions: { discourage_model_knowledge: false } },
         },
       },
@@ -86,9 +91,49 @@ describe("Microsoft .agent", () => {
     assert.equal(agent.name, "Plain");
     assert.equal(agent.welcome, "Welcome");
     assert.equal(agent.copilot.webSearch, true);
+    assert.equal(agent.copilot.codeInterpreter, true);
+    assert.equal(agent.copilot.teamsMessages, false);
+    assert.equal(agent.copilot.meetings, false);
+    assert.equal(agent.copilot.imageGeneration, false);
     assert.equal(agent.copilot.preferMyFiles, false);
     assert.equal(agent.creator.name, "");
     assert.ok(notices.some((n) => n.includes("stored by ID")));
+    assert.ok(notices.some((n) => n.includes("1 site")));
+  });
+
+  test("a capabilities list without WebSearch means web search is off", () => {
+    const text = JSON.stringify({
+      schemaVersion: "0.2.0",
+      customCopilotConfig: {
+        gptDefinition: {
+          name: "Quiet",
+          description: "No web",
+          instructions: "Be helpful.",
+          capabilities: [{ name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [], items_by_url: [] }],
+        },
+      },
+    });
+    const { agent } = engine.formats.msAgent.import(text);
+    assert.equal(agent.copilot.webSearch, false);
+  });
+
+  test("a file from an earlier version still reads its switches from the extra key", () => {
+    const text = JSON.stringify({
+      _agentprise: { version: "1.0.0", copilot: { web_search: true, teams_messages: false, meetings: false, code_interpreter: true, image_generation: false, app_id: "" } },
+      schemaVersion: "0.2.0",
+      customCopilotConfig: {
+        gptDefinition: {
+          name: "Older",
+          description: "Written before capabilities were listed",
+          instructions: "Be helpful.",
+          capabilities: [{ name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [], items_by_url: [] }],
+        },
+      },
+    });
+    const { agent } = engine.formats.msAgent.import(text);
+    assert.equal(agent.copilot.webSearch, true);
+    assert.equal(agent.copilot.codeInterpreter, true);
+    assert.equal(agent.copilot.teamsMessages, false);
   });
 
   test("rejects JSON that is not an agent without throwing", () => {

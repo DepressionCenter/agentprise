@@ -71,7 +71,7 @@ listed under known gaps.
 - Uploaded files are untrusted input. Every value read from a file passes through
   `normalizeAgent`, which type-checks and length-caps each field before it reaches
   the form. Evidence: `tests/engine.test.mjs`, `tests/formats.test.mjs`, and
-  `tests/library.test.mjs` (48 tests passing on 2026-10-09).
+  `tests/library.test.mjs` (50 tests passing on 2026-10-09).
 - The ZIP reader caps the entry count at 200, each entry at 10 MB, and the whole
   archive at 50 MB. It rejects names containing `..`, a leading slash, a
   backslash, or a drive letter; refuses encrypted and 64-bit archives; verifies

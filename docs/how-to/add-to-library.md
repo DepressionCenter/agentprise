@@ -54,9 +54,10 @@ added.
 Every assistant in the Library also carries the same short safety section in
 its instructions. It gives no legal or medical advice, and it answers anyone who
 seems to be in a mental health crisis with the 988 Lifeline notice. If yours
-does not have that section yet, the maintainer adds it before listing. No entry
-reads meetings or SharePoint files unless the person who downloads it turns
-that on; chat and web search are up to the author.
+does not have that section yet, the maintainer adds it before listing. Web
+search is on for every entry, so each one can look things up. No entry reads
+meetings or SharePoint files unless the person who downloads it turns that on;
+chat is up to the author.
 
 ### For maintainers: adding an entry
 
@@ -88,7 +89,7 @@ file, so an entry is nothing more than a bundle the app itself made.
    the tests check that they do. Tags are free text for the search box.
 4. Run `npm test`. The library tests open every listed bundle, check the catalog
    line against it, check that the picture is 192 by 192 pixels, and check that
-   the instructions carry the safety section.
+   the instructions carry the safety section and that web search is on.
 5. Start the local server and open the Library page to see the card.
 
 To replace an assistant, overwrite its `.zip` and update its catalog line. The
