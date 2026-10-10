@@ -90,8 +90,8 @@ file, so an entry is nothing more than a bundle the app itself made.
    the tests check that they do. Tags are free text for the search box.
 4. Run `npm test`. The library tests open every listed bundle, check the catalog
    line against it, check that the picture is 192 by 192 pixels, and check that
-   the instructions carry the safety section, that web search is on, and that
-   Teams messages and meetings are off.
+   the instructions carry the safety section, that web search and image
+   creation are on, and that Teams messages and meetings are off.
 5. Start the local server and open the Library page to see the card.
 
 To replace an assistant, overwrite its `.zip` and update its catalog line. The
