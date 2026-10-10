@@ -61,6 +61,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             --notice-bg: #FFF4CC;
             --notice-border: #8A5B00;
             --code-bg: #FFFFFF;
+            --lift: 0 8px 24px rgba(27, 36, 48, 0.12);
             --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
             --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", Menlo, monospace;
         }
@@ -89,6 +90,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                 --notice-bg: #3A2E00;
                 --notice-border: #F2C94C;
                 --code-bg: #14171B;
+                --lift: 0 8px 24px rgba(0, 0, 0, 0.5);
             }
         }
 
@@ -607,13 +609,65 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         .after ol { margin: 0 0 8px; padding-left: 20px; }
 
         /* ### Library and help ### */
-        .library-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
-        @media (min-width: 48rem) { .library-list { grid-template-columns: 1fr 1fr; } }
-        .library-card .preview-head { align-items: flex-start; }
-        .library-card .preview-head img { width: 64px; height: 64px; }
-        .library-card h3 { font-size: 1rem; margin: 0 0 4px; }
-        .tags { list-style: none; padding: 0; margin: 6px 0; display: flex; flex-wrap: wrap; gap: 6px; }
-        .tags li { background: var(--panel-alt); border: 1px solid var(--border-soft); border-radius: 999px; padding: 2px 10px; font-size: 0.8125rem; }
+        /* The Library reads like an app store: a search pill, a row of tag filters, and a grid of tiles with one action each. */
+        .store-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 24px; margin-bottom: 20px; }
+        .store-head .page-hint { max-width: 56ch; }
+        .store-search { position: relative; flex: 1 1 240px; max-width: 360px; min-width: 0; }
+        .store-search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+        .store-search input[type="text"] { width: 100%; min-height: 44px; padding: 0 16px 0 42px; border-radius: 999px; }
+        .store-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 20px; }
+        .store-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip, button.chip { min-height: 36px; min-width: 0; padding: 0 14px; border-radius: 999px; border-color: var(--border); font-size: 0.875rem; }
+        .chip[aria-pressed="true"], button.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+        .store-count { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+        .store-status { margin: 0; color: var(--muted); font-size: 0.9375rem; }
+        .store-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+        .store-card {
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 20px;
+            background: var(--panel);
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+        }
+        /* A tile with its own picture repeats it large and faint behind the name, like a store banner, and fades to the
+           plain panel before the summary so the text below keeps its contrast. Monogram icons get no banner, since a
+           blurred letter reads as a watermark. */
+        .store-card.has-art::before {
+            content: "";
+            position: absolute;
+            left: -25%;
+            top: -25%;
+            width: 150%;
+            aspect-ratio: 1;
+            z-index: -1;
+            background: var(--tile-art) center / cover no-repeat;
+            opacity: 0.22;
+            filter: blur(6px);
+        }
+        .store-card.has-art::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(to bottom, transparent 20%, var(--panel) 72%);
+        }
+        @media (prefers-reduced-motion: no-preference) { .store-card { transition: box-shadow 150ms ease, border-color 150ms ease; } }
+        .store-card:hover { border-color: var(--border); box-shadow: var(--lift); }
+        .store-card img { width: 80px; height: 80px; border-radius: 20px; object-fit: cover; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16); }
+        .store-card h3 { margin: 6px 0 0; font-size: 1.0625rem; }
+        .store-card .by { margin: -6px 0 0; font-size: 0.875rem; color: var(--muted); }
+        .store-card .summary { margin: 0; font-size: 0.9375rem; }
+        .store-tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+        .store-tags button { min-height: 28px; min-width: 0; padding: 0 10px; border-radius: 999px; border-color: var(--border-soft); background: var(--panel-alt); font-size: 0.8125rem; }
+        .store-tags button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+        .store-foot { margin-top: auto; padding-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .store-foot .license { margin: 0; min-width: 0; overflow-wrap: anywhere; font-size: 0.8125rem; color: var(--muted); }
+        .store-foot .primary { flex: none; min-height: 40px; padding: 0 20px; }
         .help-card h2 { font-size: 1.0625rem; margin: 20px 0 6px; }
         .help-card h2:first-of-type { margin-top: 0; }
         .help-card p, .help-card li { max-width: 72ch; }
@@ -880,17 +934,25 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
 
             <!-- ### Library ### -->
             <section id="view-library" class="view" aria-labelledby="library-heading" hidden>
-                <div class="page-head">
-                    <h1 id="library-heading" class="page-title" tabindex="-1">Library</h1>
-                    <p class="page-hint">Ready-made assistants you can try, change, and download. Want yours listed here? <a href="https://github.com/DepressionCenter/agentprise/issues/new" target="_blank" rel="noopener">Send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
+                <div class="store-head">
+                    <div>
+                        <h1 id="library-heading" class="page-title" tabindex="-1">Library</h1>
+                        <p class="page-hint">Ready-made assistants you can try, change, and download. Want yours listed here? <a href="https://github.com/DepressionCenter/agentprise/issues/new" target="_blank" rel="noopener">Send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
+                    </div>
+                    <div class="store-search">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                        <label for="library-search" class="visually-hidden">Search the library by name, summary, or tag</label>
+                        <input type="text" id="library-search" placeholder="Search" autocomplete="off">
+                    </div>
                 </div>
-                <div class="field">
-                    <label for="library-search">Search the library</label>
-                    <p class="hint" id="library-search-hint">Searches names, summaries, and tags.</p>
-                    <input type="text" id="library-search" aria-describedby="library-search-hint" autocomplete="off">
+                <div class="store-bar">
+                    <div class="store-filters" id="library-filters" role="group" aria-label="Show only one tag" hidden></div>
+                    <div class="store-count">
+                        <p id="library-status" class="store-status" role="status"></p>
+                        <button type="button" class="link-button" id="library-clear" hidden>Show all</button>
+                    </div>
                 </div>
-                <p id="library-status" class="muted"></p>
-                <ul class="library-list" id="library-list"></ul>
+                <ul class="store-grid" id="library-list"></ul>
             </section>
 
             <!-- ### Details ### -->
@@ -3378,6 +3440,7 @@ const ui = {
     storageOk: true,
     catalog: [],
     catalogOk: false,
+    libraryTag: "",
     problems: [],
     warnings: [],
     saveTimer: null,
@@ -4528,6 +4591,8 @@ function setupProductTabs() {
 // same importer as a dropped file, so adding an entry means dropping the zip in the
 // folder and adding one catalog line. Nothing about an entry lives in this page.
 const LIBRARY_PATH = "library/";
+// The filter row shows the most used tags only, so a big catalog does not turn it into a wall of chips.
+const LIBRARY_FILTER_MAX = 12;
 
 /** A page opened from a file cannot fetch its own folder, so the Library is only available when served. */
 function libraryAvailable() {
@@ -4612,23 +4677,92 @@ function useLibraryEntry(entry) {
     });
 }
 
-function libraryCard(entry) {
+/**
+ * One store tile: icon, name, maker, summary, tag buttons that narrow the grid, and the
+ * license beside Try it. Each Try it carries the entry name for screen readers, since a
+ * page of identical "Try it" buttons would be impossible to tell apart.
+ */
+function storeCard(entry) {
     const icon = el("img", { alt: "", src: "" });
     icon.src = entry.agent ? iconPreviewUri(entry.agent) : drawDefaultIcon(entry.name, 96).toDataURL("image/png");
-    const tags = el("ul", { className: "tags", "aria-label": "Tags" });
-    entry.tags.forEach(function (tag) { tags.appendChild(el("li", { text: tag })); });
-    const tryButton = el("button", { type: "button", className: "primary", text: "Try it" });
+    const tags = el("ul", { className: "store-tags", "aria-label": "Tags" });
+    entry.tags.forEach(function (tag) {
+        const button = el("button", { type: "button", text: tag, "aria-pressed": String(ui.libraryTag === tag) });
+        button.addEventListener("click", function () { setLibraryTag(ui.libraryTag === tag ? "" : tag, true); });
+        tags.appendChild(el("li", {}, [button]));
+    });
+    const tryButton = el("button", { type: "button", className: "primary" }, ["Try it", el("span", { className: "visually-hidden", text: ": " + entry.name })]);
     tryButton.addEventListener("click", function () { useLibraryEntry(entry); });
-    const meta = el("p", { className: "muted small", text: (entry.author ? "By " + entry.author + ". " : "") + (entry.license ? "License: " + entry.license + "." : "") });
-    const body = [el("h3", { text: entry.name }), el("p", { text: entry.summary }), tags, meta];
+    const body = [icon, el("h3", { text: entry.name })];
+    if (entry.author) {
+        body.push(el("p", { className: "by", text: "By " + entry.author }));
+    }
+    body.push(el("p", { className: "summary", text: entry.summary }));
+    if (entry.tags.length > 0) {
+        body.push(tags);
+    }
     if (entry.problem) {
         tryButton.disabled = true;
         body.push(el("p", { className: "error-text", text: "This entry cannot be opened right now. " + entry.problem }));
     }
-    return el("li", { className: "card library-card" }, [
-        el("div", { className: "preview-head" }, [icon, el("div", {}, body)]),
-        el("div", { className: "button-row" }, [tryButton])
-    ]);
+    body.push(el("div", { className: "store-foot" }, [el("p", { className: "license", text: entry.license }), tryButton]));
+    const card = el("li", { className: "store-card" }, body);
+    if (entry.agent && entry.agent.icon) {
+        card.classList.add("has-art");
+        card.style.setProperty("--tile-art", 'url("' + icon.src + '")');  // Only the app's own PNG data URI ever lands here
+    }
+    return card;
+}
+
+/** The tags used across the catalog, most used first, plus the active one so its chip never disappears. */
+function libraryTags() {
+    const counts = {};
+    ui.catalog.forEach(function (entry) {
+        entry.tags.forEach(function (tag) { counts[tag] = (counts[tag] || 0) + 1; });
+    });
+    const tags = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b); }).slice(0, LIBRARY_FILTER_MAX);
+    if (ui.libraryTag && tags.indexOf(ui.libraryTag) < 0) {
+        tags.push(ui.libraryTag);
+    }
+    return tags;
+}
+
+/** Builds the filter row only when its chips change, so a keyboard user's focus stays on the chip they pressed. */
+function renderLibraryFilters() {
+    const row = $("library-filters");
+    const tags = libraryTags();
+    row.hidden = tags.length === 0;
+    const chips = [""].concat(tags);
+    if (row.getAttribute("data-chips") !== chips.join("\n")) {
+        clearChildren(row);
+        chips.forEach(function (tag) {
+            const chip = el("button", { type: "button", className: "chip", text: tag || "All", "data-tag": tag });
+            chip.addEventListener("click", function () { setLibraryTag(tag, false); });
+            row.appendChild(chip);
+        });
+        row.setAttribute("data-chips", chips.join("\n"));
+    }
+    Array.prototype.forEach.call(row.children, function (chip) {
+        chip.setAttribute("aria-pressed", String(chip.getAttribute("data-tag") === ui.libraryTag));
+    });
+}
+
+/**
+ * Narrows the grid to one tag, or to all with an empty tag. A tag pressed on a card moves focus
+ * to the matching chip, because the card it was on is rebuilt and may no longer be shown.
+ */
+function setLibraryTag(tag, fromCard) {
+    ui.libraryTag = tag;
+    renderLibrary();
+    if (fromCard) {
+        const chips = $("library-filters").children;
+        for (let index = 0; index < chips.length; index += 1) {
+            if (chips[index].getAttribute("data-tag") === tag) {
+                chips[index].focus();
+                break;
+            }
+        }
+    }
 }
 
 /** Fetches the catalog and every bundle once, shared by the Library view and the start page strip. */
@@ -4660,8 +4794,12 @@ async function renderLibrary() {
             : "The Library needs the app to run from a web address. Use the online version at " + APP_SITE_URL + " or start the included server.");
         return;
     }
+    renderLibraryFilters();
     const query = $("library-search").value.trim().toLowerCase();
     const matches = ui.catalog.filter(function (entry) {
+        if (ui.libraryTag && entry.tags.indexOf(ui.libraryTag) < 0) {
+            return false;
+        }
         if (!query) {
             return true;
         }
@@ -4669,8 +4807,9 @@ async function renderLibrary() {
         return haystack.indexOf(query) >= 0;
     });
     clearChildren(list);
-    setText(status, matches.length === 0 ? "No assistants match." : matches.length + " assistant(s).");
-    matches.forEach(function (entry) { list.appendChild(libraryCard(entry)); });
+    $("library-clear").hidden = !query && !ui.libraryTag;
+    setText(status, matches.length === 0 ? "No assistants match." : matches.length + (matches.length === 1 ? " assistant" : " assistants"));
+    matches.forEach(function (entry) { list.appendChild(storeCard(entry)); });
 }
 
 /** One strip tile: the icon with the name over it. Choosing it opens the entry like Try it does. */
@@ -4751,6 +4890,12 @@ function initApp() {
     setupProductTabs();
     setupStrip();
     $("library-search").addEventListener("input", function () { renderLibrary(); });
+    $("library-clear").addEventListener("click", function () {
+        $("library-search").value = "";
+        ui.libraryTag = "";
+        renderLibrary();
+        $("library-search").focus();
+    });
     $("start-new").addEventListener("click", function () {
         ui.editorMode = "new";
         renderWorkspace();

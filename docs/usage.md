@@ -93,7 +93,9 @@ without asking, because the same sample is still in the Library.
 ### Start from the Library
 
 1. Choose **Library** on the left, or **Use a sample** on the start page.
-2. Search by name, summary, or tag if the list is long.
+2. Search by name, summary, or tag if the list is long. The row of tags under
+   the search box narrows the list to one tag. Choose **All** or **Show all**
+   to see everything again.
 3. Choose **Try it**. The assistant opens in the Workspace, ready to change
    or download.
 
