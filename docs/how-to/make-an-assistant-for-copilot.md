@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/make-an-assistant-for-copilot.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: Step-by-step guide with screenshots: make a new assistant in Agentprise
          and add it to the Agents list in Microsoft 365 Copilot or Teams.
 Notes: See README file for documentation and full license information.
@@ -92,8 +92,9 @@ your name** under the questions to open them.
   you so before you download.
 - **Microsoft 365 Copilot settings.** Open this section to paste links to
   SharePoint files the assistant should read. It also lets you choose what
-  Copilot may use, such as web search or meeting notes. Leave these as they
-  are if you are not sure.
+  Copilot may use. Web search is on to start. Teams messages and meetings are
+  off, because they make Teams ask for approval before each answer in a group
+  chat. Leave these as they are if you are not sure.
 - **Welcome message.** Teams chats and SharePoint show this when someone opens
   the assistant. The Copilot app package has no place for it, so you can skip
   it for this guide.

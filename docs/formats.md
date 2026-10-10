@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/formats.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
          need: field mappings, vendor facts with check dates, and open tests.
@@ -180,12 +180,21 @@ cannot carry those, so the importer reports how many it skipped and asks for the
 as links.
 
 Copilot honors a switch only when its capability is in the list, so a list
-without `WebSearch` means web search is off, and the importer reads it that way.
-Copilot can also limit web search to a few sites with a `sites` list. Agentprise
-cannot carry that list, so the importer says so and web search covers the whole
-web. Files written by earlier versions of Agentprise kept the five switches
-inside `_agentprise` instead of the list, and the importer still reads a switch
-that is on there.
+without `WebSearch` means web search is off, and the importer reads it that way
+for any file that lists a switch or carries the `_agentprise` key. The SharePoint
+builder never lists a switch, so a file with no `_agentprise` key and no switch
+was made there. It opens with web search on and the other switches off, which is
+what people expect once the file reaches a Teams chat. Copilot can also limit
+web search to a few sites with a `sites` list. Agentprise cannot carry that list,
+so the importer says so and web search covers the whole web. Files written by
+earlier versions of Agentprise kept the five switches inside `_agentprise`
+instead of the list, and the importer still reads a switch that is on there.
+
+New assistants start with web search, code interpreter, and image generation on,
+and with Teams messages and meetings off. Those two read the asker's own chats
+and meetings, and in a group chat Teams shows the asker a preview to approve
+before others see an answer built on them. Microsoft documents that rule for
+Copilot in group chats; see Verified vendor facts.
 
 ### The Teams app package
 
@@ -245,10 +254,12 @@ Checked on 2026-10-09 unless a line says otherwise.
 | The Copilot app's own export uses manifest 1.28 and the four `validDomains` Agentprise copies | A Caveman package exported from the Copilot app on 2026-10-09 |
 | The SharePoint `.agent` file (schema 0.2.0) has the shape Agentprise writes | A Caveman `.agent` file exported from SharePoint on 2026-10-09 |
 | A `.agent` file with an extra top-level key loads and runs in Teams | Loaded in a real tenant on 2026-10-09 |
+| In a Teams group chat, an answer that used the web, or only sources everyone in the chat can see, posts to everyone; an answer that used sources not everyone can see is shown first to the person who asked, with Approve and Reject | [How to use Microsoft Copilot in Teams group chats](https://support.microsoft.com/office/how-to-use-microsoft-365-copilot-in-teams-group-chats-2c613de4-cd26-4ae3-9e4b-6905d745d991), checked 2026-10-10 |
+| A `.agent` file written by Agentprise that listed `WebSearch`, `TeamsMessages`, and `Meetings` answered from the web in a Teams group chat and asked the person who asked to approve each answer; a SharePoint-made file with no switches answered without approval and without the web | Tenant tests on 2026-10-10 |
 
 ### Tests run in this repository
 
-- `npm test` on 2026-10-09: 50 tests pass, including a round trip of a sample
+- `npm test` on 2026-10-10: 51 tests pass, including a round trip of a sample
   agent through bundle, `.agent`, bundle, Teams package, and bundle, and a check
   that every bundle listed in `library/catalog.json` opens and matches its
   catalog line.
@@ -266,6 +277,9 @@ These are open. Record the date and result here when someone runs them.
   used a hand-edited file, not this app's output.
 - Try a Teams package with an extra `LICENSE.txt` file inside. The app does not
   add one until this is known to work.
+- Load a `.agent` file with `WebSearch` on and `TeamsMessages` and `Meetings`
+  off in a Teams group chat, and confirm the answers post without the approve
+  step.
 
 ### Conclusion
 

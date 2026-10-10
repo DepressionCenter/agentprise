@@ -2,7 +2,7 @@
 // tests/formats.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-09
+// Last Modified: 2026-10-10
 // Summary: Tests for the format converters inside index.html: the Agent Skill
 //          bundle, the Microsoft .agent file, the Teams app package, copy-ready
 //          text, format detection, and full round trips between them.
@@ -101,8 +101,9 @@ describe("Microsoft .agent", () => {
     assert.ok(notices.some((n) => n.includes("1 site")));
   });
 
-  test("a capabilities list without WebSearch means web search is off", () => {
+  test("a file this app wrote without WebSearch opens with web search off", () => {
     const text = JSON.stringify({
+      _agentprise: { version: "1", copilot: { app_id: "" } },
       schemaVersion: "0.2.0",
       customCopilotConfig: {
         gptDefinition: {
@@ -115,6 +116,32 @@ describe("Microsoft .agent", () => {
     });
     const { agent } = engine.formats.msAgent.import(text);
     assert.equal(agent.copilot.webSearch, false);
+  });
+
+  test("a SharePoint-made file that lists no switch opens with web search on and personal sources off", () => {
+    const text = JSON.stringify({
+      schemaVersion: "0.2.0",
+      customCopilotConfig: {
+        conversationStarters: { conversationStarterList: [{ text: "Hi" }] },
+        gptDefinition: {
+          name: "Site helper",
+          description: "Made in SharePoint",
+          instructions: "Be helpful.",
+          capabilities: [{ name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [], items_by_url: [] }],
+          behavior_overrides: { special_instructions: { discourage_model_knowledge: true } },
+        },
+        icon: "https://res.public.onecdn.static.microsoft/files/sp-client/example.svg",
+      },
+    });
+    const { agent } = engine.formats.msAgent.import(text);
+    assert.equal(agent.copilot.webSearch, true);
+    assert.equal(agent.copilot.teamsMessages, false);
+    assert.equal(agent.copilot.meetings, false);
+    assert.equal(agent.copilot.codeInterpreter, false);
+    assert.equal(agent.copilot.preferMyFiles, true);
+    // Writing it back lists WebSearch, so the file keeps the web in a Teams chat.
+    const doc = JSON.parse(engine.formats.msAgent.export(agent).text);
+    assert.deepEqual(doc.customCopilotConfig.gptDefinition.capabilities.map((c) => c.name), ["WebSearch", "OneDriveAndSharePoint"]);
   });
 
   test("a file from an earlier version still reads its switches from the extra key", () => {

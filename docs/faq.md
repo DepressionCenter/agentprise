@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/faq.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: The questions people ask about Agentprise, with the same answers the
          Help page inside the app gives.
 Notes: See README file for documentation and full license information.
@@ -71,6 +71,13 @@ App packages do not work in group chats, channels, or meeting chats. Use the
 Teams Chat download instead: put the `.agent` file in a SharePoint library,
 choose Copy link for Teams, paste the link in the chat, and choose Add to this
 chat.
+
+### Why does Teams ask me to approve the answer?
+
+In a group chat, Teams shows the person who asked a preview whenever the answer
+used something the others may not be able to see, such as that person's own
+chats or meetings. Turn off Teams messages and meetings under Copilot settings
+and answers post straight to the chat. Web search does not cause this.
 
 ### Where does my work go?
 

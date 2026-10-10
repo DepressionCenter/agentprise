@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/add-to-library.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: How to get an assistant listed in the Agentprise Library, and how a
          maintainer adds one to the repository.
 Notes: See README file for documentation and full license information.
@@ -56,8 +56,8 @@ its instructions. It gives no legal or medical advice, and it answers anyone who
 seems to be in a mental health crisis with the 988 Lifeline notice. If yours
 does not have that section yet, the maintainer adds it before listing. Web
 search is on for every entry, so each one can look things up. No entry reads
-meetings or SharePoint files unless the person who downloads it turns that on;
-chat is up to the author.
+Teams messages, meetings, or SharePoint files unless the person who downloads it
+turns that on, so answers post to a group chat without an approval step.
 
 ### For maintainers: adding an entry
 
@@ -79,7 +79,7 @@ file, so an entry is nothing more than a bundle the app itself made.
      "file": "caveman.zip",
      "name": "Caveman",
      "summary": "Me agent, answer questions, big brain.",
-     "tags": ["fun", "example", "copilot"],
+     "tags": ["fun", "persona", "copilot"],
      "author": "Gabriel Mongefranco",
      "license": "GPL-3.0-or-later"
    }
@@ -89,7 +89,8 @@ file, so an entry is nothing more than a bundle the app itself made.
    the tests check that they do. Tags are free text for the search box.
 4. Run `npm test`. The library tests open every listed bundle, check the catalog
    line against it, check that the picture is 192 by 192 pixels, and check that
-   the instructions carry the safety section and that web search is on.
+   the instructions carry the safety section, that web search is on, and that
+   Teams messages and meetings are off.
 5. Start the local server and open the Library page to see the card.
 
 To replace an assistant, overwrite its `.zip` and update its catalog line. The

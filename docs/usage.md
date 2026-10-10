@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/usage.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-09
+Last Modified: 2026-10-10
 Summary: How to use Agentprise, job by job: create an assistant, open one you
          have, start from the Library, download it for each product, and keep a copy.
 Notes: See README file for documentation and full license information.
@@ -77,8 +77,10 @@ required.
   a blue square.
 - **Copilot settings.** Here you choose what the assistant may use in Microsoft
   365 and paste links to SharePoint files or folders it should read. You can
-  also tell it to prefer those files over its own knowledge. Other products
-  ignore these settings.
+  also tell it to prefer those files over its own knowledge. Web search starts
+  on. Teams messages and meetings start off, because in a group chat Teams asks
+  the person who asked to approve any answer that used their own chats or
+  meetings before others can see it. Other products ignore these settings.
 - **About you.** Fill in your name, your website, and links to your privacy and
   terms pages. The Copilot app package needs all four, so the app fills in
   placeholders if you leave them blank. The copyright line and license travel
