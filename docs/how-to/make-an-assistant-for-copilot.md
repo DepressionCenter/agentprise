@@ -69,7 +69,7 @@ description, or the behavior is still empty, the card lists what is missing
 and the download buttons stay gray. Each item in the list is a link that takes
 you to that blank.
 
-![The Download card before the assistant is ready. A gray box says Before it can travel, fill in, followed by three links: a name, what it does, and how it should behave. The download buttons under it are grayed out.](../../images/guides/where-not-ready.png)
+![The Download card before the assistant is ready. A gray box says Required information, followed by three links: a name, what it does, and how it should behave. The download buttons under it are grayed out.](../../images/guides/where-not-ready.png)
 
 Once all three are filled in, the buttons turn on.
 
