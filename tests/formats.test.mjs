@@ -23,7 +23,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { loadEngine } from "./load-engine.mjs";
-import { makePng, sampleAgent, agentFields } from "./helpers.mjs";
+import { makePng, sampleAgent, agentFields, BYTE_SHAPES } from "./helpers.mjs";
 
 const engine = loadEngine();
 const encode = (text) => new TextEncoder().encode(text);
@@ -263,13 +263,17 @@ describe("Agent Skill bundle", () => {
     assert.ok(decode(entries.get("caveman/README.md")).includes("notes.txt"));
     const skill = engine.zip.write([
       { name: "x/SKILL.md", bytes: encode("---\nname: x\ndescription: A skill\n---\nDo things.\n") },
-      { name: "x/references/readme.md", bytes: encode("# notes") },
+      { name: "x/references/photo.png", bytes: makePng(4, 4) },
+      { name: "x/references/deploy.ps1", bytes: encode("Write-Host 'hi'") },
       { name: "x/references/data.txt", bytes: encode("rows") },
+      { name: "x/references/fake.pdf", bytes: BYTE_SHAPES.windows },
       { name: "x/references/deep/more.txt", bytes: encode("ignored") },
     ]);
     const result = await engine.formats.bundle.import(skill);
-    assert.deepEqual(result.agent.files.map((f) => f.name), ["data.txt"]);
-    assert.ok(result.notices.some((n) => n.includes("readme.md")));
+    // Scripts keep their real names in the bundle; a program hiding behind a document name is refused by content.
+    assert.deepEqual(result.agent.files.map((f) => f.name), ["deploy.ps1", "data.txt"]);
+    assert.ok(result.notices.some((n) => n.includes("photo.png")));
+    assert.ok(result.notices.some((n) => n.includes("fake.pdf (it is a Windows program)")));
   });
 
   test("non-default license writes a short notice", async () => {
@@ -389,12 +393,27 @@ describe("Teams app package", () => {
     const { bytes } = await engine.formats.teamsZip.export(agent, teamsIcons());
     const entries = await engine.zip.read(bytes);
     const list = [...entries].map(([name, data]) => ({ name, bytes: data }));
-    list.push({ name: "guide.pdf", bytes: encode("%PDF-1.4 demo") }, { name: "tool.exe", bytes: encode("MZ") }, { name: "en.json", bytes: encode("{}") });
+    list.push({ name: "guide.pdf", bytes: encode("%PDF-1.4 demo") }, { name: "tool.exe", bytes: encode("MZ") }, { name: "en.json", bytes: encode("{}") }, { name: "fake.pdf", bytes: BYTE_SHAPES.windows });
     const result = await engine.formats.teamsZip.import(engine.zip.write(list));
     assert.deepEqual(result.agent.files.map((f) => f.name), ["guide.pdf"]);
     assert.ok(result.notices.some((n) => n.includes("tool.exe") && !n.includes("en.json")));
+    assert.ok(result.notices.some((n) => n.includes("fake.pdf (it is a Windows program)")));
     const again = await engine.formats.teamsZip.export(result.agent, teamsIcons());
     assert.equal(decode((await engine.zip.read(again.bytes)).get("guide.pdf")), "%PDF-1.4 demo");
+  });
+
+  test("a script goes out as .txt under its own name and comes back with its real name", async () => {
+    const agent = sampleAgent(engine);
+    agent.files = [{ name: "deploy.ps1", bytes: encode("Write-Host 'hi'") }, { name: "notes.txt", bytes: encode("plain") }];
+    const { bytes } = await engine.formats.teamsZip.export(agent, teamsIcons());
+    const entries = await engine.zip.read(bytes);
+    assert.deepEqual([...entries.keys()].slice(4), ["deploy.ps1.txt", "notes.txt"]);
+    assert.equal(decode(entries.get("deploy.ps1.txt")), "Write-Host 'hi'");
+    const back = await engine.formats.teamsZip.import(bytes);
+    assert.deepEqual(back.agent.files.map((f) => f.name), ["deploy.ps1", "notes.txt"]);
+    const bundle = await engine.formats.bundle.export(back.agent);
+    const bundleEntries = await engine.zip.read(bundle.bytes);
+    assert.ok(bundleEntries.has("caveman/references/deploy.ps1"));
   });
 
   test("placeholder creator values import as blank", async () => {

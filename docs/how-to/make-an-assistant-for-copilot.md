@@ -92,7 +92,9 @@ your name** under the questions to open them.
   you so before you download.
 - **Microsoft 365 Copilot settings.** Open this section to paste links to
   SharePoint files the assistant should read, add files from your computer,
-  or limit web search to a few sites. It also lets you choose what Copilot may
+  or limit web search to a few sites. Files can be documents or plain text,
+  including scripts, which Copilot receives as `.txt`; the app refuses
+  programs by reading their contents. It also lets you choose what Copilot may
   use. Web search is on to start. Teams messages, email, and meetings are off,
   because they make Teams ask for approval before each answer in a group chat.
   Leave these as they are if you are not sure.

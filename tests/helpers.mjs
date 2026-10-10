@@ -4,7 +4,8 @@
 // Created: 2026-10-09
 // Last Modified: 2026-10-10
 // Summary: Builders for synthetic test data: a valid PNG of any size, a deflated
-//          ZIP archive, and a sample agent with every field filled.
+//          ZIP archive, document and program byte shapes, and a sample agent
+//          with every field filled.
 // Notes: See README file for documentation and full license information.
 //
 // Copyright © 2026 The Regents of the University of Michigan
@@ -141,6 +142,28 @@ export function makeDeflatedZip(entries) {
   }
   return out;
 }
+
+/** A minimal Office Open XML shape: a deflated ZIP holding the part every Office file has. */
+export function makeOfficeZip() {
+  return makeDeflatedZip([{ name: "[Content_Types].xml", bytes: encoder.encode("<Types/>") }, { name: "word/document.xml", bytes: encoder.encode("<w:document/>") }]);
+}
+
+/** The first bytes of the kinds of file the app refuses or accepts by content, each padded to a few bytes. */
+export const BYTE_SHAPES = Object.freeze({
+  windows: new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00]),
+  elf: new Uint8Array([0x7f, 0x45, 0x4c, 0x46, 0x02, 0x01]),
+  machO32: new Uint8Array([0xfe, 0xed, 0xfa, 0xce, 0x00, 0x00]),
+  machO64: new Uint8Array([0xfe, 0xed, 0xfa, 0xcf, 0x00, 0x00]),
+  machO32Swapped: new Uint8Array([0xce, 0xfa, 0xed, 0xfe, 0x00, 0x00]),
+  machO64Swapped: new Uint8Array([0xcf, 0xfa, 0xed, 0xfe, 0x00, 0x00]),
+  javaOrFat: new Uint8Array([0xca, 0xfe, 0xba, 0xbe, 0x00, 0x00]),
+  ole: new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0x00, 0x00]),
+  pdf: encoder.encode("%PDF-1.7\n1 0 obj\n"),
+  pdfWithPrefix: new Uint8Array([...encoder.encode("junk before the header "), ...encoder.encode("%PDF-1.4\n")]),
+  utf16Text: new Uint8Array([0xff, 0xfe, 0x68, 0x00, 0x69, 0x00]),
+  textWithNul: new Uint8Array([0x68, 0x69, 0x00, 0x68, 0x69]),
+  utf8WithBom: new Uint8Array([0xef, 0xbb, 0xbf, 0x68, 0x69]),
+});
 
 /** Returns the byte offset of the first central directory record. */
 export function findCentralDirectory(zipBytes) {
