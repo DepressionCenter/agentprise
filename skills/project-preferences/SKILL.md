@@ -121,6 +121,12 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   included, is an Inspect tab with its own file tree and download button.
   Gemini and Claude have separate tabs even while their files match. Do not
   add a vendor until it has a real file to download.
+- The Workspace Download card is one line per product: the product name and
+  its file on the left, a short Download or Copy button on the right. Each
+  button carries hidden text naming its file, so screen readers do not hear
+  seven identical buttons.
+- The top bar carries three square icon links, GitHub, Help, and the EFDC code
+  site, in the same shape as the header of code.depressioncenter.org.
 - Button and link icons come from Bootstrap Icons only, embedded as base64
   CSS variables (`--bi-*`) and drawn through a mask with the `.bi` class, so
   each icon is stored once. Credit stays in the README.

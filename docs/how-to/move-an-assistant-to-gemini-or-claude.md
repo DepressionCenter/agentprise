@@ -75,12 +75,12 @@ Two things are worth knowing when the file came from Microsoft:
 
 ### Step 3: Download the skill
 
-Under **Download**, choose **Download skill** next to Gemini or next
-to Claude. Both buttons give the same file, so one download works for both
+Under **Download**, choose **Download** on the Gemini row or on the Claude
+row. Both buttons give the same file, so one download works for both
 products. The file is a `.zip` named after the assistant, such as
 `Caveman.zip`.
 
-![The Download card. Gemini and Claude each have a Download skill button.](../../images/guides/where-it-can-go.png)
+![The Download card. The Gemini and Claude rows each say Skill (.zip) and have a Download button on the right.](../../images/guides/where-it-can-go.png)
 
 This file is also the complete copy of your assistant. Keep it, and drop it on
 the Workspace page any time to edit the assistant again.

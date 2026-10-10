@@ -129,16 +129,17 @@ Library needs the app to run from a web address, so it is empty when you open
 
 ### Download it for a product
 
-Under **Download**, choose the product people will use:
+Under **Download**, each row names a product and the file it gets. Choose
+**Download** on the row for the product people will use:
 
 | Product | Button | What you get |
 |---|---|---|
-| The Agents list in the Microsoft 365 Copilot app or in Teams | Copilot / Teams Apps, **Download app package** | An app package (`.zip`) |
-| A Teams group chat, channel, or meeting | Teams Chat, **Download .agent file** | One `.agent` file |
-| Gemini or Claude | **Download skill** | A skill (`.zip`), the same file for both |
-| ChatGPT | ChatGPT, **Copy text** | Text to paste |
-| Gemini Notebook | Gemini Notebook, **Download .md file** | A `.md` file to add as a source |
-| Any other tool that reads Agent Skills | SKILL.md, **Download plain skill** | A plain skill (`.skill.zip`) with nothing specific to this app |
+| The Agents list in the Microsoft 365 Copilot app or in Teams | **Copilot / Teams Apps** | An app package (`.zip`) |
+| A Teams group chat, channel, or meeting | **Teams Chat** | One `.agent` file |
+| Gemini or Claude | **Gemini** or **Claude** | A skill (`.zip`), the same file for both |
+| ChatGPT | **ChatGPT**, then **Copy** | Text to paste |
+| Gemini Notebook | **Gemini Notebook** | A `.md` file to add as a source |
+| Any other tool that reads Agent Skills | **SKILL.md** | A plain skill (`.skill.zip`) with nothing specific to this app |
 
 The [formats page](formats.md) explains what to do with each file once you have
 it, and what the app package leaves out.
