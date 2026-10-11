@@ -227,8 +227,8 @@ Agentprise opens any of its own downloads, plus files made elsewhere:
   plugin. Its skills become skills in the project, and its tool servers are
   kept with the project.
 
-Drop the file on the drop area of the Workspace page, or choose Open a file in
-a project. Each file opens as a new project. When the same project is already
+Drop the file on the drop area of the Workspace page, or use the Choose a file
+button there. Each file opens as a new project. When the same project is already
 in your workspace, the app asks whether to keep both or replace yours. To add a
 file's skills to the project you have open instead, choose Add from a file in
 the project.

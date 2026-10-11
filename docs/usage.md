@@ -36,15 +36,20 @@ Go to [code.depressioncenter.org/agentprise](https://code.depressioncenter.org/a
 There is nothing to install and no account to make. Everything happens in your
 browser, and nothing you type is sent anywhere.
 
-The page has four parts, listed down the left side:
+The menu on the left has these parts:
 
 - **Workspace** is where your projects are kept and where you start new ones.
+  Once a project is open, two more items appear under it:
+  - The project's name opens the project page, where you answer the questions.
+  - **Inspect** shows every field and the exact files each product receives.
 - **Library** holds ready-made assistants and skills you can start from.
-- **Inspect** shows every field and the exact files each product receives.
-- **Help** answers the most common questions.
+- **Help** answers the most common questions and links to this documentation.
 
 Under them, **Recent** lists up to five projects you opened lately. Choose
-one to go straight back to it.
+one to open it.
+
+The buttons at the top right go to the Workspace page, the Help page, and the
+Agentprise code on GitHub.
 
 ### Projects, assistants, and skills
 
@@ -230,8 +235,8 @@ skill.
 ### Open a file you already have
 
 Drop the file on the drop area of the Workspace page, or choose
-**Choose a file** there. In a project, you can also choose **Open a file**.
-Agentprise opens:
+**Choose a file** there. If a project is open, choose **Workspace** on the left
+or the home button at the top to get back to that page first. Agentprise opens:
 
 - Any file it made itself: the backup, the skill `.zip`, the `.agent` file, or
   the app package `.zip`.
@@ -421,8 +426,9 @@ to Gemini or Claude, use their own **Download** buttons instead.
 
 ### Inspect the output
 
-Choose **Inspect** on the left, or **See what is inside each download** under
-the download buttons. The left side shows every field as a plain form, and the
+Choose **Inspect** at the top of the project page or under **Workspace** on the
+left. You can also choose **See what is inside each download** under the
+download buttons. The left side shows every field as a plain form, and the
 right side, **Files for each product**, shows the files for the product you pick, with your own words
 highlighted. Changes you make here show up in the Workspace too. The tabs run
 in alphabetical order and include **SKILL.md**, a plain Agent Skill with
