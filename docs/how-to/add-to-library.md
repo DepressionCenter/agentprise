@@ -174,6 +174,14 @@ converts. A backup that is already version 2 is left alone, so a second run
 changes nothing. On 2026-10-10, `--check` reported all 13 entries as already
 version 2 and the catalog unchanged.
 
+When the app changes how it writes a backup, add `--relayout` to either
+command. The script then opens every Library `.zip` that has no source folder,
+writes it again the way the app writes a backup today, and checks that it
+opens to the same project. Entries built from `library/sources/` are left to
+`tools/build-library.mjs`. On 2026-10-11, `--relayout` rewrote 12 entries so
+their Copilot settings and publisher details sit in `agentprise.json`, and a
+second run reported nothing to rewrite.
+
 ### Conclusion
 
 Send a backup through the GitHub issue form and a maintainer takes it from

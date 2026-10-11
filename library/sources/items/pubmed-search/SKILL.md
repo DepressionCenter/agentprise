@@ -5,7 +5,6 @@ license: GPL-3.0-or-later
 compatibility: "Works everywhere for query preparation. Live search needs one of these: the PubMed connector in Claude, the bundled E-utilities API plugin in Microsoft 365 Copilot, an MCP server you supply in ChatGPT, or Python 3 with network access in a coding agent."
 metadata:
   agentprise-kind: skill
-  creator-name: Gabriel Mongefranco
 ---
 
 # PubMed Search

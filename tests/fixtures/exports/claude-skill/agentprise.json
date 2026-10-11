@@ -127,6 +127,12 @@
     }
   ],
   "copyright": "Copyright (C) 2026 Example Creator",
+  "creator": {
+    "name": "Example Creator",
+    "url": "https://example.org",
+    "privacy": "https://example.org/privacy",
+    "terms": "https://example.org/terms"
+  },
   "files": [
     {
       "path": "openapi/records.yaml",

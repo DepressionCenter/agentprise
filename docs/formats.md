@@ -345,7 +345,7 @@ The same folder, zipped on its own, is the skill `.zip` for Gemini and Claude:
 ```
 caveman/
   SKILL.md         Required by the Agent Skills standard. Frontmatter plus instructions.
-  agentprise.json  The item fields the standard has no place for.
+  agentprise.json  Every Agentprise setting the standard has no place for.
   icon.png         The full-color icon of an assistant, when one was set.
   LICENSE.txt      The full GPL v3 text for the default license, or a short notice.
   README.md        Skill .zip and plain skill only: name, description, creator, how to use the file, and the conversion report.
@@ -368,43 +368,18 @@ starts with `Persona: `.
 
 `SKILL.md` keeps the fields the Agent Skills standard defines (`name`,
 `description`, `license`, and for a skill `compatibility` and `allowed-tools`)
-at the top level. `compatibility` is the "What it needs to work" field.
-Everything the Microsoft formats need but the standard lacks lives under
-`metadata`, as flat strings, because the standard defines `metadata` as a map
-from string keys to string values and some readers reject anything else.
-Gemini and Claude ignore metadata they do not know. A skill's own metadata
-from elsewhere is kept as it was.
+at the top level. `compatibility` is the "What it needs to work" field. Its
+`metadata` holds one Agentprise key, `agentprise-kind`, set to `agent` or
+`skill`, so a tool that reads only `SKILL.md` still knows an assistant from a
+skill. A skill's own metadata from elsewhere is kept next to it as it was.
+Gemini and Claude ignore metadata they do not know.
 
-| Metadata key | Holds | Example |
-|---|---|---|
-| `agentprise-kind` | Whether the folder is an assistant or a skill | `agent` |
-| `sharepoint-sources` | SharePoint links a person pasted, one per line | |
-| `sharepoint-items` | SharePoint items that came from a Microsoft file, as one JSON array; each has `by` (`id` or `url`) plus the keys the builder wrote | |
-| `copilot-web-search` | Copilot capability on or off | `"true"` |
-| `copilot-web-sites` | Sites web search is limited to, one per line, at most four | |
-| `copilot-sharepoint` | Copilot capability on or off. An assistant without this key reads as on when it has SharePoint links or items and off otherwise | `"false"` |
-| `copilot-teams-messages` | Copilot capability on or off | `"true"` |
-| `copilot-teams-links` | Teams chats the source is limited to, one link per line, at most five | |
-| `copilot-email` | Copilot capability on or off | `"false"` |
-| `copilot-mailboxes` | Shared or group mailboxes email is limited to, one address per line, at most 25 | |
-| `copilot-shared-mailbox` | One shared mailbox address that came from a file | |
-| `copilot-email-folders` | Folder ids that came from a file, one per line | |
-| `copilot-meetings` | Copilot capability on or off | `"true"` |
-| `copilot-meeting-items` | Meetings the source is limited to, as one JSON array of `{id, is_series}`, at most five | |
-| `copilot-code-interpreter` | Copilot capability on or off | `"true"` |
-| `copilot-image-generation` | Copilot capability on or off | `"true"` |
-| `copilot-prefer-my-files` | Tell Copilot to answer from the sources, not its own knowledge | `"false"` |
-| `copilot-response-mode` | `Auto`, `Quick response`, or `Think deeper` | `Auto` |
-| `copilot-app-id` | The Teams app id, kept so re-exports update the same app | |
-| `creator-name`, `creator-website`, `creator-privacy`, `creator-terms` | The project's publisher details, shown in the Teams manifest | |
-
-The `sharepoint-` and `copilot-` keys are written for assistants only. A skill
-carries `agentprise-kind`, its own metadata, and the `creator-` keys.
-
-`agentprise.json` sits next to `SKILL.md` and holds what neither the standard
-fields nor the metadata map can carry, so a folder copied out of a project
-stays complete. It starts with a `_license` key, like the other JSON files the
-app writes.
+Every other Agentprise setting for the item is in `agentprise.json`, which
+sits next to `SKILL.md`. Keeping them there, as ordinary JSON values, means
+the folder stays a valid Agent Skill, since the standard allows only text
+values under `metadata`, and a folder copied out of a project stays complete.
+The file starts with a `_license` key, like the other JSON files the app
+writes.
 
 | Key | Holds |
 |---|---|
@@ -413,12 +388,41 @@ app writes.
 | `id` | The item's UUID |
 | `name` | The name people see, with capitals and spaces |
 | `welcome`, `starters`, `uses` | Assistants only: the welcome message, the conversation starters, and the skill names of the skills it can use |
+| `sharepointLinks` | Assistants only: SharePoint links a person pasted, as a list |
+| `sharepointItems` | Assistants only: SharePoint items that came from a Microsoft file; each has `by` (`id` or `url`) plus the keys the builder wrote |
+| `copilot` | Assistants only: the Copilot settings, described in the next table |
 | `appId`, `license` | Skills only: the Teams app id, and the skill's own license when it differs from the project's |
 | `capabilities` | The item's tool declarations (see "Tools" below), empty when it has none |
 | `copyright` | The project's free-text copyright line |
+| `creator` | The project's publisher details, shown in the Teams manifest: `name`, `url`, `privacy`, and `terms` |
 | `files` | The path and type of each of the item's own files |
 | `composed` | `true` in every export that writes this file except the backup, so a reader knows `SKILL.md` holds composed text and takes the tools section and the `Persona: ` prefix back out |
 | `servers` | Exports only: the project servers this item's tools name, so a folder copied out alone keeps them |
+
+| `copilot` key | Holds | Example |
+|---|---|---|
+| `webSearch`, `teamsMessages`, `email`, `meetings`, `codeInterpreter`, `imageGeneration` | Each Copilot capability, on or off | `true` |
+| `sharepoint` | The SharePoint and OneDrive capability, on or off | `false` |
+| `webSites` | Sites web search is limited to, at most four | `["https://example.org"]` |
+| `teamsLinks` | Teams chats the source is limited to, at most five | |
+| `mailboxes` | Shared or group mailboxes email is limited to, at most 25 | `["lab-team@example.org"]` |
+| `sharedMailbox` | One shared mailbox address that came from a file | |
+| `emailFolders` | Folder ids that came from a file | `["inbox"]` |
+| `meetingItems` | Meetings the source is limited to, as `{id, is_series}`, at most five | |
+| `preferMyFiles` | Tell Copilot to answer from the sources, not its own knowledge | `false` |
+| `responseMode` | `Auto`, `Quick response`, or `Think deeper` | `"Auto"` |
+| `appId` | The Teams app id, kept so re-exports update the same app | |
+
+Files written before 2026-10-11 keep these settings in `SKILL.md` metadata
+instead, as text: `sharepoint-sources` and `copilot-web-sites` hold one link
+per line, `sharepoint-items` and `copilot-meeting-items` hold a JSON list, the
+switches hold `"true"` or `"false"`, and the publisher details are
+`creator-name`, `creator-website`, `creator-privacy`, and `creator-terms`. The
+other keys are `copilot-` followed by the setting name in lowercase with
+hyphens, such as `copilot-prefer-my-files`. The app still reads these keys
+when `agentprise.json` does not have the setting, so those files open the same
+as before. An old assistant without `copilot-sharepoint` reads as having
+SharePoint on when it has SharePoint links or items, and off otherwise.
 
 The skill `name` is derived from the display name: lowercase letters, digits, and
 single hyphens, at most 64 characters, never starting or ending with a hyphen.

@@ -84,7 +84,10 @@ D2. The Agent Plugins 1.0 directory layout is the backup container and one of
 the export targets. Project-level data the standard has no field for lives under
 `extensions["org.depressioncenter.agentprise"]` in `plugin.json`. Per-item data
 lives in an `agentprise.json` file next to each `SKILL.md`, so a skill folder
-copied out of a project stays self-contained.
+copied out of a project stays self-contained. That file is the only home for
+Agentprise item settings; `SKILL.md` metadata holds just `agentprise-kind`, and
+the older `copilot-`, `sharepoint-`, and `creator-` metadata keys are read
+only from files written before 2026-10-11.
 
 D3. Capability names and provider mappings are data inside the library entry.
 The app code knows only the schema of a capability declaration and the provider
@@ -418,9 +421,8 @@ evidence-scout/
 `plugin.json` carries `$schema`, `name`, `version`, `description`, `author`,
 `repository`, and `extensions["org.depressioncenter.agentprise"]` holding the
 project record without item bodies and files. `agentprise.json` next to each
-`SKILL.md` holds that item's `kind`, `id`, `uses`, `capabilities`, and any
-metadata that does not fit the existing `copilot-`, `sharepoint-`, and
-`creator-` frontmatter prefixes, which keep working as today.
+`SKILL.md` holds that item's `kind`, `id`, `uses`, `capabilities`, Copilot
+settings, SharePoint links, and publisher details.
 
 The skill zip export for a single item is that item's folder zipped, so the
 Gemini and Claude downloads keep the same shape. The app does not read version
@@ -542,7 +544,6 @@ license: GPL-3.0-or-later
 compatibility: Works everywhere for query preparation. Live search needs one of these: the PubMed connector in Claude, the bundled E-utilities API plugin in Microsoft 365 Copilot, an MCP server you supply in ChatGPT, or Python 3 with network access in a coding agent.
 metadata:
   agentprise-kind: skill
-  creator-name: First Last
 ---
 ```
 

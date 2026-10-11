@@ -1684,7 +1684,9 @@ const FILE_KIND_PROBLEMS = Object.freeze({
     onenote: "it is not a OneNote file"
 });
 
-// SKILL.md metadata is a string-to-string map per the spec.
+// SKILL.md metadata is a string-to-string map per the spec. Only kind is
+// still written; the other keys are read from files made before agentprise.json
+// held every Agentprise item setting.
 const META = Object.freeze({
     kind: "agentprise-kind",
     version: "agentprise-version",
@@ -5183,8 +5185,9 @@ function itemFileBytes(item, path) {
 }
 
 /**
- * Standard fields first, then, unless standardOnly, a metadata map of strings
- * (kind, Copilot settings, skill metadata, creator).
+ * Standard fields first, then, unless standardOnly, a metadata map of strings:
+ * the item kind and a skill's own metadata. Every other Agentprise setting is
+ * in agentprise.json.
  * @param {object} project
  * @param {object} item
  * @param {{standardOnly?: boolean, description?: string}} options
@@ -5207,44 +5210,23 @@ function itemFrontmatter(project, item, options) {
     if (options.standardOnly) {
         return data;
     }
+    // Kind stays here so a reader without agentprise.json still knows an
+    // assistant from a skill.
     const metadata = {};
     metadata[META.kind] = item.kind;
-    if (item.kind === "agent") {
-        const copilot = item.copilot;
-        metadata[META.sharepoint] = item.sharepointLinks.join("\n");
-        metadata[META.sharepointItems] = item.sharepointItems.length > 0 ? JSON.stringify(item.sharepointItems) : "";
-        metadata[META.webSearch] = String(copilot.webSearch);
-        metadata[META.webSites] = copilot.webSites.join("\n");
-        metadata[META.sharepointSwitch] = String(copilot.sharepoint);
-        metadata[META.teamsMessages] = String(copilot.teamsMessages);
-        metadata[META.teamsLinks] = copilot.teamsLinks.join("\n");
-        metadata[META.email] = String(copilot.email);
-        metadata[META.mailboxes] = copilot.mailboxes.join("\n");
-        metadata[META.sharedMailbox] = copilot.sharedMailbox;
-        metadata[META.emailFolders] = copilot.emailFolders.join("\n");
-        metadata[META.meetings] = String(copilot.meetings);
-        metadata[META.meetingItems] = copilot.meetingItems.length > 0 ? JSON.stringify(copilot.meetingItems) : "";
-        metadata[META.codeInterpreter] = String(copilot.codeInterpreter);
-        metadata[META.imageGeneration] = String(copilot.imageGeneration);
-        metadata[META.preferMyFiles] = String(copilot.preferMyFiles);
-        metadata[META.responseMode] = copilot.responseMode;
-        metadata[META.appId] = copilot.appId;
-    } else {
+    if (item.kind === "skill") {
         Object.keys(item.metadata).forEach(function (key) {
             metadata[key] = item.metadata[key];
         });
     }
-    metadata[META.creatorName] = project.creator.name;
-    metadata[META.creatorWebsite] = project.creator.url;
-    metadata[META.creatorPrivacy] = project.creator.privacy;
-    metadata[META.creatorTerms] = project.creator.terms;
     data.metadata = metadata;
     return data;
 }
 
 /**
- * The sidecar: fields the standard lacks (id, skills, tools, welcome,
- * starters, file list).
+ * The sidecar: every Agentprise setting the standard lacks (id, skills, tools,
+ * welcome, starters, SharePoint links, Copilot settings, publisher details,
+ * file list), as plain JSON values.
  * @param {object} project
  * @param {object} item
  * @returns {string} JSON text
@@ -5261,6 +5243,9 @@ function itemSidecar(project, item, composed, servers) {
         doc.welcome = item.welcome;
         doc.starters = item.starters.slice();
         doc.uses = item.uses.slice();
+        doc.sharepointLinks = item.sharepointLinks.slice();
+        doc.sharepointItems = JSON.parse(JSON.stringify(item.sharepointItems));
+        doc.copilot = JSON.parse(JSON.stringify(item.copilot));
     } else {
         doc.appId = item.appId;
         // Empty means the project license; this keeps the difference.
@@ -5268,6 +5253,8 @@ function itemSidecar(project, item, composed, servers) {
     }
     doc.capabilities = JSON.parse(JSON.stringify(item.capabilities));
     doc.copyright = project.copyright;
+    // Kept per item so a folder copied out of the project still names its publisher.
+    doc.creator = { name: project.creator.name, url: project.creator.url, privacy: project.creator.privacy, terms: project.creator.terms };
     doc.files = item.files.map(function (file) { return { path: file.path, type: fileTypeOf(file.path) }; });
     // Exports rewrite text for the product; this flag lets a reader take the
     // additions back out.
@@ -5611,9 +5598,10 @@ function readItemFolder(entries, folder, nested) {
         raw.welcome = side.welcome;
         raw.starters = side.starters;
         raw.uses = side.uses;
-        raw.sharepointLinks = splitLines(meta[META.sharepoint]);
-        raw.sharepointItems = parseJsonArray(meta[META.sharepointItems]);
-        raw.copilot = {
+        // Files made before agentprise.json held these keep them as metadata strings.
+        raw.sharepointLinks = Array.isArray(side.sharepointLinks) ? side.sharepointLinks : splitLines(meta[META.sharepoint]);
+        raw.sharepointItems = Array.isArray(side.sharepointItems) ? side.sharepointItems : parseJsonArray(meta[META.sharepointItems]);
+        raw.copilot = isPlainObject(side.copilot) ? side.copilot : {
             webSearch: meta[META.webSearch],
             webSites: splitLines(meta[META.webSites]),
             sharepoint: meta[META.sharepointSwitch],
@@ -5669,7 +5657,12 @@ function readItemFolder(entries, folder, nested) {
         files.push({ path: path === "icon.png" ? "assets/icon.png" : path, bytes: bytes });
     });
     raw.files = files;
-    const creator = {
+    const creator = isPlainObject(side.creator) ? {
+        name: side.creator.name,
+        url: side.creator.url,
+        privacy: side.creator.privacy,
+        terms: side.creator.terms
+    } : {
         name: meta[META.creatorName],
         url: meta[META.creatorWebsite],
         privacy: meta[META.creatorPrivacy],

@@ -173,9 +173,9 @@ describe("backup round trip", () => {
     assert.equal(extension.schemaVersion, engine.PROJECT_SCHEMA_VERSION);
     assert.deepEqual(extension.servers, engine.project.record(project).servers);
     assert.deepEqual(extension.unrecognized, [{ path: "hooks/hooks.json", note: "Not interpreted by Agentprise." }, { path: "skills/data-tools/photo.png", note: "Not interpreted by Agentprise." }]);
-    // Agent metadata keeps only the kind and the Copilot, SharePoint, and creator keys; the rest is in agentprise.json.
+    // Agent metadata keeps only the kind; the rest is in agentprise.json.
     const { data } = engine.yaml.parseFrontmatter(decode(byName.get("lab-kit/skills/caveman/SKILL.md")));
-    assert.ok(Object.keys(data.metadata).every((key) => /^(agentprise-kind|copilot-|sharepoint-|creator-)/.test(key)));
+    assert.deepEqual(data.metadata, { "agentprise-kind": "agent" });
     const sidecar = JSON.parse(decode(byName.get("lab-kit/skills/caveman/agentprise.json")));
     assert.deepEqual(sidecar.uses, ["data-tools"]);
     assert.equal(sidecar.capabilities[0].id, "web");
