@@ -4046,12 +4046,18 @@ async function zipRead(bytes) {
 // ### Format helpers ###
 
 /** Notice for files that allow an extra key: creator copyright and license, then the app. */
+/** The license file a plugin made elsewhere brought at its root, kept as unrecognized, or null. */
+function rootLicenseFile(project) {
+    return project.unrecognized.find(function (entry) { return entry.path.indexOf("/") < 0 && LICENSE_FILE_PATTERN.test(entry.path); }) || null;
+}
+
 function licenseNotice(agent) {
     const parts = [];
     if (agent.copyright) {
         parts.push(agent.copyright.replace(/\.?$/, "."));
     }
-    parts.push("Licensed under " + agent.license + ".");
+    // A license named only by its file, such as "See LICENSE.txt", is quoted as such.
+    parts.push(/^See /.test(agent.license) ? "License: " + agent.license.replace(/^See /, "see ") + "." : "Licensed under " + agent.license + ".");
     parts.push("Made with Agentprise, free software under the GNU GPL v3.0 or later: " + APP_REPOSITORY_URL);
     return parts.join(" ");
 }
@@ -5458,7 +5464,7 @@ function projectBundleEntries(project) {
     const own = function (name) {
         return project.unrecognized.some(function (entry) { return entry.path.toLowerCase() === name.toLowerCase(); });
     };
-    if (!own("LICENSE.txt")) {
+    if (!rootLicenseFile(project)) {
         entries.push({ name: root + "LICENSE.txt", bytes: toBytes(bundleLicenseText(first)) });
     }
     if (!own("README.md")) {
@@ -5851,7 +5857,12 @@ function readPluginArchive(entries) {
         generated.push(mcpPath);
     }
     if (ours) {
-        generated.push(root + "README.md", root + "LICENSE.txt", root + SETUP_FILE_NAME);
+        const kept = Array.isArray(extension.unrecognized) ? extension.unrecognized.filter(isPlainObject).map(function (entry) { return entry.path; }) : [];
+        ["README.md", "LICENSE.txt", SETUP_FILE_NAME].forEach(function (name) {
+            if (kept.indexOf(name) < 0) {
+                generated.push(root + name);
+            }
+        });
     }
     const notes = {};
     if (ours && Array.isArray(extension.unrecognized)) {
@@ -6224,7 +6235,8 @@ function pluginEntries(project, exportId) {
         head.push({ name: root + (claude ? ".mcp.json" : "mcp.json"), bytes: toBytes(JSON.stringify(mcpManifest(servers, claude ? "claude" : "agent-plugins"), null, 2) + "\n") });
     }
     const first = project.items[0] ? agentView(project, project.items[0]) : { copyright: project.copyright, license: project.license };
-    head.push({ name: root + "LICENSE.txt", bytes: toBytes(bundleLicenseText(first)) });
+    const authorLicense = rootLicenseFile(project);
+    head.push({ name: root + "LICENSE.txt", bytes: authorLicense ? authorLicense.bytes : toBytes(bundleLicenseText(first)) });
     head.push({ name: root + "README.md", bytes: toBytes(pluginReadme(project, report, exportId)) });
     const setup = writeSetupGuide(project, project.items, exportId);
     if (setup) {

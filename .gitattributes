@@ -2,11 +2,11 @@
 # .gitattributes
 # Author(s): Gabriel Mongefranco.
 # Created: 2026-10-09
-# Last Modified: 2026-10-10
+# Last Modified: 2026-10-11
 # Summary: Keeps the launch scripts and prebuilt server binaries byte-exact on
 #          every platform, so the Linux and macOS scripts run after a Windows checkout,
 #          and keeps the library bundles, pinned test schemas, and golden export
-#          files untouched by line-ending conversion.
+#          files and import fixtures untouched by line-ending conversion.
 # Notes: See README file for documentation and full license information.
 #
 # Copyright © 2026 The Regents of the University of Michigan
@@ -31,3 +31,5 @@ tests/schemas/** -text
 tests/fixtures/exports/** -text
 # Library sources are built into ZIPs that the tests compare byte for byte.
 library/sources/** -text
+# Import fixtures are ZIP archives the importer tests open byte for byte.
+tests/fixtures/imports/** -text
