@@ -455,7 +455,7 @@ describe("zip", () => {
   });
 
   test("rejects too many entries", async () => {
-    const entries = Array.from({ length: 201 }, (_, i) => ({ name: "f" + i, bytes: encode("x") }));
+    const entries = Array.from({ length: engine.LIMITS.zipEntries + 1 }, (_, i) => ({ name: "f" + i, bytes: encode("x") }));
     await assert.rejects(engine.zip.read(engine.zip.write(entries)), /entries/);
   });
 

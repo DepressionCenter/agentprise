@@ -3,8 +3,9 @@
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
 // Last Modified: 2026-10-11
-// Summary: Tests for the agent library: the catalog and each bundle it lists,
-//          opened with the same importer the app uses for dropped files.
+// Summary: Tests for the agent library: the catalog and each backup it lists,
+//          opened as a project with the same importer the app uses for
+//          dropped files.
 // Notes: See README file for documentation and full license information.
 //
 // Copyright © 2026 The Regents of the University of Michigan
@@ -32,16 +33,23 @@ const catalog = JSON.parse(readFileSync(join(libraryDir, "catalog.json"), "utf8"
 // The same rule the page applies to a catalog line: a plain file name ending in .zip.
 const FILE_NAME = /^[A-Za-z0-9][A-Za-z0-9 ._-]{0,99}\.zip$/;
 
+/**
+ * Opens a catalog entry as a project and returns it with the agent view of its
+ * first item, which is the agent for an entry of kind "agent".
+ */
 async function openEntry(entry) {
   const bytes = new Uint8Array(readFileSync(join(libraryDir, entry.file)));
-  assert.equal(engine.detectFormat(entry.file, bytes), "bundle", entry.file + " must be an Agentprise bundle");
-  const result = await engine.formats.bundle.import(bytes);
+  assert.equal(engine.detectFormat(entry.file, bytes), "plugin", entry.file + " must be an Agentprise backup");
+  const result = await engine.imports.any(entry.file, bytes);
   assert.equal(result.error, undefined, entry.file + ": " + result.error);
-  return result;
+  assert.equal(result.format, "plugin");
+  const item = result.project.items[0];
+  return { project: result.project, item: item, notices: result.notices, agent: item ? engine.project.agentView(result.project, item) : null };
 }
 
 // Caveman supplies the publisher details for the original maintainer's entries.
 const caveman = (await openEntry(catalog.agents.find((item) => item.file === "caveman.zip"))).agent;
+const ENTRY_KINDS = ["agent", "skill", "project"];
 
 describe("library catalog", () => {
   test("carries the license key and well-formed entries", () => {
@@ -57,6 +65,8 @@ describe("library catalog", () => {
       assert.ok(Array.isArray(entry.tags) && entry.tags.length > 0);
       assert.ok(entry.author.length > 0);
       assert.ok(entry.license.length > 0);
+      assert.ok(ENTRY_KINDS.includes(entry.kind), entry.file + " has an unknown kind");
+      assert.ok(Array.isArray(entry.capabilities), entry.file + " must list its tools, even when there are none");
     }
     // Two lines for one file or one name would make the page show the same card twice.
     const files = catalog.agents.map((entry) => entry.file);
@@ -65,10 +75,23 @@ describe("library catalog", () => {
     assert.equal(new Set(names).size, names.length, "two entries share a name");
   });
 
-  test("every bundle opens cleanly and matches its catalog line", async () => {
+  test("every backup opens cleanly and matches its catalog line", async () => {
     for (const entry of catalog.agents) {
-      const { agent, notices } = await openEntry(entry);
-      assert.deepEqual(notices, []);
+      const { project, item, agent, notices } = await openEntry(entry);
+      assert.deepEqual(notices, [], entry.file + " must open without notices");
+      if (entry.kind === "agent") {
+        assert.equal(project.items.length, 1, entry.file + " must hold exactly one item");
+        assert.equal(item.kind, "agent", entry.file + " must hold an agent");
+      }
+      // The catalog lists the tool ids the entry declares, so cards can show them without opening the file.
+      const declared = [...new Set(project.items.flatMap((i) => i.capabilities.map((c) => c.id)))];
+      assert.deepEqual(entry.capabilities.slice().sort(), declared.sort(), entry.file + " catalog tools must match the file");
+      assert.deepEqual(project.unrecognized, [], entry.file + " must not carry files the app cannot read");
+      assert.equal(project.license, entry.license);
+      // A backup re-exported and opened again is the same project.
+      const again = await engine.exports.backup(project);
+      const reopened = await engine.imports.any(again.fileName, again.bytes);
+      assert.deepEqual(engine.project.record(reopened.project), engine.project.record(project), entry.file + " must survive a backup round trip");
       assert.equal(agent.name, entry.name);
       assert.equal(agent.description, entry.summary);
       assert.equal(agent.creator.name, entry.author);
@@ -93,6 +116,7 @@ describe("library catalog", () => {
       assert.equal(agent.copilot.meetings, false, entry.file + " must not read meetings by default");
       assert.deepEqual(agent.sharepointLinks, [], entry.file + " must not link files by default");
       assert.deepEqual(engine.validateAgent(agent).problems, []);
+      assert.deepEqual(engine.project.validateItem(project, item).problems, []);
       assert.ok(agent.icon, entry.file + " should carry an icon so the card and the Teams package have one");
       const size = engine.png.dimensions(agent.icon.bytes);
       assert.deepEqual([size.width, size.height], [192, 192]);
@@ -140,9 +164,14 @@ describe("Caveman entry", () => {
     assert.equal(agent.creator.website, "https://gabriel.mongefranco.com");
     assert.ok(agent.creator.privacy.length > 0 && agent.creator.terms.length > 0, "Copilot needs privacy and terms links");
     assert.equal(agent.copyright, "Copyright (C) 2026 Gabriel Mongefranco");
-    const bundle = await engine.formats.bundle.export(agent);
-    assert.deepEqual(bundle.warnings, []);
-    const ms = engine.formats.msAgent.export(agent);
+    const { project, item } = await openEntry(entry);
+    const backup = await engine.exports.backup(project);
+    assert.equal(backup.fileName, "caveman.agentprise.zip");
+    assert.deepEqual(backup.report, []);
+    const skillZip = await engine.exports.skillZip(project, item);
+    assert.equal(skillZip.fileName, "Caveman.zip");
+    assert.deepEqual(skillZip.report, []);
+    const ms = engine.exports.msAgent(project, item);
     assert.deepEqual(ms.warnings, []);
     assert.equal(ms.fileName, "Caveman.agent");
   });
