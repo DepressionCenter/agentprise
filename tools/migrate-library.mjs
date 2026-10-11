@@ -2,10 +2,12 @@
 // tools/migrate-library.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-10
-// Summary: One-time maintainer script that converts each version 1 Agentprise
-//          bundle in library/ into the version 2 project backup, checks that
-//          every field survives, and adds the version 2 fields to the catalog.
+// Last Modified: 2026-10-11
+// Summary: Maintainer script that converts each version 1 Agentprise bundle in
+//          library/ into the version 2 project backup, checks that every field
+//          survives, and adds the version 2 fields to the catalog. With
+//          --relayout, it also writes every Library ZIP that has no source
+//          folder again in the current backup layout.
 // Notes: See README file for documentation and full license information.
 //
 // Copyright © 2026 The Regents of the University of Michigan
@@ -23,14 +25,17 @@
 // Usage, from the repository root:
 //   node tools/migrate-library.mjs           convert every version 1 bundle
 //   node tools/migrate-library.mjs --check   report what would change, write nothing
+//   node tools/migrate-library.mjs --relayout          also rewrite version 2 ZIPs in the current layout
+//   node tools/migrate-library.mjs --relayout --check  report which ZIPs would be rewritten
 //
 // The app reads only version 2 backups, so this script carries the one piece
 // of version 1 knowledge needed: a version 1 bundle is one Agent Skill folder
 // whose SKILL.md frontmatter metadata holds every agent field as flat strings.
 // A bundle that is already a version 2 backup is left alone, so a second run
-// changes nothing.
+// changes nothing. Entries built from library/sources/ belong to
+// tools/build-library.mjs, so --relayout leaves them alone.
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { loadEngine, repoRoot } from "../tests/load-engine.mjs";
@@ -40,11 +45,13 @@ import { makeDeflatedZip } from "../tests/helpers.mjs";
 const engine = loadEngine();
 await engine.ready;
 const checkOnly = process.argv.includes("--check");
+const relayout = process.argv.includes("--relayout");
 const libraryDir = join(repoRoot, "library");
 const catalogPath = join(libraryDir, "catalog.json");
-// Version 1 metadata keys that version 2 no longer writes to the frontmatter.
-// The rest, with the copilot-, sharepoint-, and creator- prefixes, keep the
-// names in the engine's META constant.
+const entriesDir = join(libraryDir, "sources", "entries");
+// Version 1 metadata keys that version 2 never wrote to the frontmatter. The
+// rest, with the copilot-, sharepoint-, and creator- prefixes, keep the names
+// in the engine's META constant.
 const V1_KEYS = { displayName: "display-name", welcome: "welcome", starters: "starters", copyright: "copyright" };
 // The agent fields every download is built from, compared before and after.
 const COMPARED_FIELDS = ["name", "description", "welcome", "instructions", "starters", "icon", "sharepointLinks", "sharepointItems", "files", "copilot", "creator", "copyright", "license"];
@@ -178,6 +185,41 @@ for (const entry of catalog.agents) {
   console.log((checkOnly ? "would convert: " : "converted: ") + entry.file + " (" + bytes.length + " to " + packed.length + " bytes)");
 }
 
+// ### Rewrite Version 2 Entries ###
+// Opens each ZIP the way the app does and writes it again, so a Library entry
+// made by an older version of the app has the layout the app writes today.
+// Ids and timestamps come from the file, so a second run changes nothing.
+let relaid = 0;
+if (relayout) {
+  const built = new Set(readdirSync(entriesDir).filter((name) => name.endsWith(".json")).map((name) => JSON.parse(readFileSync(join(entriesDir, name), "utf8")).file));
+  for (const entry of catalog.agents) {
+    if (built.has(entry.file)) {
+      continue;
+    }
+    const path = join(libraryDir, entry.file);
+    const bytes = new Uint8Array(readFileSync(path));
+    const opened = await engine.imports.any(entry.file, bytes);
+    if (opened.error || opened.notices.length > 0) {
+      throw new Error(entry.file + ": did not open cleanly: " + (opened.error || opened.notices.join(" ")));
+    }
+    const backup = await engine.exports.backup(opened.project);
+    const packed = makeDeflatedZip(backup.entries);
+    if (Buffer.from(packed).equals(Buffer.from(bytes))) {
+      continue;
+    }
+    // The rewritten file must open to the same project, field for field.
+    const reopened = await engine.imports.any(entry.file, packed);
+    if (reopened.error || reopened.notices.length > 0 || !isDeepStrictEqual(engine.project.record(reopened.project), engine.project.record(opened.project))) {
+      throw new Error(entry.file + ": the rewritten file does not open to the same project");
+    }
+    if (!checkOnly) {
+      writeFileSync(path, packed);
+    }
+    relaid += 1;
+    console.log((checkOnly ? "would rewrite: " : "rewrote: ") + entry.file);
+  }
+}
+
 // ### Save Results ###
 // Catalog entries gain kind and capabilities. Every version 1 entry is a
 // single assistant with no tools.
@@ -200,4 +242,4 @@ catalog.agents = catalog.agents.map((entry) => {
 if (catalogChanged && !checkOnly) {
   writeFileSync(catalogPath, JSON.stringify(catalog, null, 2) + "\n");
 }
-console.log((checkOnly ? "Check only. " : "") + converted + " converted, " + skipped + " already version 2" + (catalogChanged ? ", catalog " + (checkOnly ? "would be " : "") + "updated." : ", catalog unchanged."));
+console.log((checkOnly ? "Check only. " : "") + converted + " converted, " + skipped + " already version 2" + (relayout ? ", " + relaid + (checkOnly ? " to rewrite" : " rewritten") : "") + (catalogChanged ? ", catalog " + (checkOnly ? "would be " : "") + "updated." : ", catalog unchanged."));

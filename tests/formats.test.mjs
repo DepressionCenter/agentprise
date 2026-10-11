@@ -296,24 +296,8 @@ describe("Agent Skill ZIP", () => {
     for (const value of Object.values(data.metadata)) {
       assert.equal(typeof value, "string");
     }
-    // Display name, welcome, and starters moved to the sidecar; the metadata keeps the kind and the Copilot, SharePoint, and creator keys.
-    assert.equal(data.metadata["agentprise-kind"], "agent");
-    for (const key of Object.keys(data.metadata)) {
-      assert.match(key, /^(agentprise-kind|copilot-|sharepoint-|creator-)/, key);
-    }
-    assert.equal(data.metadata["copilot-prefer-my-files"], "true");
-    assert.equal(data.metadata["copilot-email"], "true");
-    assert.equal(data.metadata["copilot-web-sites"], "https://example.org\nhttps://example.net/docs/guide");
-    assert.equal(data.metadata["copilot-sharepoint"], "true");
-    assert.equal(data.metadata["copilot-teams-links"], agent.copilot.teamsLinks.join("\n"));
-    assert.equal(data.metadata["copilot-mailboxes"], "lab-team@example.org");
-    assert.equal(data.metadata["copilot-shared-mailbox"], "front-desk@example.org");
-    assert.equal(data.metadata["copilot-email-folders"], "inbox");
-    assert.deepEqual(JSON.parse(data.metadata["copilot-meeting-items"]), agent.copilot.meetingItems);
-    assert.equal(data.metadata["copilot-response-mode"], "Think deeper");
-    assert.deepEqual(JSON.parse(data.metadata["sharepoint-items"]), agent.sharepointItems);
-    assert.equal(data.metadata["creator-name"], "Example Creator");
-    assert.equal(data.metadata["creator-privacy"], "https://example.org/privacy");
+    // The metadata keeps only the kind; every other Agentprise setting is in the sidecar.
+    assert.deepEqual(data.metadata, { "agentprise-kind": "agent" });
     assert.equal(body.trim(), agent.instructions);
     const sidecar = JSON.parse(decode(byName.get("caveman/agentprise.json")));
     assert.equal(sidecar.schemaVersion, engine.PROJECT_SCHEMA_VERSION);
@@ -326,6 +310,15 @@ describe("Agent Skill ZIP", () => {
     assert.deepEqual(sidecar.capabilities, []);
     assert.equal(sidecar.copyright, agent.copyright);
     assert.deepEqual(sidecar.files, [{ path: "references/notes.txt", type: "txt" }]);
+    // Copilot settings, SharePoint links, and publisher details are plain JSON values.
+    assert.deepEqual(sidecar.copilot, JSON.parse(JSON.stringify(project.items[0].copilot)));
+    assert.equal(sidecar.copilot.preferMyFiles, true);
+    assert.equal(sidecar.copilot.responseMode, "Think deeper");
+    assert.deepEqual(sidecar.copilot.webSites, ["https://example.org", "https://example.net/docs/guide"]);
+    assert.deepEqual(sidecar.sharepointLinks, project.items[0].sharepointLinks);
+    assert.deepEqual(sidecar.sharepointItems, JSON.parse(JSON.stringify(project.items[0].sharepointItems)));
+    assert.equal(sidecar.creator.name, "Example Creator");
+    assert.equal(sidecar.creator.privacy, "https://example.org/privacy");
     // An export marks its composed text so a re-import can take the additions back out.
     assert.equal(sidecar.composed, true);
     assert.ok(sidecar._license.includes("GPL-3.0-or-later"));
@@ -370,7 +363,7 @@ describe("Agent Skill ZIP", () => {
     assert.equal(data.license, "MIT. See LICENSE.txt.");
     assert.equal(data.compatibility, "Needs Python 3");
     assert.equal(data["allowed-tools"], "Bash(python:*)");
-    assert.deepEqual(data.metadata, { "agentprise-kind": "skill", team: "lab", "creator-name": "", "creator-website": "", "creator-privacy": "", "creator-terms": "" });
+    assert.deepEqual(data.metadata, { "agentprise-kind": "skill", team: "lab" });
     assert.equal(body.trim(), item.body);
     const sidecar = JSON.parse(decode(entries[1].bytes));
     assert.equal(sidecar.kind, "skill");
@@ -403,6 +396,34 @@ describe("Agent Skill ZIP", () => {
     assert.deepEqual(result.project.unrecognized.map((u) => u.path), ["skills/x/references/photo.png"]);
     // The agent view lists only the files directly under references/.
     assert.deepEqual(viewOf(result.project).files.map((f) => f.name), ["deploy.ps1", "data.txt"]);
+  });
+
+  test("an agent folder with its Copilot and publisher settings as metadata strings still opens with them", async () => {
+    // Files made before agentprise.json held these settings keep them in SKILL.md metadata.
+    const skillMd = [
+      "---", "name: old-agent", "description: d", "metadata:",
+      "  agentprise-kind: agent",
+      "  sharepoint-sources: https://example.sharepoint.com/sites/a",
+      "  copilot-web-search: \"true\"",
+      "  copilot-web-sites: https://example.org",
+      "  copilot-email: \"false\"",
+      "  copilot-response-mode: Think deeper",
+      "  creator-name: Example Creator",
+      "  creator-website: https://example.org",
+      "---", "", "Talk plainly.", "",
+    ].join("\n");
+    const sidecar = JSON.stringify({ schemaVersion: engine.PROJECT_SCHEMA_VERSION, kind: "agent", id: "11111111-1111-4111-8111-111111111111", name: "Old Agent", welcome: "", starters: [], uses: [], capabilities: [], copyright: "", files: [] });
+    const zip = engine.zip.write([{ name: "old-agent/SKILL.md", bytes: encode(skillMd) }, { name: "old-agent/agentprise.json", bytes: encode(sidecar) }]);
+    const result = await engine.imports.any("old-agent.zip", zip);
+    const item = result.project.items[0];
+    assert.equal(item.kind, "agent");
+    assert.deepEqual(item.sharepointLinks, ["https://example.sharepoint.com/sites/a"]);
+    assert.equal(item.copilot.webSearch, true);
+    assert.deepEqual(item.copilot.webSites, ["https://example.org"]);
+    assert.equal(item.copilot.email, false);
+    assert.equal(item.copilot.responseMode, "Think deeper");
+    assert.equal(result.project.creator.name, "Example Creator");
+    assert.equal(result.project.creator.url, "https://example.org");
   });
 
   test("an agent SKILL.md written without the SharePoint switch opens with it on when links exist", () => {

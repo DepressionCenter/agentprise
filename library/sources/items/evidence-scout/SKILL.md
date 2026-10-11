@@ -4,28 +4,6 @@ description: Find and compare research evidence, trace claims to sources, and pr
 license: GPL-3.0-or-later. See LICENSE.txt.
 metadata:
   agentprise-kind: agent
-  sharepoint-sources: ""
-  sharepoint-items: ""
-  copilot-web-search: "true"
-  copilot-web-sites: ""
-  copilot-sharepoint: "false"
-  copilot-teams-messages: "false"
-  copilot-teams-links: ""
-  copilot-email: "false"
-  copilot-mailboxes: ""
-  copilot-shared-mailbox: ""
-  copilot-email-folders: ""
-  copilot-meetings: "false"
-  copilot-meeting-items: ""
-  copilot-code-interpreter: "false"
-  copilot-image-generation: "true"
-  copilot-prefer-my-files: "false"
-  copilot-response-mode: Auto
-  copilot-app-id: ""
-  creator-name: Gabriel Mongefranco
-  creator-website: https://gabriel.mongefranco.com
-  creator-privacy: https://gabriel.mongefranco.com/privacy
-  creator-terms: https://gabriel.mongefranco.com/terms
 ---
 
 # Evidence Scout

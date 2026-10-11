@@ -108,12 +108,20 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   `icon.png` for an assistant with a picture, `LICENSE.txt`, and its files
   (attached files under `references/`). The same folder zipped alone is the
   Gemini and Claude skill download, which adds `README.md`. Frontmatter
-  `metadata` holds flat strings: `agentprise-kind`, and for assistants the
-  `copilot-` and `sharepoint-` keys, plus the `creator-` keys; SharePoint items
-  are one JSON array string. The welcome message, starters, `uses`, display
-  name, copyright, and file list live in `agentprise.json`. The key names are
-  the `META` constant in `index.html` and the tables in
+  `metadata` holds only `agentprise-kind` and a skill's own metadata from
+  elsewhere. Every other Agentprise item setting lives in `agentprise.json` as
+  plain JSON: the welcome message, starters, `uses`, display name, Copilot
+  settings, SharePoint links and items, publisher details, copyright, and file
+  list. The importer still reads the older `copilot-`, `sharepoint-`, and
+  `creator-` metadata keys (the `META` constant in `index.html`) when the
+  sidecar lacks a setting. The tables are in
   [docs/formats.md](../../docs/formats.md).
+- **Products it works in** (More settings) stores `notFor`, a list of the
+  `PRODUCT_LABELS` keys (the provider keys without `*`), and `notForReason` on
+  each item. `planExport` blocks every export whose `EXPORTS` target is in the
+  list, an assistant leaves out a used skill marked for that target, and the
+  two plugins leave marked items out instead of blocking, unless every item is
+  marked. The sidecar writes both keys only when they are set.
 - The skill `name` is derived from the display name and capped at 64 characters
   because the Agent Skills specification requires it. Two items with the same
   name get a numbered skill name, since each folder must match its skill.

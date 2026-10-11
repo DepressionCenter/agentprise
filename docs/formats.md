@@ -38,9 +38,9 @@ maintainers", holds the technical details behind each file.
 | Claude | Claude | A skill (`.zip`) |
 | A ChatGPT project | ChatGPT, Copy | Project instructions to paste |
 | Gemini Notebook | Gemini Notebook | A `.md` file to add as a source |
-| Another tool that reads Agent Skills | SKILL.md | A plain skill (`.skill.zip`) with nothing specific to this app |
+| Another tool that reads Agent Skills, such as Claude Code, Codex, Kimi Code CLI, or OpenClaw | SKILL.md | A plain skill (`.skill.zip`) with nothing specific to this app |
 | Claude (claude.ai, Cowork, or Claude Code), with every assistant, skill, and tool in the project | Claude plugin | One plugin (`.claude-plugin.zip`) |
-| ChatGPT, Codex, GitHub Copilot, Cursor, or another tool that reads Agent Plugins, with every assistant, skill, and tool in the project | Plugin | One plugin (`.plugin.zip`) |
+| ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw, or another tool that reads Agent Plugins, with every assistant, skill, and tool in the project | Plugin | One plugin (`.plugin.zip`) |
 | Nowhere yet, or you want to edit it later | Download Backup | The whole project as one `.agentprise.zip` |
 
 The first seven downloads are for one assistant or skill: the one named at the
@@ -77,6 +77,11 @@ servers the product can reach, a `README.md`, a `LICENSE.txt`, and a
 `SETUP.md` when something needs setting up. Agentprise can open either
 plugin again. The Plugin download brings back the whole project, and the
 Claude plugin brings back its assistants, skills, and tool servers.
+
+**Products it works in**, the setting that turns off the downloads for a
+product, is kept by the backup, the skill `.zip`, and the plugins. The plain
+skill has no place for it, so a plain skill opened again works in every
+product.
 
 Settings that only Microsoft 365 Copilot understands, such as what Copilot may
 use, the lists that limit each source, the response mode, and attached files,
@@ -169,6 +174,10 @@ reasons:
   allows.
 - The download would drop a list that limits a Copilot source, which would let
   the assistant use the whole source.
+- The author marked the assistant or skill as not for this product under
+  **More settings**, then **Products it works in**. A whole-project plugin is
+  blocked this way only when every item in the project is marked; otherwise it
+  leaves the marked items out.
 
 ### What to do with the file
 
@@ -205,9 +214,22 @@ Skills turned on for your organization.
 
 **Plugin.** In ChatGPT, a workspace owner, or someone allowed to upload
 plugins, opens the Admin console, then Plugins, chooses Add, then Upload
-plugin, and picks the `.zip` file. In Codex, GitHub Copilot, Cursor, and
-similar tools, unzip the file and add the folder as a plugin, following the
-tool's own steps.
+plugin, and picks the `.zip` file. In Codex, GitHub Copilot, Cursor,
+OpenClaw, and similar tools, unzip the file and add the folder as a plugin,
+following the tool's own steps.
+
+**Plain skill (.skill.zip).** Unzip the file where your tool looks for skills,
+such as the `.agents/skills` folder of a project.
+
+- In OpenClaw, or a Kimi Claw you run yourself, unzip it into the `skills`
+  folder of your OpenClaw workspace. Or unzip it anywhere and run
+  `openclaw skills install` with the path to the folder.
+- In Kimi Code CLI, unzip it into the `.agents/skills` folder of your project,
+  or into `.kimi-code/skills` in your home folder to use it in every project.
+
+Kimi chat, Kimi Agent mode, and the Kimi Claw that Kimi hosts for you have no
+way to upload a skill file today. They offer skills only from Kimi's own list,
+from ClawHub, or made inside Kimi.
 
 **Backup (.agentprise.zip).** Keep it somewhere safe, because browsers can
 clear what they store. Drop it on the Workspace page to open the project
@@ -257,9 +279,9 @@ a real account. Read it before changing any converter in `index.html`.
 |---|---|---|---|---|---|
 | Agentprise project backup (Agent Plugins 1.0 folder) | `.agentprise.zip` | Yes | Yes | Yes, for the whole project | Keeping a project to edit later |
 | Skill (Agent Skill folder with a sidecar) | `.zip` | Yes | Yes | Yes for one item, without the project's organization and version | Gemini and Claude |
-| Plain skill | `.skill.zip` | Yes | Yes | Standard Agent Skills fields only | Any tool that reads Agent Skills |
+| Plain skill | `.skill.zip` | Yes | Yes | Standard Agent Skills fields only | Any tool that reads Agent Skills, such as Claude Code, Codex, Kimi Code CLI, and OpenClaw |
 | Claude plugin | `.claude-plugin.zip` | Yes, as skills and servers | Yes | No: instructions are composed for Claude, and local servers are left out | claude.ai, Cowork, and Claude Code |
-| Plugin (Agent Plugins 1.0 folder with the project record) | `.plugin.zip` | Yes, as a project | Yes | No: instructions are composed for ChatGPT | ChatGPT, Codex, GitHub Copilot, Cursor |
+| Plugin (Agent Plugins 1.0 folder with the project record) | `.plugin.zip` | Yes, as a project | Yes | No: instructions are composed for ChatGPT | ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw |
 | Agent Plugins folder, Claude plugin, or Codex plugin made elsewhere | `.zip` | Yes | As the backup or either plugin | Skills and servers; everything else is kept as unrecognized files | Bringing a plugin into a project |
 | Microsoft `.agent` | `.agent` | Yes | Yes | All but attached files | SharePoint libraries and Teams chats |
 | Teams app package | `.zip` | Yes | Yes | No (see below) | The Microsoft 365 Copilot app |
@@ -332,7 +354,7 @@ The same folder, zipped on its own, is the skill `.zip` for Gemini and Claude:
 ```
 caveman/
   SKILL.md         Required by the Agent Skills standard. Frontmatter plus instructions.
-  agentprise.json  The item fields the standard has no place for.
+  agentprise.json  Every Agentprise setting the standard has no place for.
   icon.png         The full-color icon of an assistant, when one was set.
   LICENSE.txt      The full GPL v3 text for the default license, or a short notice.
   README.md        Skill .zip and plain skill only: name, description, creator, how to use the file, and the conversion report.
@@ -355,43 +377,18 @@ starts with `Persona: `.
 
 `SKILL.md` keeps the fields the Agent Skills standard defines (`name`,
 `description`, `license`, and for a skill `compatibility` and `allowed-tools`)
-at the top level. `compatibility` is the "What it needs to work" field.
-Everything the Microsoft formats need but the standard lacks lives under
-`metadata`, as flat strings, because the standard defines `metadata` as a map
-from string keys to string values and some readers reject anything else.
-Gemini and Claude ignore metadata they do not know. A skill's own metadata
-from elsewhere is kept as it was.
+at the top level. `compatibility` is the "What it needs to work" field. Its
+`metadata` holds one Agentprise key, `agentprise-kind`, set to `agent` or
+`skill`, so a tool that reads only `SKILL.md` still knows an assistant from a
+skill. A skill's own metadata from elsewhere is kept next to it as it was.
+Gemini and Claude ignore metadata they do not know.
 
-| Metadata key | Holds | Example |
-|---|---|---|
-| `agentprise-kind` | Whether the folder is an assistant or a skill | `agent` |
-| `sharepoint-sources` | SharePoint links a person pasted, one per line | |
-| `sharepoint-items` | SharePoint items that came from a Microsoft file, as one JSON array; each has `by` (`id` or `url`) plus the keys the builder wrote | |
-| `copilot-web-search` | Copilot capability on or off | `"true"` |
-| `copilot-web-sites` | Sites web search is limited to, one per line, at most four | |
-| `copilot-sharepoint` | Copilot capability on or off. An assistant without this key reads as on when it has SharePoint links or items and off otherwise | `"false"` |
-| `copilot-teams-messages` | Copilot capability on or off | `"true"` |
-| `copilot-teams-links` | Teams chats the source is limited to, one link per line, at most five | |
-| `copilot-email` | Copilot capability on or off | `"false"` |
-| `copilot-mailboxes` | Shared or group mailboxes email is limited to, one address per line, at most 25 | |
-| `copilot-shared-mailbox` | One shared mailbox address that came from a file | |
-| `copilot-email-folders` | Folder ids that came from a file, one per line | |
-| `copilot-meetings` | Copilot capability on or off | `"true"` |
-| `copilot-meeting-items` | Meetings the source is limited to, as one JSON array of `{id, is_series}`, at most five | |
-| `copilot-code-interpreter` | Copilot capability on or off | `"true"` |
-| `copilot-image-generation` | Copilot capability on or off | `"true"` |
-| `copilot-prefer-my-files` | Tell Copilot to answer from the sources, not its own knowledge | `"false"` |
-| `copilot-response-mode` | `Auto`, `Quick response`, or `Think deeper` | `Auto` |
-| `copilot-app-id` | The Teams app id, kept so re-exports update the same app | |
-| `creator-name`, `creator-website`, `creator-privacy`, `creator-terms` | The project's publisher details, shown in the Teams manifest | |
-
-The `sharepoint-` and `copilot-` keys are written for assistants only. A skill
-carries `agentprise-kind`, its own metadata, and the `creator-` keys.
-
-`agentprise.json` sits next to `SKILL.md` and holds what neither the standard
-fields nor the metadata map can carry, so a folder copied out of a project
-stays complete. It starts with a `_license` key, like the other JSON files the
-app writes.
+Every other Agentprise setting for the item is in `agentprise.json`, which
+sits next to `SKILL.md`. Keeping them there, as ordinary JSON values, means
+the folder stays a valid Agent Skill, since the standard allows only text
+values under `metadata`, and a folder copied out of a project stays complete.
+The file starts with a `_license` key, like the other JSON files the app
+writes.
 
 | Key | Holds |
 |---|---|
@@ -400,12 +397,43 @@ app writes.
 | `id` | The item's UUID |
 | `name` | The name people see, with capitals and spaces |
 | `welcome`, `starters`, `uses` | Assistants only: the welcome message, the conversation starters, and the skill names of the skills it can use |
+| `sharepointLinks` | Assistants only: SharePoint links a person pasted, as a list |
+| `sharepointItems` | Assistants only: SharePoint items that came from a Microsoft file; each has `by` (`id` or `url`) plus the keys the builder wrote |
+| `copilot` | Assistants only: the Copilot settings, described in the next table |
 | `appId`, `license` | Skills only: the Teams app id, and the skill's own license when it differs from the project's |
 | `capabilities` | The item's tool declarations (see "Tools" below), empty when it has none |
+| `notFor` | Only when set: the products the author marked the item as not for, from `copilot`, `claude`, `chatgpt`, `gemini`, and `cli` (coding tools) |
+| `notForReason` | Only when set: the author's reason, up to 200 characters |
 | `copyright` | The project's free-text copyright line |
+| `creator` | The project's publisher details, shown in the Teams manifest: `name`, `url`, `privacy`, and `terms` |
 | `files` | The path and type of each of the item's own files |
 | `composed` | `true` in every export that writes this file except the backup, so a reader knows `SKILL.md` holds composed text and takes the tools section and the `Persona: ` prefix back out |
 | `servers` | Exports only: the project servers this item's tools name, so a folder copied out alone keeps them |
+
+| `copilot` key | Holds | Example |
+|---|---|---|
+| `webSearch`, `teamsMessages`, `email`, `meetings`, `codeInterpreter`, `imageGeneration` | Each Copilot capability, on or off | `true` |
+| `sharepoint` | The SharePoint and OneDrive capability, on or off | `false` |
+| `webSites` | Sites web search is limited to, at most four | `["https://example.org"]` |
+| `teamsLinks` | Teams chats the source is limited to, at most five | |
+| `mailboxes` | Shared or group mailboxes email is limited to, at most 25 | `["lab-team@example.org"]` |
+| `sharedMailbox` | One shared mailbox address that came from a file | |
+| `emailFolders` | Folder ids that came from a file | `["inbox"]` |
+| `meetingItems` | Meetings the source is limited to, as `{id, is_series}`, at most five | |
+| `preferMyFiles` | Tell Copilot to answer from the sources, not its own knowledge | `false` |
+| `responseMode` | `Auto`, `Quick response`, or `Think deeper` | `"Auto"` |
+| `appId` | The Teams app id, kept so re-exports update the same app | |
+
+Files written before 2026-10-11 keep these settings in `SKILL.md` metadata
+instead, as text: `sharepoint-sources` and `copilot-web-sites` hold one link
+per line, `sharepoint-items` and `copilot-meeting-items` hold a JSON list, the
+switches hold `"true"` or `"false"`, and the publisher details are
+`creator-name`, `creator-website`, `creator-privacy`, and `creator-terms`. The
+other keys are `copilot-` followed by the setting name in lowercase with
+hyphens, such as `copilot-prefer-my-files`. The app still reads these keys
+when `agentprise.json` does not have the setting, so those files open the same
+as before. An old assistant without `copilot-sharepoint` reads as having
+SharePoint on when it has SharePoint links or items, and off otherwise.
 
 The skill `name` is derived from the display name: lowercase letters, digits, and
 single hyphens, at most 64 characters, never starting or ending with a hyphen.
@@ -738,7 +766,10 @@ which would let Copilot load skills as folders instead of inlined text, but on
 Both plugins put each item in `skills/<skill-name>/` as an item folder whose
 `SKILL.md` holds the composed text for the plugin's product, with
 `agentprise.json` (`composed: true` and `servers`). The folders keep the
-item's files, as in the skill ZIPs.
+item's files, as in the skill ZIPs. An item whose author marked it as not for
+the plugin's product (Claude for the Claude plugin, ChatGPT for the Plugin) is
+left out, with a "left out" line in the report, and `README.md` lists only the
+items inside.
 
 The Claude plugin (`<name>.claude-plugin.zip`):
 
@@ -872,6 +903,18 @@ real account, unless the line names a tenant test.
 | Gems become skills in November 2026 for personal accounts, March 2027 for Workspace business, enterprise, and nonprofit accounts, and June 2027 for Workspace education accounts. The 2026-10-09 check recorded 2026-11-17 for personal accounts | [Gems to skills](https://support.google.com/gemini/answer/18560919), checked 2026-10-10 |
 | A Gemini skill can be downloaded as a `.zip` from Settings, Skills, More, Download | [Gemini skills help](https://support.google.com/gemini/answer/17094296), checked 2026-10-10 |
 
+#### OpenClaw and Kimi
+
+| Fact | Source |
+|---|---|
+| OpenClaw follows the Agent Skills specification; a `SKILL.md` needs only `name` and `description`, and `metadata.openclaw` is optional | [OpenClaw skills](https://docs.openclaw.ai/skills) and [Creating skills](https://docs.openclaw.ai/tools/creating-skills), checked 2026-10-11 |
+| OpenClaw loads skills from `<workspace>/skills`, `<workspace>/.agents/skills`, and `~/.agents/skills`, and `openclaw skills install` takes a folder path | [OpenClaw skills](https://docs.openclaw.ai/skills) and [ClawHub skill format](https://docs.openclaw.ai/clawhub/skill-format), checked 2026-10-11 |
+| OpenClaw reads the skills in an Agent Plugins folder (root `plugin.json`), a Claude plugin (`.claude-plugin/plugin.json`), and Codex and Cursor plugins, without checking them against those formats | [OpenClaw plugin manifest](https://docs.openclaw.ai/plugins/manifest), checked 2026-10-11 |
+| Kimi Claw is OpenClaw hosted by Kimi; its help pages offer skills from Kimi's list, from ClawHub, or synced from Agent mode, and document no upload of a `SKILL.md` or `.zip` | [Kimi Claw overview](https://www.kimi.com/help/kimi-claw/overview) and [Use skills in Claw](https://www.kimi.com/en/help/plugins-and-skills/use-skills-in-claw), checked 2026-10-11 |
+| Kimi Agent mode makes a custom skill from up to three Office or PDF files, or from a chat with its skill creator; it documents no upload of a `SKILL.md` or `.zip` | [Use skills in Agent](https://www.kimi.com/en/help/plugins-and-skills/use-skills-in-agent), checked 2026-10-11 |
+| Kimi Code CLI reads skills from `.kimi-code/skills` and `.agents/skills` in a project and from `~/.kimi-code/skills` and `~/.agents/skills` for one person | [Kimi Code CLI skills](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/skills.html), checked 2026-10-11 |
+| Kimi Code CLI plugins use their own `kimi.plugin.json` or `.kimi-plugin/plugin.json`, with `skills` and `mcpServers`, and install with `/plugins install` and a folder or `.zip` | [Kimi Code CLI plugins](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html), checked 2026-10-11 |
+
 ### Tests run in this repository
 
 - `npm test` on 2026-10-10 ran 220 tests, and 219 passed. The one failure was
@@ -932,6 +975,9 @@ documentation settled some of them. The rest need a real account.
 
 #### Other open tests
 
+- Install a plain skill and a Plugin made by Agentprise in an OpenClaw you run
+  yourself and in Kimi Code CLI, and confirm the skills load. The steps above
+  come from their documentation; a real install has not been recorded.
 - Upload a skill `.zip` made by Agentprise to a Gemini account and to a Claude
   account, and confirm both accept the `agentprise.json` file beside
   `SKILL.md`. The Claude upload path itself was settled by the documentation
@@ -988,6 +1034,9 @@ or importer changes.
 - [Add your assistant to the Library](how-to/add-to-library.md)
 - [Agent Skills specification](https://agentskills.io/specification)
 - [Agent Plugins specification](https://agent-plugins.org/specification)
+- [OpenClaw skills](https://docs.openclaw.ai/skills)
+- [OpenClaw plugin manifest](https://docs.openclaw.ai/plugins/manifest)
+- [Kimi Code CLI skills](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/skills.html)
 - [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8)
 - [Plugin manifest 2.4](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-manifest-2.4)
 - [Dynamic tool discovery for Copilot plugins](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-dynamic-tool-discovery)

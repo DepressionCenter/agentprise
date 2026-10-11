@@ -5,10 +5,6 @@ license: GPL-3.0-or-later. See LICENSE.txt.
 compatibility: Works everywhere for planning; live lookups need one of the tools.
 metadata:
   agentprise-kind: skill
-  creator-name: Example Creator
-  creator-website: https://example.org
-  creator-privacy: https://example.org/privacy
-  creator-terms: https://example.org/terms
 ---
 
 # Steps

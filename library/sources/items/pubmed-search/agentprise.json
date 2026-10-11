@@ -185,6 +185,12 @@
     }
   ],
   "copyright": "Copyright (C) 2026 Gabriel Mongefranco",
+  "creator": {
+    "name": "Gabriel Mongefranco",
+    "url": "https://gabriel.mongefranco.com",
+    "privacy": "https://gabriel.mongefranco.com/privacy",
+    "terms": "https://gabriel.mongefranco.com/terms"
+  },
   "files": [
     {
       "path": "README.md",

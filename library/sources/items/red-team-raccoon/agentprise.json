@@ -14,7 +14,33 @@
     "Give me the strongest counterarguments to this proposal so I can address them up front."
   ],
   "uses": [],
+  "sharepointLinks": [],
+  "sharepointItems": [],
+  "copilot": {
+    "webSearch": true,
+    "webSites": [],
+    "sharepoint": false,
+    "teamsMessages": false,
+    "teamsLinks": [],
+    "email": false,
+    "mailboxes": [],
+    "sharedMailbox": "",
+    "emailFolders": [],
+    "meetings": false,
+    "meetingItems": [],
+    "codeInterpreter": false,
+    "imageGeneration": true,
+    "preferMyFiles": false,
+    "responseMode": "Auto",
+    "appId": ""
+  },
   "capabilities": [],
   "copyright": "Copyright (C) 2026 Gabriel Mongefranco",
+  "creator": {
+    "name": "Gabriel Mongefranco",
+    "url": "https://gabriel.mongefranco.com",
+    "privacy": "https://gabriel.mongefranco.com/privacy",
+    "terms": "https://gabriel.mongefranco.com/terms"
+  },
   "files": []
 }

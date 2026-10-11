@@ -173,9 +173,9 @@ describe("backup round trip", () => {
     assert.equal(extension.schemaVersion, engine.PROJECT_SCHEMA_VERSION);
     assert.deepEqual(extension.servers, engine.project.record(project).servers);
     assert.deepEqual(extension.unrecognized, [{ path: "hooks/hooks.json", note: "Not interpreted by Agentprise." }, { path: "skills/data-tools/photo.png", note: "Not interpreted by Agentprise." }]);
-    // Agent metadata keeps only the kind and the Copilot, SharePoint, and creator keys; the rest is in agentprise.json.
+    // Agent metadata keeps only the kind; the rest is in agentprise.json.
     const { data } = engine.yaml.parseFrontmatter(decode(byName.get("lab-kit/skills/caveman/SKILL.md")));
-    assert.ok(Object.keys(data.metadata).every((key) => /^(agentprise-kind|copilot-|sharepoint-|creator-)/.test(key)));
+    assert.deepEqual(data.metadata, { "agentprise-kind": "agent" });
     const sidecar = JSON.parse(decode(byName.get("lab-kit/skills/caveman/agentprise.json")));
     assert.deepEqual(sidecar.uses, ["data-tools"]);
     assert.equal(sidecar.capabilities[0].id, "web");
@@ -753,6 +753,38 @@ describe("format detection reads entry names, not contents", () => {
     assert.equal(opened.error, undefined);
     assert.equal(opened.project.items[0].skillName, "x");
     assert.deepEqual(opened.project.items[0].files.map((f) => f.path), ["references/plugin.json"]);
+  });
+});
+
+describe("products an item is not for", () => {
+  test("only known product keys are kept, once each, in a fixed order, and the reason is capped", () => {
+    const { project, notices } = engine.project.normalize({
+      items: [{ kind: "skill", name: "Marked", notFor: ["gemini", "copilot", "gemini", "kimi", 7, "*", "__proto__"], notForReason: "x".repeat(300) }],
+    });
+    const item = project.items[0];
+    assert.deepEqual(item.notFor, ["copilot", "gemini"]);
+    assert.equal(item.notForReason.length, 200);
+    assert.ok(notices.some((notice) => notice.includes("longer than 200 characters")));
+  });
+
+  test("a value that is not a list, or no value, means every product", () => {
+    for (const notFor of [undefined, "copilot", { copilot: true }, null]) {
+      const { project, notices } = engine.project.normalize({ items: [{ kind: "agent", name: "A", description: "d", instructions: "i", notFor }] });
+      assert.deepEqual(project.items[0].notFor, []);
+      assert.equal(project.items[0].notForReason, "");
+      assert.deepEqual(notices, []);
+    }
+  });
+
+  test("the backup keeps the setting for every item", async () => {
+    const project = richProject();
+    project.items[0].notFor = ["chatgpt"];
+    project.items[0].notForReason = "Needs Copilot sources";
+    project.items[1].notFor = ["copilot", "cli"];
+    const record = engine.project.record(project);
+    const back = await reopen(await engine.exports.backup(project));
+    assert.deepEqual(engine.project.record(back.project).items, record.items);
+    assert.deepEqual(back.project.items[1].notFor, ["copilot", "cli"]);
   });
 });
 

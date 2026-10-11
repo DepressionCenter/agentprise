@@ -63,6 +63,15 @@ It depends on where people will use the assistant.
 Not sure yet? Download a backup. You can come back any time and download it
 for another product.
 
+### Does it work with Kimi or OpenClaw?
+
+Partly. Kimi Code CLI and an OpenClaw you run yourself both read the
+**SKILL.md** download (the plain skill) and the **Plugin** download. OpenClaw
+also reads the **Claude plugin**. The
+[formats page](formats.md#what-to-do-with-the-file) has the steps. Kimi chat,
+Kimi Agent mode, and the Kimi Claw that Kimi hosts for you have no way to
+upload a skill file yet, so Agentprise cannot make a download for them.
+
 ### What does "Download Backup" do?
 
 It saves the whole project, with every assistant, skill, and file, as one
@@ -119,12 +128,17 @@ the Inspect page for the Copilot app package.
 
 ### Why is a download button turned off?
 
-Either a required question is still empty, or the download is blocked. The
-card lists empty questions as links. A blocked download shows why in the list
-**What changes in this download** on the Inspect page. Common reasons are a web
-search list over Copilot's limit of four sites, or instructions longer than
-Copilot's limit of 8,000 characters. Fix what the list names and the button
-turns back on.
+A required question is still empty, the download is blocked, or the author
+marked the assistant or skill as not for that product. The card lists empty
+questions as links. A blocked download shows why in the list **What changes in
+this download** on the Inspect page. Common reasons are a web search list over
+Copilot's limit of four sites, or instructions longer than Copilot's limit of
+8,000 characters. Fix what the list names and the button turns back on.
+
+When the author marked it as not for a product, a short note under the
+download says so, such as "Marked as not for Claude: Needs the Claude Docs
+plugin." To download it anyway, open **More settings**, then **Products it
+works in**, and check the product.
 
 ### Why does my assistant's description start with "Persona:"?
 
@@ -218,8 +232,9 @@ or start the included server as the README describes.
 | Backup (`.agentprise.zip`) | No | No | No | No | No |
 
 The backup opens only in Agentprise. Keep it to change the project later. The
-Plugin download also works in Codex, GitHub Copilot, Cursor, and other tools
-that read Agent Plugins.
+Plugin download also works in Codex, GitHub Copilot, Cursor, OpenClaw, and
+other tools that read Agent Plugins. The plain skill works in Claude Code,
+Codex, Kimi Code CLI, OpenClaw, and other tools that read Agent Skills.
 
 ### Conclusion
 

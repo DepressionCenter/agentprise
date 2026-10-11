@@ -626,6 +626,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         .destination-text { min-width: 0; overflow-wrap: anywhere; }
         .destination-name { display: block; font-weight: 500; font-size: 0.875rem; }
         .destination-file { display: block; font-size: 0.8125rem; color: var(--muted); }
+        .destination-note { display: block; font-size: 0.8125rem; color: var(--text); font-style: italic; }
         .destination-list button { flex: none; padding: 0 12px; font-size: 0.875rem; }
         .destinations .primary { width: 100%; margin-bottom: 8px; }
 
@@ -1018,6 +1019,16 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                             <p class="hint" id="f-compatibility-hint">Optional. One or two sentences about the tools, products, or access the skill needs, such as "Live search needs the PubMed connector." Up to 500 characters.</p>
                                             <textarea id="f-compatibility" maxlength="500" rows="2" aria-describedby="f-compatibility-hint"></textarea>
                                         </div>
+                                        <fieldset class="field" id="products-wrap">
+                                            <legend>Products it works in</legend>
+                                            <p class="hint" id="products-hint">Uncheck a product where this won't work, such as one that needs a plugin only Claude has. Its downloads for that product turn off, and a plugin for that product leaves it out.</p>
+                                            <div id="products-list"></div>
+                                            <div class="field">
+                                                <label for="f-notForReason">Reason (optional)</label>
+                                                <p class="hint" id="f-notForReason-hint">Shown next to each download you turned off, such as "Needs the Claude Docs plugin." Up to 200 characters.</p>
+                                                <input type="text" id="f-notForReason" maxlength="200" aria-describedby="f-notForReason-hint">
+                                            </div>
+                                        </fieldset>
                                         <fieldset class="field">
                                             <legend>File attachments</legend>
                                             <p class="hint" id="file-add-hint">Documents the assistant can read to answer questions, such as a handbook or a list of contacts. Some products can't use files.</p>
@@ -1159,6 +1170,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <span class="destination-text">
                                             <span class="destination-name">Copilot / Teams Apps</span>
                                             <span class="destination-file">App package (.zip)</span>
+                                            <span class="destination-note" id="note-teamsZip" hidden></span>
                                         </span>
                                         <button type="button" class="download-button" data-format="teamsZip"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the app package for Copilot and Teams apps</span></button>
                                     </li>
@@ -1166,6 +1178,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <span class="destination-text">
                                             <span class="destination-name">Teams Chat</span>
                                             <span class="destination-file">.agent file</span>
+                                            <span class="destination-note" id="note-msAgent" hidden></span>
                                         </span>
                                         <button type="button" class="download-button" data-format="msAgent"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the .agent file for Teams Chat</span></button>
                                     </li>
@@ -1173,6 +1186,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <span class="destination-text">
                                             <span class="destination-name">Gemini</span>
                                             <span class="destination-file">Skill (.zip)</span>
+                                            <span class="destination-note" id="note-geminiSkill" hidden></span>
                                         </span>
                                         <button type="button" class="download-button" data-format="geminiSkill"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the skill for Gemini</span></button>
                                     </li>
@@ -1180,6 +1194,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <span class="destination-text">
                                             <span class="destination-name">Gemini Notebook</span>
                                             <span class="destination-file">Markdown (.md)</span>
+                                            <span class="destination-note" id="note-markdown" hidden></span>
                                         </span>
                                         <button type="button" class="download-button" data-format="markdown"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the .md file for Gemini Notebook</span></button>
                                     </li>
@@ -1187,6 +1202,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <span class="destination-text">
                                             <span class="destination-name">Claude</span>
                                             <span class="destination-file">Skill (.zip)</span>
+                                            <span class="destination-note" id="note-claudeSkill" hidden></span>
                                         </span>
                                         <button type="button" class="download-button" data-format="claudeSkill"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the skill for Claude</span></button>
                                     </li>
@@ -1194,6 +1210,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <span class="destination-text">
                                             <span class="destination-name">ChatGPT</span>
                                             <span class="destination-file">Project instructions to paste</span>
+                                            <span class="destination-note" id="note-chatgpt" hidden></span>
                                         </span>
                                         <button type="button" id="chatgpt-copy"><span class="bi bi-clipboard" aria-hidden="true"></span>Copy<span class="visually-hidden"> the text for ChatGPT</span></button>
                                     </li>
@@ -1201,6 +1218,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <span class="destination-text">
                                             <span class="destination-name">SKILL.md</span>
                                             <span class="destination-file">Plain skill (.zip)</span>
+                                            <span class="destination-note" id="note-plainSkill" hidden></span>
                                         </span>
                                         <button type="button" class="download-button" data-format="plainSkill"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the plain skill</span></button>
                                     </li>
@@ -1211,13 +1229,15 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <span class="destination-text">
                                             <span class="destination-name">Claude plugin</span>
                                             <span class="destination-file">claude.ai, Cowork, Claude Code (.zip)</span>
+                                            <span class="destination-note" id="note-claudePlugin" hidden></span>
                                         </span>
                                         <button type="button" class="download-button" data-format="claudePlugin"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the Claude plugin with the whole project</span></button>
                                     </li>
                                     <li>
                                         <span class="destination-text">
                                             <span class="destination-name">Plugin</span>
-                                            <span class="destination-file">ChatGPT, Codex, GitHub Copilot, Cursor (.zip)</span>
+                                            <span class="destination-file">ChatGPT, Codex, Cursor, OpenClaw, and more (.zip)</span>
+                                            <span class="destination-note" id="note-portablePlugin" hidden></span>
                                         </span>
                                         <button type="button" class="download-button" data-format="portablePlugin"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the plugin with the whole project for ChatGPT and other tools</span></button>
                                     </li>
@@ -1354,16 +1374,19 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                         <li><strong>Teams Chat</strong> gives you a .agent file for a Teams group chat, channel, or meeting. You put the file in a SharePoint library first.</li>
                         <li><strong>Gemini</strong> and <strong>Claude</strong> each get a skill (.zip) made for that product.</li>
                         <li><strong>ChatGPT</strong> gets project instructions to paste into a ChatGPT project.</li>
-                        <li><strong>Claude plugin</strong> and <strong>Plugin</strong> hold the whole project, with its skills and tools. The Plugin works in ChatGPT, Codex, GitHub Copilot, and Cursor.</li>
+                        <li><strong>Claude plugin</strong> and <strong>Plugin</strong> hold the whole project, with its skills and tools. The Plugin works in ChatGPT, Codex, GitHub Copilot, Cursor, and OpenClaw.</li>
+                        <li><strong>SKILL.md</strong> gives you a plain skill (.zip) for Claude Code, Codex, Kimi Code CLI, OpenClaw, and other tools that read Agent Skills.</li>
                         <li><strong>Gemini Notebook</strong> gets a .md file to add as a source, or the same text to paste.</li>
                     </ul>
                     <p>Not sure yet? Download a backup. You can come back any time and download it for another product.</p>
+                    <h2>Does it work with Kimi or OpenClaw?</h2>
+                    <p>Partly. Kimi Code CLI and an OpenClaw you run yourself both read the SKILL.md download and the Plugin download, and OpenClaw also reads the Claude plugin. The Inspect page has the steps for each. Kimi chat, Kimi Agent mode, and the Kimi Claw that Kimi hosts for you have no way to upload a skill file yet, so Agentprise cannot make a download for them.</p>
                     <h2>What does "Download Backup" do?</h2>
                     <p>It saves the whole project, with every assistant, skill, and file, as one .zip file on your computer. Drop that file on the Workspace page later to open it again, change it, or download it for a different product. To upload to Gemini or Claude, use their own Download buttons instead.</p>
                     <h2>What are tools, and what does "needs setup" mean?</h2>
                     <p>Some assistants and skills, such as PubMed Search, can use a tool to look things up. Each product connects tools its own way, so every download lists what changes for it under "What changes in this download" on the Inspect page. "Needs setup" means one more step after you install, such as turning on a connector or pasting a server address. The setup steps that come with the download say how. If the tool isn't connected, the assistant does what it can and tells people it couldn't use the tool.</p>
-                    <h2>Why is a download button greyed out?</h2>
-                    <p>Either a required question is still empty, or the product can't accept the project as it is, for example more than four web search sites for Copilot. The Inspect page says what to change.</p>
+                    <h2>Why is a download button grayed out?</h2>
+                    <p>Either a required question is still empty, the product can't accept the project as it is, for example more than four web search sites for Copilot, or the author marked the assistant or skill as not for that product under More settings, then Products it works in. The Inspect page says what to change.</p>
                     <h2>Which files can I attach?</h2>
                     <p>Word, PowerPoint, Excel, PDF, OneNote (.one and .onepart), and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, .onepart, and .txt, so a script is added as a .txt file with the same name, and a .one file is left out of the app package. The skill .zip keeps every file under its real name.</p>
                     <h2>Where do links go?</h2>
@@ -1496,6 +1519,7 @@ const LIMITS = Object.freeze({
     itemPathDepth: 5,
     projectVersion: 32,
     organizationText: 200,
+    notForReason: 200,
     metadataEntries: 30,
     metadataText: 1000,
     allowedTools: 1000,
@@ -1521,6 +1545,8 @@ const PROJECT_SCHEMA_VERSION = 2;
 const ITEM_KINDS = Object.freeze(["agent", "skill"]);
 // Provider keys: "cli" is coding agents reading Agent Skills folders, "*" the fallback.
 const TARGET_KEYS = Object.freeze(["copilot", "claude", "chatgpt", "gemini", "cli", "*"]);
+// The products an author can mark an item as not for, one per provider key.
+const PRODUCT_LABELS = Object.freeze({ copilot: "Microsoft 365 Copilot", claude: "Claude", chatgpt: "ChatGPT", gemini: "Gemini", cli: "Coding tools" });
 const PROVIDER_KINDS = Object.freeze(["connector", "mcp", "openapi", "script", "websearch", "none"]);
 const REPORT_STATUSES = Object.freeze(["preserved", "transformed", "requires-setup", "unsupported", "blocked"]);
 // "sse" is the older remote transport some servers still use.
@@ -1681,7 +1707,9 @@ const FILE_KIND_PROBLEMS = Object.freeze({
     onenote: "it is not a OneNote file"
 });
 
-// SKILL.md metadata is a string-to-string map per the spec.
+// SKILL.md metadata is a string-to-string map per the spec. Only kind is
+// still written; the other keys are read from files made before agentprise.json
+// held every Agentprise item setting.
 const META = Object.freeze({
     kind: "agentprise-kind",
     version: "agentprise-version",
@@ -2492,12 +2520,12 @@ function createItem(kind) {
     if (kind === "skill") {
         return {
             kind: "skill", id: newUuid(), name: "", skillName: "skill", description: "", compatibility: "", body: "",
-            license: "", appId: "", metadata: {}, allowedTools: "", capabilities: [], files: []
+            license: "", appId: "", metadata: {}, allowedTools: "", capabilities: [], notFor: [], notForReason: "", files: []
         };
     }
     return {
         kind: "agent", id: newUuid(), name: "", skillName: "agent", description: "", instructions: "", starters: [], welcome: "",
-        icon: null, sharepointLinks: [], sharepointItems: [], copilot: createAgent().copilot, uses: [], capabilities: [], files: []
+        icon: null, sharepointLinks: [], sharepointItems: [], copilot: createAgent().copilot, uses: [], capabilities: [], notFor: [], notForReason: "", files: []
     };
 }
 
@@ -2832,6 +2860,12 @@ function normalizePluginExtras(value) {
     return extras;
 }
 
+/** Known product keys from an untrusted list, once each, in PRODUCT_LABELS order. */
+function normalizeNotFor(value) {
+    const list = Array.isArray(value) ? value : [];
+    return Object.keys(PRODUCT_LABELS).filter(function (key) { return list.indexOf(key) >= 0; });
+}
+
 /** Copies untrusted skill metadata, minus keys this app writes. */
 function normalizeSkillMetadata(value) {
     const metadata = {};
@@ -2858,6 +2892,8 @@ function normalizeItem(input, notices) {
     const item = createItem(kind);
     item.id = asUuid(source.id) || item.id;
     item.capabilities = normalizeCapabilities(source.capabilities, notices);
+    item.notFor = normalizeNotFor(source.notFor);
+    item.notForReason = asText(source.notForReason, LIMITS.notForReason, "reason it does not work in some products", notices);
     if (kind === "agent") {
         // Accepted types directly under references/ are attachments; other
         // non-program files follow the skill file rules, so nothing is lost.
@@ -4575,6 +4611,37 @@ function reportEntry(component, status, note) {
     return { component: component, status: status, note: note };
 }
 
+/** True when the author marked the item as not for the product. */
+function notForTarget(item, target) {
+    return Array.isArray(item.notFor) && item.notFor.indexOf(target) >= 0;
+}
+
+/** The product name inside a sentence. */
+function productPhrase(target) {
+    return target === "cli" ? "coding tools" : PRODUCT_LABELS[target];
+}
+
+/** "as not for Claude: Needs the Claude Docs plugin." with the author's reason, when there is one. */
+function notForPhrase(item, target) {
+    const reason = item.notForReason ? ": " + item.notForReason.replace(/[.!?]*$/, "") : "";
+    return "as not for " + productPhrase(target) + reason + ".";
+}
+
+/** The report line for an item a whole-project plugin leaves out. */
+function notForEntry(item, target) {
+    return reportEntry(item.name, "unsupported", "Left out, because its author marked it " + notForPhrase(item, target));
+}
+
+/** Blocked when every item is marked as not for the plugin's product. */
+function pluginNotForBlock(project, exportId) {
+    const target = EXPORTS[exportId].target;
+    const left = project.items.filter(function (item) { return !notForTarget(item, target); });
+    if (project.items.length === 0 || left.length > 0) {
+        return null;
+    }
+    return reportEntry(project.name, "blocked", "Every assistant and skill in this project is marked as not for " + productPhrase(target) + ", so there is nothing to put in the plugin. To make it anyway, open More settings, then Products it works in, and check " + PRODUCT_LABELS[target] + ".");
+}
+
 /** Its own key, then "*". Empty means none. */
 function providersFor(capability, target) {
     if (Array.isArray(capability.providers[target])) {
@@ -4632,7 +4699,7 @@ function providerName(project, provider) {
  */
 function planExport(project, item, exportId, options) {
     const spec = EXPORTS[exportId];
-    const skip = (options && options.skip) || [];
+    let skip = (options && options.skip) || [];
     const report = [];
     const files = [];
     const setup = [];
@@ -4649,6 +4716,10 @@ function planExport(project, item, exportId, options) {
         return result(false);
     }
     const kindName = item.kind === "agent" ? "assistant" : "skill";
+    if (notForTarget(item, spec.target)) {
+        report.push(reportEntry(item.name, "blocked", "The author marked this " + kindName + " " + notForPhrase(item, spec.target) + " To download it anyway, open More settings, then Products it works in, and check " + PRODUCT_LABELS[spec.target] + "."));
+        return result(true);
+    }
     const attach = function (leaf) { return exportId === "teamsZip" ? copilotFileName(leaf) : leaf; };
 
     // ### Agents and skills on products without that idea ###
@@ -4661,10 +4732,18 @@ function planExport(project, item, exportId, options) {
     }
 
     // ### Skills the assistant uses ###
-    const used = usedSkills(project, item).filter(function (skill) { return skip.indexOf(skill.id) < 0; });
-    usedSkills(project, item).filter(function (skill) { return skip.indexOf(skill.id) >= 0; }).forEach(function (skill) {
-        report.push(reportEntry("Skill " + skill.name, "unsupported", "Left out with its tools, because its steps do not fit in the instructions and " + spec.label + " cannot include files."));
+    // A plugin reports a skill marked as not for its product once, as its own item.
+    const plugin = exportId === "claudePlugin" || exportId === "portablePlugin";
+    const notFor = plugin ? [] : usedSkills(project, item).filter(function (skill) { return notForTarget(skill, spec.target); }).map(function (skill) { return skill.id; });
+    usedSkills(project, item).forEach(function (skill) {
+        if (notFor.indexOf(skill.id) >= 0) {
+            report.push(reportEntry("Skill " + skill.name, "unsupported", "Left out with its tools, because its author marked it " + notForPhrase(skill, spec.target)));
+        } else if (skip.indexOf(skill.id) >= 0) {
+            report.push(reportEntry("Skill " + skill.name, "unsupported", "Left out with its tools, because its steps do not fit in the instructions and " + spec.label + " cannot include files."));
+        }
     });
+    skip = skip.concat(notFor);
+    const used = usedSkills(project, item).filter(function (skill) { return skip.indexOf(skill.id) < 0; });
     if (spec.skills && used.length > 0 && exportId !== "claudePlugin" && exportId !== "portablePlugin") {
         used.forEach(function (skill) {
             report.push(reportEntry("Skill " + skill.name, "requires-setup", "This download holds only " + item.name + ". Download " + skill.name + " too and add it in the same place, or use a plugin download, which holds both."));
@@ -4950,7 +5029,9 @@ function composeInstructions(project, item, exportId) {
  */
 function prepareExport(project, item, exportId) {
     const plan = planExport(project, item, exportId);
-    const report = plan.report.concat(formatReport(project, item, exportId, plan.named));
+    // An item marked as not for the product reports only why it is turned off.
+    const marked = EXPORTS[exportId] && notForTarget(item, EXPORTS[exportId].target);
+    const report = marked ? plan.report : plan.report.concat(formatReport(project, item, exportId, plan.named));
     const view = agentView(project, item);
     view.instructions = plan.text;
     if (exportId === "teamsZip") {
@@ -5180,8 +5261,9 @@ function itemFileBytes(item, path) {
 }
 
 /**
- * Standard fields first, then, unless standardOnly, a metadata map of strings
- * (kind, Copilot settings, skill metadata, creator).
+ * Standard fields first, then, unless standardOnly, a metadata map of strings:
+ * the item kind and a skill's own metadata. Every other Agentprise setting is
+ * in agentprise.json.
  * @param {object} project
  * @param {object} item
  * @param {{standardOnly?: boolean, description?: string}} options
@@ -5204,44 +5286,23 @@ function itemFrontmatter(project, item, options) {
     if (options.standardOnly) {
         return data;
     }
+    // Kind stays here so a reader without agentprise.json still knows an
+    // assistant from a skill.
     const metadata = {};
     metadata[META.kind] = item.kind;
-    if (item.kind === "agent") {
-        const copilot = item.copilot;
-        metadata[META.sharepoint] = item.sharepointLinks.join("\n");
-        metadata[META.sharepointItems] = item.sharepointItems.length > 0 ? JSON.stringify(item.sharepointItems) : "";
-        metadata[META.webSearch] = String(copilot.webSearch);
-        metadata[META.webSites] = copilot.webSites.join("\n");
-        metadata[META.sharepointSwitch] = String(copilot.sharepoint);
-        metadata[META.teamsMessages] = String(copilot.teamsMessages);
-        metadata[META.teamsLinks] = copilot.teamsLinks.join("\n");
-        metadata[META.email] = String(copilot.email);
-        metadata[META.mailboxes] = copilot.mailboxes.join("\n");
-        metadata[META.sharedMailbox] = copilot.sharedMailbox;
-        metadata[META.emailFolders] = copilot.emailFolders.join("\n");
-        metadata[META.meetings] = String(copilot.meetings);
-        metadata[META.meetingItems] = copilot.meetingItems.length > 0 ? JSON.stringify(copilot.meetingItems) : "";
-        metadata[META.codeInterpreter] = String(copilot.codeInterpreter);
-        metadata[META.imageGeneration] = String(copilot.imageGeneration);
-        metadata[META.preferMyFiles] = String(copilot.preferMyFiles);
-        metadata[META.responseMode] = copilot.responseMode;
-        metadata[META.appId] = copilot.appId;
-    } else {
+    if (item.kind === "skill") {
         Object.keys(item.metadata).forEach(function (key) {
             metadata[key] = item.metadata[key];
         });
     }
-    metadata[META.creatorName] = project.creator.name;
-    metadata[META.creatorWebsite] = project.creator.url;
-    metadata[META.creatorPrivacy] = project.creator.privacy;
-    metadata[META.creatorTerms] = project.creator.terms;
     data.metadata = metadata;
     return data;
 }
 
 /**
- * The sidecar: fields the standard lacks (id, skills, tools, welcome,
- * starters, file list).
+ * The sidecar: every Agentprise setting the standard lacks (id, skills, tools,
+ * welcome, starters, SharePoint links, Copilot settings, publisher details,
+ * file list), as plain JSON values.
  * @param {object} project
  * @param {object} item
  * @returns {string} JSON text
@@ -5258,13 +5319,25 @@ function itemSidecar(project, item, composed, servers) {
         doc.welcome = item.welcome;
         doc.starters = item.starters.slice();
         doc.uses = item.uses.slice();
+        doc.sharepointLinks = item.sharepointLinks.slice();
+        doc.sharepointItems = JSON.parse(JSON.stringify(item.sharepointItems));
+        doc.copilot = JSON.parse(JSON.stringify(item.copilot));
     } else {
         doc.appId = item.appId;
         // Empty means the project license; this keeps the difference.
         doc.license = item.license;
     }
     doc.capabilities = JSON.parse(JSON.stringify(item.capabilities));
+    // Written only when set, so most folders stay as they are.
+    if (item.notFor.length > 0) {
+        doc.notFor = item.notFor.slice();
+    }
+    if (item.notForReason) {
+        doc.notForReason = item.notForReason;
+    }
     doc.copyright = project.copyright;
+    // Kept per item so a folder copied out of the project still names its publisher.
+    doc.creator = { name: project.creator.name, url: project.creator.url, privacy: project.creator.privacy, terms: project.creator.terms };
     doc.files = item.files.map(function (file) { return { path: file.path, type: fileTypeOf(file.path) }; });
     // Exports rewrite text for the product; this flag lets a reader take the
     // additions back out.
@@ -5361,7 +5434,8 @@ function itemReadme(project, item, report, ownText) {
         "## How to use",
         "",
         "- Gemini: open Settings, then Skills, then Upload, and choose this ZIP file.",
-        "- Claude: open Settings, then Capabilities, then Skills, and upload this ZIP file.",
+        "- Claude: open Customize, then Skills, choose the plus button, then Create skill, then Upload a skill, and pick this ZIP file.",
+        "- Claude Code, Codex, Kimi Code CLI, OpenClaw, and other tools that read Agent Skills: unzip this file into the folder where the tool looks for skills, such as .agents/skills.",
         "- Microsoft 365 Copilot, ChatGPT, or to edit it: open this ZIP file at " + APP_SITE_URL,
         "",
         "SKILL.md holds the instructions. LICENSE.txt holds the license.",
@@ -5600,16 +5674,19 @@ function readItemFolder(entries, folder, nested) {
         name: typeof side.name === "string" && side.name ? side.name : humanizeSkillName(toSkillName(skillName)),
         skillName: skillName,
         description: description,
-        capabilities: side.capabilities
+        capabilities: side.capabilities,
+        notFor: side.notFor,
+        notForReason: side.notForReason
     };
     if (kind === "agent") {
         raw.instructions = body;
         raw.welcome = side.welcome;
         raw.starters = side.starters;
         raw.uses = side.uses;
-        raw.sharepointLinks = splitLines(meta[META.sharepoint]);
-        raw.sharepointItems = parseJsonArray(meta[META.sharepointItems]);
-        raw.copilot = {
+        // Files made before agentprise.json held these keep them as metadata strings.
+        raw.sharepointLinks = Array.isArray(side.sharepointLinks) ? side.sharepointLinks : splitLines(meta[META.sharepoint]);
+        raw.sharepointItems = Array.isArray(side.sharepointItems) ? side.sharepointItems : parseJsonArray(meta[META.sharepointItems]);
+        raw.copilot = isPlainObject(side.copilot) ? side.copilot : {
             webSearch: meta[META.webSearch],
             webSites: splitLines(meta[META.webSites]),
             sharepoint: meta[META.sharepointSwitch],
@@ -5665,7 +5742,12 @@ function readItemFolder(entries, folder, nested) {
         files.push({ path: path === "icon.png" ? "assets/icon.png" : path, bytes: bytes });
     });
     raw.files = files;
-    const creator = {
+    const creator = isPlainObject(side.creator) ? {
+        name: side.creator.name,
+        url: side.creator.url,
+        privacy: side.creator.privacy,
+        terms: side.creator.terms
+    } : {
         name: meta[META.creatorName],
         url: meta[META.creatorWebsite],
         privacy: meta[META.creatorPrivacy],
@@ -6249,7 +6331,14 @@ function pluginEntries(project, exportId) {
     const report = [];
     const servers = {};
     const entries = [];
+    const target = EXPORTS[exportId].target;
+    const included = [];
     project.items.forEach(function (item) {
+        if (notForTarget(item, target)) {
+            report.push(notForEntry(item, target));
+            return;
+        }
+        included.push(item);
         const prepared = prepareExport(project, item, exportId);
         prepared.report.forEach(function (entry) {
             report.push(reportEntry(entry.component === item.name ? item.name : item.name + ": " + entry.component, entry.status, entry.note));
@@ -6261,6 +6350,10 @@ function pluginEntries(project, exportId) {
             entries.push({ name: root + "skills/" + item.skillName + "/" + entry.name, bytes: entry.bytes });
         });
     });
+    const empty = pluginNotForBlock(project, exportId);
+    if (empty) {
+        report.push(empty);
+    }
     const manifestPath = claude ? root + ".claude-plugin/plugin.json" : root + "plugin.json";
     let manifest;
     if (claude) {
@@ -6283,19 +6376,19 @@ function pluginEntries(project, exportId) {
     const first = project.items[0] ? agentView(project, project.items[0]) : { copyright: project.copyright, license: project.license };
     const authorLicense = rootLicenseFile(project);
     head.push({ name: root + "LICENSE.txt", bytes: authorLicense ? authorLicense.bytes : toBytes(bundleLicenseText(first)) });
-    head.push({ name: root + "README.md", bytes: toBytes(pluginReadme(project, report, exportId)) });
-    const setup = writeSetupGuide(project, project.items, exportId);
+    head.push({ name: root + "README.md", bytes: toBytes(pluginReadme(project, report, exportId, included)) });
+    const setup = writeSetupGuide(project, included, exportId);
     if (setup) {
         head.push({ name: root + SETUP_FILE_NAME, bytes: toBytes(setup) });
     }
     return { entries: head.concat(entries), report: report, name: name };
 }
 
-/** Contents, install steps, and the report. */
-function pluginReadme(project, report, exportId) {
+/** Contents, install steps, and the report. items: those in the plugin. */
+function pluginReadme(project, report, exportId, items) {
     const lines = ["<!--", project.name, licenseNotice({ copyright: project.copyright, license: project.license }), "-->", "", "# " + project.name, "", project.description || "", ""];
     lines.push("## What is inside", "");
-    project.items.forEach(function (item) {
+    items.forEach(function (item) {
         lines.push("- " + item.name + " (" + (item.kind === "agent" ? "assistant, written as a skill" : "skill") + "): " + (item.description || "").slice(0, 200));
     });
     lines.push("", "## How to install", "");
@@ -6308,7 +6401,7 @@ function pluginReadme(project, report, exportId) {
     } else {
         lines.push(
             "- ChatGPT: a workspace owner or someone with upload permission opens the Admin console, then Plugins, chooses Add, then Upload plugin, and picks this ZIP file.",
-            "- Codex, GitHub Copilot, Cursor, and other tools that read Agent Plugins: unzip this file and add the folder as a plugin, following the tool's own steps."
+            "- Codex, GitHub Copilot, Cursor, OpenClaw, and other tools that read Agent Plugins: unzip this file and add the folder as a plugin, following the tool's own steps."
         );
     }
     lines.push("", "To change it or download it for another product, open the backup of this project at " + APP_SITE_URL, "", "## " + REPORT_HEADING, "", reportMarkdown(report));
@@ -6780,9 +6873,9 @@ const PRODUCT_HINTS = {
     teamsZip: "When you change the assistant later, download this again from the same project. Copilot then updates the app you shared instead of adding a new one.",
     chatgpt: "There is no file to upload. Paste the text into the instructions of a ChatGPT project. To include skills and tools, use the Plugin download instead.",
     claudePlugin: "The whole project as one Claude plugin, with every assistant and skill and the tool servers Claude can connect to.",
-    portablePlugin: "The whole project as one plugin that ChatGPT, Codex, GitHub Copilot, Cursor, and other tools can read.",
+    portablePlugin: "The whole project as one plugin that ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw, and other tools can read.",
     notebook: "Add the .md file as a source, or paste the instructions.",
-    skill: "A standard skill for any tool that reads Agent Skills. It leaves out the picture, the welcome message, the example questions, and the Copilot settings.",
+    skill: "A standard skill for any tool that reads Agent Skills, such as Claude Code, Codex, Kimi Code CLI, and OpenClaw. It leaves out the picture, the welcome message, the example questions, and the Copilot settings.",
     backup: "The whole project in one .zip, with every assistant, skill, and file. You can open it here any time."
 };
 const AFTER_STEPS = {
@@ -6806,13 +6899,15 @@ const AFTER_STEPS = {
     ],
     portablePlugin: [
         ["In ChatGPT", ["A workspace owner, or someone allowed to upload plugins, opens the Admin console, then Plugins.", "Choose Add, then Upload plugin, and pick this .zip file."]],
-        ["In Codex, GitHub Copilot, Cursor, and similar tools", ["Unzip the file and add the folder as a plugin, following the tool's own steps.", "If the download has a SETUP.md file, follow its steps."]]
+        ["In Codex, GitHub Copilot, Cursor, OpenClaw, and similar tools", ["Unzip the file and add the folder as a plugin, following the tool's own steps.", "If the download has a SETUP.md file, follow its steps."]]
     ],
     notebook: [
         ["In Gemini Notebook", ["Open the notebook, then More, then Notebook settings.", "Add the .md download as a source.", "Or paste the instructions into the instructions field."]]
     ],
     skill: [
-        ["In a tool that reads Agent Skills", ["Upload or unzip this file where the tool looks for skills, such as the .agents/skills folder.", "SKILL.md holds the instructions, and the other folders hold its files."]]
+        ["In a tool that reads Agent Skills", ["Upload or unzip this file where the tool looks for skills, such as the .agents/skills folder.", "SKILL.md holds the instructions, and the other folders hold its files."]],
+        ["In OpenClaw or a Kimi Claw you run yourself", ["Unzip this file into the skills folder of your OpenClaw workspace.", "Or unzip it anywhere and run openclaw skills install with the path to the folder."]],
+        ["In Kimi Code CLI", ["Unzip this file into the .agents/skills folder of your project, or into .kimi-code/skills in your home folder to use it everywhere."]]
     ],
     backup: [
         ["In Agentprise", ["Keep this file somewhere safe. Browsers can clear what they store.", "Drop it on the Workspace page to keep working on it or to download it for another product."]]
@@ -8065,6 +8160,37 @@ function renderUses() {
     });
 }
 
+// What each checkbox under Products it works in turns off, as people see the downloads.
+const PRODUCT_DOWNLOADS = Object.freeze({
+    copilot: "Copilot / Teams Apps and Teams Chat",
+    claude: "Claude skill and Claude plugin",
+    chatgpt: "ChatGPT text and Plugin",
+    gemini: "Gemini skill and Gemini Notebook",
+    cli: "the SKILL.md download"
+});
+
+/** One checkbox per product; checked means the item works there. */
+function renderNotFor() {
+    const item = currentItem();
+    const list = $("products-list");
+    clearChildren(list);
+    Object.keys(PRODUCT_LABELS).forEach(function (key) {
+        const id = "product-" + key;
+        const box = el("input", { type: "checkbox", id: id });
+        box.checked = item.notFor.indexOf(key) < 0;
+        box.addEventListener("change", function () {
+            const current = currentItem();
+            current.notFor = Object.keys(PRODUCT_LABELS).filter(function (other) {
+                return other === key ? !box.checked : current.notFor.indexOf(other) >= 0;
+            });
+            updateDerived();
+            scheduleSave();
+            announce(box.checked ? "Downloads for " + PRODUCT_LABELS[key] + " are turned on." : "Downloads for " + PRODUCT_LABELS[key] + " are turned off.");
+        });
+        list.appendChild(el("div", { className: "check-row" }, [box, el("label", { "for": id, text: PRODUCT_LABELS[key] + " (" + PRODUCT_DOWNLOADS[key] + ")" })]));
+    });
+}
+
 // ### Interface: form state ###
 // Both editors share fields, so each lists all its controls. Publisher fields
 // belong to the project.
@@ -8074,6 +8200,7 @@ const TEXT_FIELDS = [
     { ids: ["s-instructions", "d-instructions"], get: function (i) { return itemBody(i); }, set: function (i, v) { if (i.kind === "agent") { i.instructions = v; } else { i.body = v; } } },
     { ids: ["f-welcome"], get: function (i) { return i.kind === "agent" ? i.welcome : ""; }, set: function (i, v) { if (i.kind === "agent") { i.welcome = v; } } },
     { ids: ["f-compatibility"], get: function (i) { return i.kind === "skill" ? i.compatibility : ""; }, set: function (i, v) { if (i.kind === "skill") { i.compatibility = v; } } },
+    { ids: ["f-notForReason"], get: function (i) { return i.notForReason; }, set: function (i, v) { i.notForReason = v; } },
     { ids: ["a-name"], get: function (i, p) { return p.creator.name; }, set: function (i, v, p) { p.creator.name = v; } },
     { ids: ["a-organization"], get: function (i, p) { return p.creator.organization; }, set: function (i, v, p) { p.creator.organization = v; } },
     { ids: ["a-website"], get: function (i, p) { return p.creator.url; }, set: function (i, v, p) { p.creator.url = v; } },
@@ -8301,7 +8428,6 @@ function updateDerived() {
     ui.warnings = result.warnings;
     ui.findings = scanProject(project, fileTextsForScan());
     const blocked = ui.problems.length > 0;
-    const projectBlocked = project.items.some(function (other) { return validateItem(project, other).problems.length > 0; });
     document.querySelectorAll(".download-button").forEach(function (button) {
         const format = button.getAttribute("data-format");
         if (format === "backup") {
@@ -8309,8 +8435,9 @@ function updateDerived() {
             return;
         }
         const whole = format === "claudePlugin" || format === "portablePlugin";
-        button.disabled = (whole ? projectBlocked : blocked) || downloadReport(format).some(function (entry) { return entry.status === "blocked"; });
+        button.disabled = (whole ? pluginItemsBlocked(project, format) : blocked) || downloadReport(format).some(function (entry) { return entry.status === "blocked"; });
     });
+    renderDestinationNotes(project, item);
     setText($("where-item"), item.name || ("this " + KIND_WORDS[item.kind].noun));
     renderPreview();
     renderReadiness();
@@ -8381,6 +8508,7 @@ function renderForm() {
     }
     renderFiles();
     renderUses();
+    renderNotFor();
     renderTools();
     renderServers();
     const select = $("a-license");
@@ -8752,7 +8880,7 @@ function setupForm() {
 // ### Interface: tools ###
 // Tools come from the Library or files. People can read, remove, and fill in
 // server addresses; new tools are built in files.
-const TOOL_PRODUCTS = [["copilot", "Microsoft 365 Copilot"], ["claude", "Claude"], ["chatgpt", "ChatGPT"], ["gemini", "Gemini"], ["cli", "Coding tools"]];
+const TOOL_PRODUCTS = Object.keys(PRODUCT_LABELS).map(function (key) { return [key, PRODUCT_LABELS[key]]; });
 
 /** How a tool works in one product, in plain words. */
 function toolRoute(project, capability, target) {
@@ -8851,25 +8979,64 @@ function renderServers() {
     });
 }
 
+// Download card formats and the export each one makes.
+const DOWNLOAD_EXPORTS = Object.freeze({ teamsZip: "teamsZip", msAgent: "msAgent", geminiSkill: "gemini", claudeSkill: "claude", plainSkill: "skill", markdown: "notebook", chatgpt: "chatgpt", claudePlugin: "claudePlugin", portablePlugin: "portablePlugin" });
+
 /** Used to block a download before it starts. */
 function downloadReport(format) {
     const item = currentItem();
-    const ids = { teamsZip: "teamsZip", msAgent: "msAgent", geminiSkill: "gemini", claudeSkill: "claude", plainSkill: "skill", markdown: "notebook", chatgpt: "chatgpt" };
     if (format === "claudePlugin" || format === "portablePlugin") {
         return pluginEntriesReport(format);
     }
-    return ids[format] ? conversionReport(ui.project, item, ids[format]) : [];
+    return DOWNLOAD_EXPORTS[format] ? conversionReport(ui.project, item, DOWNLOAD_EXPORTS[format]) : [];
 }
 
-/** Without building files. */
+/** Without building files. Items marked as not for the plugin's product are left out, as pluginEntries does. */
 function pluginEntriesReport(format) {
     const report = [];
+    const target = EXPORTS[format].target;
     ui.project.items.forEach(function (item) {
+        if (notForTarget(item, target)) {
+            report.push(notForEntry(item, target));
+            return;
+        }
         conversionReport(ui.project, item, format).forEach(function (entry) {
             report.push(reportEntry(entry.component === item.name ? item.name : item.name + ": " + entry.component, entry.status, entry.note));
         });
     });
+    const empty = pluginNotForBlock(ui.project, format);
+    if (empty) {
+        report.push(empty);
+    }
     return report;
+}
+
+/** True when an item the plugin includes still has an empty required question. */
+function pluginItemsBlocked(project, format) {
+    const target = EXPORTS[format].target;
+    return project.items.some(function (other) { return !notForTarget(other, target) && validateItem(project, other).problems.length > 0; });
+}
+
+/** The line under each download the author turned off, read with its button. */
+function renderDestinationNotes(project, item) {
+    Object.keys(DOWNLOAD_EXPORTS).forEach(function (format) {
+        const target = EXPORTS[DOWNLOAD_EXPORTS[format]].target;
+        const note = $("note-" + format);
+        const button = format === "chatgpt" ? $("chatgpt-copy") : document.querySelector(".download-button[data-format='" + format + "']");
+        let text = "";
+        if (notForTarget(item, target)) {
+            const whole = format === "claudePlugin" || format === "portablePlugin";
+            text = whole ? "Leaves out " + (item.name || "this " + KIND_WORDS[item.kind].noun) + ", which is marked " + notForPhrase(item, target) : "Marked " + notForPhrase(item, target);
+        }
+        setText(note, text);
+        note.hidden = !text;
+        if (text) {
+            button.setAttribute("aria-describedby", note.id);
+        } else {
+            button.removeAttribute("aria-describedby");
+        }
+    });
+    $("chatgpt-copy").disabled = notForTarget(item, "chatgpt");
 }
 
 function renderReport(report) {
@@ -9043,7 +9210,7 @@ function entriesToFiles(entries) {
 async function buildProductFiles(project, item, product) {
     const report = productReport(project, item, product);
     if (report.some(function (entry) { return entry.status === "blocked"; })) {
-        return { root: "", files: [{ name: "Blocked", text: "To download this, fix the items marked blocked in the list above." }], fileName: "", format: "", notes: [], report: report };
+        return { root: "", files: [{ name: "Blocked", text: "This download is turned off. The list above says why." }], fileName: "", format: "", notes: [], report: report };
     }
     const built = await buildProductFilesUnchecked(project, item, product);
     built.report = report;
@@ -9258,7 +9425,7 @@ async function renderProductPanel() {
     labelButton(download, "bi-download", built.fileName ? "Download " + built.fileName : "Download");
     download.hidden = !built.format;
     const whole = built.format === "claudePlugin" || built.format === "portablePlugin";
-    const blockedItems = whole ? project.items.some(function (other) { return validateItem(project, other).problems.length > 0; }) : ui.problems.length > 0;
+    const blockedItems = whole ? pluginItemsBlocked(project, built.format) : ui.problems.length > 0;
     download.disabled = !built.format || (built.format === "backup" ? !projectHasContent(project) : blockedItems);
     setText($("product-hint"), PRODUCT_HINTS[ui.product]);
     renderAfterSteps(ui.product);
