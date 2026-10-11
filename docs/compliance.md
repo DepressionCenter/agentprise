@@ -241,7 +241,8 @@ listed under known gaps.
 
 Target: WCAG 2.2 AA. The app is one page with five views (Workspace, the
 project editor, Library, Inspect, and Help). The sidebar links to Workspace,
-Library, Inspect, and Help, and lists up to five recent projects.
+Library, and Help. While a project is open, it also links to that project and
+to Inspect under Workspace. It lists up to five recent projects.
 
 #### Automated scan
 
@@ -382,7 +383,7 @@ borders.
 - Text is 16 pixels at the base size with a 1.5 line height. Help text is capped
   at about 72 characters per line and left aligned.
 - Dropping a file has a button alternative (Choose a file on the start page,
-  Open a file and Add from a file in the editor). Reordering prompt suggestions
+  and Add from a file in the editor). Reordering example questions
   is done by editing the list, one per line, on the Inspect page.
 - Interface text aims at a grade 7 to 9 reading level and avoids exclamation
   marks in system messages.

@@ -50,7 +50,8 @@ without showing anyone's private work.
 ![The dotted drop box on the start page. It reads Drop an agent or skill file here. It says it accepts an Agentprise backup, a plugin or skill .zip, a .zip from the Copilot app, a .agent file, or a SKILL.md file, and that each file opens as a new project. A Choose a file button sits below.](../../images/guides/dropzone.png)
 
 If you are in the middle of a project, the start page is not showing.
-Choose **Open a file** at the top of the editor instead.
+Choose **Workspace** on the left, or the home button at the top, to get back
+to it.
 
 The file opens as a new project and is added to **Your projects**. It never
 replaces work you already have unless you say so. If the same project is

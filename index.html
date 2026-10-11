@@ -221,6 +221,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         }
         .nav-list a:hover { background: var(--nav-active); }
         .nav-list a[aria-current="page"] { background: var(--nav-active); font-weight: 500; }
+        .nav-sublist { list-style: none; margin: 4px 0 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 4px; }
+        .nav-sublist a { font-size: 0.875rem; min-height: 40px; overflow-wrap: anywhere; }
         .sidebar-note { margin-top: auto; padding: 0 8px; font-size: 0.8125rem; color: var(--muted); }
         .sidebar-note .note-title { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 500; margin: 0 0 4px; }
         .sidebar-note .note-title svg { color: var(--ok); }
@@ -282,6 +284,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             }
             .nav-group { gap: 6px; }
             .nav-list { flex-direction: row; flex-wrap: wrap; }
+            /* Workspace and its open project stay together, above Library and Help. */
+            .nav-list > li:has(.nav-sublist) { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px; }
+            .nav-sublist { margin: 0; padding: 0; flex-direction: row; flex-wrap: wrap; }
             .sidebar-note { margin-top: 0; padding: 0; }
             .topbar { padding: 8px 16px; }
             main { padding: 20px 16px 32px; }
@@ -821,13 +826,18 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             <ul class="nav-list">
                 <li><a href="#workspace" id="nav-workspace" aria-current="page">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
-                    Workspace</a></li>
+                    Workspace</a>
+                    <ul class="nav-sublist">
+                        <li id="nav-project-item" hidden><a href="#project" id="nav-project">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></svg>
+                            <span id="nav-project-name">Project</span></a></li>
+                        <li id="nav-details-item" hidden><a href="#details" id="nav-details">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5"/><path d="m16 7 5 5-5 5"/><path d="m14 4-4 16"/></svg>
+                            Inspect</a></li>
+                    </ul></li>
                 <li><a href="#library" id="nav-library">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4v16"/><path d="M9 4v16"/><path d="M14 4v16"/><path d="M17 5l3 15"/></svg>
                     Library</a></li>
-                <li><a href="#details" id="nav-details">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5"/><path d="m16 7 5 5-5 5"/><path d="m14 4-4 16"/></svg>
-                    Inspect</a></li>
                 <li><a href="#help" id="nav-help">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><path d="M12 17h.01"/></svg>
                     Help</a></li>
@@ -852,9 +862,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             <div class="topbar-actions">
                 <a class="button" href="#workspace" id="details-back" hidden>Back to the simple view</a>
                 <nav class="topbar-links" aria-label="Site links">
-                    <a href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener" title="GitHub"><span class="bi bi-github" aria-hidden="true"></span><span class="visually-hidden">GitHub (opens in a new tab)</span></a>
+                    <a href="#workspace" title="Home"><span class="bi bi-house-door" aria-hidden="true"></span><span class="visually-hidden">Home</span></a>
                     <a href="#help" title="Help"><span class="bi bi-book" aria-hidden="true"></span><span class="visually-hidden">Help</span></a>
-                    <a href="https://code.depressioncenter.org" title="EFDC code site"><span class="bi bi-house-door" aria-hidden="true"></span><span class="visually-hidden">EFDC code site</span></a>
+                    <a href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener" title="GitHub"><span class="bi bi-github" aria-hidden="true"></span><span class="visually-hidden">GitHub (opens in a new tab)</span></a>
                 </nav>
             </div>
         </header>
@@ -928,7 +938,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             <p class="page-hint" id="editor-hint">Answer the questions below. The preview changes as you type.</p>
                         </div>
                         <div class="button-row">
-                            <button type="button" id="open-file"><span class="bi bi-folder2-open" aria-hidden="true"></span>Open a file</button>
+                            <a class="button" href="#details" id="go-inspect"><span class="bi bi-search" aria-hidden="true"></span>Inspect</a>
                             <button type="button" id="go-download"><span class="bi bi-download" aria-hidden="true"></span>Download</button>
                         </div>
                     </div>
@@ -1117,7 +1127,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                     </div>
                                 </div>
                                 <p class="preview-welcome" id="preview-welcome" hidden></p>
-                                <ul class="preview-starters" id="preview-starters" aria-label="Prompt suggestions" hidden></ul>
+                                <ul class="preview-starters" id="preview-starters" aria-label="Example questions" hidden></ul>
                                 <p class="ask-pill" aria-hidden="true">Ask anything</p>
                                 <p class="preview-note">This is a preview. Each product looks a little different.</p>
                             </section>
@@ -1264,7 +1274,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                 <div class="button-row"><button type="button" class="instructions-template">Help me write this</button></div>
                             </div>
                             <div class="field">
-                                <label for="d-starters">Prompt suggestions</label>
+                                <label for="d-starters">Example questions</label>
                                 <p class="hint" id="d-starters-hint">Questions people might ask first. Put one on each line, up to 12.</p>
                                 <textarea id="d-starters" rows="3" aria-describedby="d-starters-hint d-starters-error"></textarea>
                                 <p class="error-text" id="d-starters-error" hidden></p>
@@ -1383,12 +1393,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             </tbody>
                         </table>
                     </div>
+                    <h2>Full Documentation</h2>
+                    <p>The full documentation for Agentprise is available at: <a href="https://github.com/DepressionCenter/agentprise/tree/main/docs" target="_blank" rel="noopener">github.com/DepressionCenter/agentprise<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
                 </div>
             </section>
         </main>
         <footer class="site-footer">
             <p>&copy; 2026 The Regents of the University of Michigan | <a href="https://depressioncenter.org" target="_blank" rel="noopener">Eisenberg Family Depression Center<span class="visually-hidden"> (opens in a new tab)</span></a></p>
-            <p><a href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener"><span class="bi bi-github" aria-hidden="true"></span>View Code<span class="visually-hidden"> (opens in a new tab)</span></a> | <a href="https://github.com/DepressionCenter/agentprise/tree/main/docs" target="_blank" rel="noopener">Documentation<span class="visually-hidden"> (opens in a new tab)</span></a></p>
+            <p><a href="https://github.com/DepressionCenter/agentprise" target="_blank" rel="noopener"><span class="bi bi-github" aria-hidden="true"></span>View Code<span class="visually-hidden"> (opens in a new tab)</span></a> | <a href="https://code.depressioncenter.org" target="_blank" rel="noopener">More Apps<span class="visually-hidden"> (opens in a new tab)</span></a></p>
         </footer>
     </div>
 </div>
@@ -2277,10 +2289,10 @@ function normalizeAgent(input) {
 
     const starters = Array.isArray(source.starters) ? source.starters : [];
     agent.starters = starters
-        .map(function (item) { return asText(item, LIMITS.starterText, "conversation starter", notices); })
+        .map(function (item) { return asText(item, LIMITS.starterText, "example question", notices); })
         .filter(function (item) { return item.length > 0; });
     if (agent.starters.length > LIMITS.starters) {
-        notices.push("Only the first " + LIMITS.starters + " conversation starters were kept.");
+        notices.push("Only the first " + LIMITS.starters + " example questions were kept.");
         agent.starters = agent.starters.slice(0, LIMITS.starters);
     }
 
@@ -2319,9 +2331,9 @@ function normalizeAgent(input) {
 
     if (isPlainObject(source.icon) && source.icon.bytes instanceof Uint8Array && source.icon.bytes.length > 0) {
         if (source.icon.bytes.length > LIMITS.iconBytes) {
-            notices.push("The icon was larger than " + Math.round(LIMITS.iconBytes / 1024 / 1024) + " MB and was removed.");
+            notices.push("The picture was larger than " + Math.round(LIMITS.iconBytes / 1024 / 1024) + " MB and was removed.");
         } else if (!pngIsComplete(source.icon.bytes)) {
-            notices.push("The icon was not a complete PNG image and was removed.");
+            notices.push("The picture was not a complete PNG image and was removed.");
         } else {
             agent.icon = { bytes: copyBytes(source.icon.bytes), mime: "image/png" };
         }
@@ -4108,12 +4120,12 @@ function iconFromDataUri(value, notices) {
         return null;
     }
     if (!value.startsWith(PNG_DATA_URI_PREFIX)) {
-        notices.push("The icon in the file is not a PNG image and was left out.");
+        notices.push("The picture in the file is not a PNG image and was left out.");
         return null;
     }
     const bytes = base64ToBytes(value.slice(PNG_DATA_URI_PREFIX.length));
     if (!bytes || !pngDimensions(bytes)) {
-        notices.push("The icon in the file could not be read and was left out.");
+        notices.push("The picture in the file could not be read and was left out.");
         return null;
     }
     return { bytes: bytes, mime: "image/png" };
@@ -4125,7 +4137,7 @@ function iconFromBytes(bytes, notices) {
         return null;
     }
     if (!pngDimensions(bytes)) {
-        notices.push("The icon in the file is not a PNG image and was left out.");
+        notices.push("The picture in the file is not a PNG image and was left out.");
         return null;
     }
     return { bytes: copyBytes(bytes), mime: "image/png" };
@@ -6343,12 +6355,12 @@ function teamsManifestVersion() {
 async function teamsZipExport(agent, icons, extras) {
     const warnings = [];
     if (!icons || !pngDimensions(icons.color) || !pngDimensions(icons.outline)) {
-        throw new Error("The Teams package needs a color icon and an outline icon as PNG bytes.");
+        throw new Error("The Copilot app package needs a color icon and an outline icon as PNG images.");
     }
     const colorSize = pngDimensions(icons.color);
     const outlineSize = pngDimensions(icons.outline);
     if (colorSize.width !== 192 || colorSize.height !== 192 || outlineSize.width !== 32 || outlineSize.height !== 32) {
-        throw new Error("The Teams package needs a 192 by 192 color icon and a 32 by 32 outline icon.");
+        throw new Error("The Copilot app package needs a 192 by 192 color icon and a 32 by 32 outline icon.");
     }
     if (!agent.copilot.appId) {
         agent.copilot.appId = newUuid();
@@ -7041,6 +7053,7 @@ function showView(name, moveFocus) {
     }
     renderRecent();
     renderBreadcrumb();
+    renderProjectNav();
     if (moveFocus) {
         focusViewHeading(name);
     }
@@ -7060,6 +7073,14 @@ function moveExtras(container) {
     if (extras.parentNode !== container) {
         container.appendChild(extras);
     }
+}
+
+/** The open project's name and Inspect under Workspace, hidden until a project is open. */
+function renderProjectNav() {
+    const open = Boolean(ui.project);
+    $("nav-project-item").hidden = !open;
+    $("nav-details-item").hidden = !open;
+    setText($("nav-project-name"), open ? (ui.project.name || "Untitled project") : "Project");
 }
 
 function renderBreadcrumb() {
@@ -7526,10 +7547,8 @@ function renderRecent() {
     clearChildren(list);
     $("recent-group").hidden = recent.length === 0;
     recent.forEach(function (summary) {
+        // The open project is marked by its own item under Workspace, so Recent marks none.
         const link = el("a", { href: "#project", "data-project-id": summary.id, text: summary.name });
-        if (ui.project && ui.project.id === summary.id && (ui.view === "project" || ui.view === "details")) {
-            link.setAttribute("aria-current", "page");
-        }
         link.addEventListener("click", function (event) {
             event.preventDefault();
             event.stopPropagation();
@@ -7562,6 +7581,7 @@ async function renameProject(id, name) {
         ui.project.name = clean;
         await saveNow();
         renderBreadcrumb();
+        renderProjectNav();
     } else {
         const result = await loadStoredProject(id);
         if (!result) {
@@ -7787,7 +7807,6 @@ function setupFileOpening() {
     const zone = $("dropzone");
     const input = $("file-input");
     $("browse-button").addEventListener("click", function () { input.click(); });
-    $("open-file").addEventListener("click", function () { input.click(); });
     // The download card is below the fold on small screens.
     $("go-download").addEventListener("click", function () {
         const heading = $("where-heading");
@@ -8247,6 +8266,7 @@ function updateDerived() {
     renderReview();
     renderItemBar();
     renderBreadcrumb();
+    renderProjectNav();
     if (ui.view === "details") {
         scheduleProductRender();
     }

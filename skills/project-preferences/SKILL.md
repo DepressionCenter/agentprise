@@ -194,8 +194,13 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   its file on the left, a short Download or Copy button on the right. Each
   button carries hidden text naming its file, so screen readers do not hear
   seven identical buttons.
-- The top bar carries three square icon links, GitHub, Help, and the EFDC code
-  site, in the same shape as the header of code.depressioncenter.org.
+- The top bar carries three square icon links, in this order: home (the
+  Workspace page), Help, and GitHub, in the same shape as the header of
+  code.depressioncenter.org. The footer links to code.depressioncenter.org as
+  "More Apps".
+- The sidebar lists Workspace, Library, and Help. While a project is open, two
+  items appear under Workspace: the project's name, which opens `#project`, and
+  Inspect. Recent projects are listed below the menu.
 - Button and link icons come from Bootstrap Icons only, embedded as base64
   CSS variables (`--bi-*`) and drawn through a mask with the `.bi` class, so
   each icon is stored once. Credit stays in the README.
