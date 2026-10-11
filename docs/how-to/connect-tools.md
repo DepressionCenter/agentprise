@@ -56,7 +56,7 @@ shows each tool, what it does, and how it connects in Microsoft 365 Copilot,
 Claude, ChatGPT, Gemini, and coding tools. A tool that came with a skill the
 assistant uses says "Part of the skill" and the skill's name.
 
-![Part of the editor for Evidence Scout. Under Skills it can use, PubMed Search is ticked. Under Tools are four tool cards: Run a PubMed query, Get article details, Read abstracts, and Browse PubMed pages. Each card says what the tool does, that it comes with the skill PubMed Search, and how Microsoft 365 Copilot, Claude, ChatGPT, Gemini, and coding tools connect it.](../../images/guides/editor-tools.png)
+![Part of the editor for Evidence Scout. Under Skills it can use, PubMed Search is checked. Under Tools are four tool cards: Run a PubMed query, Get article details, Read abstracts, and Browse PubMed pages. Each card says what the tool does, that it is part of the skill PubMed Search, and what each of Microsoft 365 Copilot, Claude, ChatGPT, Gemini, and coding tools uses for it, such as Uses the PubMed connector, or Not available. The assistant will let people know it can't do this.](../../images/guides/editor-tools.png)
 
 ### Find out what needs setup
 
@@ -71,7 +71,7 @@ Agentprise tells you what each download needs in three places.
 
 Each line names a part of the assistant and gives it one of five labels.
 
-![The Output Format card of the Inspect page on the Claude Plugin tab for the Evidence Scout project, with Part of the project set to Evidence Scout (assistant). The report What changes in this download has one changed line, saying the assistant is written as a skill whose description starts with Persona:, and six needs setup lines for the PubMed Search tools. Those lines say each tool works once the PubMed connector is turned on, or that the script runs only where python3 has network access and, on claude.ai, a workspace Owner must allow the address it calls.](../../images/guides/details-claude-plugin.png)
+![The Files for each product card of the Inspect page on the Claude Plugin tab for the Evidence Scout project, with Part of the project set to Evidence Scout (assistant). The report What changes in this download has one changed line, saying the assistant is written as a skill whose description starts with Persona:, and six needs setup lines for the PubMed Search tools. Those lines say each tool works once the PubMed connector is turned on, or that the script runs only where python3 has network access and, on claude.ai, a workspace Owner must allow the address it calls.](../../images/guides/details-claude-plugin.png)
 
 | Label | What it means | What you do |
 |---|---|---|

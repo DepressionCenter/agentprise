@@ -36,7 +36,7 @@ its place.
    The Workspace start page opens.
 2. Choose **Create new** on the right.
 
-![The Agentprise Workspace start page. The menu on the left lists Workspace, Library, Inspect, and Help, with a Recent list under it. In the middle is a dotted box for dropping a file, with two cards on the right: Create new and Use a sample. Under them, Your projects shows three project cards, Evidence Scout, Caveman, and Team Helper, each with a More button. At the bottom, a row titled Or start from the library shows pictures such as Pirate First Mate, Ticket Goblin, Survey Sleuth, Study Coach, Admin Ally, and Red Team Raccoon, with an arrow at each end and a See the whole library link.](../../images/guides/workspace-start.png)
+![The Agentprise Workspace start page. The menu on the left lists Workspace, with the open project, Evidence Scout, and Inspect under it, then Library and Help, with a Recent list below. At the top right are buttons for home, Help, and GitHub. In the middle is a dotted box for dropping a file, with two cards on the right: Create new and Use a sample. Under them, Your projects shows three project cards, Evidence Scout, Caveman, and Team Helper. Each card has an Edit button and a button with three dots, and says what the project holds and when it was last edited. At the bottom, a row titled Or start from the library shows pictures such as Pirate First Mate, Ticket Goblin, Survey Sleuth, Study Coach, Admin Ally, and Red Team Raccoon, with an arrow at each end and a See the whole library link.](../../images/guides/workspace-start.png)
 
 ### Step 2: Answer the four questions
 
@@ -44,7 +44,7 @@ The editor shows four questions with a blank under each one. Gray example text
 in a blank shows the kind of answer that goes there. It disappears when you
 type.
 
-![The editor for a new, untitled project. At the top, a bar titled In this project shows one item, New assistant, with the buttons Add a skill and Add from a file. The four questions, What should it be called, What does it do, How should it behave, and What might people ask it first, show gray example text such as Team Helper. On the right, a gray box in the Download card titled Required information lists a name, what it does, and how it should behave, and the download buttons are grayed out.](../../images/guides/editor-blank.png)
+![The editor for a new, untitled project. At the top, a bar titled In this project shows one item, New assistant, with the buttons Add a skill and Add from a file. The four questions, What should it be called, What does it do, How should it behave, and What might people ask it first, show gray example text such as Team Helper. On the right, a gray box in the Download card titled Before you download, add lists a name, what it does, and how it should behave, and the download buttons are grayed out.](../../images/guides/editor-blank.png)
 
 1. Under **What should it be called?**, type a short name. This is how the
    assistant will be listed in Copilot. The example is Team Helper.
@@ -71,11 +71,11 @@ description, or the behavior is still empty, the card lists what is missing
 and the download buttons stay gray. Each item in the list is a link that takes
 you to that blank.
 
-![The Download card before the assistant is ready. A gray box says Required information, followed by three links: a name, what it does, and how it should behave. Every Download button, the Claude plugin and Plugin rows under For the whole project, and the Download Backup button are grayed out. Only the Copy button on the ChatGPT row is active.](../../images/guides/where-not-ready.png)
+![The Download card before the assistant is ready. A gray box says Before you download, add, followed by three links: a name, what it does, and how it should behave. Every Download button, the Claude plugin and Plugin rows under For the whole project, and the Download Backup button are grayed out. Only the Copy button on the ChatGPT row is active.](../../images/guides/where-not-ready.png)
 
 Once all three are filled in, the buttons turn on.
 
-![The Download card when Team Helper is ready. Under the heading For Team Helper, each row names a product and its file, with a Download button on the right: Copilot / Teams Apps, Teams Chat, Gemini, Gemini Notebook, Claude, ChatGPT with Project instructions to paste and a Copy button, and SKILL.md. Under the heading For the whole project are the Claude plugin and Plugin rows. A blue Download Backup button sits at the bottom, with a link to Inspect output files.](../../images/guides/where-it-can-go.png)
+![The Download card when Team Helper is ready. Under the heading For Team Helper, each row names a product and its file, with a Download button on the right: Copilot / Teams Apps, Teams Chat, Gemini, Gemini Notebook, Claude, ChatGPT with Project instructions to paste and a Copy button, and SKILL.md. Under the heading For the whole project are the Claude plugin and Plugin rows. A blue Download Backup button sits at the bottom, with a link that reads See what is inside each download.](../../images/guides/where-it-can-go.png)
 
 ### Step 4: Add a picture and your name
 

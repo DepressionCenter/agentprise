@@ -55,7 +55,7 @@ To see the file before you download it, choose **Inspect** on the left and
 then the **Teams Chat** tab. Everything you wrote is in this one file,
 including the welcome message and the picture.
 
-![The Output Format card of the Inspect page on the Teams Chat tab for Caveman. One file, Caveman.agent, is listed, with its contents shown. At the bottom are a button that reads Download Caveman.agent and four steps under the heading For a Teams chat.](../../images/guides/details-teams-chat.png)
+![The Files for each product card of the Inspect page on the Teams Chat tab for Caveman. One file, Caveman.agent, is listed, with its contents shown. At the bottom are a button that reads Download Caveman.agent and four steps under the heading For a Teams chat.](../../images/guides/details-teams-chat.png)
 
 ### Step 3: Put the file in SharePoint
 

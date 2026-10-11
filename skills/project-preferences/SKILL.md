@@ -41,7 +41,7 @@ served by GitHub Pages from the root of the main branch.
 
 - The whole app is one file, `index.html`, with one `<style>` block and one
   `<script>` block. There is no build step, no framework, no CDN, and no web font.
-  The page should stay under 500 KB.
+  The page should stay under 750 KB.
 - Google Analytics loads only when the page is served from
   `code.depressioncenter.org`, the production host. Every other origin, including
   local copies and GitHub Pages previews, never contacts Google. The host name and
@@ -171,10 +171,10 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
 - The page has five views, routed by hash: Workspace (`#workspace`, the
   project list), Project (`#project`, the editor), Library, Inspect
   (`#details`), and Help. The project editor asks plain questions with blanks
-  under them, with an "In this project" bar for its items; the Inspect page
-  shows every field beside the exact files each product receives. Both edit
-  the same state, and the shared controls (welcome message, picture, Copilot
-  settings, publisher details) exist once and move between the two.
+  under them, with an "In this project" bar for its items, and is the only
+  place to edit. The Inspect page shows only the exact files each product
+  receives. Its old details form is still in the page, hidden, because the
+  editor code keeps its fields in step.
 - Opening a file always creates a new project. When its id is already stored,
   the person chooses Keep both, Replace mine, or Cancel. "Add from a file"
   merges a file's items into the open project instead.

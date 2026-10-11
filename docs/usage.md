@@ -41,7 +41,7 @@ The menu on the left has these parts:
 - **Workspace** is where your projects are kept and where you start new ones.
   Once a project is open, two more items appear under it:
   - The project's name opens the project page, where you answer the questions.
-  - **Inspect** shows every field and the exact files each product receives.
+  - **Inspect** shows the exact files each product receives.
 - **Library** holds ready-made assistants and skills you can start from.
 - **Help** answers the most common questions and links to this documentation.
 
@@ -71,10 +71,11 @@ computer.
 The Workspace page lists **Your projects**, newest first. It shows nine at a
 time. When you have more, choose **Show all** to see every one, and
 **Show fewer** to go back. Each tile shows the picture, the name, what the
-project holds (such as "1 assistant and 2 skills"), and when it last changed.
+project holds (such as "1 assistant and 2 skills"), and on a second line,
+when it was last edited. Point to that line to see the day and time.
 
-Choose a project's name to open it. Choose **More** on a tile for the other
-actions:
+Choose a project's name or **Edit** to open it. Choose the **...** button on a
+tile for the other actions:
 
 - **Rename** gives the project a new name.
 - **Make a copy** adds a second project with "(copy)" at the end of its name.
@@ -276,10 +277,12 @@ A few things are worth knowing about files made elsewhere:
 ### Start from the Library
 
 1. Choose **Library** on the left, or **Use a sample** on the start page.
-2. Search by name, summary, kind, or tag if the list is long. The row of tags
-   under the search box narrows the list to one tag. Choose **All** or
+2. Search by name, summary, kind, or tag if the list is long. The row of
+   buttons under the search box narrows the list. **Assistant**, **Skill**, and
+   **Assistant with skills** show one kind of entry. The buttons after them
+   show one tag. Choose **All** or
    **Show all** to see everything again.
-3. Read the cards. Each card has **View** and **Try it** buttons at the top
+3. Read the cards. Each card has **View** and **Open** buttons at the top
    right, beside the picture. Under them, it says whether the entry is an
    **Assistant**, a **Skill**, or an **Assistant with skills**, and shows the
    name, the author, a short summary, and up to three tags. A long summary
@@ -288,11 +291,17 @@ A few things are worth knowing about files made elsewhere:
 4. Choose **View** to look inside before you take it. Choosing the picture or
    **Read more** does the same. The window shows the kind of entry, the
    author, the license, the full summary, what the entry holds, a few example
-   questions, and the start of its instructions. For a skill, it can also
-   have an **Add to** button that adds the skill to the project you have
-   open.
-5. Choose **Try it**. The entry is added to Your projects as a new project and
-   opens, ready to change or download.
+   questions, and the start of its instructions. Choose the **X** in the top
+   right corner to close it.
+5. Choose **Open** on the card or in the window. The entry is
+   added to Your projects as a new project and opens, ready to change or
+   download.
+
+To add a Library assistant or skill to the project you have open, choose
+**View**, then **Add to Current Project**. The app adds it and shows the
+project page. If the project already has something with the same name, the new
+one gets "copy" at the end of its name. This button works only while a project
+is open, and only for an entry with one assistant or one skill.
 
 The Library holds fun characters, such as Caveman and Red Team Raccoon, and
 helpers for work, such as Survey Sleuth for surveys and questionnaires. Some
@@ -418,7 +427,7 @@ Choose **Download Backup** at the bottom of the **Download** card. Unlike the
 other buttons, it saves the whole project: every assistant, every skill, and
 all their files and pictures, in one `.zip` named after the project, such as
 `caveman.agentprise.zip`. You can also choose **Download backup** from
-**More** on the project's tile on the Workspace page.
+the **...** menu on the project's tile on the Workspace page.
 
 Drop the backup on the Workspace page any time to keep working on the
 project, or to download it for another product. The backup is for Agentprise. To upload
@@ -428,9 +437,9 @@ to Gemini or Claude, use their own **Download** buttons instead.
 
 Choose **Inspect** at the top of the project page or under **Workspace** on the
 left. You can also choose **See what is inside each download** under the
-download buttons. The left side shows every field as a plain form, and the
-right side, **Files for each product**, shows the files for the product you pick, with your own words
-highlighted. Changes you make here show up in the Workspace too. The tabs run
+download buttons. Under **Files for each product**, choose a product to see
+its files, with your own words highlighted. To change anything, go back to the
+project page. The tabs run
 in alphabetical order and include **SKILL.md**, a plain Agent Skill with
 nothing specific to this app, **Claude Plugin** and **Plugin**, which show the
 files of the two plugins, and **Agentprise Backup**, which shows the files of
