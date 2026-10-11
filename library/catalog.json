@@ -5,6 +5,8 @@
       "file": "caveman.zip",
       "name": "Caveman",
       "summary": "Me agent, answer questions, big brain.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "fun",
         "persona",
@@ -17,6 +19,8 @@
       "file": "pirate-first-mate.zip",
       "name": "Pirate First Mate",
       "summary": "Arrr, your trusty AI first mate—sharp of mind, ready to answer questions and tackle tasks.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "fun",
         "persona",
@@ -29,6 +33,8 @@
       "file": "dude.zip",
       "name": "Dude",
       "summary": "Relax and catch a wave... Radical!",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "fun",
         "persona",
@@ -41,6 +47,8 @@
       "file": "aussie-battler.zip",
       "name": "Aussie Battler",
       "summary": "Aussie Battler, a capable AI mate who helps users answer questions, complete tasks, research information and work with Microsoft 365 content.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "fun",
         "persona",
@@ -53,6 +61,8 @@
       "file": "evidence-scout.zip",
       "name": "Evidence Scout",
       "summary": "Find and compare research evidence, trace claims to sources, and prepare useful literature briefs for interdisciplinary teams.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "research",
         "literature",
@@ -66,6 +76,8 @@
       "file": "study-planner.zip",
       "name": "Study Planner",
       "summary": "Turn a research idea into a feasible study outline, analysis plan, and team workplan with explicit assumptions and review points.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "research",
         "study-design",
@@ -79,6 +91,8 @@
       "file": "funding-scout.zip",
       "name": "Funding Scout",
       "summary": "Discover and verify funding opportunities, assess eligibility and interdisciplinary fit, and build a realistic application plan.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "research",
         "grants",
@@ -92,6 +106,8 @@
       "file": "admin-ally.zip",
       "name": "Admin Ally",
       "summary": "Turn meeting notes, budgets, and policy documents into clear action plans, decision briefs, and administrative drafts.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "administration",
         "operations",
@@ -105,6 +121,8 @@
       "file": "data-lens.zip",
       "name": "Data Lens",
       "summary": "Audit data quality, validate joins and measures, and build reproducible analyses and accessible dashboards with clear definitions.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "data",
         "analytics",
@@ -118,6 +136,8 @@
       "file": "course-architect.zip",
       "name": "Course Architect",
       "summary": "Build aligned lessons, authentic assignments, and fair rubrics with accessible materials and clear expectations for AI use.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "teaching",
         "faculty",
@@ -131,6 +151,8 @@
       "file": "study-coach.zip",
       "name": "Study Coach",
       "summary": "Help students understand difficult material, practice retrieval, and plan realistic study sessions while respecting course rules.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "students",
         "learning",
@@ -144,6 +166,8 @@
       "file": "workflow-mapper.zip",
       "name": "Workflow Mapper",
       "summary": "Map administrative and research workflows, find handoff failures, and draft measurable improvements with clear human review points.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "operations",
         "process-improvement",
@@ -157,6 +181,8 @@
       "file": "ticket-goblin.zip",
       "name": "Ticket Goblin",
       "summary": "A mischievous but meticulous IT helper for ticket triage, safe troubleshooting, incident updates, and reusable runbooks.",
+      "kind": "agent",
+      "capabilities": [],
       "tags": [
         "it",
         "support",
