@@ -13,12 +13,12 @@ This works best with the Example Records connector turned on.
 
 Look for Example Records in the product's list of connectors or apps, and connect it.
 
-Without it, the assistant still does the work it can and says that no tool was used.
+Until you connect it, the assistant does what it can and tells people it couldn't use the tool.
 
-## Let the script reach the internet
+## Let the script connect to the internet
 
 The script scripts/lookup.py runs only where python3 can run with network access to api.example.org.
 
-In a coding agent, allow the command when it asks.
+In a coding tool such as Claude Code or Codex, allow the command when it asks.
 
-If the script can't connect, the assistant falls back and says why.
+If the script can't connect, the assistant tells people why and answers without it.

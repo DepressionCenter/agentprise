@@ -120,7 +120,7 @@ project holds. Choose a name in the bar to edit it.
      explain them to a new colleague. **Help me write this** gives you a
      template.
 3. Choose the assistant in the **In this project** bar. Under
-   **Skills it can use**, tick the skills it should follow. This list appears
+   **Skills it can use**, check the skills it can use. This list appears
    once the project has a skill.
 
 You can also bring in skills that already exist:
@@ -151,18 +151,18 @@ you open.
 When the assistant or skill you are editing has tools, a **Tools** list
 appears under the questions. Each card shows:
 
-- The tool's name and what it does. "(needed for its main job)" after the
-  name means the assistant cannot do what it was made for without it.
+- The tool's name and what it does. "(required)" after the name means the
+  assistant cannot do what it was made for without it.
 - How each product connects it: Microsoft 365 Copilot, Claude, ChatGPT,
-  Gemini, and coding tools. "Not available, so it tells people it can't do
-  this part" means that product has no way to use it.
-- "Comes with the skill" and a skill's name, when the tool belongs to a skill
+  Gemini, and coding tools. "Not available" means that product has no way to
+  use it, and the assistant will let people know it can't do that part.
+- "Part of the skill" and a skill's name, when the tool belongs to a skill
   the assistant uses. Change or remove those tools in the skill itself.
 - **Remove this tool**, for the item's own tools. The app asks first. After
   that, no download mentions the tool.
 
-Without a tool, the assistant still does the work it can and tells people
-that no tool was used. It never claims a search was done when no tool
+If a tool isn't connected, the assistant does what it can and tells people
+it couldn't use the tool. It never claims a search was done when no tool
 returned results.
 
 Some tools reach a tool server, which is a service on the web or on your
@@ -212,7 +212,7 @@ skill.
   25 shared or group mailboxes. A box is greyed out while its switch is off,
   and an empty box means everything the person can see. Sources that came with
   a file you opened, such as SharePoint items, meetings, or a shared mailbox,
-  are listed with a Remove button and travel with every Copilot download. You
+  are listed with a Remove button and are included in every Copilot download. You
   can also tell the assistant to prefer its sources over its own knowledge and
   pick a response mode (Auto, Quick response, or Think deeper). Web search
   starts on. SharePoint, Teams messages, email, and meetings start off,
@@ -415,15 +415,15 @@ all their files and pictures, in one `.zip` named after the project, such as
 `caveman.agentprise.zip`. You can also choose **Download backup** from
 **More** on the project's tile on the Workspace page.
 
-Drop the backup on the Workspace page any time to pick up where you left off,
-or to download it for another product. The backup is for Agentprise. To upload
+Drop the backup on the Workspace page any time to keep working on the
+project, or to download it for another product. The backup is for Agentprise. To upload
 to Gemini or Claude, use their own **Download** buttons instead.
 
 ### Inspect the output
 
-Choose **Inspect** on the left, or **Inspect output files** under the download
-buttons. The left side shows every field as a plain form, and the right side
-shows the files for the output format you pick, with your own words
+Choose **Inspect** on the left, or **See what is inside each download** under
+the download buttons. The left side shows every field as a plain form, and the
+right side, **Files for each product**, shows the files for the product you pick, with your own words
 highlighted. Changes you make here show up in the Workspace too. The tabs run
 in alphabetical order and include **SKILL.md**, a plain Agent Skill with
 nothing specific to this app, **Claude Plugin** and **Plugin**, which show the

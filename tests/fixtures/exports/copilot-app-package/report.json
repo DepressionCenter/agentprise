@@ -17,7 +17,7 @@
   {
     "component": "Record server",
     "status": "unsupported",
-    "note": "Left out the Local helper server, because Copilot can reach only tool servers on the web."
+    "note": "Left out the Local helper server, because Copilot can connect only to tool servers on the web."
   },
   {
     "component": "Record API",
@@ -47,7 +47,7 @@
   {
     "component": "Copyright and license",
     "status": "unsupported",
-    "note": "The Copilot app package's files reject extra fields."
+    "note": "The Copilot app package has no place for them."
   },
   {
     "component": "guide.md",

@@ -8,7 +8,7 @@ This file is part of Agentprise
 skills/project-preferences/SKILL.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Project-specific preferences for Agentprise: the single-file build, the
          project backup format, workspace storage, the download cards, and how
          to test.
@@ -155,8 +155,8 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   file is silent about it. `copilotCapabilities` is the single writer for both
   Microsoft files and `readCopilotCapabilities` the single reader.
 - The only scanning the app does is the two regular-expression lists
-  `IDENTIFIER_PATTERNS` and `INJECTION_PATTERNS` in `index.html`, shown as
-  "Review before sharing". They warn, never block, never store or send a
+  `IDENTIFIER_PATTERNS` and `INJECTION_PATTERNS` in `index.html`, shown as a
+  yellow box under Download with the matches under View details. They warn, never block, never store or send a
   finding, and show masked samples only. Keep them regex-only: the app loads
   no model and makes no request.
 - Browser storage names carry the `agentprise-` prefix, because every EFDC app

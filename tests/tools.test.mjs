@@ -2,7 +2,7 @@
 // tests/tools.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-10
+// Last Modified: 2026-10-11
 // Summary: Tests for the tools stage: exports checked against the pinned vendor
 //          schemas, golden export files for every provider kind on every
 //          target, composed instructions, the conversion report, the setup
@@ -387,7 +387,7 @@ describe("composeInstructions", () => {
     assert.equal(plan.text, agent.instructions);
     const entry = plan.report.find((item) => item.component === "Skill Helper Skill");
     assert.equal(entry.status, "unsupported");
-    assert.ok(entry.note.includes("cannot carry files"));
+    assert.ok(entry.note.includes("cannot include files"));
   });
 
   test("a skill written for a product without skills becomes an assistant, and an assistant for a skill product gets a Persona description", () => {
@@ -413,7 +413,7 @@ describe("conversionReport", () => {
     const entry = conversionReport(project, item, "claude").find((report) => report.component === "Main lookup");
     assert.equal(entry.status, "unsupported");
     assert.ok(entry.note.includes("main job"));
-    assert.ok(entry.note.includes("will not work as intended"));
+    assert.ok(entry.note.includes("won't work as intended"));
     // Where a provider exists, there is no such entry.
     assert.equal(conversionReport(project, item, "teamsZip").some((report) => report.component === "Main lookup" && report.status === "unsupported"), false);
     const written = await engine.exports.skillZip(project, item, "claude");
@@ -521,7 +521,7 @@ describe("conversionReport", () => {
     assert.deepEqual(JSON.parse(entryText(claude, ".mcp.json")).mcpServers.remote, { type: "http", url: "https://mcp.example.org/mcp" });
     const dropped = claude.report.find((entry) => entry.status === "unsupported" && entry.note.includes("Local helper server"));
     assert.ok(dropped);
-    assert.ok(dropped.note.includes("claude.ai can reach only tool servers on the web"));
+    assert.ok(dropped.note.includes("claude.ai can connect only to tool servers on the web"));
     assert.ok(reportSectionOf(entryText(claude, "golden-kit/README.md")).includes(dropped.note));
     const portable = await engine.exports.portablePlugin(project);
     assert.deepEqual(JSON.parse(entryText(portable, "golden-kit/mcp.json")).mcpServers.local, { type: "stdio", command: "npx", args: ["-y", "example-mcp-server"] });
@@ -625,7 +625,7 @@ describe("writeSetupGuide", () => {
       capabilities: [{ id: "a", label: "Fetch", providers: { "*": [{ kind: "script", path: "scripts/fetch.py", runtime: "python3" }] } }],
     });
     const guide = writeSetupGuide(project, project.items, "claude");
-    assert.ok(guide.includes("## Let the script reach the internet"));
+    assert.ok(guide.includes("## Let the script connect to the internet"));
     assert.ok(guide.includes("The script scripts/fetch.py runs only where python3 can run with network access to eutils.example.org, api.example.net."));
     assert.ok(guide.includes("and adding eutils.example.org, api.example.net."));
   });

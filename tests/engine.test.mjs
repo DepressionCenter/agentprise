@@ -105,7 +105,7 @@ describe("normalizeAgent", () => {
     });
     assert.deepEqual(agent.starters, ["keep me"]);
     assert.deepEqual(agent.sharepointLinks, ["https://example.sharepoint.com/sites/a"]);
-    assert.ok(notices.some((n) => n.includes("4 SharePoint link(s) were removed") && n.includes("https")));
+    assert.ok(notices.some((n) => n.includes("Removed 4 SharePoint links") && n.includes("https")));
     // The switch follows the links that survive, so refused links never open the agent to every file.
     assert.equal(agent.copilot.sharepoint, true);
     assert.equal(engine.normalizeAgent({ sharepointLinks: ["https://example.org"] }).agent.copilot.sharepoint, false);
@@ -122,10 +122,10 @@ describe("normalizeAgent", () => {
       responseMode: "Deep thought",
     } });
     assert.equal(agent.copilot.teamsLinks.length, 5);
-    assert.ok(notices.some((n) => n.includes("1 Teams link(s) were removed")));
+    assert.ok(notices.some((n) => n.includes("Removed 1 Teams link.")));
     assert.ok(notices.some((n) => n.includes("first 5 Teams links")));
     assert.deepEqual(agent.copilot.mailboxes, ["lab-team@example.org", "second@example.org"]);
-    assert.ok(notices.some((n) => n.includes("1 mailbox(s) were removed")));
+    assert.ok(notices.some((n) => n.includes("Removed 1 mailbox.")));
     assert.equal(agent.copilot.sharedMailbox, "front-desk@example.org");
     assert.equal(engine.normalizeAgent({ copilot: { sharedMailbox: "nope" } }).agent.copilot.sharedMailbox, "");
     assert.deepEqual(agent.copilot.emailFolders, ["inbox"]);
@@ -182,7 +182,7 @@ describe("normalizeAgent", () => {
       "https://example.org", "https://example.org/a/b", "https://example.org/a/b/c", "https://example.org/?q=1", "http://example.org", "https://example.net", "https://example.com", "https://example.edu",
     ] } });
     assert.deepEqual(agent.copilot.webSites, ["https://example.org", "https://example.org/a/b", "https://example.net", "https://example.com"]);
-    assert.ok(notices.some((n) => n.includes("3 web site(s) were removed")));
+    assert.ok(notices.some((n) => n.includes("Removed 3 web sites")));
     assert.ok(notices.some((n) => n.includes("first 4")));
   });
 
@@ -202,7 +202,7 @@ describe("normalizeAgent", () => {
     assert.equal(agent.files[0].name, "plan.docx");
     assert.ok(agent.files.every((f) => f.name.endsWith(".docx") || f.name.endsWith(".txt")));
     assert.ok(agent.files.every((f) => !f.name.includes("..")));
-    const notice = notices.find((n) => n.includes("11 attached file(s) were left out"));
+    const notice = notices.find((n) => n.includes("Left out 11 attached files"));
     assert.ok(notice);
     assert.ok(notice.includes("tool.exe (its type is not one this app accepts)"));
     assert.ok(notice.includes("PLAN.docx (another file has the same name)"));
@@ -258,7 +258,7 @@ describe("normalizeAgent", () => {
     for (const entry of refused) {
       assert.equal(engine.files.problem(entry.name, entry.bytes), entry.reason, entry.name);
     }
-    assert.ok(notices[0].includes(refused.length + " attached file(s) were left out"));
+    assert.ok(notices[0].includes("Left out " + refused.length + " attached files"));
     assert.ok(notices[0].includes("and " + (refused.length - 5) + " more"));
   });
 
@@ -310,7 +310,7 @@ describe("validateAgent", () => {
     agent.files = [{ name: "notes.one", bytes: BYTE_SHAPES.onenote }];
     const fileWarnings = engine.validateAgent(agent).warnings.filter((w) => w.field === "files").map((w) => w.message);
     assert.equal(fileWarnings.length, 2);
-    assert.ok(fileWarnings.some((m) => m.includes("notes.one") && m.includes("can't carry")));
+    assert.ok(fileWarnings.some((m) => m.includes("notes.one") && m.includes("can't include")));
     assert.ok(!fileWarnings.some((m) => m.includes(".txt files with the same name")));
     agent.creator.terms = "";
     assert.ok(engine.validateAgent(agent).warnings.some((w) => w.field === "creator"));
@@ -452,7 +452,7 @@ describe("zip", () => {
 
   test("rejects a name listed twice", async () => {
     const bytes = makeDeflatedZip([{ name: "a/SKILL.md", bytes: encode("first") }, { name: "a/SKILL.md", bytes: encode("second") }]);
-    await assert.rejects(engine.zip.read(bytes), /twice/);
+    await assert.rejects(engine.zip.read(bytes), /two files with the same name/);
   });
 
   test("rejects too many entries", async () => {
@@ -477,7 +477,7 @@ describe("zip", () => {
   test("rejects damaged checksums and non-zip input", async () => {
     const bytes = engine.zip.write([{ name: "a.txt", bytes: encode("hello world") }]);
     bytes[30 + 5 + 2] ^= 0xff;
-    await assert.rejects(engine.zip.read(bytes), /checksum/);
+    await assert.rejects(engine.zip.read(bytes), /is damaged/);
     await assert.rejects(engine.zip.read(encode("this is not a zip file at all, really")), /not a ZIP/);
   });
 });

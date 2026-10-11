@@ -13,7 +13,7 @@ This works best with the Example Records connector turned on.
 
 Look for Example Records in the product's list of connectors or apps, and connect it.
 
-Without it, the assistant still does the work it can and says that no tool was used.
+Until you connect it, the assistant does what it can and tells people it couldn't use the tool.
 
 ## Connect the Example search server
 
@@ -27,10 +27,10 @@ The instructions mention the Pinned tools server. Connect it in the product's se
 
 The instructions mention the Local helper server. Connect it in the product's settings for tools or connectors. Until you do, the assistant tells people it can't use this tool.
 
-## Let the script reach the internet
+## Let the script connect to the internet
 
 The script scripts/lookup.py runs only where python3 can run with network access to api.example.org.
 
-Gemini skills can't run scripts that reach the internet, so in Gemini the assistant works without it.
+Gemini skills can't run scripts that connect to the internet, so in Gemini the assistant works without it.
 
-If the script can't connect, the assistant falls back and says why.
+If the script can't connect, the assistant tells people why and answers without it.

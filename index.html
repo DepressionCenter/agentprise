@@ -868,12 +868,12 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                 <div id="start">
                     <p class="eyebrow">Portable agents and skills</p>
                     <h1 id="workspace-heading" class="hero-title" tabindex="-1">Your assistant, anywhere<span class="hero-dot">.</span></h1>
-                    <p class="hero-text">Make AI agents portable across Copilot, Gemini, Claude, and ChatGPT.</p>
+                    <p class="hero-text">Build an AI assistant once, then use it in Copilot, Gemini, Claude, and ChatGPT.</p>
                     <div class="start-grid">
                         <div class="dropzone" id="dropzone">
                             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
                             <p class="dropzone-title">Drop an agent or skill file here</p>
-                            <p class="muted" id="dropzone-text">Accepts an Agentprise backup, a plugin or skill <code>.zip</code>, a <code>.zip</code> from the Copilot app, a <code>.agent</code> file, or a <code>SKILL.md</code> file. Each file opens as a new project.</p>
+                            <p class="muted" id="dropzone-text">You can open an Agentprise backup, a skill or plugin <code>.zip</code>, an app package <code>.zip</code> from Copilot, a <code>.agent</code> file, or a <code>SKILL.md</code> file. Each file opens as a new project.</p>
                             <button type="button" id="browse-button">Choose a file</button>
                         </div>
                         <div class="start-cards">
@@ -882,7 +882,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                                     Create new
                                 </span>
-                                <span class="start-card-text">Fill in a few lines. Takes about two minutes.</span>
+                                <span class="start-card-text">Answer a few questions. It takes about two minutes.</span>
                             </button>
                             <button type="button" class="start-card" id="start-sample">
                                 <span class="start-card-title">
@@ -925,7 +925,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <div class="editor-head">
                         <div>
                             <h1 id="editor-heading" class="page-title" tabindex="-1">Describe your assistant</h1>
-                            <p class="page-hint" id="editor-hint">Fill in the lines. The preview updates as you type.</p>
+                            <p class="page-hint" id="editor-hint">Answer the questions below. The preview changes as you type.</p>
                         </div>
                         <div class="button-row">
                             <button type="button" id="open-file"><span class="bi bi-folder2-open" aria-hidden="true"></span>Open a file</button>
@@ -964,12 +964,12 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             </div>
                             <fieldset class="field uses" id="uses-group" hidden>
                                 <legend id="uses-label">Skills it can use</legend>
-                                <p class="hint" id="uses-hint">Tick the skills this assistant should follow when a question needs them.</p>
+                                <p class="hint" id="uses-hint">Check the skills this assistant can use. It follows a skill only when a question calls for it.</p>
                                 <div id="uses-list"></div>
                             </fieldset>
                             <fieldset class="field tools" id="tools-group" hidden>
                                 <legend>Tools</legend>
-                                <p class="hint">What it can do when a tool is connected, and how each product connects it. Without the tool, it does the work it can and says no tool was used.</p>
+                                <p class="hint">Tools let the assistant look things up or take actions. Each product connects them in its own way, as listed below. If a tool isn't connected, the assistant does what it can and tells people it couldn't use the tool.</p>
                                 <ul class="tool-list" id="tool-list"></ul>
                             </fieldset>
                             <details class="more" id="more">
@@ -978,14 +978,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                     <div id="extras">
                                         <div class="field" id="welcome-wrap">
                                             <label for="f-welcome">Welcome message</label>
-                                            <p class="hint" id="f-welcome-hint">Greeting shown to users. Not all AI products display this.</p>
+                                            <p class="hint" id="f-welcome-hint">The greeting people see when they open the assistant. Some products don't show it.</p>
                                             <textarea id="f-welcome" maxlength="1000" rows="2" aria-describedby="f-welcome-hint"></textarea>
                                         </div>
                                         <fieldset class="field" id="icon-wrap">
                                             <legend>Picture</legend>
-                                            <p class="hint" id="icon-hint">A square PNG or JPG, 192 x 192 pixels.</p>
+                                            <p class="hint" id="icon-hint">A square PNG or JPG image. 192 by 192 pixels works best.</p>
                                             <div class="icon-row">
-                                                <img class="icon-preview" id="icon-preview" alt="Current icon preview" src="">
+                                                <img class="icon-preview" id="icon-preview" alt="Current picture" src="">
                                                 <div class="button-row">
                                                     <label class="button" for="icon-input"><span class="bi bi-image" aria-hidden="true"></span>Choose an image</label>
                                                     <input type="file" id="icon-input" class="visually-hidden" accept="image/png,image/jpeg" aria-describedby="icon-hint">
@@ -1001,7 +1001,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         </div>
                                         <fieldset class="field">
                                             <legend>File attachments</legend>
-                                            <p class="hint" id="file-add-hint">Files used for grounding the agent with specific knowledge. Not all AI providers support this.</p>
+                                            <p class="hint" id="file-add-hint">Documents the assistant can read to answer questions, such as a handbook or a list of contacts. Some products can't use files.</p>
                                             <ul class="item-list" id="file-items" aria-label="Attached files"></ul>
                                             <div class="button-row">
                                                 <label class="button" for="file-add"><span class="bi bi-paperclip" aria-hidden="true"></span>Add files</label>
@@ -1013,7 +1013,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                             <summary>Microsoft Copilot settings</summary>
                                             <fieldset>
                                                 <legend>What Copilot may use</legend>
-                                                <p class="hint">Turn each source on or off. The box under a source limits it to a few places and is used only while the source is on. Note that SharePoint, messages, email, and meetings belong to the person asking, so in a group chat Teams may pause answers for that person to approve.</p>
+                                                <p class="hint">Turn each source on or off. To limit a source to certain places, list them in the box under it. The box only matters while the source is on. SharePoint, messages, email, and meetings show only what the person asking can see, so in a group chat Teams may ask that person to approve an answer before the others see it.</p>
                                                 <div class="check-row"><input type="checkbox" id="c-webSearch"><label for="c-webSearch">Web search: look things up on the public web.</label></div>
                                                 <div class="field">
                                                     <label for="f-websites">Limit web search to these sites</label>
@@ -1028,7 +1028,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                                     <textarea id="f-sharepoint" rows="3" aria-describedby="f-sharepoint-hint f-sharepoint-error"></textarea>
                                                     <p class="error-text" id="f-sharepoint-error" hidden></p>
                                                     <div id="sharepoint-items-wrap" hidden>
-                                                        <p class="hint" id="sharepoint-items-hint">These sources came with the file you opened. They can't be edited here, but they travel with every Copilot download.</p>
+                                                        <p class="hint" id="sharepoint-items-hint">These sources came with the file you opened. They can't be changed here, but every Copilot download includes them.</p>
                                                         <ul class="item-list" id="sharepoint-items" aria-labelledby="sharepoint-items-hint"></ul>
                                                     </div>
                                                 </div>
@@ -1046,13 +1046,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                                     <textarea id="f-mailboxes" rows="2" aria-describedby="f-mailboxes-hint f-mailboxes-error"></textarea>
                                                     <p class="error-text" id="f-mailboxes-error" hidden></p>
                                                     <div id="email-items-wrap" hidden>
-                                                        <p class="hint" id="email-items-hint">These email limits came with the file you opened. They can't be edited here, but they travel with every Copilot download.</p>
+                                                        <p class="hint" id="email-items-hint">These email limits came with the file you opened. They can't be changed here, but every Copilot download includes them.</p>
                                                         <ul class="item-list" id="email-items" aria-labelledby="email-items-hint"></ul>
                                                     </div>
                                                 </div>
                                                 <div class="check-row"><input type="checkbox" id="c-meetings"><label for="c-meetings">Meetings: read meeting notes and transcripts the person can see.</label></div>
                                                 <div id="meeting-items-wrap" class="field" hidden>
-                                                    <p class="hint" id="meeting-items-hint">These meetings came with the file you opened and limit this source to them. They can't be edited here, but they travel with every Copilot download.</p>
+                                                    <p class="hint" id="meeting-items-hint">These meetings came with the file you opened and limit this source to them. They can't be changed here, but every Copilot download includes them.</p>
                                                     <ul class="item-list" id="meeting-items" aria-labelledby="meeting-items-hint"></ul>
                                                 </div>
                                                 <div class="check-row"><input type="checkbox" id="c-codeInterpreter"><label for="c-codeInterpreter">Code interpreter: run code to analyze data and make charts.</label></div>
@@ -1063,14 +1063,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                                 <div class="check-row"><input type="checkbox" id="c-preferMyFiles"><label for="c-preferMyFiles">Prefer my files: answer from the sources above instead of general knowledge.</label></div>
                                                 <div class="field">
                                                     <label for="f-responseMode">Response mode</label>
-                                                    <p class="hint" id="f-responseMode-hint">Only Microsoft 365 Copilot uses this. Think deeper takes longer but reasons more. People can still change it in the model picker.</p>
+                                                    <p class="hint" id="f-responseMode-hint">Only Microsoft 365 Copilot uses this. Think deeper takes longer but gives more careful answers. People can still change it in the model picker.</p>
                                                     <select id="f-responseMode" aria-describedby="f-responseMode-hint"></select>
                                                 </div>
                                             </fieldset>
                                         </details>
                                         <details class="sub">
                                             <summary>Publisher details</summary>
-                                            <p class="hint">These belong to the whole project and go into every download.</p>
+                                            <p class="hint">These apply to the whole project and are included in every download.</p>
                                             <div class="inline-fields">
                                                 <div class="field"><label for="a-name">Your name</label><input type="text" id="a-name" maxlength="200"></div>
                                                 <div class="field"><label for="a-organization">Organization</label><input type="text" id="a-organization" maxlength="200"></div>
@@ -1096,7 +1096,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         </details>
                                         <details class="sub" id="servers-group" hidden>
                                             <summary>Tool connections</summary>
-                                            <p class="hint">Tool servers the project's tools use. These belong to the whole project.</p>
+                                            <p class="hint">The services this project's tools connect to. These apply to the whole project.</p>
                                             <div id="server-list"></div>
                                         </details>
                                         <div class="field remove-item" id="item-remove-wrap" hidden>
@@ -1119,13 +1119,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                 <p class="preview-welcome" id="preview-welcome" hidden></p>
                                 <ul class="preview-starters" id="preview-starters" aria-label="Prompt suggestions" hidden></ul>
                                 <p class="ask-pill" aria-hidden="true">Ask anything</p>
-                                <p class="preview-note">Preview. Appearance varies by product.</p>
+                                <p class="preview-note">This is a preview. Each product looks a little different.</p>
                             </section>
                             <section class="card destinations" aria-labelledby="where-heading">
                                 <h2 id="where-heading" class="card-title" tabindex="-1">Download</h2>
                                 <h3 class="destination-group" id="item-downloads-label">For <span id="where-item"></span></h3>
                                 <div class="readiness" id="readiness" hidden>
-                                    <p>Required information:</p>
+                                    <p>Before you download, add:</p>
                                     <ul id="readiness-list"></ul>
                                 </div>
                                 <div class="review-box" id="review-box" hidden>
@@ -1204,7 +1204,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                     </li>
                                 </ul>
                                 <button type="button" class="primary download-button" data-format="backup" id="keep-copy"><span class="bi bi-archive" aria-hidden="true"></span>Download Backup</button>
-                                <p class="small muted">One .zip with the whole project, which you can open here any time.<br><a href="#details"><span class="bi bi-search" aria-hidden="true"></span>Inspect output files.</a></p>
+                                <p class="small muted">Saves the whole project as one .zip file that you can open here again later.<br><a href="#details"><span class="bi bi-search" aria-hidden="true"></span>See what is inside each download</a></p>
                             </section>
                         </aside>
                     </div>
@@ -1237,7 +1237,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             <section id="view-details" class="view" aria-labelledby="details-heading" hidden>
                 <div class="page-head">
                     <h1 id="details-heading" class="page-title" tabindex="-1">Inspect</h1>
-                    <p class="page-hint">Configure your agent and inspect the output in detail.</p>
+                    <p class="page-hint">Change any setting and see exactly which files each product gets.</p>
                 </div>
                 <div class="details-grid">
                     <section class="card details-form" aria-labelledby="write-heading">
@@ -1251,7 +1251,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             </div>
                             <div class="field">
                                 <label for="d-description">Description</label>
-                                <p class="hint" id="d-description-hint">Short description, often shown next to the agent's or skill's name.</p>
+                                <p class="hint" id="d-description-hint">A short description. Most products show it next to the name.</p>
                                 <textarea id="d-description" maxlength="1000" rows="2" aria-describedby="d-description-hint d-description-error"></textarea>
                                 <p class="error-text" id="d-description-error" hidden></p>
                             </div>
@@ -1265,7 +1265,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             </div>
                             <div class="field">
                                 <label for="d-starters">Prompt suggestions</label>
-                                <p class="hint" id="d-starters-hint">Example prompts to show to the user. Enter one per line, up to 12 lines.</p>
+                                <p class="hint" id="d-starters-hint">Questions people might ask first. Put one on each line, up to 12.</p>
                                 <textarea id="d-starters" rows="3" aria-describedby="d-starters-hint d-starters-error"></textarea>
                                 <p class="error-text" id="d-starters-error" hidden></p>
                             </div>
@@ -1273,13 +1273,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                         </form>
                     </section>
                     <section class="card details-files" aria-labelledby="receive-heading">
-                        <h2 id="receive-heading" class="card-title">Output Format</h2>
+                        <h2 id="receive-heading" class="card-title">Files for each product</h2>
                         <div class="field" id="inspect-item-wrap" hidden>
                             <label for="inspect-item">Part of the project</label>
                             <select id="inspect-item"></select>
                         </div>
-                        <p class="hint">Select an output format to inspect its contents.</p>
-                        <div class="product-tabs" role="tablist" aria-label="Output format">
+                        <p class="hint">Choose a product to see the files it gets.</p>
+                        <div class="product-tabs" role="tablist" aria-label="Product">
                             <button type="button" role="tab" id="ptab-backup" aria-controls="ppanel" aria-selected="true">Agentprise Backup</button>
                             <button type="button" role="tab" id="ptab-chatgpt" aria-controls="ppanel" aria-selected="false" tabindex="-1">ChatGPT</button>
                             <button type="button" role="tab" id="ptab-claude" aria-controls="ppanel" aria-selected="false" tabindex="-1">Claude</button>
@@ -1325,9 +1325,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                 </div>
                 <div class="card help-card">
                     <h2>What is Agentprise?</h2>
-                    <p>Agentprise is an app that lets you define an AI agent or skill once, and export to it to formats compatible across many products: Copilot, Claude, Gemini, ChatGPT, Teams, and more.</p>
+                    <p>Agentprise lets you describe an AI assistant or skill once, then download it for Copilot, Claude, Gemini, ChatGPT, Teams, and more.</p>
                     <h2>What are projects and skills?</h2>
-                    <p>A project is one thing you are building, kept in your browser under Your projects on the Workspace page. Most projects hold one assistant. A project can also hold skills: sets of steps an assistant follows only when a question needs them, such as how to search PubMed. Choose Add a skill in a project to write one, or add one from the Library or a skill file, then tick it under Skills it can use.</p>
+                    <p>A project is one thing you are building, kept in your browser under Your projects on the Workspace page. Most projects hold one assistant. A project can also hold skills: sets of steps an assistant follows only when a question needs them, such as how to search PubMed. Choose Add a skill in a project to write one, or add one from the Library or a skill file, then check it under Skills it can use.</p>
                     <h2>Which download do I need?</h2>
                     <p>It depends on where people will use the assistant.</p>
                     <ul>
@@ -1342,11 +1342,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <h2>What does "Download Backup" do?</h2>
                     <p>It saves the whole project, with every assistant, skill, and file, as one .zip file on your computer. Drop that file on the Workspace page later to open it again, change it, or download it for a different product. To upload to Gemini or Claude, use their own Download buttons instead.</p>
                     <h2>What are tools, and what does "needs setup" mean?</h2>
-                    <p>Some assistants and skills, such as PubMed Search, can use a tool to look things up. Each product connects tools its own way, so every download lists what changes for it under "What changes in this download" on the Inspect page. "Needs setup" means one more step after you install, such as turning on a connector or pasting a server address. The setup steps that come with the download say how. Without the tool, the assistant does the work it can and says no tool was used.</p>
+                    <p>Some assistants and skills, such as PubMed Search, can use a tool to look things up. Each product connects tools its own way, so every download lists what changes for it under "What changes in this download" on the Inspect page. "Needs setup" means one more step after you install, such as turning on a connector or pasting a server address. The setup steps that come with the download say how. If the tool isn't connected, the assistant does what it can and tells people it couldn't use the tool.</p>
                     <h2>Why is a download button greyed out?</h2>
-                    <p>Either something required is still empty, or the download is blocked because the product can't hold it as it is, for example more than four web search sites for Copilot. The Inspect page says what to change.</p>
+                    <p>Either a required question is still empty, or the product can't accept the project as it is, for example more than four web search sites for Copilot. The Inspect page says what to change.</p>
                     <h2>Which files can I attach?</h2>
-                    <p>Word, PowerPoint, Excel, PDF, OneNote (.one and .onepart), and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, .onepart, and .txt, so a script reaches it as a .txt file with the same name, and a .one file stays out of the app package. The skill .zip keeps every file under its real name.</p>
+                    <p>Word, PowerPoint, Excel, PDF, OneNote (.one and .onepart), and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, .onepart, and .txt, so a script is added as a .txt file with the same name, and a .one file is left out of the app package. The skill .zip keeps every file under its real name.</p>
                     <h2>Where do links go?</h2>
                     <p>Each Copilot source has its own box under Copilot settings. Web sites go under Web search, up to 4. SharePoint and OneDrive links go under SharePoint and OneDrive, up to 20. Links to teams, channels, group chats, or meeting chats go under Teams messages, up to 5. Shared or group mailbox addresses go under Email. A box only matters while its source is on, and leaving it empty means Copilot may use everything the person can see.</p>
                     <h2>Who can use my assistant?</h2>
@@ -1360,7 +1360,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <h2>What does the check for sensitive data look for?</h2>
                     <p>Before you download, the app looks through your assistant's text and plain-text files for things that often mean personal information, such as Social Security numbers, phone numbers, email addresses, street addresses, and dates labelled as a birth date or a hospital stay. It also looks for text that tries to take over an assistant, such as "ignore previous instructions" or invisible characters. If it finds something, a yellow box appears under Download. Choose View details to see where each match is, with the digits hidden. A match is a hint to look, not proof: a help desk assistant may list a phone number on purpose. It also misses plenty, including people's names, so it is not a privacy review and never blocks a download. The check runs in your browser and nothing is sent anywhere.</p>
                     <h2>Where does my work go?</h2>
-                    <p>Nowhere! Your Agentprise projects are kept only in your web browser, and are never uploaded to the Internet. It is recommended to download a backup copy since browsers can sometimes clear local storage.</p>
+                    <p>Nowhere. Your projects are kept only in your web browser and are never uploaded. Download a backup now and then, because browsers sometimes clear what they store.</p>
                     <h2>Can other people start from my assistant?</h2>
                     <p>Yes. The Library holds ready-made assistants anyone can try and change. To add yours, download a backup and <a href="https://github.com/DepressionCenter/agentprise/issues/new?template=library-assistant.yml" target="_blank" rel="noopener">send it to us on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
                     <h2>At a glance</h2>
@@ -2250,7 +2250,7 @@ function asCheckedList(value, notices, options) {
             return true;
         });
     if (dropped > 0) {
-        notices.push(dropped + " " + options.label + "(s) were removed. " + options.rule);
+        notices.push("Removed " + countOf(dropped, options.label, options.plural) + ". " + options.rule);
     }
     if (kept.length > options.max) {
         notices.push("Only the first " + options.max + " " + options.plural + " were kept.");
@@ -2314,7 +2314,7 @@ function normalizeAgent(input) {
     });
     if (refused.length > 0) {
         const reasons = refused.map(function (entry) { return (entry.name || "a file").slice(0, 40) + " (" + entry.problem + ")"; });
-        notices.push(refused.length + " attached file(s) were left out: " + listNames(reasons) + ". This app takes up to " + LIMITS.files + " files of these types, each under " + Math.round(LIMITS.fileBytes / 1024 / 1024) + " MB: " + FILE_EXTENSIONS.join(", ") + ".");
+        notices.push("Left out " + countOf(refused.length, "attached file", "attached files") + ": " + listNames(reasons) + ". This app takes up to " + LIMITS.files + " files of these types, each under " + Math.round(LIMITS.fileBytes / 1024 / 1024) + " MB: " + FILE_EXTENSIONS.join(", ") + ".");
     }
 
     if (isPlainObject(source.icon) && source.icon.bytes instanceof Uint8Array && source.icon.bytes.length > 0) {
@@ -2389,22 +2389,22 @@ function validateAgent(agent) {
     const problems = [];
     const warnings = [];
     if (!agent.name) {
-        problems.push({ field: "name", message: "Give your agent a name." });
+        problems.push({ field: "name", message: "Give your assistant a name." });
     }
     if (!agent.description) {
         problems.push({ field: "description", message: "Add a short description. Every product requires one." });
     }
     if (!agent.instructions) {
-        problems.push({ field: "instructions", message: "Add instructions so the agent knows how to behave." });
+        problems.push({ field: "instructions", message: "Add instructions so the assistant knows how to behave." });
     }
     if (agent.welcome) {
-        warnings.push({ field: "welcome", message: "The Copilot app package can't carry a welcome message. The SharePoint file and the complete copy keep it." });
+        warnings.push({ field: "welcome", message: "The Copilot app package can't include a welcome message. The Teams Chat file and the backup keep it." });
     }
     if (agent.copyright || agent.license !== DEFAULT_LICENSE) {
-        warnings.push({ field: "copyright", message: "The Copilot app package can't carry a copyright line or license name. The other downloads keep them." });
+        warnings.push({ field: "copyright", message: "The Copilot app package can't include a copyright line or license name. The other downloads keep them." });
     }
     if (agent.copilot.sharepoint || agent.sharepointLinks.length > 0 || agent.sharepointItems.length > 0) {
-        warnings.push({ field: "sharepointLinks", message: "SharePoint knowledge only works in Microsoft 365 Copilot. Other products ignore it." });
+        warnings.push({ field: "sharepointLinks", message: "SharePoint sources only work in Microsoft 365 Copilot. Other products ignore them." });
     }
     if (agent.copilot.webSites.length > 0) {
         warnings.push({ field: "webSites", message: "The web site list only works in Microsoft 365 Copilot. Other products ignore it." });
@@ -2416,21 +2416,21 @@ function validateAgent(agent) {
         warnings.push({ field: "mailboxes", message: "The mailbox list only works in Microsoft 365 Copilot. Other products ignore it." });
     }
     if (agent.files.length > 0) {
-        warnings.push({ field: "files", message: "Attached files travel in the app package, the skill, and the backup. The Teams Chat file can't carry them." });
+        warnings.push({ field: "files", message: "Attached files are included in the app package, the skill, and the backup. The Teams Chat file can't include them." });
     }
     if (agent.files.some(function (file) { return !isCopilotFileName(file.name) && fileKind(file.name) === "text"; })) {
-        warnings.push({ field: "files", message: "Script and data files reach Copilot as .txt files with the same name, because Copilot accepts only document types." });
+        warnings.push({ field: "files", message: "Script and data files are added to the Copilot app package as .txt files with the same name, because Copilot accepts only document types." });
     }
     const leftOut = agent.files.filter(function (file) { return !isCopilotFileName(file.name) && fileKind(file.name) !== "text"; });
     if (leftOut.length > 0) {
-        warnings.push({ field: "files", message: "The Copilot app package can't carry " + listNames(leftOut.map(function (file) { return file.name; })) + ", because Copilot doesn't accept that type. The skill and the backup keep it." });
+        warnings.push({ field: "files", message: "The Copilot app package can't include " + listNames(leftOut.map(function (file) { return file.name; })) + ", because Copilot doesn't accept that type. The skill and the backup keep it." });
     }
     const missingCreator = ["name", "website", "privacy", "terms"].filter(function (key) { return !agent.creator[key]; });
     if (missingCreator.length > 0) {
-        warnings.push({ field: "creator", message: "The Copilot app package needs a creator name and three links. Placeholder values will be used for the ones you left blank." });
+        warnings.push({ field: "creator", message: "The Copilot app package needs your name and three links under Publisher details. Any you leave empty get a placeholder." });
     }
     if (!agent.icon) {
-        warnings.push({ field: "icon", message: "No icon yet. Downloads will use the default icon." });
+        warnings.push({ field: "icon", message: "There is no picture yet, so downloads use the default one." });
     }
     return { problems: problems, warnings: warnings };
 }
@@ -2599,7 +2599,7 @@ function cleanSkillFiles(list, notices) {
     });
     if (refused.length > 0) {
         const reasons = refused.map(function (entry) { return entry.name.slice(0, 60) + " (" + entry.problem + ")"; });
-        notices.push(refused.length + " file(s) in a skill were left out: " + listNames(reasons) + ".");
+        notices.push("Left out " + countOf(refused.length, "file", "files") + " from a skill: " + listNames(reasons) + ".");
     }
     return { files: files, leftovers: leftovers };
 }
@@ -2965,7 +2965,8 @@ function normalizeProject(input) {
         if (item.kind === "agent") {
             const kept = item.uses.filter(function (name) { return skillNames.indexOf(name) >= 0; });
             if (kept.length < item.uses.length) {
-                notices.push(item.name + " named " + (item.uses.length - kept.length) + " skill(s) that are not in this project, so they were dropped from its list of skills.");
+                const missing = item.uses.length - kept.length;
+                notices.push(item.name + " used " + countOf(missing, "skill", "skills") + (missing === 1 ? " that isn't in this project, so it was" : " that aren't in this project, so they were") + " taken off its list.");
             }
             item.uses = kept;
         }
@@ -3017,16 +3018,16 @@ function normalizeProject(input) {
         project.unrecognized.push({ path: path, note: asText(entry.note, 200) || UNRECOGNIZED_NOTE, bytes: copyBytes(entry.bytes) });
     });
     if (dropped.programs > 0) {
-        notices.push(dropped.programs + " program file(s) were left out. Agentprise never keeps or runs programs.");
+        notices.push("Left out " + countOf(dropped.programs, "program file", "program files") + ". Agentprise never keeps or runs programs.");
     }
     if (dropped.unusable > 0) {
-        notices.push(dropped.unusable + " other file(s) were left out because their names or sizes could not be used.");
+        notices.push("Left out " + countOf(dropped.unusable, "other file", "other files") + " with a name or size this app can't use.");
     }
     if (dropped.repeated > 0) {
-        notices.push(dropped.repeated + " other file(s) were left out because another file has the same name.");
+        notices.push("Left out " + countOf(dropped.repeated, "other file", "other files") + " with the same name as another file.");
     }
     if (dropped.over > 0) {
-        notices.push("Only " + LIMITS.unrecognized + " files this app does not use can be kept, so " + dropped.over + " more were left out.");
+        notices.push("This app keeps at most " + LIMITS.unrecognized + " files it doesn't use, so it left out " + dropped.over + " more.");
     }
 
     if (!project.name && project.items.length > 0) {
@@ -3129,7 +3130,7 @@ function projectFromRecord(record, payloads) {
     }).filter(function (entry) { return entry.bytes; });
     const result = normalizeProject(source);
     if (missing.length > 0) {
-        result.notices.push(missing.length + " saved file(s) could not be found in this browser: " + listNames(missing) + ".");
+        result.notices.push("Couldn't find " + countOf(missing.length, "saved file", "saved files") + " in this browser: " + listNames(missing) + ".");
     }
     return result;
 }
@@ -3317,8 +3318,8 @@ const IDENTIFIER_PATTERNS = Object.freeze([
     { id: "ssn", label: "Social Security number", re: /\b\d{3}-\d{2}-\d{4}\b/g },
     { id: "phone", label: "phone number", re: /\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g },
     { id: "email", label: "email address", re: /\b[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}\b/g },
-    { id: "labelled-date", label: "date of birth or care date", re: /\b(?:dob|date of birth|birth ?date|born(?: on)?|admitted(?: on)?|discharged(?: on)?|died(?: on)?|(?:admission|discharge|death|visit|service) date|date of (?:admission|discharge|death|visit|service))\b\s*[:#]?\s*(?:(?:0?[1-9]|1[0-2])[\/-](?:0?[1-9]|[12]\d|3[01])[\/-](?:19|20)?\d{2}|(?:19|20)\d{2}-(?:0?[1-9]|1[0-2])-(?:0?[1-9]|[12]\d|3[01])|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? \d{1,2},? (?:19|20)\d{2})/gi },
-    { id: "labelled-id", label: "labelled identifier", re: /\b(?:mrn|medical record(?: number)?|patient id|member id|account number|ssn)\b\s*[:#]?\s*[A-Za-z0-9-]{3,}/gi },
+    { id: "labelled-date", label: "date of birth or visit date", re: /\b(?:dob|date of birth|birth ?date|born(?: on)?|admitted(?: on)?|discharged(?: on)?|died(?: on)?|(?:admission|discharge|death|visit|service) date|date of (?:admission|discharge|death|visit|service))\b\s*[:#]?\s*(?:(?:0?[1-9]|1[0-2])[\/-](?:0?[1-9]|[12]\d|3[01])[\/-](?:19|20)?\d{2}|(?:19|20)\d{2}-(?:0?[1-9]|1[0-2])-(?:0?[1-9]|[12]\d|3[01])|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? \d{1,2},? (?:19|20)\d{2})/gi },
+    { id: "labelled-id", label: "record number or ID", re: /\b(?:mrn|medical record(?: number)?|patient id|member id|account number|ssn)\b\s*[:#]?\s*[A-Za-z0-9-]{3,}/gi },
     { id: "address", label: "street address", re: /\b\d{1,6}\s+(?:[A-Za-z0-9.'-]+\s+){1,4}(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|court|ct|way|place|pl)\b\.?/gi },
     { id: "zip-plus-4", label: "ZIP+4 code", re: /\b\d{5}-\d{4}\b/g },
     { id: "ipv4", label: "IP address", re: /\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b/g },
@@ -3334,12 +3335,12 @@ const IDENTIFIER_PATTERNS = Object.freeze([
 const INJECTION_PATTERNS = Object.freeze([
     { id: "ignore-previous", label: "text telling the assistant to ignore its instructions", re: /\bignore\s+(?:all\s+|any\s+)?(?:previous|prior|above|earlier|preceding)\s+(?:instructions|prompts|rules|messages|directions)\b/gi },
     { id: "disregard-system", label: "text telling the assistant to drop its rules", re: /\b(?:disregard|forget|override|bypass)\s+(?:your|the|all|any)\s+(?:system|previous|prior|earlier|original|safety)\s+(?:prompt|instructions|rules|guidelines)\b/gi },
-    { id: "reveal-prompt", label: "text asking for the hidden prompt", re: /\b(?:reveal|print|show|repeat|output|leak|display)\s+(?:your|the)\s+(?:system|hidden|initial|original|secret)\s+(?:prompt|instructions)\b/gi },
-    { id: "jailbreak-persona", label: "a jailbreak phrase", re: /\b(?:do anything now|developer mode|jailbreak|no (?:restrictions|rules|filters|limits))\b/gi },
+    { id: "reveal-prompt", label: "text asking the assistant to reveal its instructions", re: /\b(?:reveal|print|show|repeat|output|leak|display)\s+(?:your|the)\s+(?:system|hidden|initial|original|secret)\s+(?:prompt|instructions)\b/gi },
+    { id: "jailbreak-persona", label: "text trying to switch off the assistant's rules", re: /\b(?:do anything now|developer mode|jailbreak|no (?:restrictions|rules|filters|limits))\b/gi },
     { id: "override-claim", label: "text claiming to override other instructions", re: /\bthis (?:message|instruction|note|text) (?:overrides|supersedes|replaces|takes precedence over)\b/gi },
     { id: "hide-from-user", label: "text telling the assistant to hide something from the person", re: /\b(?:do not|don't|never)\s+(?:tell|inform|reveal to|mention to|let)\s+the\s+user\b/gi },
     { id: "hidden-characters", label: "invisible characters", re: /[\u200B-\u200D\u2060\uFEFF\u202A-\u202E\u2066-\u2069]|\uDB40[\uDC00-\uDC7F]/g },
-    { id: "remote-image-link", label: "an image link that could send text out", re: /!\[[^\]]*\]\(\s*https?:\/\/[^)\s]*\?[^)]*\)/gi }
+    { id: "remote-image-link", label: "an image link that could send information to another website", re: /!\[[^\]]*\]\(\s*https?:\/\/[^)\s]*\?[^)]*\)/gi }
 ]);
 const SCAN_KINDS = Object.freeze(["identifier", "injection"]);
 
@@ -3520,7 +3521,7 @@ function parseFrontmatter(text) {
         }
     }
     if (end < 0) {
-        warnings.push("The frontmatter never closed, so the whole file was treated as instructions.");
+        warnings.push("The settings at the top of the file never end, so the whole file was read as instructions.");
         return { data: {}, body: normalized, warnings: warnings };
     }
     const data = {};
@@ -3554,7 +3555,7 @@ function parseFrontmatter(text) {
     function readEntry(line, indent, target) {
         const match = line.slice(indent).match(/^([A-Za-z0-9_.-]+):(?:\s(.*))?$/);
         if (!match) {
-            warnings.push("Skipped a frontmatter line that is not a key and value: " + line.trim().slice(0, 60));
+            warnings.push("Skipped a line in the settings at the top of the file that isn't a name and value: " + line.trim().slice(0, 60));
             i += 1;
             return;
         }
@@ -3562,7 +3563,7 @@ function parseFrontmatter(text) {
         const rest = (match[2] || "").trim();
         i += 1;
         if (key === "__proto__" || key === "constructor" || key === "prototype") {
-            warnings.push("Skipped the frontmatter key \"" + key + "\", which this app does not accept.");
+            warnings.push("Skipped the setting \"" + key + "\", which this app doesn't accept.");
             if (rest === "" || rest === "|" || rest === "|-" || rest === "|+" || rest === ">" || rest === ">-") {
                 readBlock(indent, false);
             }
@@ -3573,7 +3574,7 @@ function parseFrontmatter(text) {
             return;
         }
         if (rest === ">" || rest === ">-") {
-            warnings.push("Folded text for \"" + key + "\" is not supported and was skipped.");
+            warnings.push("Skipped the setting \"" + key + "\", because this app can't read folded text.");
             readBlock(indent, false);
             return;
         }
@@ -3590,7 +3591,7 @@ function parseFrontmatter(text) {
                     break;
                 }
                 if (next.trim().startsWith("- ")) {
-                    warnings.push("Lists under \"" + key + "\" are not supported and were skipped.");
+                    warnings.push("Skipped a list under the setting \"" + key + "\", because this app can't read lists there.");
                     i += 1;
                     continue;
                 }
@@ -3610,12 +3611,12 @@ function parseFrontmatter(text) {
         }
         const indent = indentOf(line);
         if (indent !== 0) {
-            warnings.push("Skipped an indented frontmatter line with no parent key.");
+            warnings.push("Skipped an indented line at the top of the file that belongs to no setting.");
             i += 1;
             continue;
         }
         if (line.trim().startsWith("- ")) {
-            warnings.push("Top-level lists in frontmatter are not supported and were skipped.");
+            warnings.push("Skipped a list at the top of the file, because this app can't read lists there.");
             i += 1;
             continue;
         }
@@ -3858,14 +3859,14 @@ function zipWrite(entries) {
 /** Rejects names that could escape the folder or confuse a reader. */
 function checkZipEntryName(name) {
     if (!name || name.length > 512) {
-        throw new ZipError("The file contains an entry with an empty or very long name.");
+        throw new ZipError("A file inside the .zip has an empty or very long name.");
     }
     if (name.indexOf("\\") >= 0 || name.startsWith("/") || /^[A-Za-z]:/.test(name) || name.indexOf("\u0000") >= 0) {
-        throw new ZipError("The file contains an entry with an unsafe path and was not opened.");
+        throw new ZipError("The .zip wasn't opened because a file inside it has an unsafe name.");
     }
     const parts = name.split("/");
     if (parts.some(function (part) { return part === ".." || part === "."; })) {
-        throw new ZipError("The file contains an entry that points outside its folder and was not opened.");
+        throw new ZipError("The .zip wasn't opened because a file inside it points outside its folder.");
     }
 }
 
@@ -3887,7 +3888,7 @@ async function inflateRaw(bytes, expectedSize) {
             total += step.value.length;
             if (total > expectedSize) {
                 await reader.cancel();
-                throw new ZipError("An entry in the file is larger than it claims to be, so the file was not opened.");
+                throw new ZipError("The .zip wasn't opened because a file inside it is larger than it claims to be.");
             }
             chunks.push(step.value);
         }
@@ -3895,7 +3896,7 @@ async function inflateRaw(bytes, expectedSize) {
         if (error instanceof ZipError) {
             throw error;
         }
-        throw new ZipError("An entry in the file could not be decompressed.");
+        throw new ZipError("A file inside the .zip couldn't be unpacked.");
     }
     const out = new Uint8Array(total);
     let cursor = 0;
@@ -3990,14 +3991,14 @@ async function zipRead(bytes) {
         throw new ZipError("The file holds more than " + LIMITS.zipEntries + " entries, which is more than this app opens.");
     }
     if (centralOffset + centralSize > endOffset) {
-        throw new ZipError("The file's directory is damaged.");
+        throw new ZipError("The .zip file is damaged.");
     }
     const entries = new Map();
     let cursor = centralOffset;
     let totalBytes = 0;
     for (let n = 0; n < entryCount; n++) {
         if (cursor + 46 > endOffset || view.getUint32(cursor, true) !== 0x02014B50) {
-            throw new ZipError("The file's directory is damaged.");
+            throw new ZipError("The .zip file is damaged.");
         }
         const flags = view.getUint16(cursor + 8, true);
         const method = view.getUint16(cursor + 10, true);
@@ -4012,49 +4013,49 @@ async function zipRead(bytes) {
         cursor += 46 + nameLength + extraLength + commentLength;
 
         if (compressedSize === 0xFFFFFFFF || uncompressedSize === 0xFFFFFFFF || localOffset === 0xFFFFFFFF) {
-            throw new ZipError("64-bit ZIP files are not supported.");
+            throw new ZipError("This app can't open 64-bit .zip files.");
         }
         if ((flags & 0x0001) !== 0) {
-            throw new ZipError("Encrypted ZIP files are not supported.");
+            throw new ZipError("This app can't open password-protected .zip files.");
         }
         checkZipEntryName(name);
         if (name.endsWith("/")) {
             continue;
         }
         if (uncompressedSize > LIMITS.zipEntryBytes) {
-            throw new ZipError("An entry in the file is larger than " + Math.round(LIMITS.zipEntryBytes / 1024 / 1024) + " MB, which is more than this app opens.");
+            throw new ZipError("A file inside the .zip is larger than " + Math.round(LIMITS.zipEntryBytes / 1024 / 1024) + " MB, which is more than this app opens.");
         }
         totalBytes += uncompressedSize;
         if (totalBytes > LIMITS.zipTotalBytes) {
             throw new ZipError("The unpacked file would be larger than " + Math.round(LIMITS.zipTotalBytes / 1024 / 1024) + " MB, which is more than this app opens.");
         }
         if (localOffset + 30 > centralOffset || view.getUint32(localOffset, true) !== 0x04034B50) {
-            throw new ZipError("The file's directory is damaged.");
+            throw new ZipError("The .zip file is damaged.");
         }
         const localNameLength = view.getUint16(localOffset + 26, true);
         const localExtraLength = view.getUint16(localOffset + 28, true);
         const dataStart = localOffset + 30 + localNameLength + localExtraLength;
         if (dataStart + compressedSize > centralOffset) {
-            throw new ZipError("The file's directory is damaged.");
+            throw new ZipError("The .zip file is damaged.");
         }
         const raw = bytes.subarray(dataStart, dataStart + compressedSize);
         let data;
         if (method === 0) {
             if (compressedSize !== uncompressedSize) {
-                throw new ZipError("The file's directory is damaged.");
+                throw new ZipError("The .zip file is damaged.");
             }
             data = copyBytes(raw);
         } else if (method === 8) {
             data = await inflateRaw(raw, uncompressedSize);
         } else {
-            throw new ZipError("The file uses a compression method this app does not support.");
+            throw new ZipError("This .zip was compressed in a way this app can't read. Try zipping it again with your computer's built-in tool.");
         }
         if (data.length !== uncompressedSize || crc32(data) !== crc) {
-            throw new ZipError("An entry in the file is damaged (its checksum does not match).");
+            throw new ZipError("A file inside the .zip is damaged.");
         }
         // A repeated name would silently replace the first entry.
         if (entries.has(name)) {
-            throw new ZipError("The file lists the same name twice.");
+            throw new ZipError("The .zip holds two files with the same name.");
         }
         entries.set(name, data);
     }
@@ -4166,6 +4167,11 @@ function parseJsonArray(text) {
 function listNames(names) {
     const shown = names.slice(0, 5).map(function (name) { return String(name).slice(0, 90); });
     return shown.join(", ") + (names.length > 5 ? ", and " + (names.length - 5) + " more" : "");
+}
+
+/** "1 file" or "3 files", so messages never show "file(s)". */
+function countOf(count, singular, pluralForm) {
+    return count + " " + (count === 1 ? singular : pluralForm);
 }
 
 /** "pdf-processing" becomes a display name. */
@@ -4342,7 +4348,7 @@ function readCopilotCapabilities(list, raw, notices) {
         const known = COPILOT_CAPABILITIES.find(function (cap) { return cap.name === capability.name; });
         if (!known) {
             if (typeof capability.name === "string") {
-                notices.push("The capability \"" + capability.name + "\" is not one this app can carry and was left out.");
+                notices.push("The Copilot setting \"" + capability.name + "\" isn't one this app supports, so it was left out.");
             }
             return;
         }
@@ -4396,7 +4402,7 @@ function msAgentExport(agent) {
         starters.welcomeMessage = { text: agent.welcome };
     }
     if (agent.files.length > 0) {
-        warnings.push("The Teams Chat file can't carry attached files, so they were left out.");
+        warnings.push("The Teams Chat file can't include attached files, so they were left out.");
     }
     const definition = {
         name: agent.name,
@@ -4441,10 +4447,10 @@ function msAgentImport(text) {
     try {
         parsed = JSON.parse(String(text));
     } catch (error) {
-        return { error: "This file is not valid JSON, so it can't be opened as a Copilot agent." };
+        return { error: "This file is damaged or isn't a Copilot .agent file, so it can't be opened." };
     }
     if (!isPlainObject(parsed) || !isPlainObject(parsed.customCopilotConfig)) {
-        return { error: "This doesn't look like a Copilot .agent file. It has no customCopilotConfig section." };
+        return { error: "This doesn't look like a Copilot .agent file." };
     }
     const notices = [];
     const config = parsed.customCopilotConfig;
@@ -4635,7 +4641,7 @@ function planExport(project, item, exportId, options) {
     // ### Skills the assistant uses ###
     const used = usedSkills(project, item).filter(function (skill) { return skip.indexOf(skill.id) < 0; });
     usedSkills(project, item).filter(function (skill) { return skip.indexOf(skill.id) >= 0; }).forEach(function (skill) {
-        report.push(reportEntry("Skill " + skill.name, "unsupported", "Left out with its tools, because its steps do not fit in the instructions and " + spec.label + " cannot carry files."));
+        report.push(reportEntry("Skill " + skill.name, "unsupported", "Left out with its tools, because its steps do not fit in the instructions and " + spec.label + " cannot include files."));
     });
     if (spec.skills && used.length > 0 && exportId !== "claudePlugin" && exportId !== "portablePlugin") {
         used.forEach(function (skill) {
@@ -4680,7 +4686,7 @@ function planExport(project, item, exportId, options) {
                         return;
                     }
                     if (server.transport === "stdio" && (exportId === "claudePlugin" || exportId === "teamsZip")) {
-                        leave(exportId === "teamsZip" ? "Copilot can reach only tool servers on the web." : "it runs on the computer, and claude.ai can reach only tool servers on the web.");
+                        leave(exportId === "teamsZip" ? "Copilot can connect only to tool servers on the web." : "it runs on the computer, and claude.ai can connect only to tool servers on the web.");
                         return;
                     }
                     if (exportId === "teamsZip" && server.auth === "apikey") {
@@ -4763,10 +4769,10 @@ function planExport(project, item, exportId, options) {
                 }
             } else if (provider.kind === "script") {
                 named.push(provider.path);
-                note = "The script travels with the skill. It runs only where " + (provider.runtime || "it") + " can run with network access.";
+                note = "The script comes with the skill. It works only where " + (provider.runtime || "it") + " can run and connect to the internet.";
                 if (exportId === "claude" || exportId === "claudePlugin" || exportId === "gemini") {
                     status = "requires-setup";
-                    note += exportId === "gemini" ? " Gemini skills can't run scripts that reach the internet." : " On claude.ai, a workspace Owner must allow the address it calls.";
+                    note += exportId === "gemini" ? " Gemini skills can't run scripts that connect to the internet." : " On claude.ai, a workspace Owner must allow the address it calls.";
                 }
                 setup.push({ key: "script:" + link.owner.id + ":" + provider.path, kind: "script", path: provider.path, runtime: provider.runtime, owner: link.owner });
             } else if (provider.kind === "websearch") {
@@ -4787,7 +4793,7 @@ function planExport(project, item, exportId, options) {
             report.push(reportEntry(capability.label, status, note));
         });
         if (usable.length === 0 && capability.required) {
-            report.push(reportEntry(capability.label, "unsupported", "No way to do this works in " + spec.label + ", and the " + kindName + " needs it for its main job. It will not work as intended there."));
+            report.push(reportEntry(capability.label, "unsupported", "Nothing in " + spec.label + " can do this, and the " + kindName + " needs it for its main job, so it won't work as intended there."));
         }
         const label = oneLine(capability.label);
         const fallback = capability.fallback || DEFAULT_FALLBACK;
@@ -4828,7 +4834,7 @@ function planExport(project, item, exportId, options) {
         const leaf = entry.skill.skillName + ".md";
         files.push({ path: BUNDLE_FILES_FOLDER + leaf, bytes: toBytes(entry.section + "\n") });
         attachedNote.push("When a question needs the skill " + entry.skill.name + ", follow the steps in the attached file " + attach(leaf) + ".");
-        report.push(reportEntry("Skill " + entry.skill.name, "transformed", "Its steps did not fit in the instructions, so they travel as the attached file " + attach(leaf) + "."));
+        report.push(reportEntry("Skill " + entry.skill.name, "transformed", "Its steps did not fit in the instructions, so they were moved to the attached file " + attach(leaf) + "."));
     });
     // A skill left out takes its tools, so the plan is made again without it.
     if (leftOut.length > 0) {
@@ -4847,7 +4853,7 @@ function planExport(project, item, exportId, options) {
         files.push({ path: BUNDLE_FILES_FOLDER + leaf, bytes: toBytes(item.body + "\n") });
         pieces[0] = (item.description ? item.description + "\n\n" : "") + "Follow the steps in the attached file " + attach(leaf) + " whenever a question calls for them.";
         text = pieces.concat(attachedNote, toolsSection ? [toolsSection] : []).join("\n\n");
-        report.push(reportEntry("Steps", "transformed", "The skill's steps are longer than " + spec.label + " allows, so they travel as the attached file " + attach(leaf) + "."));
+        report.push(reportEntry("Steps", "transformed", "The skill's steps are longer than " + spec.label + " allows, so they were moved to the attached file " + attach(leaf) + "."));
     }
     if (spec.limit && text.length > spec.limit && toolsSection) {
         const leaf = "tool-notes.md";
@@ -4856,7 +4862,7 @@ function planExport(project, item, exportId, options) {
             files.push({ path: BUNDLE_FILES_FOLDER + leaf, bytes: toBytes(toolsSection + "\n") });
         }
         text = pieces.concat(attachedNote, [compact]).join("\n\n");
-        report.push(reportEntry("Tool notes", "transformed", "The notes on how to use each tool were shortened to one line each to fit " + spec.label + (spec.files ? ", and the full notes travel as the attached file " + attach(leaf) + "." : ".")));
+        report.push(reportEntry("Tool notes", "transformed", "The notes on how to use each tool were shortened to one line each to fit " + spec.label + (spec.files ? ", and the full notes are in the attached file " + attach(leaf) + "." : ".")));
     }
     let blocked = report.some(function (entry) { return entry.status === "blocked"; });
     if (spec.limit && text.length > spec.limit) {
@@ -4973,7 +4979,7 @@ function formatReport(project, item, exportId, named) {
             report.push(reportEntry("Welcome message", "unsupported", "The Copilot app package has no place for it."));
         }
         if (view.copyright || view.license !== DEFAULT_LICENSE) {
-            report.push(reportEntry("Copyright and license", "unsupported", "The Copilot app package's files reject extra fields."));
+            report.push(reportEntry("Copyright and license", "unsupported", "The Copilot app package has no place for them."));
         }
         const missing = ["name", "website", "privacy", "terms"].filter(function (key) { return !view.creator[key]; });
         if (missing.length > 0) {
@@ -4995,7 +5001,7 @@ function formatReport(project, item, exportId, named) {
     }
     if (exportId === "msAgent" || exportId === "teamsZip") {
         widenedSources(item).forEach(function (label) {
-            report.push(reportEntry(label, "blocked", "This download would use the whole source instead of the places you listed, so it is blocked."));
+            report.push(reportEntry(label, "blocked", "This download can't keep the list of places you chose, so Copilot would use the whole source instead. The download is blocked to prevent that."));
         });
     }
     if (exportId === "gemini") {
@@ -5006,7 +5012,7 @@ function formatReport(project, item, exportId, named) {
         });
     }
     if ((exportId === "chatgpt" || exportId === "notebook") && item.files.length > 0) {
-        report.push(reportEntry("Attached files", "requires-setup", "Copied text can't carry files. Add them to the " + (exportId === "chatgpt" ? "ChatGPT project" : "notebook") + " yourself."));
+        report.push(reportEntry("Attached files", "requires-setup", "Copied text can't include files. Add them to the " + (exportId === "chatgpt" ? "ChatGPT project" : "notebook") + " yourself."));
     }
     return report;
 }
@@ -5086,7 +5092,7 @@ function writeSetupGuide(project, items, exportId) {
                 } else {
                     lines.push("", "Look for " + step.name + " in the product's list of connectors or apps, and connect it.");
                 }
-                lines.push("", "Without it, the assistant still does the work it can and says that no tool was used.");
+                lines.push("", "Until you connect it, the assistant does what it can and tells people it couldn't use the tool.");
             } else if (step.kind === "address") {
                 lines = ["## Add the address of your " + step.label, "", "This download has no server address, because you supply your own " + step.label + ".", "", "1. Open " + step.file + " in a text editor.", "2. Replace " + MCP_URL_PLACEHOLDER + " with the https address of your server.", "3. Save the file and install the download.", "", "Until you do, the assistant tells people it can't use this tool."];
             } else if (step.kind === "connect") {
@@ -5096,15 +5102,15 @@ function writeSetupGuide(project, items, exportId) {
             } else if (step.kind === "script") {
                 const file = step.owner.files.find(function (entry) { return entry.path === step.path; });
                 const hosts = file ? hostsInText(file.bytes) : [];
-                lines = ["## Let the script reach the internet", "", "The script " + step.path + " runs only where " + (step.runtime || "it") + " can run with network access" + (hosts.length ? " to " + hosts.join(", ") : "") + ".", ""];
+                lines = ["## Let the script connect to the internet", "", "The script " + step.path + " runs only where " + (step.runtime || "it") + " can run with network access" + (hosts.length ? " to " + hosts.join(", ") : "") + ".", ""];
                 if (claude) {
                     lines.push("On claude.ai, code execution must be on. A workspace Owner can allow the address under Organization settings, then Capabilities, by choosing package managers and specific domains" + (hosts.length ? " and adding " + hosts.join(", ") : "") + ".");
                 } else if (exportId === "gemini") {
-                    lines.push("Gemini skills can't run scripts that reach the internet, so in Gemini the assistant works without it.");
+                    lines.push("Gemini skills can't run scripts that connect to the internet, so in Gemini the assistant works without it.");
                 } else {
-                    lines.push("In a coding agent, allow the command when it asks.");
+                    lines.push("In a coding tool such as Claude Code or Codex, allow the command when it asks.");
                 }
-                lines.push("", "If the script can't connect, the assistant falls back and says why.");
+                lines.push("", "If the script can't connect, the assistant tells people why and answers without it.");
             }
             steps.push(lines.join("\n") + "\n");
         });
@@ -5541,12 +5547,12 @@ function readItemFolder(entries, folder, nested) {
     const knownFields = ["name", "description", "license", "compatibility", "metadata", "allowed-tools"];
     Object.keys(data).forEach(function (key) {
         if (knownFields.indexOf(key) < 0) {
-            notices.push("The frontmatter field \"" + key + "\" is not part of the Agent Skills standard and was ignored.");
+            notices.push("The setting \"" + key + "\" isn't part of the Agent Skills standard, so it was ignored.");
         }
     });
     const skillName = typeof data.name === "string" ? data.name.trim() : "";
     if (!skillName) {
-        notices.push("A skill has no name in its frontmatter, so you will need to add one.");
+        notices.push("A skill has no name, so you'll need to give it one.");
     } else if (skillName !== toSkillName(skillName)) {
         notices.push("The skill name \"" + skillName.slice(0, 64) + "\" doesn't follow the Agent Skills rules. It will be saved as \"" + toSkillName(skillName) + "\".");
     }
@@ -5804,7 +5810,7 @@ function serversFromMcp(value, notices) {
         }
         const dropped = ["headers", "env", "cwd"].filter(function (field) { return entry[field] !== undefined; });
         if (dropped.length > 0) {
-            notices.push("The tool server \"" + key.slice(0, 40) + "\" had " + dropped.join(", ") + " settings, which this app does not keep, because they can hold secrets. Add them again where you install it.");
+            notices.push("The tool server \"" + key.slice(0, 40) + "\" had settings that can hold passwords or keys (" + dropped.join(", ") + "), so this app didn't keep them. Add them again where you install it.");
         }
         // Remote: "streamable-http", "http", "streamable_http", "sse", or none; a command means local.
         if (typeof entry.command === "string") {
@@ -5900,11 +5906,11 @@ function readPluginArchive(entries) {
         unrecognized.push({ path: path, note: notes[path] || UNRECOGNIZED_NOTE, bytes: bytes });
     });
     if (outside > 0) {
-        notices.push(outside + " file(s) outside the plugin folder were left out.");
+        notices.push("Left out " + countOf(outside, "file", "files") + " from outside the plugin folder.");
     }
     const behaviorFiles = unrecognized.filter(function (entry) { return /^(hooks|agents|commands)\//.test(entry.path); }).length;
     if (behaviorFiles > 0) {
-        notices.push("The plugin has " + behaviorFiles + " hook, command, or agent file(s). Agentprise keeps them in the backup but never reads or runs them.");
+        notices.push("The plugin has " + countOf(behaviorFiles, "hook, command, or agent file", "hook, command, or agent files") + ". Agentprise keeps " + (behaviorFiles === 1 ? "it" : "them") + " in the backup but never reads or runs " + (behaviorFiles === 1 ? "it" : "them") + ".");
     }
 
     let raw;
@@ -6349,10 +6355,10 @@ async function teamsZipExport(agent, icons, extras) {
     }
     const appId = agent.copilot.appId;
     if (agent.welcome) {
-        warnings.push("The Copilot app package can't carry the welcome message, so it was left out.");
+        warnings.push("The Copilot app package can't include the welcome message, so it was left out.");
     }
     if (agent.copyright || agent.license !== DEFAULT_LICENSE) {
-        warnings.push("The Copilot app package can't carry the copyright line or license name, so they were left out.");
+        warnings.push("The Copilot app package can't include the copyright line or license name, so they were left out.");
     }
     const creator = {};
     const placeholdersUsed = [];
@@ -6436,7 +6442,7 @@ async function teamsZipExport(agent, icons, extras) {
         }
     });
     if (leftOut.length > 0) {
-        warnings.push("The Copilot app package can't carry " + listNames(leftOut) + ", because Copilot doesn't accept that type. The skill and the backup keep it.");
+        warnings.push("The Copilot app package can't include " + listNames(leftOut) + ", because Copilot doesn't accept that type. The skill and the backup keep it.");
     }
     return { fileName: safeFileName(agent.name + " Copilot app", ".zip"), bytes: zipWrite(entries), warnings: warnings, appId: appId };
 }
@@ -6494,7 +6500,7 @@ async function teamsZipImport(bytes) {
     };
     readCopilotCapabilities(declarative.capabilities, raw, notices);
     if (Array.isArray(declarative.actions) && declarative.actions.length > 0) {
-        notices.push("This package has " + declarative.actions.length + " action(s) (plugins) that this app can't carry. They were left out.");
+        notices.push("Left out " + countOf(declarative.actions.length, "action", "actions") + " (Copilot plugins), which this app doesn't support.");
     }
     const developer = manifest && isPlainObject(manifest.developer) ? manifest.developer : {};
     const developerFields = { name: "name", website: "websiteUrl", privacy: "privacyUrl", terms: "termsOfUseUrl" };
@@ -6522,9 +6528,9 @@ async function teamsZipImport(bytes) {
         }
     });
     if (skipped.length > 0) {
-        notices.push("The package has " + skipped.length + " file(s) this app can't use, so they were left out: " + listNames(skipped) + ".");
+        notices.push("Left out " + countOf(skipped.length, "file", "files") + " this app can't use: " + listNames(skipped) + ".");
     }
-    notices.push("Copilot app packages don't carry a welcome message, so that field is empty.");
+    notices.push("Copilot app packages don't include a welcome message, so that field is empty.");
     const result = normalizeAgent(raw);
     return { agent: result.agent, notices: notices.concat(result.notices) };
 }
@@ -6722,7 +6728,7 @@ const STATUS_SECONDS = 8;
 const KIND_WORDS = {
     agent: {
         noun: "assistant", title: "Assistant", heading: "Describe your assistant", namePlaceholder: "Team Helper",
-        hint: "Fill in the lines. The preview updates as you type.",
+        hint: "Answer the questions below. The preview changes as you type.",
         description: "What does it do?", instructions: "How should it behave?",
         descriptionPlaceholder: "Answers questions about our team's processes and points to the right forms.",
         instructionsPlaceholder: "Be friendly and brief. Explain steps in order. Say when you are not sure, and point to the source you used.",
@@ -6746,16 +6752,16 @@ const REVIEW_FIELDS = { name: "s-name", description: "s-description", instructio
 const WORKSPACE_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions" };
 const DETAILS_FIELDS = { name: "d-name", description: "d-description", instructions: "d-instructions" };
 const PRODUCT_HINTS = {
-    gemini: "A skill ZIP. Gemini reads SKILL.md and the references folder.",
-    claude: "A skill ZIP. Claude reads SKILL.md and the references folder.",
-    msAgent: "Single file for SharePoint, OneDrive and Teams chats.",
-    teamsZip: "Keep the same file when you update it, so the app id stays the same.",
-    chatgpt: "No file to upload. Paste the box into the instructions of a ChatGPT project. For skills and tools, use the Plugin download.",
-    claudePlugin: "The whole project as one Claude plugin: every assistant and skill, with the tool servers Claude can reach.",
-    portablePlugin: "The whole project as an Agent Plugins folder, which ChatGPT, Codex, GitHub Copilot, Cursor, and other tools read.",
+    gemini: "A skill to upload to Gemini, with any files it uses.",
+    claude: "A skill to upload to Claude, with any files it uses.",
+    msAgent: "One file to put in SharePoint or OneDrive and add to a Teams chat.",
+    teamsZip: "When you change the assistant later, download this again from the same project. Copilot then updates the app you shared instead of adding a new one.",
+    chatgpt: "There is no file to upload. Paste the text into the instructions of a ChatGPT project. To include skills and tools, use the Plugin download instead.",
+    claudePlugin: "The whole project as one Claude plugin, with every assistant and skill and the tool servers Claude can connect to.",
+    portablePlugin: "The whole project as one plugin that ChatGPT, Codex, GitHub Copilot, Cursor, and other tools can read.",
     notebook: "Add the .md file as a source, or paste the instructions.",
-    skill: "A plain Agent Skill with nothing specific to this app. It leaves out the picture, the welcome message, the prompt suggestions, and the Copilot settings.",
-    backup: "The whole project in one .zip: every assistant and skill, with their files. Open it here any time."
+    skill: "A standard skill for any tool that reads Agent Skills. It leaves out the picture, the welcome message, the example questions, and the Copilot settings.",
+    backup: "The whole project in one .zip, with every assistant, skill, and file. You can open it here any time."
 };
 const AFTER_STEPS = {
     gemini: [
@@ -6771,7 +6777,7 @@ const AFTER_STEPS = {
         ["In the Microsoft 365 Copilot app or in Teams", ["Choose Agents.", "Choose Upload, or Create, then Upload, and pick this .zip file.", "Choose Share to give it to other people. Your admin may need to allow custom agents."]]
     ],
     chatgpt: [
-        ["In ChatGPT", ["Open a project, or create one in the sidebar.", "Open the project's menu, then Project settings.", "Paste the box into Instructions, and add any files the assistant uses to the project."]]
+        ["In ChatGPT", ["Open a project, or create one in the sidebar.", "Open the project's menu, then Project settings.", "Paste the text into Instructions, and add any files the assistant uses to the project."]]
     ],
     claudePlugin: [
         ["In Claude", ["Open Customize, then Plugins.", "Choose Add, then Upload plugin, and pick this .zip file.", "Open the plugin's Connectors tab to connect any tool servers. Skills must be turned on for your organization.", "If the download has a SETUP.md file, follow its steps."]]
@@ -6787,7 +6793,7 @@ const AFTER_STEPS = {
         ["In a tool that reads Agent Skills", ["Upload or unzip this file where the tool looks for skills, such as the .agents/skills folder.", "SKILL.md holds the instructions, and the other folders hold its files."]]
     ],
     backup: [
-        ["In Agentprise", ["Keep this file somewhere safe. Browsers can clear what they store.", "Drop it on the Workspace page to pick up where you left off or to download it for another product."]]
+        ["In Agentprise", ["Keep this file somewhere safe. Browsers can clear what they store.", "Drop it on the Workspace page to keep working on it or to download it for another product."]]
     ]
 };
 const INSTRUCTIONS_TEMPLATE = [
@@ -7384,7 +7390,7 @@ async function openProject(id, moveFocus) {
     ui.savedRecord = recordFingerprint(result.project);
     projectPayloads(result.project).forEach(function (payload) { savedBytes.set(result.project.id + "/" + payload.key, payload.bytes); });
     if (result.notices.length > 0) {
-        announce("Some saved settings were changed when the project was opened. " + result.notices.join(" "));
+        announce("A few saved settings had to be changed to open this project. " + result.notices.join(" "));
     }
     showView("project", moveFocus);
     return true;
@@ -8339,7 +8345,7 @@ function readListField(id, check, max, rule) {
     const bad = lines.filter(function (line) { return !check(line); });
     const kept = lines.filter(check).slice(0, max);
     if (bad.length > 0) {
-        showFieldError(id, bad.length + " line(s) will be left out. " + rule);
+        showFieldError(id, countOf(bad.length, "line", "lines") + " will be left out. " + rule);
     } else if (lines.length > max) {
         showFieldError(id, "Only the first " + max + " are kept.");
     } else {
@@ -8481,7 +8487,7 @@ async function addFiles(fileList) {
         const cleaned = cleanSkillFiles(candidates, notices);
         item.files = cleaned.files;
         if (cleaned.leftovers.length > 0) {
-            notices.push(cleaned.leftovers.length + " file(s) were left out because their type is not one this app accepts: " + listNames(cleaned.leftovers.map(function (file) { return pathLeaf(file.path); })) + ".");
+            notices.push("Left out " + countOf(cleaned.leftovers.length, "file", "files") + " of a type this app doesn't accept: " + listNames(cleaned.leftovers.map(function (file) { return pathLeaf(file.path); })) + ".");
         }
     }
     // Keep originals so saves skip unchanged files.
@@ -8494,7 +8500,7 @@ async function addFiles(fileList) {
     renderFiles();
     updateDerived();
     scheduleSave();
-    announce(added > 0 ? "Added " + added + " file(s)." : "No files were added.", added === 0);
+    announce(added > 0 ? "Added " + countOf(added, "file", "files") + "." : "No files were added.", added === 0);
 }
 
 function readStartersField() {
@@ -8681,9 +8687,9 @@ const TOOL_PRODUCTS = [["copilot", "Microsoft 365 Copilot"], ["claude", "Claude"
 function toolRoute(project, capability, target) {
     const providers = providersFor(capability, target).filter(function (provider) { return provider.kind !== "none"; });
     if (providers.length === 0) {
-        return "not available, so it tells people it can't do this part";
+        return "Not available. The assistant will let people know it can't do this.";
     }
-    return providers.map(function (provider) { return providerName(project, provider); }).join(", or ");
+    return "Uses " + providers.map(function (provider) { return providerName(project, provider); }).join(", or ") + ".";
 }
 
 /** An assistant also shows its skills' tools, without Remove. */
@@ -8701,9 +8707,9 @@ function renderTools() {
             routes.appendChild(el("li", {}, [el("span", { className: "tool-product", text: product[1] + ": " }), toolRoute(ui.project, capability, product[0])]));
         });
         const body = [
-            el("p", { className: "tool-name" }, [el("span", { className: "bi bi-plug", "aria-hidden": "true" }), capability.label + (capability.required ? " (needed for its main job)" : "")]),
+            el("p", { className: "tool-name" }, [el("span", { className: "bi bi-plug", "aria-hidden": "true" }), capability.label + (capability.required ? " (required)" : "")]),
             capability.description ? el("p", { className: "tool-text", text: capability.description }) : null,
-            link.owner !== item ? el("p", { className: "hint", text: "Comes with the skill " + link.owner.name + "." }) : null,
+            link.owner !== item ? el("p", { className: "hint", text: "Part of the skill " + link.owner.name + "." }) : null,
             routes
         ].filter(Boolean);
         if (link.owner === item) {
@@ -8735,7 +8741,7 @@ function renderServers() {
         const row = el("div", { className: "server-row" });
         row.appendChild(el("p", { className: "tool-name", text: server.label }));
         if (server.transport === "stdio") {
-            row.appendChild(el("p", { className: "hint" }, ["Runs on the computer with the command ", el("code", { text: [server.command].concat(server.args).join(" ") }), ". Agentprise never runs it; tools such as Claude Code and Codex can."]));
+            row.appendChild(el("p", { className: "hint" }, ["This runs a program on the person's computer: ", el("code", { text: [server.command].concat(server.args).join(" ") }), ". Agentprise never runs it, but coding tools such as Claude Code and Codex can."]));
         } else {
             const hintId = id + "-hint";
             const input = el("input", { type: "url", id: id, placeholder: "https://", autocomplete: "off", "aria-describedby": hintId + " " + id + "-error" });
@@ -8749,13 +8755,13 @@ function renderServers() {
                 scheduleSave();
             });
             row.appendChild(el("label", { "for": id, text: "Address of the " + server.label }));
-            row.appendChild(el("p", { className: "hint", id: hintId, text: server.userSupplied ? "Paste the https address of your own " + server.label + ". You can leave it empty and fill it in after you download; the setup steps say where." : "The https address of this server." }));
+            row.appendChild(el("p", { className: "hint", id: hintId, text: server.userSupplied ? "Paste the https address of your own " + server.label + ". You can also leave it empty and add it after you download. The setup steps say where." : "The https address of this server." }));
             row.appendChild(input);
             row.appendChild(el("p", { className: "error-text", id: id + "-error", hidden: "" }));
         }
         const remove = iconButton("bi-trash", "Remove this connection", ": " + server.label);
         remove.addEventListener("click", function () {
-            openConfirm("Remove " + server.label + "?", "Tools that use this server will stop mentioning it in every download.", "Remove it", "Keep it", function () {
+            openConfirm("Remove " + server.label + "?", "Tools that use this connection won't mention it in any download.", "Remove it", "Keep it", function () {
                 delete ui.project.servers[name];
                 ui.project.items.forEach(function (item) {
                     item.capabilities.forEach(function (capability) {
@@ -8855,9 +8861,9 @@ async function startDownload(format) {
         }
         const setup = (result.report || []).filter(function (entry) { return entry.status === "requires-setup"; }).length;
         const guide = ["teamsZip", "claudeSkill", "geminiSkill", "plainSkill", "claudePlugin", "portablePlugin"].indexOf(format) >= 0;
-        announce("Downloaded " + result.fileName + "." + (notes.length ? " " + notes.join(" ") : "") + (setup ? (guide ? " Some parts need setting up; the setup steps say how." : " Some parts need setting up; the Inspect page lists them.") : ""));
+        announce("Downloaded " + result.fileName + "." + (notes.length ? " " + notes.join(" ") : "") + (setup ? (guide ? " Some parts need to be set up. The setup steps in the download explain how." : " Some parts need to be set up. The Inspect page lists them.") : ""));
     } catch (error) {
-        announce("The download could not be made: " + error.message, true);
+        announce("The download didn't work. " + error.message, true);
     }
 }
 
@@ -8966,7 +8972,7 @@ function entriesToFiles(entries) {
 async function buildProductFiles(project, item, product) {
     const report = productReport(project, item, product);
     if (report.some(function (entry) { return entry.status === "blocked"; })) {
-        return { root: "", files: [{ name: "Blocked", text: "This download can't be made until the blocked items in the list above are fixed." }], fileName: "", format: "", notes: [], report: report };
+        return { root: "", files: [{ name: "Blocked", text: "To download this, fix the items marked blocked in the list above." }], fileName: "", format: "", notes: [], report: report };
     }
     const built = await buildProductFilesUnchecked(project, item, product);
     built.report = report;
@@ -9068,7 +9074,7 @@ function renderFileBody() {
         return;
     }
     if (file.size !== undefined) {
-        body.appendChild(el("p", { className: "muted", text: file.name + ", " + formatSize(file.size) + ". A file carried exactly as it was added." }));
+        body.appendChild(el("p", { className: "muted", text: file.name + ", " + formatSize(file.size) + ". This file is included exactly as you added it." }));
         return;
     }
     const pre = el("pre", { className: "file-text", tabindex: "0", role: "region", "aria-label": "Contents of " + file.name });
@@ -9158,7 +9164,7 @@ async function renderProductPanel() {
     try {
         built = await buildProductFiles(project, item, ui.product);
     } catch (error) {
-        built = { root: "", files: [{ name: "Could not build the files", text: error.message }], fileName: "", format: "", notes: [], report: [] };
+        built = { root: "", files: [{ name: "The files couldn't be made", text: error.message }], fileName: "", format: "", notes: [], report: [] };
     }
     if (token !== ui.productRender || ui.view !== "details") {
         return;

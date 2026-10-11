@@ -44,7 +44,7 @@ settings each product needs, plus a section in the instructions called
 reach it in this product, and what to do when none of them works.
 
 You do not have to set up every tool. An assistant still works without its
-tools. It does the parts it can and tells people that no tool was used (see
+tools. It does the parts it can and tells people it couldn't use the tool (see
 [What happens without the tool](#what-happens-without-the-tool)).
 
 #### Where tools come from
@@ -54,7 +54,7 @@ the Library, such as the **PubMed Search** skill, and with skill or plugin
 files you open. In the project editor, a **Tools** list under the questions
 shows each tool, what it does, and how it connects in Microsoft 365 Copilot,
 Claude, ChatGPT, Gemini, and coding tools. A tool that came with a skill the
-assistant uses says "Comes with the skill" and the skill's name.
+assistant uses says "Part of the skill" and the skill's name.
 
 ![Part of the editor for Evidence Scout. Under Skills it can use, PubMed Search is ticked. Under Tools are four tool cards: Run a PubMed query, Get article details, Read abstracts, and Browse PubMed pages. Each card says what the tool does, that it comes with the skill PubMed Search, and how Microsoft 365 Copilot, Claude, ChatGPT, Gemini, and coding tools connect it.](../../images/guides/editor-tools.png)
 
@@ -252,7 +252,7 @@ is missing:
 
 So an assistant without its tool does not pretend. It says plainly that no
 tool was used, and it offers what it can do without one. A tool marked
-"needed for its main job" in the **Tools** list is the exception: without it,
+"(required)" in the **Tools** list is the exception: without it,
 the assistant cannot do what it was made for. When a download has no way to
 reach such a tool, the report says so.
 

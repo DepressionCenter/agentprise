@@ -2,7 +2,7 @@
 // tests/project.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-10
+// Last Modified: 2026-10-11
 // Summary: Tests for the version 2 project model inside index.html: the backup
 //          round trip, normalization of hostile input, the Agent Plugins
 //          manifests, duplicate and merge, the stored record and payloads, and
@@ -136,7 +136,7 @@ describe("backup round trip", () => {
     assert.equal(engine.detectFormat(backup.fileName, backup.bytes), "plugin");
     const back = await reopen(backup);
     assert.equal(back.format, "plugin");
-    assert.deepEqual(back.notices, ["The plugin has 1 hook, command, or agent file(s). Agentprise keeps them in the backup but never reads or runs them."]);
+    assert.deepEqual(back.notices, ["The plugin has 1 hook, command, or agent file. Agentprise keeps it in the backup but never reads or runs it."]);
     assert.deepEqual(engine.project.record(back.project), record);
     assert.deepEqual(payloadBytes(back.project), payloadBytes(project));
     // A second trip changes nothing either.
@@ -285,7 +285,7 @@ describe("normalizeProject with hostile input", () => {
   test("skills an agent uses must exist in the project", () => {
     const { project, notices } = hostile();
     assert.deepEqual(project.items[2].uses, ["same", "same-2"]);
-    assert.ok(notices.includes("Agent named 1 skill(s) that are not in this project, so they were dropped from its list of skills."));
+    assert.ok(notices.includes("Agent used 1 skill that isn't in this project, so it was taken off its list."));
   });
 
   test("tool providers that name a missing server or file are dropped with a notice", () => {
@@ -314,22 +314,22 @@ describe("normalizeProject with hostile input", () => {
     for (const path of paths) {
       assert.ok(!path.startsWith("/") && !path.includes("\\") && !path.split("/").includes(".."), path);
     }
-    const refused = notices.find((n) => n.includes("file(s) in a skill were left out"));
+    const refused = notices.find((n) => n.includes("files from a skill"));
     assert.ok(refused, "one notice lists the refused files");
     // The notice names the first five and counts the rest.
-    assert.ok(refused.startsWith("8 file(s)"), refused);
+    assert.ok(refused.startsWith("Left out 8 files"), refused);
     for (const reason of ["../escape.txt (it has no usable name)", "ok/../../escape3.txt (it has no usable name)", "tool.exe (it is a program)", "fake.txt (it is a Windows program)", "and 3 more"]) {
       assert.ok(refused.includes(reason), reason);
     }
     const rest = engine.project.normalize({ items: [{ kind: "skill", name: "S", files: [{ path: "a/b/c/d/e/f.txt", bytes: encode("too deep") }, { path: "empty.txt", bytes: new Uint8Array(0) }, { path: 42, bytes: encode("x") }, { path: "x.txt", bytes: "not bytes" }] }] });
     assert.deepEqual(rest.project.items[0].files, []);
-    assert.deepEqual(rest.notices, ["4 file(s) in a skill were left out: a/b/c/d/e/f.txt (it has no usable name), empty.txt (it is empty), a file (it has no usable name), x.txt (it has no usable name)."]);
+    assert.deepEqual(rest.notices, ["Left out 4 files from a skill: a/b/c/d/e/f.txt (it has no usable name), empty.txt (it is empty), a file (it has no usable name), x.txt (it has no usable name)."]);
   });
 
   test("unrecognized files keep safe paths and never hold programs", () => {
     const { project, notices } = hostile();
     assert.deepEqual(project.unrecognized.map((u) => u.path), [".claude/settings.json"]);
-    assert.ok(notices.includes("2 program file(s) were left out. Agentprise never keeps or runs programs."));
+    assert.ok(notices.includes("Left out 2 program files. Agentprise never keeps or runs programs."));
   });
 
   test("server settings are checked: names, https addresses, and one-program commands", () => {
@@ -553,7 +553,7 @@ describe("stored record and payloads", () => {
     store.delete(project.items[1].id + "/references/guide.md");
     store.delete(project.items[0].id + "/icon.png");
     const back = engine.project.fromRecord(record, store);
-    assert.deepEqual(back.notices, ["2 saved file(s) could not be found in this browser: icon.png, references/guide.md."]);
+    assert.deepEqual(back.notices, ["Couldn't find 2 saved files in this browser: icon.png, references/guide.md."]);
     assert.equal(back.project.items[0].icon, null);
     assert.deepEqual(back.project.items[1].files.map((f) => f.path), ["scripts/run.py", "openapi/api.yaml"]);
   });
@@ -591,7 +591,7 @@ describe("imports of plugins and skills made elsewhere", () => {
     });
     assert.deepEqual(project.items.map((i) => [i.kind, i.skillName, i.body]), [["skill", "lookup", "Search first."]]);
     assert.deepEqual(project.unrecognized.map((u) => [u.path, u.note]), [["hooks/hooks.json", "Not interpreted by Agentprise."]]);
-    assert.ok(notices.some((n) => n.includes("hook, command, or agent file(s)")));
+    assert.ok(notices.some((n) => n.includes("hook, command, or agent file")));
     assert.ok(notices.some((n) => n.includes("never runs it")));
     // The kept hook goes back into the backup under its own path.
     const backup = await engine.exports.backup(project);
@@ -707,7 +707,7 @@ describe("skill ZIP of an agent", () => {
     const back = await reopen(await engine.exports.skillZip(project, project.items[0], "claude"));
     // The skill ZIP holds only the agent, so the skills it named are not in the opened project.
     assert.deepEqual(back.project.items[0].uses, []);
-    assert.ok(back.notices.some((n) => n.includes("not in this project")));
+    assert.ok(back.notices.some((n) => n.includes("in this project, so")));
     assert.deepEqual(back.project.items[0].capabilities, project.items[0].capabilities);
   });
 

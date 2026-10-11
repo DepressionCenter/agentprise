@@ -94,7 +94,7 @@ Copilot. Choose **More settings** under the questions to open them.
 - **File attachments.** Add files from your computer. Files can be documents,
   OneNote pages, or plain text, including scripts, which Copilot receives as
   `.txt`; the app refuses programs by reading their contents. A `.one` file
-  stays out of the app package, because Copilot does not accept it.
+  is left out of the app package, because Copilot does not accept it.
 - **Microsoft Copilot settings.** Open this section to choose what Copilot may
   use. Turn on SharePoint and OneDrive and paste links to the files, folders,
   or sites the assistant should read, or leave the box empty for everything
