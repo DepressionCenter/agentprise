@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/faq.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: The questions people ask about Agentprise, with the same answers the
          Help page inside the app gives.
 Notes: See README file for documentation and full license information.
@@ -56,12 +56,13 @@ same file also works as a skill in Gemini and Claude.
 
 ### Which files can I attach?
 
-Word, PowerPoint, Excel, PDF, and plain text files, including scripts and data
-files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files,
-each under 10 MB. The app reads the start of every file and refuses programs,
-including ones renamed to look like a document. Copilot accepts only document
-types, so a script reaches it as a `.txt` file with the same name. The skill
-`.zip` keeps the real name.
+Word, PowerPoint, Excel, PDF, OneNote (`.one` and `.onepart`), and plain text
+files, including scripts and data files such as PowerShell, Python, SQL,
+Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the
+start of every file and refuses programs, including ones renamed to look like
+a document. Copilot accepts only document types, `.onepart`, and `.txt`, so a
+script reaches it as a `.txt` file with the same name, and a `.one` file stays
+out of the app package. The skill `.zip` keeps every file under its real name.
 
 ### Who can use my assistant?
 

@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/make-an-assistant-for-copilot.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Step-by-step guide with screenshots: make a new assistant in Agentprise
          and add it to the Agents list in Microsoft 365 Copilot or Teams.
 Notes: See README file for documentation and full license information.
@@ -89,15 +89,19 @@ Copilot. Choose **More settings** under the questions to open them.
   links to a privacy page and a terms page. The Copilot app package needs all
   four. If you leave any blank, the app fills in placeholder values and tells
   you so before you download.
-- **File attachments.** Add files from your computer. Files can be documents
-  or plain text, including scripts, which Copilot receives as `.txt`; the app
-  refuses programs by reading their contents.
-- **Microsoft Copilot settings.** Open this section to paste links to
-  SharePoint files the assistant should read or to limit web search to a few
-  sites. It also lets you choose what Copilot may use. Web search is on to
-  start. Teams messages, email, and meetings are off, because they make Teams
-  ask for approval before each answer in a group chat. Leave these as they are
-  if you are not sure.
+- **File attachments.** Add files from your computer. Files can be documents,
+  OneNote pages, or plain text, including scripts, which Copilot receives as
+  `.txt`; the app refuses programs by reading their contents. A `.one` file
+  stays out of the app package, because Copilot does not accept it.
+- **Microsoft Copilot settings.** Open this section to choose what Copilot may
+  use. Turn on SharePoint and OneDrive and paste links to the files, folders,
+  or sites the assistant should read, or leave the box empty for everything
+  the person can see. The same works for web sites under Web search, Teams
+  chats under Teams messages, and shared mailboxes under Email. You can also
+  pick a response mode. Web search is on to start. SharePoint, Teams
+  messages, email, and meetings are off, because they make Teams ask for
+  approval before each answer in a group chat. Leave these as they are if you
+  are not sure.
 - **Welcome message.** Teams chats and SharePoint show this when someone opens
   the assistant. The Copilot app package has no place for it, so you can skip
   it for this guide.

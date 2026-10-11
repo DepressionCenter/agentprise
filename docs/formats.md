@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/formats.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
          need: field mappings, vendor facts with check dates, and open tests.
@@ -57,17 +57,27 @@ cannot carry two things, and the app tells you so before you download it:
 The ChatGPT text carries the name, description, instructions, and example questions,
 which is everything ChatGPT and Gemini Notebook can take.
 
-Settings that only Microsoft 365 Copilot understands, such as SharePoint
-sources, the web site list, attached files, and what Copilot may use, travel in
-every download that has room for them but are ignored by the other products.
+Settings that only Microsoft 365 Copilot understands, such as what Copilot may
+use, the lists that limit each source, the response mode, and attached files,
+travel in every download that has room for them but are ignored by the other
+products. Each source has its own list: web sites under Web search (up to
+four), SharePoint and OneDrive links under SharePoint and OneDrive (up to 20),
+links to teams, channels, group chats, or meeting chats under Teams messages
+(up to five), and shared or group mailbox addresses under Email (up to 25).
+Meetings chosen in the Copilot app, a shared mailbox, and email folders can
+only arrive inside a file; the app keeps them and shows them with a Remove
+button. A list only matters while its source is on, and an empty list means
+Copilot may use everything the person can see.
 
-Attached files can be Word, PowerPoint, Excel, PDF, or plain text, including
-scripts and data files such as `.ps1`, `.py`, `.sql`, `.md`, `.csv`, and
-`.json`. The app reads the first bytes of every file and refuses anything
-that does not match its name, so a program renamed to `.pdf` never gets in.
-Copilot accepts only the document types and `.txt` as uploads, so the app
-package carries a script as plain text under its own name plus `.txt`, for
-example `deploy.ps1.txt`. The skill `.zip` keeps the real name.
+Attached files can be Word, PowerPoint, Excel, PDF, OneNote (`.one` and
+`.onepart`), or plain text, including scripts and data files such as `.ps1`,
+`.py`, `.sql`, `.md`, `.csv`, and `.json`. The app reads the first bytes of
+every file and refuses anything that does not match its name, so a program
+renamed to `.pdf` never gets in. Copilot accepts only the document types,
+`.onepart`, and `.txt` as uploads, so the app package carries a script as
+plain text under its own name plus `.txt`, for example `deploy.ps1.txt`, and
+leaves out a `.one` file with a warning. The skill `.zip` keeps every file
+under its real name.
 
 ### What to do with the file
 
@@ -153,12 +163,19 @@ readers reject anything else. Gemini and Claude ignore metadata they do not know
 | `sharepoint-items` | SharePoint items that came from a Microsoft file, as one JSON array; each has `by` (`id` or `url`) plus the keys the builder wrote | |
 | `copilot-web-search` | Copilot capability on or off | `"true"` |
 | `copilot-web-sites` | Sites web search is limited to, one per line, at most four | |
+| `copilot-sharepoint` | Copilot capability on or off. A bundle without this key reads as on when it has SharePoint links or items and off otherwise | `"false"` |
 | `copilot-teams-messages` | Copilot capability on or off | `"true"` |
+| `copilot-teams-links` | Teams chats the source is limited to, one link per line, at most five | |
 | `copilot-email` | Copilot capability on or off | `"false"` |
+| `copilot-mailboxes` | Shared or group mailboxes email is limited to, one address per line, at most 25 | |
+| `copilot-shared-mailbox` | One shared mailbox address that came from a file | |
+| `copilot-email-folders` | Folder ids that came from a file, one per line | |
 | `copilot-meetings` | Copilot capability on or off | `"true"` |
+| `copilot-meeting-items` | Meetings the source is limited to, as one JSON array of `{id, is_series}`, at most five | |
 | `copilot-code-interpreter` | Copilot capability on or off | `"true"` |
 | `copilot-image-generation` | Copilot capability on or off | `"true"` |
 | `copilot-prefer-my-files` | Tell Copilot to answer from the sources, not its own knowledge | `"false"` |
+| `copilot-response-mode` | `Auto`, `Quick response`, or `Think deeper` | `Auto` |
 | `copilot-app-id` | The Teams app id, kept so re-exports update the same app | |
 | `creator-name`, `creator-website`, `creator-privacy`, `creator-terms` | Shown in the Teams manifest | |
 | `copyright` | A free-text copyright line | `Copyright (C) 2026 Example Creator` |
@@ -192,40 +209,53 @@ never requires the key.
 | Starters | `customCopilotConfig.conversationStarters.conversationStarterList[].text` |
 | Welcome message | `customCopilotConfig.conversationStarters.welcomeMessage.text` (omitted when empty) |
 | Icon | `customCopilotConfig.icon` as a `data:image/png;base64,` URI |
-| SharePoint links a person pasted | `gptDefinition.capabilities[OneDriveAndSharePoint].items_by_url[]` as `{url}` |
+| SharePoint and OneDrive switch | `gptDefinition.capabilities[OneDriveAndSharePoint]`, always present and last: both lists empty when the switch is off, no lists when it is on with no limit, the lists when it is on with sources |
+| SharePoint links a person pasted | `capabilities[OneDriveAndSharePoint].items_by_url[]` as `{url}` |
 | SharePoint items from a Microsoft file | `items_by_sharepoint_ids[]` and `items_by_url[]`, every key as the builder wrote it (`url`, `name`, `site_id`, `web_id`, `list_id`, `unique_id`, `type`) |
 | Web search, Teams messages, email, meetings, code interpreter, image generation | `gptDefinition.capabilities[]` named `WebSearch`, `TeamsMessages`, `Email`, `Meetings`, `CodeInterpreter`, `GraphicArt`, listed only when on |
 | Web search sites | `capabilities[WebSearch].sites[].url`, at most four |
+| Teams chats | `capabilities[TeamsMessages].urls[].url`, at most five |
+| Mailboxes and folders | `capabilities[Email].group_mailboxes[]`, `shared_mailbox`, and `folders[].folder_id` |
+| Meetings | `capabilities[Meetings].items_by_id[]` as `{id, is_series}`, at most five |
 | Attached files | Nowhere. The export warns and leaves them out. |
 | Prefer my files | `gptDefinition.behavior_overrides.special_instructions.discourage_model_knowledge` |
+| Response mode | `gptDefinition.behavior_overrides.default_response_mode`, written only when it is not `Auto` |
 | Everything else | `_agentprise` |
 
 The SharePoint builder writes every source with `url`, `name`, `site_id`,
-`web_id`, `list_id`, `unique_id`, and `type`, files under
-`items_by_sharepoint_ids` and sites under `items_by_url`. Agentprise keeps each
-item whole and writes it back the same way, because a file whose site entry had
-only `url` failed to load in a Teams chat. Links a person pastes go out as
-`{url}` alone, since the app has no way to look up the ids; whether Teams accepts
-those is an open test below. A site that limits a source to certain chats,
-folders, mailboxes, or meetings keeps the switch on and loses the list, with a
-notice.
+`web_id`, `list_id`, `unique_id`, and `type` (`File`, `Folder`, or `Site`),
+files under `items_by_sharepoint_ids` and folders and sites under
+`items_by_url`. Agentprise keeps each item whole and writes it back the same
+way, because a file whose site entry had only `url` failed to load in a Teams
+chat. Links a person pastes go out as `{url}` alone, since the app has no way
+to look up the ids; whether Teams accepts those is an open test below. Every
+list that limits a source is carried: Teams chats, mailboxes and folders, and
+meetings go out exactly as the declarative agent schema spells them, and a
+`null` list in a file, which the Copilot app writes for a source it did not
+limit, reads as no limit.
 
 Copilot honors a switch only when its capability is in the list, so a list
 without `WebSearch` means web search is off, and the importer reads it that way
 for any file that lists a switch or carries the `_agentprise` key. The SharePoint
-builder never lists a switch, so a file with no `_agentprise` key and no switch
-was made there. It opens with web search on and the other switches off, which is
-what people expect once the file reaches a Teams chat. Copilot can also limit
-web search to at most four sites with a `sites` list, and Agentprise carries it.
-Files written by earlier versions of Agentprise kept the five switches inside
-`_agentprise` instead of the list, and the importer still reads a switch that is
-on there.
+builder lists only `OneDriveAndSharePoint`, so that entry never counts as a
+switch: a file with no `_agentprise` key and no other capability was made there.
+It opens with web search on and the other switches off, which is what people
+expect once the file reaches a Teams chat. The SharePoint switch itself follows
+the entry: both lists present and empty means off (the builder's shape for an
+agent with no sources), no lists at all means on with no limit, and lists with
+entries mean on with those limits. When the entries are pasted links, the
+switch turns on only for links that pass the host check, so a file whose only
+sources were links on other hosts opens with the switch off and a notice, never
+wide open. Files written by earlier versions of Agentprise kept the five
+switches inside `_agentprise` instead of the list, and the importer still reads
+a switch that is on there.
 
 New assistants start with web search, code interpreter, and image generation on,
-and with Teams messages, email, and meetings off. Those three read the asker's
-own chats, mail, and meetings, and in a group chat Teams shows the asker a
-preview to approve before others see an answer built on them. Microsoft documents
-that rule for Copilot in group chats; see Verified vendor facts.
+and with SharePoint, Teams messages, email, and meetings off. Those four read
+the asker's own files, chats, mail, and meetings, and in a group chat Teams
+shows the asker a preview to approve before others see an answer built on them.
+Microsoft documents that rule for Copilot in group chats; see Verified vendor
+facts.
 
 ### The Teams app package
 
@@ -257,12 +287,15 @@ package carries no extra keys and no license notice.
 | Welcome message | Nowhere. The export warns and leaves it out. |
 | Copyright line and license name | Nowhere. The export warns and leaves them out. |
 | Icon | `color.png` plus a generated `outline.png` |
+| SharePoint and OneDrive switch | `capabilities[OneDriveAndSharePoint]`, second in the list as the Copilot app writes it: omitted when off, bare when on with no limit, with lists when on with sources |
 | SharePoint links and sites | `capabilities[OneDriveAndSharePoint].items_by_url[]` as `{url}` only, which is all the schema allows there |
 | SharePoint files and folders stored by id | `items_by_sharepoint_ids[]` with `site_id`, `web_id`, `list_id`, `unique_id`, and the optional part and hub keys |
 | Web search, Teams messages, email, meetings, code interpreter, image generation | `capabilities[]` named `WebSearch`, `TeamsMessages`, `Email`, `Meetings`, `CodeInterpreter`, `GraphicArt` |
 | Web search sites | `capabilities[WebSearch].sites[].url`, at most four |
-| Attached files | At the ZIP root, exactly as the Copilot app's own export places them, with no entry in either JSON file |
-| Prefer my files | `behavior_overrides.special_instructions.discourage_model_knowledge` |
+| Teams chats, mailboxes and folders, meetings | `capabilities[TeamsMessages].urls[]`, `capabilities[Email].group_mailboxes[]`, `shared_mailbox`, `folders[]`, and `capabilities[Meetings].items_by_id[]`, each present only when the source is limited |
+| Attached files | At the ZIP root, exactly as the Copilot app's own export places them, with no entry in either JSON file. Only the types Copilot accepts go in: documents, `.onepart`, and `.txt`, with other text types renamed `name.ext.txt`; a `.one` file is left out with a warning |
+| Prefer my files | `behavior_overrides.special_instructions.discourage_model_knowledge`, written only when on |
+| Response mode | `behavior_overrides.default_response_mode`, written only when it is not `Auto` |
 | Creator | `manifest.json` `developer` (name at most 32 characters, three https links) |
 | App id | `manifest.json` `id`, a UUID generated once and kept in the agent |
 
@@ -291,9 +324,13 @@ Checked on 2026-10-09 unless a line says otherwise.
 | Claude uploads skills as a ZIP from Settings, then Capabilities, on paid plans with code execution on | [Claude skills documentation](https://claude.com/docs/skills/how-to) |
 | Declarative agent schema 1.8: name up to 100, description up to 1,000, instructions up to 8,000, at most 12 starters, capability names as listed above, `behavior_overrides.special_instructions.discourage_model_knowledge`, unrecognized properties invalidate the document | [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8) |
 | Declarative agent schema 1.8: `WebSearch.sites` holds at most four https URLs with no query and at most two path segments; the items-by-URL object has only `url`; the items-by-IDs object has `site_id`, `web_id`, `list_id`, `unique_id`, `search_associated_sites`, `part_type`, `part_id`; `Email` is a capability; an `EmbeddedKnowledge` object exists but the Copilot app's export does not use it | [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8), checked 2026-10-10 |
-| Agent Builder takes up to four public site URLs, 100 SharePoint files, 50 OneDrive files, and 20 uploaded files of type .doc, .docx, .ppt, .pptx, .xls, .xlsx, .pdf, or .txt | [Add knowledge sources in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge) and [agent details in the admin center](https://learn.microsoft.com/microsoft-365/admin/manage/agent-details), checked 2026-10-10 |
-| The Copilot app's export of an agent with an uploaded file places the file at the ZIP root with no entry in either JSON file; its declarative agent lists `WebSearch` with `sites`, `TeamsMessages` with `urls: null`, `Email`, and a SharePoint file by id with only the four id keys | A test agent exported from the Copilot app on 2026-10-10 |
-| The SharePoint builder writes each source with `url`, `name`, `site_id`, `web_id`, `list_id`, `unique_id`, and `type` (`Site` or `File`), files under `items_by_sharepoint_ids` and sites under `items_by_url`; a `.agent` file whose site entry carried only `url` installed in a Teams chat but answered "this agent is not available" | A test agent exported from SharePoint on 2026-10-10 and a tenant test the same day |
+| Agent Builder takes up to four public site URLs, 100 SharePoint files, one SharePoint list, 50 OneDrive files, five Teams chats and five meetings, and 20 uploaded files; its documentation lists the upload types .doc, .docx, .ppt, .pptx, .xls, .xlsx, .pdf, and .txt; a pasted SharePoint link must include the site path and no query string, and a OneDrive link is a shared link | [Add knowledge sources in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge), checked 2026-10-10 |
+| The Copilot app's upload dialog also accepted `.onepart` (a OneNote page), so the app accepts `.one` and `.onepart` and sends only `.onepart` in the package | A tenant check on 2026-10-10 |
+| Declarative agent schema 1.6 and later: `TeamsMessages.urls` holds at most five Teams links; `Email` takes `shared_mailbox`, `group_mailboxes` (at most 25), and `folders[].folder_id`; `Meetings.items_by_id` holds at most five `{id, is_series}`; schema 1.7 adds `behavior_overrides.default_response_mode` with the values `Auto`, `Quick response`, and `Think deeper` | [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8), checked 2026-10-10 |
+| The Copilot app's export of an agent with an uploaded file places the file at the ZIP root with no entry in either JSON file; its declarative agent lists, in this order, `WebSearch` with `sites`, `OneDriveAndSharePoint` with a file by id, `items_by_url: []`, and `additional_search_terms: null`, `TeamsMessages` with three `urls` (one team link carrying a query string), `Email` with `group_mailboxes` once a shared mailbox was added, `Meetings` with `items_by_id`, `CodeInterpreter`, and `GraphicArt`; it writes `actions: []`, `conversation_starters: []`, and `behavior_overrides: {special_instructions: null, default_response_mode: "Think deeper"}`; an earlier export wrote `urls: null` for an unlimited `TeamsMessages` | Test agents exported from the Copilot app on 2026-10-10 |
+| The Teams client host is `teams.microsoft.com` in the commercial cloud, `gov.teams.microsoft.us` in GCC High, `dod.teams.microsoft.us` in DoD, and `teams.microsoftonline.cn` for 21Vianet; the app accepts Teams links on those hosts | [Plan for sovereign clouds](https://learn.microsoft.com/microsoftteams/platform/concepts/sovereign-cloud), checked 2026-10-10 |
+| A OneNote section file starts with the file type GUID `{7B5C52E4-D88C-4DA7-AEB1-5378D02996D3}` and holds the file format GUID `{109ADD3F-911B-49F5-A5D0-1791EDC8AED8}` at byte 48 | [MS-ONESTORE header](https://learn.microsoft.com/openspecs/office_file_formats/ms-onestore/), checked 2026-10-10 |
+| The SharePoint builder writes each source with `url`, `name`, `site_id`, `web_id`, `list_id`, `unique_id`, and `type` (`Site`, `Folder`, or `File`), files under `items_by_sharepoint_ids` and folders and sites under `items_by_url`; a `.agent` file whose site entry carried only `url` installed in a Teams chat but answered "this agent is not available" | Test agents exported from SharePoint on 2026-10-10 and a tenant test the same day |
 | The app package needs `manifest.json`, a 192 by 192 `color.png`, and a 32 by 32 transparent `outline.png` | [App package for Microsoft 365](https://learn.microsoft.com/office/dev/add-ins/overview/app-package-for-microsoft-365) |
 | `developer.name` is at most 32 characters; `websiteUrl`, `privacyUrl`, and `termsOfUseUrl` are required | [Manifest developer object](https://learn.microsoft.com/microsoft-365/extensibility/schema/root-developer) |
 | The Copilot app's own export uses manifest 1.28 and the four `validDomains` Agentprise copies | A Caveman package exported from the Copilot app on 2026-10-09 |
@@ -304,13 +341,18 @@ Checked on 2026-10-09 unless a line says otherwise.
 
 ### Tests run in this repository
 
-- `npm test` on 2026-10-10: 92 tests pass, including a round trip of a sample
-  agent through bundle, `.agent`, bundle, Teams package, and bundle, and a check
-  that every bundle listed in `library/catalog.json` opens and matches its
-  catalog line.
+- `npm test` on 2026-10-11: 105 tests pass, including a round trip of a sample
+  agent through bundle, `.agent`, bundle, Teams package, and bundle, a synthetic
+  copy of the Copilot app's 2026-10-10 export shape, and a check that every
+  bundle listed in `library/catalog.json` opens and matches its catalog line.
 - The real Caveman `.agent` and Teams package exports both import. The `.agent`
   import returns every field, and the Teams import returns every field except the
   welcome message and starters (that export had none).
+- The real Copilot app export of 2026-10-10 (a SharePoint file by id, three
+  Teams chats, a group mailbox, a meeting, Think deeper, and a `.txt` upload)
+  imports with no loss and writes back the same Copilot settings. The real
+  SharePoint builder export with a file, a folder, and a site imports with the
+  switch on and all three items.
 
 ### Tests that still need a real account
 
@@ -334,6 +376,17 @@ These are open. Record the date and result here when someone runs them.
   the schema's `EmbeddedKnowledge` entry.
 - Upload a package that carries a script, such as `deploy.ps1.txt`, to the
   Copilot app and check whether the agent lists it and can quote from it.
+- Export an agent from the Copilot app with "My SharePoint files, folders, and
+  sites" on and no specific items, to learn how the app spells an unlimited
+  `OneDriveAndSharePoint` entry. Agentprise writes a bare entry and reads both
+  lists empty as off.
+- Attach a real `.onepart` file. The app checks it against the OneNote section
+  header; if a real one is refused, the check needs the real header.
+- Load a `.agent` file written by Agentprise that limits Teams messages to
+  chats, email to a group mailbox, or meetings to ids, or that sets a response
+  mode, in a Teams chat, and confirm each limit is honored.
+- Load a `.agent` file with a bare `OneDriveAndSharePoint` entry (switch on, no
+  limit) in a Teams chat and confirm it reads every file the person can see.
 
 ### Conclusion
 

@@ -8,7 +8,7 @@ This file is part of Agentprise
 skills/project-preferences/SKILL.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Project-specific preferences for Agentprise: the single-file build, the
          bundle format, the download cards, and how to test.
 Notes: See README file for documentation and full license information.
@@ -93,13 +93,26 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
 - The Teams package loses the welcome message and the copyright line, and keeps
   only the schema's keys for each SharePoint item. The `.agent` file loses
   attached files. Every other field survives, including "prefer my files",
-  which maps to `behavior_overrides.special_instructions.discourage_model_knowledge`.
+  which maps to `behavior_overrides.special_instructions.discourage_model_knowledge`,
+  and the response mode, which maps to `behavior_overrides.default_response_mode`
+  and is written only when it is not `Auto`.
 - Attached files are accepted by content, never by name alone. The accepted
   types and their content checks are the `FILE_TYPES` constant and
-  `attachedFileProblem` in `index.html`. Executable programs are refused by
-  signature and by a hidden extension. Script and data text files are allowed;
-  the Teams package writes them as `name.ext.txt` because Copilot accepts only
-  document types, and the bundle keeps the real name under `references/`.
+  `attachedFileProblem` in `index.html`; OneNote files (`.one`, `.onepart`)
+  are checked against the MS-ONESTORE header GUIDs. Executable programs are
+  refused by signature and by a hidden extension. Script and data text files
+  are allowed; the Teams package writes them as `name.ext.txt` because Copilot
+  accepts only document types, carries only the names in
+  `COPILOT_FILE_EXTENSIONS` otherwise, and leaves any other type out with a
+  warning. The bundle keeps every file under its real name in `references/`.
+- Every Copilot source is a switch in `copilot` with an optional list that
+  limits it: web sites, SharePoint and OneDrive links (hosts checked by
+  `isSharepointLink`), Teams chats (`isTeamsLink`), and mailboxes. Meetings,
+  a shared mailbox, and email folders arrive only inside files and are shown
+  read-only. The lists are written only while the switch is on, and the
+  SharePoint switch follows the links and items that survive validation when a
+  file is silent about it. `copilotCapabilities` is the single writer for both
+  Microsoft files and `readCopilotCapabilities` the single reader.
 - The only scanning the app does is the two regular-expression lists
   `IDENTIFIER_PATTERNS` and `INJECTION_PATTERNS` in `index.html`, shown as
   "Review before sharing". They warn, never block, never store or send a

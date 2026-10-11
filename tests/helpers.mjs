@@ -2,7 +2,7 @@
 // tests/helpers.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-10
+// Last Modified: 2026-10-11
 // Summary: Builders for synthetic test data: a valid PNG of any size, a deflated
 //          ZIP archive, document and program byte shapes, and a sample agent
 //          with every field filled.
@@ -148,8 +148,23 @@ export function makeOfficeZip() {
   return makeDeflatedZip([{ name: "[Content_Types].xml", bytes: encoder.encode("<Types/>") }, { name: "word/document.xml", bytes: encoder.encode("<w:document/>") }]);
 }
 
+/**
+ * The 64-byte start of a OneNote section file: the file type GUID
+ * {7B5C52E4-D88C-4DA7-AEB1-5378D02996D3}, two GUIDs the check ignores, then
+ * the file format GUID {109ADD3F-911B-49F5-A5D0-1791EDC8AED8}, each stored
+ * mixed-endian. Spelled out by hand so a wrong constant in the app cannot pass.
+ */
+function oneNoteHeader(formatGuid = [0x3f, 0xdd, 0x9a, 0x10, 0x1b, 0x91, 0xf5, 0x49, 0xa5, 0xd0, 0x17, 0x91, 0xed, 0xc8, 0xae, 0xd8]) {
+  const header = new Uint8Array(64);
+  header.set([0xe4, 0x52, 0x5c, 0x7b, 0x8c, 0xd8, 0xa7, 0x4d, 0xae, 0xb1, 0x53, 0x78, 0xd0, 0x29, 0x96, 0xd3], 0);
+  header.set(formatGuid, 48);
+  return header;
+}
+
 /** The first bytes of the kinds of file the app refuses or accepts by content, each padded to a few bytes. */
 export const BYTE_SHAPES = Object.freeze({
+  onenote: oneNoteHeader(),
+  onenoteWrongFormat: oneNoteHeader(new Array(16).fill(0)),
   windows: new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00]),
   elf: new Uint8Array([0x7f, 0x45, 0x4c, 0x46, 0x02, 0x01]),
   machO32: new Uint8Array([0xfe, 0xed, 0xfa, 0xce, 0x00, 0x00]),
@@ -198,12 +213,19 @@ export function sampleAgent(engine) {
   agent.copilot = {
     webSearch: true,
     webSites: ["https://example.org", "https://example.net/docs/guide"],
-    teamsMessages: false,
+    sharepoint: true,
+    teamsMessages: true,
+    teamsLinks: ["https://teams.microsoft.com/l/channel/19%3Aabc123%40thread.tacv2/General?groupId=11111111-1111-4111-8111-111111111111", "https://teams.microsoft.com/l/chat/19:meeting_example@thread.v2"],
     email: true,
+    mailboxes: ["lab-team@example.org"],
+    sharedMailbox: "front-desk@example.org",
+    emailFolders: ["inbox"],
     meetings: true,
+    meetingItems: [{ id: "AAMkAGExampleMeetingId0123456789==", is_series: true }],
     codeInterpreter: false,
     imageGeneration: true,
     preferMyFiles: true,
+    responseMode: "Think deeper",
     appId: "",
   };
   agent.creator = {

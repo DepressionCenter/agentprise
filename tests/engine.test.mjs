@@ -2,7 +2,7 @@
 // tests/engine.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-10
+// Last Modified: 2026-10-11
 // Summary: Tests for the engine inside index.html: the agent model, validation,
 //          YAML frontmatter, ZIP reading and writing, and PNG header checks.
 // Notes: See README file for documentation and full license information.
@@ -39,9 +39,36 @@ describe("model", () => {
     assert.equal(agent.copilot.preferMyFiles, false);
     assert.equal(agent.copilot.teamsMessages, false);
     assert.equal(agent.copilot.email, false);
+    assert.equal(agent.copilot.sharepoint, false);
+    assert.equal(agent.copilot.meetings, false);
+    assert.equal(agent.copilot.responseMode, "Auto");
     assert.deepEqual(agent.copilot.webSites, []);
+    assert.deepEqual(agent.copilot.teamsLinks, []);
+    assert.deepEqual(agent.copilot.mailboxes, []);
+    assert.deepEqual(agent.copilot.meetingItems, []);
     assert.deepEqual(agent.sharepointItems, []);
     assert.deepEqual(agent.files, []);
+    assert.deepEqual(engine.RESPONSE_MODES, ["Auto", "Quick response", "Think deeper"]);
+  });
+
+  test("link checks accept only the hosts each Copilot source takes", () => {
+    const { links } = engine;
+    assert.equal(links.isSharepoint("https://example.sharepoint.com/sites/team/Shared%20Documents/guide.docx"), true);
+    assert.equal(links.isSharepoint("https://example-my.sharepoint.com/:f:/g/personal/someone/folder?e=abc"), true);
+    assert.equal(links.isSharepoint("https://example.sharepoint.us/sites/gov"), true);
+    assert.equal(links.isSharepoint("https://example.sharepoint-mil.us/sites/dod"), true);
+    assert.equal(links.isSharepoint("https://example.sharepoint.cn/sites/cn"), true);
+    assert.equal(links.isSharepoint("https://sharepoint.com/sites/no-tenant"), false);
+    assert.equal(links.isSharepoint("https://example.sharepoint.com.evil.example/sites/a"), false);
+    assert.equal(links.isSharepoint("https://teams.microsoft.com/l/chat/19:abc@thread.v2"), false);
+    assert.equal(links.isSharepoint("http://example.sharepoint.com/sites/a"), false);
+    assert.equal(links.isTeams("https://teams.microsoft.com/l/team/19:abc@thread.tacv2/General?tenantId=x&groupId=y"), true);
+    assert.equal(links.isTeams("https://gov.teams.microsoft.us/l/channel/19:abc@thread.tacv2/General"), true);
+    assert.equal(links.isTeams("https://teams.microsoft.com/_#/conversations/abc"), false);
+    assert.equal(links.isTeams("https://example.sharepoint.com/l/chat/x"), false);
+    assert.equal(links.isMailbox("lab-team@example.org"), true);
+    assert.equal(links.isMailbox("not an address"), false);
+    assert.equal(links.isMailbox("two@at@example.org"), false);
   });
 
   test("toSkillName follows the Agent Skills rules", () => {
@@ -70,14 +97,40 @@ describe("normalizeAgent", () => {
     assert.ok(notices.some((n) => n.includes("12")));
   });
 
-  test("drops empty starters and non-https links", () => {
+  test("drops empty starters and links that are not SharePoint addresses", () => {
     const { agent, notices } = engine.normalizeAgent({
       starters: ["  ", "keep me", ""],
-      sharepointLinks: ["http://example.com/plain", "https://example.sharepoint.com/sites/a", "not a url", ""],
+      sharepointLinks: ["http://example.com/plain", "https://example.sharepoint.com/sites/a", "not a url", "", "https://teams.microsoft.com/l/chat/19:abc@thread.v2", "https://example.org"],
     });
     assert.deepEqual(agent.starters, ["keep me"]);
     assert.deepEqual(agent.sharepointLinks, ["https://example.sharepoint.com/sites/a"]);
-    assert.ok(notices.some((n) => n.includes("https")));
+    assert.ok(notices.some((n) => n.includes("4 SharePoint link(s) were removed") && n.includes("https")));
+    // The switch follows the links that survive, so refused links never open the agent to every file.
+    assert.equal(agent.copilot.sharepoint, true);
+    assert.equal(engine.normalizeAgent({ sharepointLinks: ["https://example.org"] }).agent.copilot.sharepoint, false);
+    assert.equal(engine.normalizeAgent({ sharepointLinks: ["https://example.org"], copilot: { sharepoint: true } }).agent.copilot.sharepoint, true);
+  });
+
+  test("keeps the Copilot limits of the allowed shape and caps each list", () => {
+    const { agent, notices } = engine.normalizeAgent({ copilot: {
+      teamsLinks: Array.from({ length: 7 }, (_, i) => "https://teams.microsoft.com/l/chat/19:chat" + i + "@thread.v2").concat(["https://example.org/not-teams"]),
+      mailboxes: ["lab-team@example.org", "bad address", "second@example.org"],
+      sharedMailbox: "front-desk@example.org",
+      emailFolders: ["inbox", "", 42],
+      meetingItems: [{ id: "AAMkAGExample0123456789==", is_series: "yes" }, { id: "short" }, { id: 7 }, "x"],
+      responseMode: "Deep thought",
+    } });
+    assert.equal(agent.copilot.teamsLinks.length, 5);
+    assert.ok(notices.some((n) => n.includes("1 Teams link(s) were removed")));
+    assert.ok(notices.some((n) => n.includes("first 5 Teams links")));
+    assert.deepEqual(agent.copilot.mailboxes, ["lab-team@example.org", "second@example.org"]);
+    assert.ok(notices.some((n) => n.includes("1 mailbox(s) were removed")));
+    assert.equal(agent.copilot.sharedMailbox, "front-desk@example.org");
+    assert.equal(engine.normalizeAgent({ copilot: { sharedMailbox: "nope" } }).agent.copilot.sharedMailbox, "");
+    assert.deepEqual(agent.copilot.emailFolders, ["inbox"]);
+    assert.deepEqual(agent.copilot.meetingItems, [{ id: "AAMkAGExample0123456789==", is_series: false }]);
+    assert.equal(agent.copilot.responseMode, "Auto");
+    assert.equal(engine.normalizeAgent({ copilot: { responseMode: "Quick response" } }).agent.copilot.responseMode, "Quick response");
   });
 
   test("rejects non-object input and non-PNG icons", () => {
@@ -170,6 +223,8 @@ describe("normalizeAgent", () => {
       { name: "rows.csv", bytes: encode("a,b\n1,2") },
       { name: "config.json", bytes: encode("{}") },
       { name: "setup.sh", bytes: encode("#!/bin/sh\necho hi") },
+      { name: "notes.one", bytes: BYTE_SHAPES.onenote },
+      { name: "page.onepart", bytes: BYTE_SHAPES.onenote },
     ];
     const { agent, notices } = engine.normalizeAgent({ files: accepted });
     assert.deepEqual(agent.files.map((f) => f.name), accepted.map((f) => f.name));
@@ -190,6 +245,9 @@ describe("normalizeAgent", () => {
       { name: "wide.txt", bytes: BYTE_SHAPES.utf16Text, reason: "it is not plain text" },
       { name: "rows.csv", bytes: BYTE_SHAPES.textWithNul, reason: "it is not plain text" },
       { name: "text.pdf", bytes: encode("hello"), reason: "its contents are not a PDF" },
+      { name: "notes.one", bytes: BYTE_SHAPES.onenoteWrongFormat, reason: "it is not a OneNote file" },
+      { name: "page.onepart", bytes: BYTE_SHAPES.ole, reason: "it is not a OneNote file" },
+      { name: "short.one", bytes: BYTE_SHAPES.onenote.subarray(0, 40), reason: "it is not a OneNote file" },
       { name: "setup.exe.pdf", bytes: BYTE_SHAPES.pdf, reason: "its name hides a program type" },
       { name: "tool.dll.txt", bytes: encode("plain"), reason: "its name hides a program type" },
       { name: "installer.dmg", bytes: encode("plain"), reason: "its type is not one this app accepts" },
@@ -205,6 +263,8 @@ describe("normalizeAgent", () => {
 
   test("tells Copilot names from script names and restores a script name from the package form", () => {
     assert.equal(engine.files.isCopilotName("notes.txt"), true);
+    assert.equal(engine.files.isCopilotName("page.onepart"), true);
+    assert.equal(engine.files.isCopilotName("notes.one"), false);
     assert.equal(engine.files.isCopilotName("deploy.ps1"), false);
     assert.equal(engine.files.originalTextName("deploy.ps1.txt"), "deploy.ps1");
     assert.equal(engine.files.originalTextName("notes.txt.txt"), "notes.txt.txt");
@@ -242,8 +302,15 @@ describe("validateAgent", () => {
     assert.ok(warnings.some((w) => w.field === "sharepointLinks"));
     assert.ok(!warnings.some((w) => w.field === "creator"));
     assert.equal(warnings.filter((w) => w.field === "files").length, 1);
+    assert.ok(warnings.some((w) => w.field === "teamsLinks"));
+    assert.ok(warnings.some((w) => w.field === "mailboxes"));
     agent.files.push({ name: "deploy.ps1", bytes: encode("Write-Host 1") });
     assert.ok(engine.validateAgent(agent).warnings.some((w) => w.message.includes(".txt files with the same name")));
+    agent.files = [{ name: "notes.one", bytes: BYTE_SHAPES.onenote }];
+    const fileWarnings = engine.validateAgent(agent).warnings.filter((w) => w.field === "files").map((w) => w.message);
+    assert.equal(fileWarnings.length, 2);
+    assert.ok(fileWarnings.some((m) => m.includes("notes.one") && m.includes("can't carry")));
+    assert.ok(!fileWarnings.some((m) => m.includes(".txt files with the same name")));
     agent.creator.terms = "";
     assert.ok(engine.validateAgent(agent).warnings.some((w) => w.field === "creator"));
   });

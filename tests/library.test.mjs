@@ -2,7 +2,7 @@
 // tests/library.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-10
+// Last Modified: 2026-10-11
 // Summary: Tests for the agent library: the catalog and each bundle it lists,
 //          opened with the same importer the app uses for dropped files.
 // Notes: See README file for documentation and full license information.
@@ -87,6 +87,7 @@ describe("library catalog", () => {
       }
       const words = [agent.name, agent.description, agent.welcome, agent.instructions, ...agent.starters].join("\n");
       assert.ok(!/onedrive/i.test(words), entry.file + " must not mention OneDrive");
+      assert.equal(agent.copilot.sharepoint, false, entry.file + " must not read SharePoint by default");
       assert.equal(agent.copilot.teamsMessages, false, entry.file + " must not read Teams messages by default");
       assert.equal(agent.copilot.email, false, entry.file + " must not read email by default");
       assert.equal(agent.copilot.meetings, false, entry.file + " must not read meetings by default");
