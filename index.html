@@ -935,15 +935,15 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             <h2 id="about-heading" class="visually-hidden">About your assistant</h2>
                             <div class="prompt-group">
                                 <label for="s-name" class="prompt">What should it be called?</label>
-                                <input type="text" id="s-name" class="blank" maxlength="100" placeholder="Lab Helper" autocomplete="off">
+                                <input type="text" id="s-name" class="blank" maxlength="100" placeholder="Team Helper" autocomplete="off">
                             </div>
                             <div class="prompt-group">
                                 <label for="s-description" class="prompt">What does it do?</label>
-                                <input type="text" id="s-description" class="blank blank-wide" maxlength="1000" placeholder="Answers questions about lab procedures and safety." autocomplete="off">
+                                <input type="text" id="s-description" class="blank blank-wide" maxlength="1000" placeholder="Answers questions about our team's processes and points to the right forms." autocomplete="off">
                             </div>
                             <div class="prompt-group">
                                 <label for="s-instructions" class="prompt">How should it behave?</label>
-                                <textarea id="s-instructions" class="blank blank-wide" rows="2" maxlength="8000" placeholder="Be friendly and brief. Explain lab steps in order. Point to the safety sheet before any step that uses chemicals."></textarea>
+                                <textarea id="s-instructions" class="blank blank-wide" rows="2" maxlength="8000" placeholder="Be friendly and brief. Explain steps in order. Say when you are not sure, and point to the source you used."></textarea>
                                 <button type="button" class="link-button instructions-template">Help me write this</button>
                             </div>
                             <div class="prompt-group" id="starters-group">
@@ -6691,7 +6691,7 @@ const STATUS_SECONDS = 8;
 // Plain words for each part of an item, by kind.
 const KIND_WORDS = {
     agent: {
-        noun: "assistant", title: "Assistant", heading: "Describe your assistant",
+        noun: "assistant", title: "Assistant", heading: "Describe your assistant", namePlaceholder: "Team Helper",
         hint: "Fill in the lines. The preview updates as you type.",
         description: "What does it do?", instructions: "How should it behave?",
         descriptionPlaceholder: "Answers questions about our team's processes and points to the right forms.",
@@ -6701,7 +6701,7 @@ const KIND_WORDS = {
         remove: "Remove this assistant from the project"
     },
     skill: {
-        noun: "skill", title: "Skill", heading: "Describe your skill",
+        noun: "skill", title: "Skill", heading: "Describe your skill", namePlaceholder: "Meeting Notes",
         hint: "A skill is a set of steps an assistant follows only when a question needs them.",
         description: "What does it do, and when should it be used?", instructions: "What steps should it follow?",
         descriptionPlaceholder: "Turns meeting notes into a summary with decisions and action items. Use when someone shares notes or a transcript.",
@@ -8196,6 +8196,7 @@ function renderKind(item) {
     setText($("editor-hint"), words.hint);
     setText(document.querySelector("label[for='s-description']"), words.description);
     setText(document.querySelector("label[for='s-instructions']"), words.instructions);
+    $("s-name").placeholder = words.namePlaceholder;
     $("s-description").placeholder = words.descriptionPlaceholder;
     $("s-instructions").placeholder = words.instructionsPlaceholder;
     const descriptionLimit = String(isAgent ? LIMITS.description : LIMITS.skillDescription);
@@ -9266,7 +9267,19 @@ function addEntryToProject(entry) {
     if (!ui.project) {
         return;
     }
+    const before = ui.project.items.map(function (item) { return item.id; });
     mergeIntoOpenProject(normalizeProject(entry.project).project, entry.name, []);
+    // With one assistant, the new skills are ticked for it at once.
+    const agents = ui.project.items.filter(function (item) { return item.kind === "agent"; });
+    if (agents.length === 1) {
+        ui.project.items.forEach(function (item) {
+            if (item.kind === "skill" && before.indexOf(item.id) < 0 && agents[0].uses.indexOf(item.skillName) < 0) {
+                agents[0].uses.push(item.skillName);
+            }
+        });
+        renderForm();
+        scheduleSave();
+    }
     showView("project", true);
 }
 
@@ -9309,7 +9322,10 @@ function openLibraryPreview(entry) {
         }
     }
     const add = $("preview-dialog-add");
-    const canAdd = Boolean(ui.project && project && project.items.every(function (item) { return item.kind === "skill"; }));
+    // A skill already in the open project, by id or by name, is not offered again.
+    const canAdd = Boolean(ui.project && project && project.items.every(function (item) {
+        return item.kind === "skill" && !ui.project.items.some(function (other) { return other.id === item.id || other.skillName === item.skillName; });
+    }));
     add.hidden = !canAdd;
     setText(add, canAdd ? "Add to " + (ui.project.name || "my project") : "");
     $("preview-dialog-try").disabled = !project;

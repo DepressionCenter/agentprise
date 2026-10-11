@@ -23,6 +23,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { loadEngine, repoRoot } from "./load-engine.mjs";
 
@@ -98,6 +99,14 @@ describe("library catalog", () => {
       assert.equal(agent.creator.name, entry.author);
       assert.equal(agent.license, entry.license);
       assert.ok(agent.instructions.length > 0);
+      if (entry.kind === "skill") {
+        // A skill entry is one skill; the assistant rules below apply to assistants only.
+        assert.deepEqual(project.items.map((i) => i.kind), ["skill"], entry.file + " must hold one skill");
+        assert.ok(item.description.length <= 1024 && item.compatibility.length <= 500, entry.file + " must keep the Agent Skills limits");
+        assert.deepEqual(engine.project.validateItem(project, item).problems, []);
+        continue;
+      }
+      assert.equal(item.kind, "agent", entry.file + " must lead with an assistant");
       // Every entry carries the same safety limits: no legal or medical advice, and the 988 Lifeline notice for anyone in crisis.
       assert.ok(agent.instructions.includes("Give no legal or medical advice."), entry.file + " must refuse legal and medical advice");
       assert.ok(agent.instructions.includes("Call or text 988 to reach the 988 Lifeline"), entry.file + " must carry the 988 Lifeline notice");
@@ -179,5 +188,68 @@ describe("Caveman entry", () => {
     assert.deepEqual(ms.warnings, []);
     assert.deepEqual(ms.report, []);
     assert.equal(ms.fileName, "Caveman.agent");
+  });
+});
+
+describe("library entries built from sources", () => {
+  test("every built entry matches its source folders and catalog line", () => {
+    const output = execFileSync(process.execPath, [join(repoRoot, "tools", "build-library.mjs"), "--check"], { encoding: "utf8" });
+    assert.match(output, /matches its sources/);
+  });
+
+  test("the PubMed Search skill inside Evidence Scout is byte for byte the one listed on its own", async () => {
+    const folder = async (file) => {
+      const entries = await engine.zip.read(new Uint8Array(readFileSync(join(libraryDir, file))));
+      const files = {};
+      entries.forEach((bytes, name) => {
+        const at = name.indexOf("/skills/pubmed-search/");
+        if (at >= 0) {
+          files[name.slice(at)] = Buffer.from(bytes).toString("base64");
+        }
+      });
+      return files;
+    };
+    const embedded = await folder("evidence-scout.zip");
+    assert.ok(Object.keys(embedded).length >= 8, "Evidence Scout must embed the whole PubMed Search folder");
+    assert.deepEqual(embedded, await folder("pubmed-search.zip"));
+  });
+
+  test("Evidence Scout uses PubMed Search and every Copilot download fits", async () => {
+    const { project, item } = await openEntry(catalog.agents.find((entry) => entry.file === "evidence-scout.zip"));
+    assert.deepEqual(item.uses, ["pubmed-search"]);
+    assert.deepEqual(project.servers.pubmed, { label: "PubMed MCP server", transport: "http", url: "", userSupplied: true, auth: "none", tools: [] });
+    for (const exportId of ["teamsZip", "msAgent", "chatgpt", "claude", "gemini", "skill", "claudePlugin", "portablePlugin"]) {
+      assert.equal(engine.tools.planExport(project, item, exportId).blocked, false, "Evidence Scout must not be blocked in " + exportId);
+    }
+    const text = engine.tools.composeInstructions(project, item, "teamsZip");
+    assert.ok(text.includes("Prepared search strategy (not executed)"));
+    assert.ok(text.endsWith(engine.tools.COMPLETION_RULE));
+  });
+
+  test("PubMed Search follows the Agent Skills rules and carries its sources", async () => {
+    const entries = await engine.zip.read(new Uint8Array(readFileSync(join(libraryDir, "pubmed-search.zip"))));
+    const text = (path) => engine.bytes.toText(entries.get("pubmed-search/skills/pubmed-search/" + path));
+    const front = engine.yaml.parseFrontmatter(text("SKILL.md"));
+    assert.deepEqual(front.warnings, []);
+    assert.equal(front.data.name, "pubmed-search");
+    for (const label of ["Prepared search strategy (not executed)", "Search completed on", "Web discovery", "https://pubmed.ncbi.nlm.nih.gov/?term="]) {
+      assert.ok(text("SKILL.md").includes(label), "SKILL.md must name " + label);
+    }
+    const guide = text("references/pubmed-syntax-guide.md");
+    assert.match(guide, /Checked against NLM documentation on 2026-10-10/);
+    assert.match(guide, /https:\/\/pubmed\.ncbi\.nlm\.nih\.gov\/help\//);
+    const blocks = text("references/mobile-tech-search-blocks.md");
+    assert.match(blocks, /Judy Smith/);
+    assert.match(blocks, /Copied on 2026-10-10/);
+    const cases = text("references/query-test-cases.md");
+    assert.ok((cases.match(/^#{2,3} /gm) || []).length >= 6, "the test-case file must hold at least six cases");
+    assert.match(cases, /smart ring/i);
+    assert.match(cases, /cardiovascular/i);
+    assert.match(cases, /"university of michigan"\[affiliation\]/i);
+    const spec = text("openapi/pubmed-eutils.yaml");
+    for (const operation of ["searchPubMed", "getSummaries", "getAbstracts"]) {
+      assert.match(spec, new RegExp("operationId: " + operation));
+    }
+    assert.match(text("scripts/pubmed.py"), /eutils\.ncbi\.nlm\.nih\.gov/);
   });
 });

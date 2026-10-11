@@ -126,6 +126,31 @@ The app writes backups without compression. That works in the Library, but the
 file is larger, and the Library page downloads every entry to show its
 picture. The entries converted by the migration script below are compressed.
 
+### For maintainers: entries built from source folders
+
+Some entries are kept as plain files, so changes can be reviewed line by line
+instead of inside a `.zip`. They live under `library/sources/`:
+
+- `library/sources/items/<skill-name>/` holds one assistant or skill folder:
+  `SKILL.md`, `agentprise.json`, an `icon.png` for an assistant, and its other
+  files, such as `references/`, `scripts/`, and `openapi/`.
+- `library/sources/entries/<entry>.json` names the `.zip` to build, the item
+  folders it holds, the project fields (id, name, version, publisher,
+  license, dates, and tool servers), and its catalog line.
+
+A skill used by more than one entry has one folder, so every copy is built
+from the same files. PubMed Search, for example, is its own entry and is also
+inside Evidence Scout. After changing a source folder or an entry file, run:
+
+```
+node tools/build-library.mjs
+```
+
+It rebuilds each `.zip` and its catalog line. The build is repeatable: ids and
+dates come from the sources, and the `.zip` entries carry no dates. So
+`node tools/build-library.mjs --check`, which the tests run, fails whenever a
+committed `.zip` or catalog line no longer matches its sources.
+
 ### For maintainers: the version 1 conversion
 
 Before projects existed, a Library entry was a version 1 bundle: one Agent

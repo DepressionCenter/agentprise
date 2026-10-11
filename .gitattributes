@@ -29,3 +29,5 @@ library/*.zip binary
 # text, so line-ending conversion must never touch them.
 tests/schemas/** -text
 tests/fixtures/exports/** -text
+# Library sources are built into ZIPs that the tests compare byte for byte.
+library/sources/** -text

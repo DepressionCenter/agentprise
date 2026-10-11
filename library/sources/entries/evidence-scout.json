@@ -1,0 +1,55 @@
+{
+  "_license": "This file is part of Agentprise. Copyright (C) 2026 The Regents of the University of Michigan. Licensed under the GNU Free Documentation License v1.3 or later: https://www.gnu.org/licenses/fdl-1.3.html. Library entry source; build it with node tools/build-library.mjs.",
+  "file": "evidence-scout.zip",
+  "items": [
+    "evidence-scout",
+    "pubmed-search"
+  ],
+  "project": {
+    "id": "f059b0d5-5da3-4acc-b9e0-dbc459799e9a",
+    "name": "Evidence Scout",
+    "description": "Find and compare research evidence, trace claims to sources, and prepare useful literature briefs for interdisciplinary teams.",
+    "version": "1.1.0",
+    "creator": {
+      "name": "Gabriel Mongefranco",
+      "organization": "",
+      "url": "https://gabriel.mongefranco.com",
+      "privacy": "https://gabriel.mongefranco.com/privacy",
+      "terms": "https://gabriel.mongefranco.com/terms"
+    },
+    "copyright": "Copyright (C) 2026 Gabriel Mongefranco",
+    "license": "GPL-3.0-or-later",
+    "created": "2026-10-11T02:16:27.789Z",
+    "modified": "2026-10-10T12:00:00.000Z",
+    "servers": {
+      "pubmed": {
+        "label": "PubMed MCP server",
+        "transport": "http",
+        "url": "",
+        "userSupplied": true,
+        "auth": "none",
+        "tools": []
+      }
+    }
+  },
+  "catalog": {
+    "name": "Evidence Scout",
+    "summary": "Find and compare research evidence, trace claims to sources, and prepare useful literature briefs for interdisciplinary teams.",
+    "kind": "project",
+    "capabilities": [
+      "pubmed.search",
+      "pubmed.metadata",
+      "pubmed.abstracts",
+      "pubmed.browse"
+    ],
+    "requires": "Optional: a PubMed tool for live search. Without one, it prepares searches you can run in PubMed.",
+    "tags": [
+      "research",
+      "literature",
+      "evidence",
+      "interdisciplinary"
+    ],
+    "author": "Gabriel Mongefranco",
+    "license": "GPL-3.0-or-later"
+  }
+}

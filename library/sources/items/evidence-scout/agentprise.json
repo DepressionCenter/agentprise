@@ -1,0 +1,22 @@
+{
+  "_license": "Copyright (C) 2026 Gabriel Mongefranco. Licensed under GPL-3.0-or-later. Made with Agentprise, free software under the GNU GPL v3.0 or later: https://github.com/DepressionCenter/agentprise",
+  "schemaVersion": 2,
+  "kind": "agent",
+  "id": "6c17f3f0-aaed-44ef-ab39-ed665d93522b",
+  "name": "Evidence Scout",
+  "welcome": "What question is your team trying to answer? Share the topic, relevant population or setting, and whether you need a quick brief or a deeper evidence map.",
+  "starters": [
+    "Build an evidence map on how shift work affects sleep and wellbeing. Include clinical, engineering, and social science perspectives.",
+    "Compare these three papers: where do their findings agree, and what explains the differences?",
+    "Check the citations and claims in this draft. Flag unsupported statements and stronger evidence we should look for.",
+    "Create a journal-club brief from this paper, including methods, limitations, and five discussion questions.",
+    "Turn these abstracts into a screening table using my inclusion and exclusion criteria.",
+    "Find gaps in the literature on digital access and research participation without claiming our idea is novel."
+  ],
+  "uses": [
+    "pubmed-search"
+  ],
+  "capabilities": [],
+  "copyright": "Copyright (C) 2026 Gabriel Mongefranco",
+  "files": []
+}
