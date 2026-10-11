@@ -128,9 +128,9 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
 - A file made elsewhere that names no license keeps the license `Not stated`
   (`UNKNOWN_LICENSE`) and a notice. Never relabel it with the default license.
 - The Microsoft `.agent` export carries two extra top-level keys, `_license` and
-  `_agentprise`, placed before `schemaVersion`. Teams package files carry no extra
+  `_agentprise`, placed before `schemaVersion`. Copilot app package files carry no extra
   keys because their schemas reject them.
-- The Teams package loses the welcome message and the copyright line, and keeps
+- The Copilot app package loses the welcome message and the copyright line, and keeps
   only the schema's keys for each SharePoint item. The `.agent` file loses
   attached files. Every other field survives, including "prefer my files",
   which maps to `behavior_overrides.special_instructions.discourage_model_knowledge`,
@@ -141,7 +141,7 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   `attachedFileProblem` in `index.html`; OneNote files (`.one`, `.onepart`)
   are checked against the MS-ONESTORE header GUIDs. Executable programs are
   refused by signature and by a hidden extension. Script and data text files
-  are allowed; the Teams package writes them as `name.ext.txt` because Copilot
+  are allowed; the Copilot app package writes them as `name.ext.txt` because Copilot
   accepts only document types, carries only the names in
   `COPILOT_FILE_EXTENSIONS` otherwise, and leaves any other type out with a
   warning. The skill download and the backup keep every file under its real
@@ -215,6 +215,26 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   through `textContent`.
 - The exported agent belongs to its creator. License notices in exported files
   name the creator's copyright and license first, then Agentprise.
+
+### Terms
+
+Use one name for each concept in the interface, messages, help, the README, and
+the pages under `docs/`.
+
+- **project**: one thing a person is building, stored in the browser. Not
+  "workspace item" or "bundle".
+- **assistant**: an item that is always on. Not "agent", except in a product's
+  own name, such as the Copilot `.agent` file.
+- **skill**: an item an assistant follows only when a question needs it.
+- **tool**: something an assistant or skill can use to look things up or act,
+  such as the PubMed connector. Not "capability".
+- **picture**: the image shown next to an assistant. Not "icon" or "logo".
+- **example questions**: the questions people might ask first. Not "prompt
+  suggestions", "conversation starters", or "starters".
+- **backup**: the `.agentprise.zip` file with the whole project. Not "complete
+  copy" or "bundle".
+- **Copilot app package** and **Teams Chat file**: the two Microsoft downloads.
+  Not "Teams package" or "SharePoint file".
 
 ### Project skills
 
