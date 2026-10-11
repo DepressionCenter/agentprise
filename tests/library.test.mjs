@@ -81,6 +81,8 @@ describe("library catalog", () => {
     for (const entry of catalog.agents) {
       const { project, item, agent, notices } = await openEntry(entry);
       assert.deepEqual(notices, [], entry.file + " must open without notices");
+      const fileTexts = project.items.flatMap((each) => each.files.map((file) => ({ itemId: each.id, name: file.path, text: engine.scan.fileText({ name: file.path, bytes: file.bytes }) }))).filter((file) => file.text);
+      assert.deepEqual(engine.project.scan(project, fileTexts).map((f) => f.label + ": " + f.patternLabel), [], entry.file + " must not raise sharing warnings");
       if (entry.kind === "agent") {
         assert.equal(project.items.length, 1, entry.file + " must hold exactly one item");
         assert.equal(item.kind, "agent", entry.file + " must hold an agent");

@@ -82,19 +82,22 @@ listed under known gaps.
 - Before a download, the app matches the assistant's text fields and its
   plain-text attachments against two short lists of regular expressions: shapes
   that often mean personal identifiers (Social Security number, phone, email,
-  date, labelled identifiers such as MRN, long digit runs, street address,
-  ZIP+4, IPv4 address, age over 89, card number) and phrases common in prompt
+  dates labelled as a birth, admission, discharge, death, visit, or service
+  date, labelled identifiers such as MRN, street address, ZIP+4, IPv4
+  address, age over 89, card number) and phrases common in prompt
   injection (orders to ignore or reveal instructions, jailbreak phrases, claims
   of override, orders to hide things from the person, invisible characters,
-  image links with a query string, HTML comments). Findings are shown in the
+  image links with a query string). Findings are shown in the
   browser with a masked sample, never stored, never logged, and never sent.
   They warn and never block. Tool text (each tool's label, description,
   fallback, connector names, and route instructions) is checked as well,
   because it goes into the instructions of every export. Evidence: the
   "Tool text goes into every export's instructions" block in `scanProject` in
   `index.html`, read on 2026-10-10. The check is a hint for a person, not a privacy
-  review: it does not detect names and it over-flags ordinary dates and
-  numbers. The first five identifier patterns come from Field Station AI.
+  review: it does not detect names, and it skips bare dates, bare digit runs,
+  and HTML comments, which file headers, citations, and license comments are
+  full of. The SSN, phone, email, and labelled identifier patterns come from
+  Field Station AI.
   Evidence: `tests/scan.test.mjs`, with one example and one near miss per
   pattern and a check that no sample holds two consecutive digits.
 - Exported files carry the creator's own copyright and license first. The

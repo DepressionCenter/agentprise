@@ -133,11 +133,12 @@ You can also bring in skills that already exist:
 - In the Library, choose **View** on a skill, then **Add to** followed by
   the name of your open project.
 
-To take an assistant or a skill out of a project, open it, open
+To take an assistant or a skill out of a project, choose the **X** on its
+button under **In this project**. You can also open it, open
 **More settings**, and choose **Remove this skill from the project** or
-**Remove this assistant from the project**. The app asks first. This button
-appears only when the project holds two or more things, because a project
-always keeps at least one.
+**Remove this assistant from the project**. The app asks first either way.
+The **X** and the button appear only when the project holds two or more
+things, because a project always keeps at least one.
 
 ### Tools
 
@@ -153,8 +154,8 @@ appears under the questions. Each card shows:
 - The tool's name and what it does. "(needed for its main job)" after the
   name means the assistant cannot do what it was made for without it.
 - How each product connects it: Microsoft 365 Copilot, Claude, ChatGPT,
-  Gemini, and coding tools. "Works without the tool and says so" means that
-  product has no way to use it.
+  Gemini, and coding tools. "Not available, so it tells people it can't do
+  this part" means that product has no way to use it.
 - "Comes with the skill" and a skill's name, when the tool belongs to a skill
   the assistant uses. Change or remove those tools in the skill itself.
 - **Remove this tool**, for the item's own tools. The app asks first. After
@@ -378,18 +379,28 @@ for extra files, so its steps show on the Inspect page as
 [Connect the tools in a download](how-to/connect-tools.md) walks through each
 kind of step.
 
-### Review before sharing
+### Check for sensitive data before sharing
 
-Before you download, look at the **Review before sharing** box under
-**Download**. It appears only when the app finds something. The app looks
-through the text and the plain-text files of every assistant and skill in the
-project for shapes that often mean personal information, such as Social
-Security numbers, phone numbers, email addresses, dates, street addresses, and
-long numbers. It also looks for phrases common in prompt injection, such as
-"ignore previous instructions", invisible characters, and hidden HTML
-comments. The text of each tool is checked too, because it goes into the
-instructions of every download. Each line says where the match is and shows a
-masked sample, and clicking it takes you to the field.
+Before you download, look under **Download** for a yellow box that says
+**Possible sensitive data detected. Please review before sharing.** It appears
+only when the app finds something. The app looks through the text and the
+plain-text files of every assistant and skill in the project for things that
+often mean personal information, such as Social Security numbers, phone
+numbers, email addresses, street addresses, and dates labelled as a birth date
+or a hospital stay. It also looks for text that tries to take over an
+assistant, such as "ignore previous instructions" or invisible characters. When
+that is all it finds, the box says **Possible hidden instructions detected**
+instead. The text of each tool is checked too, because it goes into the
+instructions of every download.
+
+Choose **View details** to see the matches. Each line says where the match is
+and shows it with the digits and most letters hidden. Click a line to go to
+that field.
+
+Ordinary dates and long numbers, such as the dates in a file header or a PubMed
+article number, are not flagged. HTML comments are not flagged either, because
+many files start with a license comment. Text inside a comment is still checked
+for the phrases above.
 
 A match is a hint, not proof. A help desk assistant may hold a phone number on
 purpose. The check also misses plenty, including people's names, so it is not a
