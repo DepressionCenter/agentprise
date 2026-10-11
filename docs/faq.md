@@ -128,12 +128,17 @@ the Inspect page for the Copilot app package.
 
 ### Why is a download button turned off?
 
-Either a required question is still empty, or the download is blocked. The
-card lists empty questions as links. A blocked download shows why in the list
-**What changes in this download** on the Inspect page. Common reasons are a web
-search list over Copilot's limit of four sites, or instructions longer than
-Copilot's limit of 8,000 characters. Fix what the list names and the button
-turns back on.
+A required question is still empty, the download is blocked, or the author
+marked the assistant or skill as not for that product. The card lists empty
+questions as links. A blocked download shows why in the list **What changes in
+this download** on the Inspect page. Common reasons are a web search list over
+Copilot's limit of four sites, or instructions longer than Copilot's limit of
+8,000 characters. Fix what the list names and the button turns back on.
+
+When the author marked it as not for a product, a short note under the
+download says so, such as "Marked as not for Claude: Needs the Claude Docs
+plugin." To download it anyway, open **More settings**, then **Products it
+works in**, and check the product.
 
 ### Why does my assistant's description start with "Persona:"?
 

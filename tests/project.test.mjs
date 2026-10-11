@@ -756,6 +756,38 @@ describe("format detection reads entry names, not contents", () => {
   });
 });
 
+describe("products an item is not for", () => {
+  test("only known product keys are kept, once each, in a fixed order, and the reason is capped", () => {
+    const { project, notices } = engine.project.normalize({
+      items: [{ kind: "skill", name: "Marked", notFor: ["gemini", "copilot", "gemini", "kimi", 7, "*", "__proto__"], notForReason: "x".repeat(300) }],
+    });
+    const item = project.items[0];
+    assert.deepEqual(item.notFor, ["copilot", "gemini"]);
+    assert.equal(item.notForReason.length, 200);
+    assert.ok(notices.some((notice) => notice.includes("longer than 200 characters")));
+  });
+
+  test("a value that is not a list, or no value, means every product", () => {
+    for (const notFor of [undefined, "copilot", { copilot: true }, null]) {
+      const { project, notices } = engine.project.normalize({ items: [{ kind: "agent", name: "A", description: "d", instructions: "i", notFor }] });
+      assert.deepEqual(project.items[0].notFor, []);
+      assert.equal(project.items[0].notForReason, "");
+      assert.deepEqual(notices, []);
+    }
+  });
+
+  test("the backup keeps the setting for every item", async () => {
+    const project = richProject();
+    project.items[0].notFor = ["chatgpt"];
+    project.items[0].notForReason = "Needs Copilot sources";
+    project.items[1].notFor = ["copilot", "cli"];
+    const record = engine.project.record(project);
+    const back = await reopen(await engine.exports.backup(project));
+    assert.deepEqual(engine.project.record(back.project).items, record.items);
+    assert.deepEqual(back.project.items[1].notFor, ["copilot", "cli"]);
+  });
+});
+
 describe("project helpers", () => {
   test("agentView, usedSkills, findItem, validateItem, slug, and uniqueSkillName", () => {
     const project = richProject();

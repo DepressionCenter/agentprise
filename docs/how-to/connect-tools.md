@@ -114,6 +114,7 @@ are the reasons a download can be blocked, and the fix for each.
 | A tool lists more than 4 web search sites | Copilot can limit web search to 4 sites at most. | Use a different download, remove the tool with **Remove this tool**, or ask the tool's author for a version with fewer sites. |
 | Your sites and the tools' sites together are more than 4 | Agentprise adds the tools' sites to your own list under Web search, and the total would be more than 4. | Open **More settings**, then **Microsoft Copilot settings**, and remove some of your own web sites. |
 | The instructions are too long | Copilot allows 8,000 characters of instructions, and the instructions plus tool notes are longer. | Shorten the instructions by the number of characters the report gives. |
+| The author marked this assistant or skill as not for the product | Someone checked that it won't work there, for example because it needs a plugin only Claude has. | If you know it works there, open **More settings**, then **Products it works in**, and check the product. |
 | A source list would be dropped | The download would let the assistant use a whole source, such as all of SharePoint, instead of the places you listed. | Report the problem on GitHub. Agentprise blocks this so access is never widened without you knowing. |
 
 ### Steps for each kind of setup

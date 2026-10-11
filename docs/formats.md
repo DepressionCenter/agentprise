@@ -78,6 +78,11 @@ servers the product can reach, a `README.md`, a `LICENSE.txt`, and a
 plugin again. The Plugin download brings back the whole project, and the
 Claude plugin brings back its assistants, skills, and tool servers.
 
+**Products it works in**, the setting that turns off the downloads for a
+product, is kept by the backup, the skill `.zip`, and the plugins. The plain
+skill has no place for it, so a plain skill opened again works in every
+product.
+
 Settings that only Microsoft 365 Copilot understands, such as what Copilot may
 use, the lists that limit each source, the response mode, and attached files,
 travel in every download that has room for them but are ignored by the other
@@ -169,6 +174,10 @@ reasons:
   allows.
 - The download would drop a list that limits a Copilot source, which would let
   the assistant use the whole source.
+- The author marked the assistant or skill as not for this product under
+  **More settings**, then **Products it works in**. A whole-project plugin is
+  blocked this way only when every item in the project is marked; otherwise it
+  leaves the marked items out.
 
 ### What to do with the file
 
@@ -393,6 +402,8 @@ writes.
 | `copilot` | Assistants only: the Copilot settings, described in the next table |
 | `appId`, `license` | Skills only: the Teams app id, and the skill's own license when it differs from the project's |
 | `capabilities` | The item's tool declarations (see "Tools" below), empty when it has none |
+| `notFor` | Only when set: the products the author marked the item as not for, from `copilot`, `claude`, `chatgpt`, `gemini`, and `cli` (coding tools) |
+| `notForReason` | Only when set: the author's reason, up to 200 characters |
 | `copyright` | The project's free-text copyright line |
 | `creator` | The project's publisher details, shown in the Teams manifest: `name`, `url`, `privacy`, and `terms` |
 | `files` | The path and type of each of the item's own files |
@@ -755,7 +766,10 @@ which would let Copilot load skills as folders instead of inlined text, but on
 Both plugins put each item in `skills/<skill-name>/` as an item folder whose
 `SKILL.md` holds the composed text for the plugin's product, with
 `agentprise.json` (`composed: true` and `servers`). The folders keep the
-item's files, as in the skill ZIPs.
+item's files, as in the skill ZIPs. An item whose author marked it as not for
+the plugin's product (Claude for the Claude plugin, ChatGPT for the Plugin) is
+left out, with a "left out" line in the report, and `README.md` lists only the
+items inside.
 
 The Claude plugin (`<name>.claude-plugin.zip`):
 

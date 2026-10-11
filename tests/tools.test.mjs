@@ -796,6 +796,100 @@ describe("fixed engine gaps", () => {
 
 // ### Page size ###
 
+// ### Products an item is not for ###
+
+describe("products an author marks an item as not for", () => {
+  /** The golden project with notFor set on the assistant, the skill, or both. */
+  function marked({ agent = [], skill = [], reason = "" } = {}) {
+    const raw = goldenRaw();
+    raw.items.find((item) => item.kind === "agent").notFor = agent;
+    const rawSkill = raw.items.find((item) => item.kind === "skill");
+    rawSkill.notFor = skill;
+    rawSkill.notForReason = reason;
+    return build(raw);
+  }
+  const agentOf = (project) => project.items.find((item) => item.kind === "agent");
+  const skillOf = (project) => project.items.find((item) => item.kind === "skill");
+
+  test("an item marked as not for a product is blocked for every download for that product, and the downloads refuse", async () => {
+    const project = marked({ agent: ["copilot"] });
+    const agent = agentOf(project);
+    for (const exportId of ["teamsZip", "msAgent"]) {
+      const report = conversionReport(project, agent, exportId);
+      assert.equal(report.length, 1, exportId);
+      assert.equal(report[0].status, "blocked");
+      assert.ok(report[0].note.startsWith("The author marked this assistant as not for Microsoft 365 Copilot."), report[0].note);
+      assert.ok(report[0].note.includes("Products it works in"));
+      assert.equal(planExport(project, agent, exportId).blocked, true);
+    }
+    await assert.rejects(engine.exports.teamsPackage(project, agent, teamsIcons()), /can't be made yet/);
+    assert.throws(() => engine.exports.msAgent(project, agent), /can't be made yet/);
+    // Other products are not affected.
+    assert.equal(conversionReport(project, agent, "claude").some((entry) => entry.status === "blocked"), false);
+  });
+
+  test("the reason is part of the note, with one period at the end", () => {
+    const project = marked({ skill: ["claude"], reason: "Needs the Claude Docs plugin." });
+    const entry = conversionReport(project, skillOf(project), "claude")[0];
+    assert.ok(entry.note.startsWith("The author marked this skill as not for Claude: Needs the Claude Docs plugin. To download it anyway"), entry.note);
+    const coding = marked({ skill: ["cli"] });
+    assert.ok(conversionReport(coding, skillOf(coding), "skill")[0].note.startsWith("The author marked this skill as not for coding tools."));
+  });
+
+  test("an assistant leaves out a used skill marked as not for the product, with its tools", () => {
+    const project = marked({ skill: ["copilot"] });
+    const agent = agentOf(project);
+    const report = conversionReport(project, agent, "teamsZip");
+    const entry = report.find((item) => item.component === "Skill Record Finder");
+    assert.equal(entry.status, "unsupported");
+    assert.equal(entry.note, "Left out with its tools, because its author marked it as not for Microsoft 365 Copilot.");
+    assert.equal(report.some((item) => item.status === "blocked"), false);
+    const text = composeInstructions(project, agent, "teamsZip");
+    assert.equal(text.includes("## Skill: Record Finder"), false);
+    assert.equal(text.includes(TOOLS_SECTION), false);
+    // A skill download for another product still points at the skill.
+    assert.ok(conversionReport(project, agent, "claude").some((item) => item.component === "Skill Record Finder" && item.status === "requires-setup"));
+  });
+
+  test("a whole-project plugin leaves out an item marked as not for its product and lists only the others", async () => {
+    const project = marked({ skill: ["claude"], reason: "Needs the Claude Docs plugin" });
+    const plugin = await engine.exports.claudePlugin(project);
+    assert.equal(plugin.entries.some((entry) => entry.name.includes("/skills/record-finder/")), false);
+    assert.ok(plugin.entries.some((entry) => entry.name.includes("/skills/golden-scout/SKILL.md")));
+    const lines = plugin.report.filter((entry) => entry.component === "Record Finder");
+    assert.deepEqual(lines, [{ component: "Record Finder", status: "unsupported", note: "Left out, because its author marked it as not for Claude: Needs the Claude Docs plugin." }]);
+    const readme = entryText(plugin, "/README.md");
+    const inside = readme.slice(readme.indexOf("## What is inside"), readme.indexOf("## How to install"));
+    assert.ok(inside.includes("- Golden Scout"));
+    assert.equal(inside.includes("- Record Finder"), false);
+    // The Plugin for ChatGPT and other tools still holds both.
+    const portable = await engine.exports.portablePlugin(project);
+    assert.ok(portable.entries.some((entry) => entry.name.includes("/skills/record-finder/SKILL.md")));
+  });
+
+  test("a plugin is blocked when every item is marked as not for its product", async () => {
+    const project = marked({ agent: ["chatgpt"], skill: ["chatgpt"] });
+    await assert.rejects(engine.exports.portablePlugin(project), /there is nothing to put in the plugin/);
+    await engine.exports.claudePlugin(project);
+  });
+
+  test("the setting is written to agentprise.json only when set, and opens again from a skill ZIP", async () => {
+    const project = marked({ skill: ["gemini", "copilot"], reason: "Needs a coding tool" });
+    const written = await engine.exports.skillZip(project, skillOf(project), "claude");
+    const sidecar = JSON.parse(entryText(written, "/agentprise.json"));
+    assert.deepEqual(sidecar.notFor, ["copilot", "gemini"]);
+    assert.equal(sidecar.notForReason, "Needs a coding tool");
+    const back = await engine.imports.any(written.fileName, written.bytes);
+    const item = back.project.items[0];
+    assert.deepEqual(item.notFor, ["copilot", "gemini"]);
+    assert.equal(item.notForReason, "Needs a coding tool");
+    const plain = golden();
+    const unmarked = JSON.parse(entryText(await engine.exports.skillZip(plain, skillOf(plain), "claude"), "/agentprise.json"));
+    assert.equal("notFor" in unmarked, false);
+    assert.equal("notForReason" in unmarked, false);
+  });
+});
+
 describe("page size", () => {
   test("index.html stays under 750 KB (750,000 bytes)", () => {
     // Measured as served: the repository stores LF, but a Windows checkout may

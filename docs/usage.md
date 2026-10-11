@@ -203,6 +203,15 @@ skill.
 - **What it needs to work** (skills only). One or two sentences about the
   tools, products, or access the skill needs, such as "Live search needs the
   PubMed connector." It can be up to 500 characters.
+- **Products it works in.** Every product starts checked. Uncheck a product
+  where the assistant or skill won't work, such as one that needs a plugin
+  only Claude has. Its downloads for that product turn off, and each one shows
+  a short note under its name, such as "Marked as not for Microsoft 365
+  Copilot." The Inspect page says the same and how to turn it back on. A
+  whole-project plugin for that product leaves the item out and says so in its
+  report. In an assistant that uses the skill, the product's downloads leave
+  the skill out with its tools. Add a **Reason** of up to 200 characters, such
+  as "Needs the Claude Docs plugin.", and it shows in each note.
 - **File attachments.** Add up to 20 files from your computer: Word,
   PowerPoint, Excel, PDF, OneNote, or plain text, including scripts and data
   files. The app checks each file's contents and refuses programs, even ones
@@ -215,7 +224,7 @@ skill.
   assistant may use in Microsoft 365. Each source is a switch, and the box
   under it limits the source to a few places: up to four web sites, up to 20
   SharePoint or OneDrive links, up to five Teams chats or channels, and up to
-  25 shared or group mailboxes. A box is greyed out while its switch is off,
+  25 shared or group mailboxes. A box is grayed out while its switch is off,
   and an empty box means everything the person can see. Sources that came with
   a file you opened, such as SharePoint items, meetings, or a shared mailbox,
   are listed with a Remove button and are included in every Copilot download. You

@@ -116,6 +116,12 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   `creator-` metadata keys (the `META` constant in `index.html`) when the
   sidecar lacks a setting. The tables are in
   [docs/formats.md](../../docs/formats.md).
+- **Products it works in** (More settings) stores `notFor`, a list of the
+  `PRODUCT_LABELS` keys (the provider keys without `*`), and `notForReason` on
+  each item. `planExport` blocks every export whose `EXPORTS` target is in the
+  list, an assistant leaves out a used skill marked for that target, and the
+  two plugins leave marked items out instead of blocking, unless every item is
+  marked. The sidecar writes both keys only when they are set.
 - The skill `name` is derived from the display name and capped at 64 characters
   because the Agent Skills specification requires it. Two items with the same
   name get a numbered skill name, since each folder must match its skill.
