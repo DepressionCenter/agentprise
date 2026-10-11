@@ -27,7 +27,7 @@
   {
     "component": "Record script",
     "status": "requires-setup",
-    "note": "The script travels with the skill. It runs only where python3 can run with network access. On claude.ai, a workspace Owner must allow the address it calls."
+    "note": "The script comes with the skill. It works only where python3 can run and connect to the internet. On claude.ai, a workspace Owner must allow the address it calls."
   },
   {
     "component": "Record web search",

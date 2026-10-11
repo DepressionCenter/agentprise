@@ -26,7 +26,7 @@ To change it or download it for another product, open the backup of this project
 - Record Finder: Record connector: needs setup. Works once the Example Records connector is turned on where you use it. The setup steps say how.
 - Record Finder: Record server: kept. Connected through the Example search server.
 - Record Finder: Record server: kept. Connected through the Pinned tools server.
-- Record Finder: Record server: left out. Left out the Local helper server, because it runs on the computer, and claude.ai can reach only tool servers on the web.
+- Record Finder: Record server: left out. Left out the Local helper server, because it runs on the computer, and claude.ai can connect only to tool servers on the web.
 - Record Finder: Record API: left out. Left out the records API action, because the Claude plugin cannot use it.
-- Record Finder: Record script: needs setup. The script travels with the skill. It runs only where python3 can run with network access. On claude.ai, a workspace Owner must allow the address it calls.
+- Record Finder: Record script: needs setup. The script comes with the skill. It works only where python3 can run and connect to the internet. On claude.ai, a workspace Owner must allow the address it calls.
 - Record Finder: Record web search: needs setup. Works where the product can search the web.

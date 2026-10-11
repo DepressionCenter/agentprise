@@ -92,7 +92,7 @@ wrong.
 If you want an always-on assistant, like your Gem was, choose **Create new**
 on the Workspace page. Copy the skill's name and steps into the new
 assistant's questions. Or keep the skill and give it to an assistant: open the
-assistant, choose **Add from a file**, pick the same `.zip` file, and tick the
+assistant, choose **Add from a file**, pick the same `.zip` file, and check the
 skill under **Skills it can use**.
 
 Files your Gem used come along only if Google could copy them into the skill.

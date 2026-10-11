@@ -26,5 +26,5 @@ SKILL.md holds the instructions. LICENSE.txt holds the license.
 - Record server: needs setup. Works once the Pinned tools server is connected where you use it.
 - Record server: needs setup. Works once the Local helper server is connected where you use it.
 - Record API: needs setup. Works only where an action for this API is connected.
-- Record script: needs setup. The script travels with the skill. It runs only where python3 can run with network access. On claude.ai, a workspace Owner must allow the address it calls.
+- Record script: needs setup. The script comes with the skill. It works only where python3 can run and connect to the internet. On claude.ai, a workspace Owner must allow the address it calls.
 - Record web search: needs setup. Works where the product can search the web.

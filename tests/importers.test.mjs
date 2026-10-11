@@ -37,7 +37,7 @@ const decode = (bytes) => new TextDecoder().decode(bytes);
 const FIXTURES = join(repoRoot, "tests", "fixtures", "imports");
 const NOTE = "Not interpreted by Agentprise.";
 const UNKNOWN_LICENSE_NOTICE = "doesn't say which license it uses";
-const BEHAVIOR_NOTICE = "hook, command, or agent file(s). Agentprise keeps them in the backup but never reads or runs them.";
+const BEHAVIOR_NOTICE = "hook, command, or agent files. Agentprise keeps them in the backup but never reads or runs them.";
 // Leading bytes of Windows, Linux, and macOS programs, which no import may keep.
 const PROGRAM_SIGNATURES = [[0x4d, 0x5a], [0x7f, 0x45, 0x4c, 0x46], [0xfe, 0xed, 0xfa, 0xce], [0xfe, 0xed, 0xfa, 0xcf], [0xca, 0xfe, 0xba, 0xbe]];
 
@@ -165,7 +165,7 @@ describe("01-agent-plugins-folder.zip: an Agent Plugins folder made by another t
     assert.deepEqual(project.pluginExtras.extensions, { "com.example.client": { theme: "dark", pinned: ["note-taker"] } });
     assert.equal(project.pluginExtras.authorEmail, "author@example.org");
     assert.deepEqual(notices, [
-      "The tool server \"local-notes\" had env settings, which this app does not keep, because they can hold secrets. Add them again where you install it.",
+      "The tool server \"local-notes\" had settings that can hold passwords or keys (env), so this app didn't keep them. Add them again where you install it.",
       "The tool server \"local-notes\" runs a program on the computer. Agentprise keeps its command as text and never runs it.",
       "The plugin has 3 " + BEHAVIOR_NOTICE,
     ]);
@@ -219,7 +219,7 @@ describe("02-claude-plugin.zip: a Claude plugin", () => {
     });
     assert.equal(JSON.stringify(project).includes("EXAMPLE_API_KEY"), false);
     assert.deepEqual(notices, [
-      "The tool server \"Clinic Docs\" had headers settings, which this app does not keep, because they can hold secrets. Add them again where you install it.",
+      "The tool server \"Clinic Docs\" had settings that can hold passwords or keys (headers), so this app didn't keep them. Add them again where you install it.",
       "The plugin has 2 " + BEHAVIOR_NOTICE,
     ]);
   });
@@ -341,8 +341,8 @@ describe("06-hostile-paths.zip and 07-hostile-files.zip: hostile archives", () =
       "The tool server \"constructor\" has a name this app can't use, so it was left out.",
       "The skill name \"__proto__\" doesn't follow the Agent Skills rules. It will be saved as \"proto\".",
       "The plugin doesn't say which license it uses. Check with its author before you share it.",
-      "3 file(s) in a skill were left out: references/readme.txt (it is a Windows program), references/tool.exe (it is a program), references/empty.md (it is empty).",
-      "2 program file(s) were left out. Agentprise never keeps or runs programs.",
+      "Left out 3 files from a skill: references/readme.txt (it is a Windows program), references/tool.exe (it is a program), references/empty.md (it is empty).",
+      "Left out 2 program files. Agentprise never keeps or runs programs.",
     ]);
     assert.equal({}.polluted, undefined);
     assert.equal(Object.prototype.polluted, undefined);

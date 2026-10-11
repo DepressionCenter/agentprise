@@ -41,7 +41,7 @@ describe("Microsoft .agent", () => {
     const agent = sampleAgent(engine);
     const { fileName, text, warnings } = engine.formats.msAgent.export(agent);
     assert.equal(fileName, "Caveman.agent");
-    assert.deepEqual(warnings, ["The Teams Chat file can't carry attached files, so they were left out."]);
+    assert.deepEqual(warnings, ["The Teams Chat file can't include attached files, so they were left out."]);
     const doc = JSON.parse(text);
     assert.deepEqual(Object.keys(doc), ["_license", "_agentprise", "schemaVersion", "customCopilotConfig"]);
     assert.equal(doc.schemaVersion, "0.2.0");
@@ -199,7 +199,7 @@ describe("Microsoft .agent", () => {
     const { agent, notices } = engine.formats.msAgent.import(text);
     assert.equal(agent.copilot.sharepoint, false);
     assert.deepEqual(agent.sharepointLinks, []);
-    assert.ok(notices.some((n) => n.includes("2 SharePoint link(s) were removed")));
+    assert.ok(notices.some((n) => n.includes("Removed 2 SharePoint links")));
     // Writing it back never widens the agent to every SharePoint file.
     const entry = JSON.parse(engine.formats.msAgent.export(agent).text).customCopilotConfig.gptDefinition.capabilities.find((c) => c.name === "OneDriveAndSharePoint");
     assert.deepEqual(entry, { name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [], items_by_url: [] });
@@ -708,7 +708,7 @@ describe("Teams app package", () => {
     const { bytes, warnings } = await engine.formats.teamsZip.export(agent, teamsIcons());
     const entries = await engine.zip.read(bytes);
     assert.deepEqual([...entries.keys()].slice(4), ["page.onepart", "deploy.ps1.txt"]);
-    assert.ok(warnings.some((w) => w.includes("notes.one") && w.includes("can't carry")));
+    assert.ok(warnings.some((w) => w.includes("notes.one") && w.includes("can't include")));
     const project = projectOf(agent);
     const skillZip = await engine.zip.read((await engine.exports.skillZip(project, project.items[0], "claude")).bytes);
     assert.ok(skillZip.has("caveman/references/notes.one"));
@@ -748,7 +748,7 @@ describe("copy text and detection", () => {
     const fromProject = engine.exports.copyText(project, project.items[0], "notebook");
     assert.equal(fromProject.markdown, copy.markdown);
     // Copied text cannot carry the attached file, so the installer adds it by hand.
-    assert.deepEqual(fromProject.report, [{ component: "Attached files", status: "requires-setup", note: "Copied text can't carry files. Add them to the notebook yourself." }]);
+    assert.deepEqual(fromProject.report, [{ component: "Attached files", status: "requires-setup", note: "Copied text can't include files. Add them to the notebook yourself." }]);
     const chatgpt = engine.exports.copyText(project, project.items[0], "chatgpt");
     assert.equal(chatgpt.instructions, agent.instructions);
     assert.ok(chatgpt.report[0].note.includes("ChatGPT project"));

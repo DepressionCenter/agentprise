@@ -38,7 +38,7 @@ A project is one thing you are building, kept in your browser under Your
 projects on the Workspace page. Most projects hold one assistant. A project
 can also hold skills: sets of steps an assistant follows only when a question
 needs them, such as how to search PubMed. Choose Add a skill in a project to
-write one, or add one from the Library or a skill file, then tick it under
+write one, or add one from the Library or a skill file, then check it under
 Skills it can use.
 
 ### Which download do I need?
@@ -77,7 +77,7 @@ files, including scripts and data files such as PowerShell, Python, SQL,
 Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the
 start of every file and refuses programs, including ones renamed to look like
 a document. Copilot accepts only document types, `.onepart`, and `.txt`, so a
-script reaches it as a `.txt` file with the same name, and a `.one` file stays
+script is added as a `.txt` file with the same name, and a `.one` file is left
 out of the app package. The skill `.zip` keeps every file under its real name.
 
 ### Where do links go?
@@ -105,8 +105,8 @@ A tool lets an assistant do something on its own, such as search PubMed and
 read the results. Tools come with Library entries and with files you open, and
 the **Tools** list in the editor shows how each product connects them. Some
 tools need a step after you download, such as turning on a connector or
-pasting a server address. Without its tool, the assistant does what it can and
-says that no tool was used. See
+pasting a server address. If a tool isn't connected, the assistant does what
+it can and tells people it couldn't use the tool. See
 [Connect the tools in a download](how-to/connect-tools.md).
 
 ### What does "needs setup" mean?

@@ -13,12 +13,12 @@ This works best with the Example Records connector turned on.
 
 In Claude, open Customize, then Connectors, find Example Records, and connect it. On a Team or Enterprise plan, an Owner may need to add it first under Organization settings, then Connectors.
 
-Without it, the assistant still does the work it can and says that no tool was used.
+Until you connect it, the assistant does what it can and tells people it couldn't use the tool.
 
-## Let the script reach the internet
+## Let the script connect to the internet
 
 The script scripts/lookup.py runs only where python3 can run with network access to api.example.org.
 
 On claude.ai, code execution must be on. A workspace Owner can allow the address under Organization settings, then Capabilities, by choosing package managers and specific domains and adding api.example.org.
 
-If the script can't connect, the assistant falls back and says why.
+If the script can't connect, the assistant tells people why and answers without it.

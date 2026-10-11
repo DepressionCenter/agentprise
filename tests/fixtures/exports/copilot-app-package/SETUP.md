@@ -13,7 +13,7 @@ This works best with the Example Records connector turned on.
 
 In Microsoft 365, ask your admin whether a Example Records connector is available for Copilot.
 
-Without it, the assistant still does the work it can and says that no tool was used.
+Until you connect it, the assistant does what it can and tells people it couldn't use the tool.
 
 ## Register the sign-in for Pinned tools server
 

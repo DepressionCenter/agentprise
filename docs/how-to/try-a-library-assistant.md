@@ -151,7 +151,7 @@ assistant you are working on:
 3. Choose **Add to** followed by the name of your project. This button shows
    only for a skill that is not in the project yet.
 4. Back in the project, choose your assistant in the **In this project** bar,
-   and tick the skill under **Skills it can use**.
+   and check the skill under **Skills it can use**.
 
 An entry marked **Assistant with skills** already has its skills inside.
 When you try Evidence Scout, for example, the **In this project** bar shows

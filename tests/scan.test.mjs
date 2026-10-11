@@ -125,7 +125,7 @@ describe("scanAgent", () => {
       ["identifier", "phone number", "###-###-####"],
       ["injection", "text telling the assistant to ignore its instructions", "Ignxxx xxx xxxxxxxx xxxxxxxxxxxx"],
     ]);
-    assert.deepEqual(byField("starters").map((f) => f.patternLabel), ["Social Security number", "labelled identifier"]);
+    assert.deepEqual(byField("starters").map((f) => f.patternLabel), ["Social Security number", "record number or ID"]);
     assert.equal(byField("starters")[0].label, "Example questions");
   });
 

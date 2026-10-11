@@ -27,5 +27,5 @@ To change it or download it for another product, open the backup of this project
 - Record Finder: Record server: kept. Connected through the Pinned tools server.
 - Record Finder: Record server: kept. Connected through the Local helper server.
 - Record Finder: Record API: left out. Left out the records API action, because the plugin cannot use it.
-- Record Finder: Record script: kept. The script travels with the skill. It runs only where python3 can run with network access.
+- Record Finder: Record script: kept. The script comes with the skill. It works only where python3 can run and connect to the internet.
 - Record Finder: Record web search: needs setup. Works where the product can search the web.

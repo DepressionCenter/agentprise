@@ -27,7 +27,7 @@
   {
     "component": "Record script",
     "status": "requires-setup",
-    "note": "The script travels with the skill. It runs only where python3 can run with network access. Gemini skills can't run scripts that reach the internet."
+    "note": "The script comes with the skill. It works only where python3 can run and connect to the internet. Gemini skills can't run scripts that connect to the internet."
   },
   {
     "component": "Record web search",
