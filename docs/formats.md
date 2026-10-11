@@ -6,7 +6,8 @@ Created: 2026-10-09
 Last Modified: 2026-10-10
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
-         need: field mappings, vendor facts with check dates, and open tests.
+         need: field mappings, tools, conversion reports, vendor facts with
+         check dates, and open tests.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -34,36 +35,48 @@ maintainers", holds the technical details behind each file.
 | The Agents list in the Microsoft 365 Copilot app or in Teams | Copilot / Teams Apps | An app package (`.zip`) |
 | A Teams group chat, channel, or meeting | Teams Chat | One `.agent` file |
 | Gemini | Gemini | A skill (`.zip`) |
-| Claude | Claude | The same skill (`.zip`) |
-| ChatGPT | ChatGPT, Copy | Text to paste |
+| Claude | Claude | A skill (`.zip`) |
+| A ChatGPT project | ChatGPT, Copy | Project instructions to paste |
 | Gemini Notebook | Gemini Notebook | A `.md` file to add as a source |
 | Another tool that reads Agent Skills | SKILL.md | A plain skill (`.skill.zip`) with nothing specific to this app |
+| Claude (claude.ai, Cowork, or Claude Code), with every assistant, skill, and tool in the project | Claude plugin | One plugin (`.claude-plugin.zip`) |
+| ChatGPT, Codex, GitHub Copilot, Cursor, or another tool that reads Agent Plugins, with every assistant, skill, and tool in the project | Plugin | One plugin (`.plugin.zip`) |
 | Nowhere yet, or you want to edit it later | Download Backup | The whole project as one `.agentprise.zip` |
 
-Every download in the table except the backup is for one assistant or skill:
-the one named at the top of the Download card. The backup is the complete copy
-of the whole project, with every assistant, skill, and file in it. Drop it on
-the Workspace page any time to change the project or download it for another
-product. The backup is meant for Agentprise, so use the Gemini or Claude
-button when you want to upload to those products. The plain skill drops the
-welcome message, the starters, the picture, and the Copilot settings, so it is
-not a backup either.
+The first seven downloads are for one assistant or skill: the one named at the
+top of the Download card. The two plugins sit under **For the whole project**,
+because each one holds every assistant and skill in the project, with the
+tools they use. The backup is the complete copy of the whole project, with
+every assistant, skill, and file in it. Drop it on the Workspace page any time
+to change the project or download it for another product.
+
+The backup is meant for Agentprise, so use a skill or plugin download when you
+want to upload to a product. The plain skill drops the welcome message, the
+starters, the picture, and the Copilot settings, so it is not a backup either.
 
 ### What each download keeps
 
 The backup keeps everything in the project. The skill `.zip` for Gemini and
 Claude keeps everything about one assistant or skill, so Agentprise can open
 it again. It leaves out only what belongs to the whole project: the other
-assistants and skills, your organization, and the version number. The
-`.agent` file keeps everything about one assistant except attached files,
-which it has no place for. The app package cannot carry two things, and the
-app tells you so before you download it:
+assistants and skills, your organization, and the version number. The Gemini
+skill also leaves out Word, Excel, PowerPoint, and OneNote files, because
+Gemini skills do not accept them. The `.agent` file keeps everything about one
+assistant except attached files, which it has no place for. The app package
+cannot carry two things, and the app tells you so before you download it:
 
 - The welcome message. Copilot has no place for it in an app package.
 - Your copyright line and license name. The package's files reject extra fields.
 
-The ChatGPT text carries the name, description, instructions, and example questions,
-which is everything ChatGPT and Gemini Notebook can take.
+The ChatGPT download is one box of project instructions to paste. Gemini
+Notebook gets the name, description, instructions, and example questions,
+which is everything it can take.
+
+The two plugins keep each assistant and skill as a skill folder, the tool
+servers the product can reach, a `README.md`, a `LICENSE.txt`, and a
+`SETUP.md` when something needs setting up. Agentprise can open either
+plugin again. The Plugin download brings back the whole project, and the
+Claude plugin brings back its assistants, skills, and tool servers.
 
 Settings that only Microsoft 365 Copilot understands, such as what Copilot may
 use, the lists that limit each source, the response mode, and attached files,
@@ -87,35 +100,120 @@ plain text under its own name plus `.txt`, for example `deploy.ps1.txt`, and
 leaves out a `.one` file with a warning. The skill `.zip` and the backup keep
 every file under its real name.
 
-A skill can be downloaded for Copilot, Teams Chat, ChatGPT, and Gemini
-Notebook too. Those products have no skills, so the skill's steps become the
-assistant's instructions.
+### Assistants, skills, and products that have only one of them
+
+Some products have skills but no separate place for an assistant, and some
+have the opposite. Agentprise changes the item to fit, and the report says so.
+
+- In the Claude and Gemini skills, the plain skill, and both plugins, an
+  assistant becomes a skill whose description starts with "Persona:".
+- In the Copilot app package, the Teams Chat file, the ChatGPT project
+  instructions, and the Gemini Notebook file, a skill becomes an always-on
+  assistant, and its steps become the instructions.
+- When an assistant uses skills, those same four downloads add each skill's
+  steps to the assistant's instructions under a heading such as
+  "Skill: Meeting notes". When the steps do not fit in Copilot's limit of
+  8,000 characters, the app package carries them as an attached file instead.
+  The Teams Chat file cannot carry files, so a skill that does not fit is left
+  out there, with its tools.
+- A skill ZIP holds only one item. When an assistant uses skills, download each
+  skill too, or use a plugin, which holds them all.
+
+### How tools travel in each download
+
+Some assistants and skills use tools, such as a search of PubMed. A tool can
+reach a product in five ways: a connector the product offers, a tool server on
+the web or on the computer, an action built from a web service description, a
+script inside the skill, or web search limited to a few sites. Each tool lists
+the ways it works in each product, in order. The **Tools** list in the editor
+shows them.
+
+This table shows what each download does with each kind of tool. "Written in"
+means the download sets the tool up. "Named only" means the instructions
+mention the tool, and you connect it in the product yourself.
+
+| Kind of tool | Copilot app package | Teams Chat | ChatGPT project instructions, Gemini Notebook | Claude, Gemini, and plain skills | Claude plugin | Plugin |
+|---|---|---|---|---|---|---|
+| Connector | Named only | Named only | Named only | Named only | Named only | Named only |
+| Tool server | Written in as an action, for servers on the web | Left out | Named only | Named only | Written in, for servers on the web | Written in, for servers on the web or the computer |
+| Action from a web service description | Written in as an action | Left out | Named only | Named only | Left out | Left out |
+| Script in the skill | Left out | Left out | Left out | Travels with the skill | Travels with the skill | Travels with the skill |
+| Web search on a few sites | Written in as Copilot web search | Written in as Copilot web search | Named only | Named only | Named only | Named only |
+
+Gemini skills cannot run a script that reaches the internet, so a script that
+does travels in the Gemini skill but works only elsewhere. Every download
+also writes a section into the instructions called **Tools available in this
+setup**. It lists each tool, the ways to reach it, what to do when none works,
+and a rule: "Only report a search, lookup, or retrieval as completed when a
+tool returned results in this conversation." When that section does not fit in
+Copilot's limit, each tool gets one line, and the app package carries the full
+notes as an attached file called `tool-notes.md.txt`. The Teams Chat file
+cannot carry files, so it keeps only the one-line notes.
+
+To finish connecting the tools after you download, see
+[Connect the tools in a download](how-to/connect-tools.md).
+
+### The report for each download
+
+Every download has a report on the Inspect page, in the list called
+**What changes in this download**. Each line gets one of five labels: kept,
+changed, needs setup, left out, or blocked. The skill ZIPs and the plugins
+repeat the report in `README.md`, under **What changed in this export**.
+
+A blocked download cannot be made, and its button stays off. These are the
+reasons:
+
+- A tool limits Copilot web search to more than four sites.
+- The tools' sites and your own web search sites together are more than four.
+- The instructions, with skill steps and tool notes, are longer than Copilot
+  allows.
+- The download would drop a list that limits a Copilot source, which would let
+  the assistant use the whole source.
 
 ### What to do with the file
 
 **Copilot / Teams Apps.** In the Microsoft 365 Copilot app or in Teams, choose
 Agents, then Upload (or Create, then Upload), and pick the `.zip` file. Choose
 Share to give it to other people. Your admin may need to allow custom agents. To
-update it later, upload the new file in place of the old one.
+update it later, upload the new file in place of the old one. When the package
+includes actions, the setup steps on the Inspect page say what your admin must
+allow.
 
 **Teams Chat.** Upload the `.agent` file to a SharePoint document library. Open
 the file's menu, choose Copy link for Teams, paste the link in a Teams chat, and
 choose Add to this chat. People in the chat need a Copilot license and permission
 to any files you linked.
 
-**Skill (.zip).** In Gemini, open Settings, then Skills, then Upload. In
-Claude, open Settings, then Capabilities, then Skills, then Upload. Pick the
-`.zip` file. Gemini skills may need a paid Google AI plan, and Claude skills need
-a paid Claude plan.
+**Skill (.zip).** In Gemini, open Settings, then Skills, then Upload, and pick
+the `.zip` file. Gemini skills work with personal Google accounts for now, not
+work or school accounts. In Claude, open Customize, then Skills, choose the
+plus button, then Create skill, then Upload a skill, and pick the `.zip` file.
+Then turn the skill on. Claude skills need a paid plan with code execution on.
 
-**Copy.** In ChatGPT, open Explore GPTs, then Create, then the Configure tab,
-and paste each box into the matching field. In Gemini Notebook, open the
-notebook, then More, then Notebook settings, and paste the instructions, or add
-the `.md` file as a source.
+**ChatGPT.** Open a project in ChatGPT, or create one in the sidebar. Open the
+project's menu, then Project settings, and paste the box into Instructions.
+Add any files the assistant uses to the project yourself. For skills and
+tools in ChatGPT, use the Plugin download instead.
+
+**Gemini Notebook.** Open the notebook, then More, then Notebook settings, and
+paste the instructions, or add the `.md` file as a source.
+
+**Claude plugin.** In claude.ai or the Claude desktop app, open Customize,
+then Plugins. Choose Add, then Upload plugin, and pick the `.zip` file. Then
+open the plugin's Connectors tab to connect any tool servers. Plugins need
+Skills turned on for your organization.
+
+**Plugin.** In ChatGPT, a workspace owner, or someone allowed to upload
+plugins, opens the Admin console, then Plugins, chooses Add, then Upload
+plugin, and picks the `.zip` file. In Codex, GitHub Copilot, Cursor, and
+similar tools, unzip the file and add the folder as a plugin, following the
+tool's own steps.
 
 **Backup (.agentprise.zip).** Keep it somewhere safe, because browsers can
 clear what they store. Drop it on the Workspace page to open the project
 again.
+
+If a download holds a `SETUP.md` file, follow its steps too.
 
 ### Opening a file you already have
 
@@ -134,6 +232,11 @@ a project. Each file opens as a new project. When the same project is already
 in your workspace, the app asks whether to keep both or replace yours. To add a
 file's skills to the project you have open instead, choose Add from a file in
 the project.
+
+When you open a skill `.zip` or a plugin that Agentprise made, the app takes
+out the **Tools available in this setup** section and the "Persona:" start of
+the description, because it writes those again for each download. The plain
+skill has no record of what was added, so it opens with that text in place.
 
 Plugins sometimes carry hooks, commands, agents folders, or other files
 Agentprise does not understand. The app keeps them with the project and writes
@@ -155,24 +258,27 @@ a real account. Read it before changing any converter in `index.html`.
 | Agentprise project backup (Agent Plugins 1.0 folder) | `.agentprise.zip` | Yes | Yes | Yes, for the whole project | Keeping a project to edit later |
 | Skill (Agent Skill folder with a sidecar) | `.zip` | Yes | Yes | Yes for one item, without the project's organization and version | Gemini and Claude |
 | Plain skill | `.skill.zip` | Yes | Yes | Standard Agent Skills fields only | Any tool that reads Agent Skills |
-| Agent Plugins folder, Claude plugin, or Codex plugin made elsewhere | `.zip` | Yes | Only as the backup | Skills and servers; everything else is kept as unrecognized files | Bringing a plugin into a project |
+| Claude plugin | `.claude-plugin.zip` | Yes, as skills and servers | Yes | No: instructions are composed for Claude, and local servers are left out | claude.ai, Cowork, and Claude Code |
+| Plugin (Agent Plugins 1.0 folder with the project record) | `.plugin.zip` | Yes, as a project | Yes | No: instructions are composed for ChatGPT | ChatGPT, Codex, GitHub Copilot, Cursor |
+| Agent Plugins folder, Claude plugin, or Codex plugin made elsewhere | `.zip` | Yes | As the backup or either plugin | Skills and servers; everything else is kept as unrecognized files | Bringing a plugin into a project |
 | Microsoft `.agent` | `.agent` | Yes | Yes | All but attached files | SharePoint libraries and Teams chats |
 | Teams app package | `.zip` | Yes | Yes | No (see below) | The Microsoft 365 Copilot app |
-| Copy-ready text | none, or `.md` | No | Copy buttons and a `.md` download | Not applicable | ChatGPT custom GPTs and Gemini Notebook |
+| Copy-ready text | none, or `.md` | No | Copy buttons and a `.md` download | Not applicable | ChatGPT projects and Gemini Notebook |
 
-The Gemini upload and the Claude upload are the same bytes, so the Gemini row
-and the Claude row produce the same skill `.zip`. Gemini and Claude have
-separate tabs on the Inspect page because their skill support may diverge. The
-backup is a different file: it holds the whole project, while every other
-download holds one item. In the app, the Teams app package is labeled
-"Copilot / Teams Apps" and the `.agent` file is labeled "Teams Chat".
+The Gemini skill and the Claude skill share one folder layout, but each is
+composed for its own product, so their instructions and reports can differ.
+The Gemini skill also leaves out Office and OneNote files. The backup holds
+the whole project, and so do the two plugins. Every other download holds one
+item. In the app, the Teams app package is labeled "Copilot / Teams Apps" and
+the `.agent` file is labeled "Teams Chat".
 
-Every download except the backup is named after the item, such as
-`Caveman.zip`, `Caveman.skill.zip`, `Caveman.agent`, and `Caveman.md`. The app
-package adds "Copilot app" to its name, as in `Caveman Copilot app.zip`, so the
-`.zip` downloads never overwrite each other. Inside the skill `.zip`, the
-folder keeps the skill name. The backup is named after the project in skill
-name form, such as `caveman.agentprise.zip`.
+Every one-item download is named after the item, such as `Caveman.zip`,
+`Caveman.skill.zip`, `Caveman.agent`, and `Caveman.md`. The app package adds
+"Copilot app" to its name, as in `Caveman Copilot app.zip`, so the `.zip`
+downloads never overwrite each other. Inside the skill `.zip`, the folder keeps
+the skill name. The whole-project files are named after the project in skill
+name form: `caveman.agentprise.zip`, `caveman.claude-plugin.zip`, and
+`caveman.plugin.zip`.
 
 ### The project backup
 
@@ -208,8 +314,10 @@ Other tools' `extensions` entries are kept.
 `mcp.json` names the Agent Plugins MCP schema and lists each server under
 `mcpServers`: a remote server as `type` `streamable-http` (or `sse`) with its
 `url`, and a local server as `type` `stdio` with its `command` and `args`. A
-server whose address the installer must supply is written with a placeholder
-address. The app writes these files and never runs or contacts the servers.
+server whose address the installer must supply is written with the placeholder
+address `https://example.com/replace-with-your-mcp-server-address`, which the
+importer reads back as empty. The app writes these files and never runs or
+contacts the servers.
 
 A plugin made elsewhere keeps its own root `LICENSE.txt` and `README.md`; the
 app writes its own only where the author had none. The project `id` is a UUID
@@ -227,7 +335,8 @@ caveman/
   agentprise.json  The item fields the standard has no place for.
   icon.png         The full-color icon of an assistant, when one was set.
   LICENSE.txt      The full GPL v3 text for the default license, or a short notice.
-  README.md        Skill .zip and plain skill only: name, description, creator, and how to use the file.
+  README.md        Skill .zip and plain skill only: name, description, creator, how to use the file, and the conversion report.
+  SETUP.md         Skill .zip and plain skill only, when a tool needs setup.
   references/      Attached files, when there are any, under their real names.
 ```
 
@@ -238,6 +347,11 @@ not a program is kept as an unrecognized file, which only the backup writes
 back. The plain skill
 (`.skill.zip`) is the same folder without `agentprise.json` or `icon.png`, and
 its `SKILL.md` carries only the standard fields.
+
+In the backup, `SKILL.md` holds the item's own text. In every other download
+it holds the composed instructions for that product (see "Composed
+instructions" below), and the description of an assistant written as a skill
+starts with `Persona: `.
 
 `SKILL.md` keeps the fields the Agent Skills standard defines (`name`,
 `description`, `license`, and for a skill `compatibility` and `allowed-tools`)
@@ -287,9 +401,11 @@ app writes.
 | `name` | The name people see, with capitals and spaces |
 | `welcome`, `starters`, `uses` | Assistants only: the welcome message, the conversation starters, and the skill names of the skills it can use |
 | `appId`, `license` | Skills only: the Teams app id, and the skill's own license when it differs from the project's |
-| `capabilities` | Tool declarations, empty for items made in the app |
+| `capabilities` | The item's tool declarations (see "Tools" below), empty when it has none |
 | `copyright` | The project's free-text copyright line |
 | `files` | The path and type of each of the item's own files |
+| `composed` | `true` in every export that writes this file except the backup, so a reader knows `SKILL.md` holds composed text and takes the tools section and the `Persona: ` prefix back out |
+| `servers` | Exports only: the project servers this item's tools name, so a folder copied out alone keeps them |
 
 The skill `name` is derived from the display name: lowercase letters, digits, and
 single hyphens, at most 64 characters, never starting or ending with a hyphen.
@@ -304,34 +420,151 @@ fields, so such a file opens as a plain skill. The maintainer script
 `tools/migrate-library.mjs` converted the Library from version 1 to version 2
 once (see [Add your assistant to the Library](how-to/add-to-library.md)).
 
-### Opening files made elsewhere
+### Tools: capabilities, providers, and servers
 
-Every file is untrusted input. The importers read structure and text only, and
-everything passes through the same project normalizer before it reaches the
-form.
+An item declares tools as capabilities. The app has no form for writing a new
+one; capabilities arrive with Library entries and imported files and pass
+through `normalizeCapability` and `normalizeProvider`. The editor shows them
+as **Tools** cards and lets a person remove the item's own tools, and the
+**Tool connections** section under More settings lists the project servers.
 
-- A root `plugin.json` with the Agentprise extension is a backup. Without the
-  extension it is an Agent Plugins folder made elsewhere. One wrapping folder
-  around the plugin is allowed.
-- `.claude-plugin/plugin.json` is a Claude plugin and
-  `.codex-plugin/plugin.json` is the Codex layout. Both read servers from
-  `.mcp.json` or from `mcpServers` in the manifest, and both may name another
-  skills folder in the manifest's `skills` path.
-- A ZIP with one or more `SKILL.md` files and no plugin manifest is read as
-  skills. Each folder with a `SKILL.md` becomes an item, and files outside
-  every skill folder are kept as unrecognized.
-- A plugin's `displayName` or `name`, `description`, `version`, `author`, and
-  `license` fill in the project. Its `homepage`, `repository`, `keywords`, and
-  `extensions` are kept, so the backup writes them back.
-- MCP servers become project servers. Their `headers`, `env`, and `cwd`
-  settings are dropped with a notice, because they can hold secrets. A local
-  server's command is stored as text and never run.
-- `hooks/`, `commands/`, `agents/`, and every other file the app does not
-  understand are kept as unrecognized files, written back only into the
-  backup, and never read or run. Programs are refused everywhere.
-- A plugin or skill with no license field and no license file opens with the
-  license `Not stated` and a notice. A license file alone gives
-  `See LICENSE.txt`. The app never replaces either with its default license.
+| Capability field | Holds |
+|---|---|
+| `id` | A stable id such as `pubmed.search`, owned by the declaring entry |
+| `label`, `description` | What people see in the Tools card and what the instructions say the tool does |
+| `required` | `true` when the item cannot do its main job without the tool; the report then says so wherever no route works |
+| `fallback` | What to do when no route works; the default is "No tool for this is connected in this setup. Say so plainly and offer what you can do without it." |
+| `providers` | A map from target to an ordered list of routes. Targets are `copilot`, `claude`, `chatgpt`, `gemini`, `cli`, and `*` for any other |
+
+Each route is a provider of one kind from a closed list (`PROVIDER_KINDS`).
+Every kind except `none` may carry `instructions`, which are added to the
+composed instructions under that route.
+
+| Kind | Fields | Meaning |
+|---|---|---|
+| `connector` | `name` | A connector the product offers, such as PubMed in Claude |
+| `mcp` | `server`, `tools` | A project server by name, optionally limited to some of its tools |
+| `openapi` | `spec`, `operations`, `auth` | An OpenAPI description among the item's files and the operation ids to use |
+| `script` | `path`, `runtime` | A script among the item's files |
+| `websearch` | `sites` | Web search limited to https sites with no query and at most two path segments |
+| `none` | | No route on this target |
+
+Each export reads one target's routes. The Copilot app package and the Teams
+Chat file read `copilot`, the Claude skill and the Claude plugin read
+`claude`, the ChatGPT text and the Plugin download read `chatgpt`, the Gemini
+skill and Gemini Notebook read `gemini`, and the plain skill reads `cli`. A
+target with no list falls back to `*`.
+
+A project server (`servers` in the project record) has `label`, `transport`
+(`http`, `sse`, or `stdio`), `userSupplied`, `auth` (`none`, `oauth`, or
+`apikey`), and `tools`. A web server has a `url`; a local one has a `command`
+(a program name or a relative path, never one with `..`) and `args`. `cleanServerUrl` keeps an
+address only when it is https with no user name, password, or fragment, and
+no query parameter named like a key, token, secret, password, or signature.
+The editor's **Address of the** box uses the same check.
+
+`PROVIDER_SUPPORT` decides what each export does with each kind: `tool` writes
+it into the download, `text` names it in the instructions for the installer to
+connect, and `omit` leaves it out with a report entry.
+
+| Kind | `teamsZip` | `msAgent` | `chatgpt`, `notebook` | `claude`, `gemini`, `skill` | `claudePlugin` | `portablePlugin` |
+|---|---|---|---|---|---|---|
+| `connector` | text | text | text | text | text | text |
+| `mcp` | tool (web servers, no API key) | omit | text | text | tool (web servers) | tool |
+| `openapi` | tool | omit | text | text | omit | omit |
+| `script` | omit | omit | omit | tool | tool | tool |
+| `websearch` | tool | tool | text | text | text | text |
+
+### Composed instructions
+
+`planExport` builds everything one export of one item writes and reports, and
+both `composeInstructions` and `conversionReport` read it, so the text and the
+report always agree. The composed text is, in order:
+
+1. The item's own instructions or steps.
+2. For an export without skills (`teamsZip`, `msAgent`, `chatgpt`,
+   `notebook`), each used skill under `## Skill: <name>`, with a
+   "Use this when:" line from its description.
+3. A line for each skill that moved to an attached file.
+4. `## Tools available in this setup`, with one `###` section per tool: its
+   description, "Use the first of these that is available in this
+   conversation:", the usable routes as a numbered list with their
+   instructions, and "If none of them is available:" followed by the
+   fallback. A tool with no usable route gets only its fallback. The section
+   ends with "Only report a search, lookup, or retrieval as completed when a
+   tool returned results in this conversation."
+
+Tool labels are put on one line, and a `#` at the start of any line of tool
+text is escaped, so tool text cannot add headings of its own. For an export
+without skills, the tools of used skills are listed too.
+
+Copilot's 8,000-character limit applies to the app package and the Teams Chat
+file. The planner fits text in this order:
+
+1. Used skills are inlined while the whole text fits.
+2. A skill that does not fit moves to `references/<skill-name>.md` in the app
+   package, which carries it as `<skill-name>.md.txt`. The Teams Chat file
+   cannot carry files, so the skill is left out with its tools and the plan is
+   made again without it.
+3. In the app package, a skill item whose own steps exceed the limit moves
+   its steps to an attached file, and the instructions point at it.
+4. If the text is still too long, each tool shrinks to one line, and the app
+   package carries the full tool section as `tool-notes.md.txt`. The Teams
+   Chat file gets the one-line notes only.
+5. If the text is still too long, the export is blocked.
+
+The other exports have no limit. In the app package, the files of used skills
+travel as attached files, and a file a tool names, such as an OpenAPI
+description, travels as that tool's own file instead of as knowledge.
+
+### Conversion report
+
+Each report entry has a `component`, a `status` from `REPORT_STATUSES`, and a
+plain note. The interface and the READMEs show the statuses as plain words.
+
+| Status | Shown as | Used for |
+|---|---|---|
+| `preserved` | kept | A route written into the download, or web search that already covers the whole web |
+| `transformed` | changed | An assistant written as a skill, a skill written as an assistant, skill steps inlined or attached, shortened tool notes, web search sites added, publisher placeholders, renamed Copilot files |
+| `requires-setup` | needs setup | Connectors, servers named only in text, placeholder server addresses, Copilot sign-in ids, scripts on Claude and Gemini, a used skill that travels in its own download, files the copied text cannot carry |
+| `unsupported` | left out | Routes the export cannot use, a required tool with no usable route, the welcome message and license in the app package, file types a product refuses, files over Copilot's count, actions over 10 |
+| `blocked` | blocked | See below |
+
+An export is blocked, and `assertNotBlocked` refuses to write it, when:
+
+- a Copilot `websearch` route lists more than four sites;
+- the sites the tools need, merged with the assistant's own web search list,
+  are more than four;
+- the composed instructions are still over the limit after every step above;
+- `widenedSources` finds that the Copilot writer would drop a list that limits
+  web search sites, Teams chats, mailboxes, or SharePoint sources while the
+  switch is on.
+
+The download button is disabled while its report has a blocked entry, and the
+Inspect page shows a "Blocked" file in place of the output. The plugin
+reports combine every item's report, each line prefixed with the item name.
+`README.md` in skill ZIPs and plugins repeats the report under
+`## What changed in this export`.
+
+### Setup guide
+
+`writeSetupGuide` writes `SETUP.md` from the setup steps the plans collected,
+one section per distinct step, worded for the export's product. Skill ZIPs and
+plugins carry it as a file. The app package has no place for it, so the
+Inspect page shows it as "Setup steps (not in the package)". Sections:
+
+- **Turn on the connector**, with Claude, Copilot, and generic wording.
+- **Add the address of your server**, naming the file to edit (`.mcp.json`,
+  `mcp.json`, or `plugin-<namespace>.json inside the app package`) and the
+  placeholder to replace.
+- **Connect the server**, for servers named only in text.
+- **Register the sign-in**, for Copilot actions whose auth is not `none`: an
+  admin registers it, for example in the Teams Developer Portal, and the
+  installer replaces `replace-with-your-auth-registration-id`.
+- **Let the script reach the internet**, naming up to five https hosts found
+  in the script (`hostsInText`), with Claude, Gemini, and coding-agent
+  wording.
+- **Allow custom apps in Microsoft 365**, when the app package has actions.
 
 ### The Microsoft `.agent` file
 
@@ -349,6 +582,11 @@ top-level key was loaded and used in a Teams chat in a real tenant on 2026-10-09
 When Agentprise opens a `.agent` file made in SharePoint, the key is absent, so the
 creator fields stay blank and nothing the file ever had is lost. The importer
 never requires the key.
+
+The instructions are the composed text for `msAgent`. A `websearch` route adds
+its sites to `WebSearch.sites` the same way as in the app package (see below).
+Whether a Teams chat honors `WebSearch.sites` in a `.agent` file is open test
+V3.
 
 | Field | Where it lives in the `.agent` file |
 |---|---|
@@ -407,15 +645,21 @@ facts.
 ### The Teams app package
 
 The Microsoft 365 Copilot app exports a ZIP with four files, plus any files that
-were uploaded as knowledge, and that is what Agentprise writes:
+were uploaded as knowledge, and that is what Agentprise writes. When the
+assistant's tools become Copilot actions, the package also holds their plugin
+manifests and API descriptions:
 
 ```
-manifest.json            Teams app manifest, schema 1.28
-declarativeAgent_0.json  Declarative agent, schema v1.8
-color.png                192 by 192 full-color icon
-outline.png              32 by 32 white icon on a transparent background
-guide.pdf                Any attached files, at the root, with no manifest entry
-deploy.ps1.txt           A script or data file, renamed so Copilot accepts it
+manifest.json               Teams app manifest, schema 1.28
+declarativeAgent_0.json     Declarative agent, schema v1.8
+color.png                   192 by 192 full-color icon
+outline.png                 32 by 32 white icon on a transparent background
+guide.pdf                   Any attached files, at the root, with no manifest entry
+deploy.ps1.txt              A script or data file, renamed so Copilot accepts it
+meeting-notes.md.txt        A used skill's steps that did not fit the instructions
+tool-notes.md.txt           The full tool notes, when they were shortened to fit
+plugin-pubmedeutils.json    One Copilot plugin manifest (v2.4) per action
+apis/pubmedeutils/pubmed-eutils.yaml   The OpenAPI description an action uses
 ```
 
 JSON and YAML entries at the root of a package are read as package metadata,
@@ -429,7 +673,8 @@ package carries no extra keys and no license notice.
 
 | Field | Where it lives in the package |
 |---|---|
-| Name, description, instructions | `declarativeAgent_0.json` top level; `manifest.json` `name` and `description` |
+| Name, description | `declarativeAgent_0.json` top level; `manifest.json` `name` and `description` |
+| Instructions | `declarativeAgent_0.json` `instructions`, the composed text for `teamsZip`, at most 8,000 characters |
 | Starters | `conversation_starters[].text`, at most 12 |
 | Welcome message | Nowhere. The export warns and leaves it out. |
 | Copyright line and license name | Nowhere. The export warns and leaves them out. |
@@ -438,8 +683,9 @@ package carries no extra keys and no license notice.
 | SharePoint links and sites | `capabilities[OneDriveAndSharePoint].items_by_url[]` as `{url}` only, which is all the schema allows there |
 | SharePoint files and folders stored by id | `items_by_sharepoint_ids[]` with `site_id`, `web_id`, `list_id`, `unique_id`, and the optional part and hub keys |
 | Web search, Teams messages, email, meetings, code interpreter, image generation | `capabilities[]` named `WebSearch`, `TeamsMessages`, `Email`, `Meetings`, `CodeInterpreter`, `GraphicArt` |
-| Web search sites | `capabilities[WebSearch].sites[].url`, at most four |
+| Web search sites | `capabilities[WebSearch].sites[].url`, at most four, including sites the tools add |
 | Teams chats, mailboxes and folders, meetings | `capabilities[TeamsMessages].urls[]`, `capabilities[Email].group_mailboxes[]`, `shared_mailbox`, `folders[]`, and `capabilities[Meetings].items_by_id[]`, each present only when the source is limited |
+| Actions | `declarativeAgent_0.json` `actions[]` as `{id, file}`, at most 10, written only when there is at least one |
 | Attached files | At the ZIP root, exactly as the Copilot app's own export places them, with no entry in either JSON file. Only the types Copilot accepts go in: documents, `.onepart`, and `.txt`, with other text types renamed `name.ext.txt`; a `.one` file is left out with a warning |
 | Prefer my files | `behavior_overrides.special_instructions.discourage_model_knowledge`, written only when on |
 | Response mode | `behavior_overrides.default_response_mode`, written only when it is not `Auto` |
@@ -453,24 +699,142 @@ of the same app always sorts higher and installs as an update. The manifest
 `name.short` is cut to 30 characters and `description.short` to 80, which the
 Teams schema requires.
 
+#### Copilot actions
+
+`writeCopilotActions` turns the actions `planExport` decided into plugin
+manifest v2.4 files. Each action is one source: one OpenAPI description, or
+one web tool server. Its `namespace` is the server name, or the description's
+file name without its extension, reduced to letters and digits, with a number
+added when two would collide. The file is `plugin-<namespace>.json`, and the
+declarative agent lists it as `{"id": "<namespace>", "file": "plugin-<namespace>.json"}`.
+
+| Plugin manifest field | Value |
+|---|---|
+| `$schema`, `schema_version` | The v2.4 schema URL and `v2.4` |
+| `name_for_human`, `description_for_human` | The server label or tool label, cut to 20 and 100 characters |
+| `description_for_model` | The descriptions of the tools that use the action, joined, at most 2,048 characters |
+| `functions` | OpenAPI: each named operation that the description defines and that matches `^[A-Za-z0-9_-]{1,100}$`. Tool server: the listed tools, or none |
+| `runtimes[0]` OpenAPI | `type` `OpenApi`, `spec.url` `apis/<namespace>/<file>` (the description copied into the package) |
+| `runtimes[0]` tool server | `type` `RemoteMCPServer`, `spec.url` the server address or the placeholder |
+| `run_for_functions` | The function names, or `["*"]` with no functions, which makes Copilot discover the server's tools itself |
+| `auth` | `{"type": "None"}`, or `OAuthPluginVault` or `ApiKeyPluginVault` with `reference_id` `replace-with-your-auth-registration-id` |
+| `privacy_policy_url`, `legal_info_url` | The project's privacy and terms links, when set |
+
+A local (`stdio`) server and a server that needs an API key are left out,
+because Copilot cannot use them. An operation the description does not define
+is left out with its own report entry. An eleventh action is left out.
+
+Tool web search sites merge into the assistant's own Copilot web search
+without widening it (`mergeWebSearchSites`): whole-web search stays whole-web,
+web search that was off turns on for the tools' sites only, and a site list
+grows only up to four, past which the export is blocked.
+
+The package stays on declarative agent v1.8. Version 1.9 adds `agent_skills`,
+which would let Copilot load skills as folders instead of inlined text, but on
+2026-10-10 it was a Frontier preview with no reference page.
+
+### The whole-project plugins
+
+Both plugins put each item in `skills/<skill-name>/` as an item folder whose
+`SKILL.md` holds the composed text for the plugin's product, with
+`agentprise.json` (`composed: true` and `servers`). The folders keep the
+item's files, as in the skill ZIPs.
+
+The Claude plugin (`<name>.claude-plugin.zip`):
+
+```
+caveman/
+  .claude-plugin/plugin.json   name, displayName, version, description, author (name, url), license
+  .mcp.json                    Web tool servers only, as "type": "http" (or "sse"), when a tool uses them
+  skills/caveman/...           One item folder per assistant or skill, composed for Claude
+  README.md                    What is inside, how to install, and the report
+  SETUP.md                     When something needs setup
+  LICENSE.txt
+```
+
+The plugin `name` is the project name in skill name form. Claude refuses
+names that start with `claude-`, `anthropic-`, `anthropics-`, or `cc-plugin-`,
+or that put `official` next to Claude or Anthropic, so `claudePluginName`
+drops `official` there and adds `my-` in front of a reserved start. Local
+servers are left out with a report entry, because claude.ai cannot run them.
+`.mcp.json` has no `$schema` and no headers.
+
+The Plugin (`<name>.plugin.zip`):
+
+```
+caveman/
+  plugin.json        Agent Plugins 1.0.0, with the project record in
+                     extensions["org.depressioncenter.agentprise"]
+  mcp.json           Agent Plugins MCP 1.0.0: streamable-http, sse, and stdio servers
+  skills/caveman/... One item folder per assistant or skill, composed for ChatGPT
+  README.md
+  SETUP.md           When something needs setup
+  LICENSE.txt
+```
+
+Because `plugin.json` carries the Agentprise extension, the Plugin opens
+again as a project. It writes no `.codex-plugin/plugin.json`: ChatGPT, Codex,
+and VS Code read the root `plugin.json` (see the vendor facts below).
+
 ### Copy-ready text
 
-ChatGPT custom GPTs have no import file, and Gemini Notebook has no skill upload.
-For both, Agentprise shows the name, description, instructions, and starters in
-boxes with Copy buttons, plus a `.md` download that can be added to a notebook as
-a source.
+ChatGPT has no file to import, and Gemini Notebook has no skill upload. For
+ChatGPT, Agentprise shows one box, **Project instructions**, with the composed
+text for `chatgpt`, to paste into a ChatGPT project. For Gemini Notebook, it
+shows the name, description, instructions, and starters in boxes with Copy
+buttons, plus a `.md` download that can be added to a notebook as a source.
+Copied text cannot carry files, so the report marks attached files as needing
+setup.
+
+Custom GPTs retire on 2026-12-11 and have no export file, so Agentprise no
+longer writes for them and has no importer for them. To move a GPT, copy its
+fields into Create new.
 
 ### Verified vendor facts
 
-Checked on 2026-10-09 unless a line says otherwise.
+Checked on 2026-10-09 unless a line says otherwise. Facts checked on
+2026-10-10 come from vendor documentation and downloaded schemas, not from a
+real account, unless the line names a tenant test.
+
+#### Agent Skills and Agent Plugins
 
 | Fact | Source |
 |---|---|
-| An Agent Skill is a folder with `SKILL.md`; `name` is 1 to 64 lowercase characters and hyphens, must match the folder name; `description` is up to 1,024 characters; `metadata` is a string-to-string map; unknown top-level fields are not allowed | [Agent Skills specification](https://agentskills.io/specification) |
-| Gemini uploads a skill from Settings, then Skills, then Upload, as a `SKILL.md` or a ZIP with `SKILL.md` in the root folder; Gems migrate to Skills starting 2026-11-17 for personal accounts | [Gemini productivity overview](https://gemini.google/overview/productivity/) and Google's help pages for Gemini Skills |
-| Claude uploads skills as a ZIP from Settings, then Capabilities, on paid plans with code execution on | [Claude skills documentation](https://claude.com/docs/skills/how-to) |
-| Declarative agent schema 1.8: name up to 100, description up to 1,000, instructions up to 8,000, at most 12 starters, capability names as listed above, `behavior_overrides.special_instructions.discourage_model_knowledge`, unrecognized properties invalidate the document | [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8) |
+| An Agent Skill is a folder with `SKILL.md`; `name` is 1 to 64 characters of `a-z`, `0-9`, and single hyphens, with no hyphen at either end, and must match the folder name; `description` is up to 1,024 characters; `compatibility` is up to 500; `metadata` is a string-to-string map; unknown top-level fields are not allowed | [Agent Skills specification](https://agentskills.io/specification), checked again 2026-10-10 |
+| Agent Plugins 1.0.0 is the published release; 1.1.0 is a working draft that differs only in version strings | [Agent Plugins specification](https://agent-plugins.org/specification), checked 2026-10-10 |
+| Agent Plugins 1.0.0 `plugin.json` is closed: `$schema` (exactly `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`) and `name` are required; the only other keys are `version`, `description`, `author` (only `name`, `email`, `url`), `homepage`, `repository` (a string), `license`, `keywords`, and `extensions` (objects keyed by reverse-domain namespace); `name` matches `^(?!.*(?:--\|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$`, at most 64 characters | Pinned `tests/schemas/agent-plugins/plugin.schema.json`, downloaded 2026-10-10 |
+| Agent Plugins skills live only in `skills/<name>/SKILL.md` and servers only in `mcp.json`; `plugin.json` cannot name other paths; clients must not fetch the schema at load time | [Agent Plugins specification](https://agent-plugins.org/specification), checked 2026-10-10 |
+| Agent Plugins 1.0.0 `mcp.json` requires `$schema` (the 1.0.0 MCP schema, same version as `plugin.json`) and `mcpServers`; each server is exactly one of `stdio` (`command`, `args`, `env`, `cwd`), `streamable-http` (`url`, `headers`), or `sse`; non-loopback URLs must be https with no user information or fragment; credentials must not go in `headers` or `env` | Pinned `tests/schemas/agent-plugins/mcp.schema.json` and the specification, 2026-10-10 |
+| VS Code and GitHub Copilot CLI read a root `plugin.json` with the Agent Plugins `$schema` as Agent Plugins; without it, the same file is read as the older Copilot format | VS Code agent plugins documentation (approved 2026-10-07) and the [GitHub Copilot CLI plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference), checked 2026-10-10 |
+
+#### Claude
+
+| Fact | Source |
+|---|---|
+| Claude uploads a skill ZIP from Customize, then Skills, then the plus button, Create skill, and Upload a skill; the ZIP holds the skill folder, named like the skill, at its top level; the skill is then turned on and stays private until shared. The 2026-10-09 check of the same docs recorded Settings, then Capabilities, which is now out of date | [Use skills in Claude](https://support.claude.com/en/articles/12512180-use-skills-in-claude) and [Claude skills documentation](https://claude.com/docs/skills/how-to), checked 2026-10-10 |
+| Claude skills need code execution and file creation on; the docs and a support article name different settings pages for that switch | [Claude skills overview](https://claude.com/docs/skills/overview), checked 2026-10-10 |
+| Claude's docs allow a skill description of 1,024 characters, and one support article says 200 | [Claude skills documentation](https://claude.com/docs/skills/how-to) and [Use custom skills](https://support.claude.com/en/articles/12512198), checked 2026-10-10 |
+| A Claude plugin has `.claude-plugin/plugin.json` with `name` required and `displayName`, `version`, `description`, `author` (`name` required), `homepage`, `repository`, `license`, and `keywords` optional; every other file sits at the plugin root; unknown top-level keys are removed with a warning | [Claude Code plugin manifest reference](https://code.claude.com/docs/en/plugins/manifest-reference), checked 2026-10-10 |
+| Claude refuses plugin names that start with `claude-`, `anthropic-`, `anthropics-`, or `cc-plugin-`, names that are exactly `claude`, `anthropic`, `anthropics`, `claude-code`, or `claude-mods`, and names that put `official` next to Claude or Anthropic | [Claude Code plugin manifest reference](https://code.claude.com/docs/en/plugins/manifest-reference), checked 2026-10-10 |
+| A plugin's `.mcp.json` lists servers under `mcpServers`, with a web server as `"type": "http"` and a `url`; secrets must not go in the file | [Build a plugin](https://claude.com/docs/plugins/build), checked 2026-10-10 |
+| In claude.ai chat, plugin skills load, commands load as skills, agents and hooks are ignored, web servers with a fixed URL are listed on the plugin's Connectors tab and work once connected, and local servers are ignored; a plugin with a top-level `bin/` folder cannot be installed | [Plugin platform support](https://claude.com/docs/plugins/platform-support), checked 2026-10-10 |
+| A plugin is uploaded from Customize, then Plugins, Add, Upload plugin, as a `.zip` with one `.claude-plugin/plugin.json` at its root or inside one top-level folder; limits are 5,000 files and 200 MB; adding a plugin does not connect its connectors | [Claude plugins overview](https://claude.com/docs/plugins/overview), checked 2026-10-10 |
+| On Team and Enterprise plans, turning off Skills under Organization settings, Plugins & skills, Policy turns plugins off for the whole organization | [Plugin administration](https://claude.com/docs/plugins/admin), checked 2026-10-10 |
+| Team and Enterprise network egress for code execution can be off, package managers only, package managers plus specific domains, or all domains; the default domain list holds package registries and does not include `eutils.ncbi.nlm.nih.gov` | [Create and edit files with Claude](https://support.claude.com/en/articles/12111783), checked 2026-10-10 |
+
+#### Microsoft 365 Copilot
+
+| Fact | Source |
+|---|---|
+| Declarative agent schema 1.8 is the latest version with a reference page: name up to 100, description up to 1,000, instructions up to 8,000, at most 12 starters, capability names as listed above, `behavior_overrides.special_instructions.discourage_model_knowledge`, unrecognized properties invalidate the document | [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8) and pinned `tests/schemas/copilot/declarative-agent-v1.8.schema.json`, checked 2026-10-10 |
+| Declarative agent schema 1.8: `actions` holds 1 to 10 objects with only `id` and `file`, where `file` is the path to a plugin manifest | Pinned `tests/schemas/copilot/declarative-agent-v1.8.schema.json`, 2026-10-10 |
+| Declarative agent schema 1.9 exists and adds `agent_skills` (at most 8 `{folder}` entries), but its reference page returned 404 and custom skills are a Frontier preview | [Add custom skills](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-skills) and the v1.9 schema URL, checked 2026-10-10 |
 | Declarative agent schema 1.8: `WebSearch.sites` holds at most four https URLs with no query and at most two path segments; the items-by-URL object has only `url`; the items-by-IDs object has `site_id`, `web_id`, `list_id`, `unique_id`, `search_associated_sites`, `part_type`, `part_id`; `Email` is a capability; an `EmbeddedKnowledge` object exists but the Copilot app's export does not use it | [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8), checked 2026-10-10 |
+| Scoped web search grounds on content Bing has indexed, so pages built in the browser may be missing | [Knowledge sources](https://learn.microsoft.com/microsoft-365/copilot/extensibility/knowledge-sources), checked 2026-10-10 |
+| Plugin manifest v2.4 is the latest; it requires `schema_version`, `name_for_human`, `namespace`, and `description_for_human`; `$schema` is allowed at the root and `_license` is not; a runtime requires `type` (`OpenApi`, `LocalPlugin`, or `RemoteMCPServer`), `auth`, and `spec`; `auth.type` is `None`, `OAuthPluginVault`, or `ApiKeyPluginVault`, and the vault types need `reference_id` | [Plugin manifest 2.4](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-manifest-2.4) and pinned `tests/schemas/copilot/plugin-v2.4.schema.json`, checked 2026-10-10 |
+| A `RemoteMCPServer` runtime needs `spec.url`; without `spec.mcp_tool_description`, Copilot discovers the tools by calling the server, and the docs pair that with `run_for_functions: ["*"]` | [Dynamic tool discovery](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-dynamic-tool-discovery), checked 2026-10-10 |
+| Tool server plugins support Entra sign-in, dynamic client registration, OAuth, or no sign-in, and not API keys; sign-ins live in an auth configuration referenced by `reference_id` | [Plugin authentication](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-authentication), checked 2026-10-10 |
+| API plugins do not support nested objects in parameters, `oneOf`, `allOf`, `anyOf`, or API keys in query parameters | [Known issues: API plugins](https://learn.microsoft.com/microsoft-365/copilot/extensibility/known-issues#api-plugins), checked 2026-10-10 |
 | Agent Builder takes up to four public site URLs, 100 SharePoint files, one SharePoint list, 50 OneDrive files, five Teams chats and five meetings, and 20 uploaded files; its documentation lists the upload types .doc, .docx, .ppt, .pptx, .xls, .xlsx, .pdf, and .txt; a pasted SharePoint link must include the site path and no query string, and a OneDrive link is a shared link | [Add knowledge sources in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge), checked 2026-10-10 |
 | The Copilot app's upload dialog also accepted `.onepart` (a OneNote page), so the app accepts `.one` and `.onepart` and sends only `.onepart` in the package | A tenant check on 2026-10-10 |
 | Declarative agent schema 1.6 and later: `TeamsMessages.urls` holds at most five Teams links; `Email` takes `shared_mailbox`, `group_mailboxes` (at most 25), and `folders[].folder_id`; `Meetings.items_by_id` holds at most five `{id, is_series}`; schema 1.7 adds `behavior_overrides.default_response_mode` with the values `Auto`, `Quick response`, and `Think deeper` | [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8), checked 2026-10-10 |
@@ -480,17 +844,38 @@ Checked on 2026-10-09 unless a line says otherwise.
 | The SharePoint builder writes each source with `url`, `name`, `site_id`, `web_id`, `list_id`, `unique_id`, and `type` (`Site`, `Folder`, or `File`), files under `items_by_sharepoint_ids` and folders and sites under `items_by_url`; a `.agent` file whose site entry carried only `url` installed in a Teams chat but answered "this agent is not available" | Test agents exported from SharePoint on 2026-10-10 and a tenant test the same day |
 | The app package needs `manifest.json`, a 192 by 192 `color.png`, and a 32 by 32 transparent `outline.png` | [App package for Microsoft 365](https://learn.microsoft.com/office/dev/add-ins/overview/app-package-for-microsoft-365) |
 | `developer.name` is at most 32 characters; `websiteUrl`, `privacyUrl`, and `termsOfUseUrl` are required | [Manifest developer object](https://learn.microsoft.com/microsoft-365/extensibility/schema/root-developer) |
-| The Copilot app's own export uses manifest 1.28 and the four `validDomains` Agentprise copies | A Caveman package exported from the Copilot app on 2026-10-09 |
+| The Copilot app's own export uses manifest 1.28 and the four `validDomains` Agentprise copies; manifest 1.30 is the latest, and 1.28 is valid | A Caveman package exported from the Copilot app on 2026-10-09; [app manifest versions](https://learn.microsoft.com/microsoft-365/extensibility/schema/), checked 2026-10-10 |
 | The SharePoint `.agent` file (schema 0.2.0) has the shape Agentprise writes | A Caveman `.agent` file exported from SharePoint on 2026-10-09 |
 | A `.agent` file with an extra top-level key loads and runs in Teams | Loaded in a real tenant on 2026-10-09 |
 | In a Teams group chat, an answer that used the web, or only sources everyone in the chat can see, posts to everyone; an answer that used sources not everyone can see is shown first to the person who asked, with Approve and Reject | [How to use Microsoft Copilot in Teams group chats](https://support.microsoft.com/office/how-to-use-microsoft-365-copilot-in-teams-group-chats-2c613de4-cd26-4ae3-9e4b-6905d745d991), checked 2026-10-10 |
 | A `.agent` file written by Agentprise that listed `WebSearch`, `TeamsMessages`, and `Meetings` answered from the web in a Teams group chat and asked the person who asked to approve each answer; a SharePoint-made file with no switches answered without approval and without the web | Tenant tests on 2026-10-10 |
 
+#### ChatGPT and OpenAI
+
+| Fact | Source |
+|---|---|
+| A root `plugin.json` with the Agent Plugins schema is the recommended plugin format for ChatGPT and Codex; `.codex-plugin/plugin.json` is an optional fallback; skills come from `skills/` and servers from `mcp.json` | [OpenAI: build plugins](https://developers.openai.com/plugins/build/plugins), checked 2026-10-10 |
+| A plugin ZIP is uploaded in ChatGPT from the Admin console, Plugins, Add, Upload plugin, by a workspace owner or someone with upload permission; Upload plugins is off by default for Enterprise; uploading does not connect the plugin's apps | [Plugins in ChatGPT](https://help.openai.com/en/articles/20001256), checked 2026-10-10 |
+| The OpenAI developer portal accepts a plugin ZIP in either layout; the OpenAI API's hosted sandbox requires `.codex-plugin/plugin.json`, which Agentprise does not target | [OpenAI plugin submission](https://developers.openai.com/plugins/deploy/submission) and the OpenAI API plugins guide, checked 2026-10-10 |
+| Project instructions are added from a project's menu, Project settings; they apply only in that project; no character limit is stated | [Projects in ChatGPT](https://help.openai.com/en/articles/10169521), checked 2026-10-10 |
+| Custom GPTs retire on 2026-12-11, or 2027-02-11 for Enterprise workspaces with an approved deferral; Enterprise creation of new custom GPTs is planned to end 2026-10-26; Migrate to plugin turns a GPT's instructions into a skill in a plugin; no GPT export file exists | [Custom GPT retirement and migration FAQ](https://help.openai.com/en/articles/20001519-custom-gpt-retirement-and-migration-faq), checked 2026-10-10 |
+
+#### Gemini
+
+| Fact | Source |
+|---|---|
+| Gemini uploads a skill from Settings, then Skills, then Upload, as a `SKILL.md`, a folder, or a ZIP with `SKILL.md` in its main folder; uploads total 100 MB at most; Word, Excel, and other binary office files are not supported; scripts that reach the internet are not supported | [Gemini skills help](https://support.google.com/gemini/answer/17094296), checked 2026-10-10 |
+| Gemini skills work only with personal Google accounts, for people 18 or older; work and school accounts are not supported yet | [Gemini skills help](https://support.google.com/gemini/answer/17094296) and [Gems to skills](https://support.google.com/gemini/answer/18560919), checked 2026-10-10 |
+| Gems become skills in November 2026 for personal accounts, March 2027 for Workspace business, enterprise, and nonprofit accounts, and June 2027 for Workspace education accounts. The 2026-10-09 check recorded 2026-11-17 for personal accounts | [Gems to skills](https://support.google.com/gemini/answer/18560919), checked 2026-10-10 |
+| A Gemini skill can be downloaded as a `.zip` from Settings, Skills, More, Download | [Gemini skills help](https://support.google.com/gemini/answer/17094296), checked 2026-10-10 |
+
 ### Tests run in this repository
 
-- `npm test` on 2026-10-10: 149 tests pass. They include a project exported to
-  the backup and opened again normalizing to an identical record, the closed
-  Agent Plugins 1.0.0 shape of `plugin.json` and the schema and transport of
+- `npm test` on 2026-10-10 ran 220 tests, and 219 passed. The one failure was
+  a content check on the Library entry `pubmed-search.zip`, which must refuse
+  legal and medical advice. The suite covers a project exported to the backup
+  and opened again normalizing to an identical record, the closed Agent
+  Plugins 1.0.0 shape of `plugin.json` and the schema and transport of
   `mcp.json`, imports of a Claude plugin, two Codex plugins, a generic Agent
   Plugins folder, and a version 1 bundle (which opens as a skill), a skill
   `.zip` of an assistant restoring its kind, starters, welcome message, icon,
@@ -498,6 +883,19 @@ Checked on 2026-10-09 unless a line says otherwise.
   app's 2026-10-10 export shape, and a check that every backup listed in
   `library/catalog.json` opens without notices, survives a backup round trip,
   and matches its catalog line.
+- `tests/tools.test.mjs` exports a fixed synthetic project
+  (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
+  tool of each provider kind, to every download and compares each result with
+  the golden files under `tests/fixtures/exports/`. Set `UPDATE_GOLDEN=1` to
+  write them again after a deliberate change.
+- Exports are checked against the pinned schemas in `tests/schemas/`
+  (Agent Plugins 1.0.0 `plugin.json` and `mcp.json`, declarative agent v1.8,
+  plugin manifest v2.4, and Teams manifest 1.28) by the small validator in
+  `tests/schema-validator.mjs`, which has its own tests.
+  `tests/schemas/SOURCES.md` lists each file's URL, download date, and SHA-256
+  hash. The tests read these files from disk and never fetch a schema.
+- A test keeps `index.html` under 500,000 bytes, so the page stays quick to
+  load. The test fails as soon as the file grows past that.
 - `node tools/migrate-library.mjs --check` on 2026-10-10 reported all 13
   Library entries as already version 2 and the catalog unchanged.
 - The real Caveman `.agent` and Teams package exports both import. The `.agent`
@@ -513,12 +911,33 @@ Checked on 2026-10-09 unless a line says otherwise.
 
 These are open. Record the date and result here when someone runs them.
 
+#### Tools, skills, and plugins (V1 to V8)
+
+The design for tools listed eight facts to check. On 2026-10-10 the vendor
+documentation settled some of them. The rest need a real account.
+
+| Item | Question | Status on 2026-10-10 |
+|---|---|---|
+| V1 | Can a Copilot API plugin use an operation that returns `text/plain`, such as PubMed abstracts? | Open. No Microsoft page says. If it cannot, `pubmed.abstracts` on Copilot drops to its fallback, which asks people to paste abstracts. Needs a tenant test. |
+| V2 | Which declarative agent version to target, its instruction limit, and the plugin fields for a remote tool server | Settled by docs and schemas: v1.8, 8,000 characters, plugin manifest v2.4 with a `RemoteMCPServer` runtime. Version 1.9 with `agent_skills` is a preview only; whether to move to it is a follow-up. |
+| V3 | Does a `.agent` file in a Teams chat honor `WebSearch.sites`? | Open. The `.agent` schema is not documented. Needs a tenant test. |
+| V4 | Does ChatGPT accept a plugin with only a root `plugin.json`? | Partly settled. OpenAI documents it for ChatGPT, Codex, and the developer portal. The Admin console upload does not name a layout, so upload a Plugin download there once. |
+| V5 | What does claude.ai load from a plugin, and is Skills on for the EFDC Team workspace? | Component list settled by docs (see vendor facts). Whether Skills is on in the EFDC workspace needs an Owner to look. |
+| V6 | Do Gemini skills accept work and school accounts? | Settled: not yet. Recheck before changing the Gemini steps. |
+| V7 | Does Copilot web search limited to `pubmed.ncbi.nlm.nih.gov` return useful results? | Open. The site passes the schema rules; usefulness needs a tenant test. |
+| V8 | Can a person download a migrated ChatGPT plugin or a Gemini skill? | Gemini: yes, as a `.zip`, which the regular skill importer opens. ChatGPT: no download is documented for the person who migrated a GPT, so a GPT still moves by copying its fields into Create new. |
+
+#### Other open tests
+
 - Upload a skill `.zip` made by Agentprise to a Gemini account and to a Claude
   account, and confirm both accept the `agentprise.json` file beside
-  `SKILL.md`.
-- Confirm the Claude upload path. The vendor fact above, checked 2026-10-09,
-  says Settings, then Capabilities; the app's steps on the Inspect page say
-  Customize, then Skills.
+  `SKILL.md`. The Claude upload path itself was settled by the documentation
+  on 2026-10-10 (Customize, then Skills); a real upload has not been recorded.
+- Upload a Claude plugin made by Agentprise to claude.ai, connect a web tool
+  server from its Connectors tab, and confirm the skills load.
+- Upload a Copilot app package with an action to a tenant, once with an
+  OpenAPI action and once with a tool server, and confirm Copilot lists and
+  calls them.
 - Load a `.agent` file written by Agentprise, with `_license` and `_agentprise`,
   in a SharePoint library and in a Teams chat. The tenant test recorded above
   used a hand-edited file, not this app's output.
@@ -550,22 +969,49 @@ These are open. Record the date and result here when someone runs them.
 
 ### Conclusion
 
-Pick the download for the product you use, and download a backup if you are unsure.
-Maintainers: keep the project backup lossless, keep each item folder a valid
-Agent Skill, keep the Microsoft files free of extra keys where their schemas
-forbid them, and update the tables above whenever a converter or importer
-changes.
+Pick the download for the product you use, and download a backup if you are
+unsure. If the download has tools, read its report and setup steps. Maintainers:
+keep the project backup lossless, keep each item folder a valid Agent Skill,
+keep the Microsoft and Agent Plugins files free of extra keys where their
+schemas forbid them, keep `planExport` the single source for both the
+instructions and the report, and update the tables above whenever a converter
+or importer changes.
 
 ### Additional resources
 
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
+- [Connect the tools in a download](how-to/connect-tools.md)
 - [Add your assistant to the Library](how-to/add-to-library.md)
 - [Agent Skills specification](https://agentskills.io/specification)
 - [Agent Plugins specification](https://agent-plugins.org/specification)
 - [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8)
+- [Plugin manifest 2.4](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-manifest-2.4)
+- [Dynamic tool discovery for Copilot plugins](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-dynamic-tool-discovery)
+- [Plugin authentication for Copilot](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-authentication)
+- [Known issues for Copilot API plugins](https://learn.microsoft.com/microsoft-365/copilot/extensibility/known-issues#api-plugins)
+- [Add custom skills to a declarative agent](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-skills)
+- [Knowledge sources for declarative agents](https://learn.microsoft.com/microsoft-365/copilot/extensibility/knowledge-sources)
 - [App package for Microsoft 365](https://learn.microsoft.com/office/dev/add-ins/overview/app-package-for-microsoft-365)
+- [Microsoft 365 app manifest versions](https://learn.microsoft.com/microsoft-365/extensibility/schema/)
 - [Manifest developer object](https://learn.microsoft.com/microsoft-365/extensibility/schema/root-developer)
-- [Gemini productivity overview](https://gemini.google/overview/productivity/)
 - [Claude skills documentation](https://claude.com/docs/skills/how-to)
+- [Claude skills overview](https://claude.com/docs/skills/overview)
+- [Use skills in Claude](https://support.claude.com/en/articles/12512180-use-skills-in-claude)
+- [Use custom skills in Claude](https://support.claude.com/en/articles/12512198)
+- [Create and edit files with Claude](https://support.claude.com/en/articles/12111783)
+- [Claude plugins overview](https://claude.com/docs/plugins/overview)
+- [Build a Claude plugin](https://claude.com/docs/plugins/build)
+- [Claude plugin platform support](https://claude.com/docs/plugins/platform-support)
+- [Claude plugin administration](https://claude.com/docs/plugins/admin)
+- [Claude Code plugin manifest reference](https://code.claude.com/docs/en/plugins/manifest-reference)
+- [GitHub Copilot CLI plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference)
+- [OpenAI: build plugins](https://developers.openai.com/plugins/build/plugins)
+- [OpenAI plugin submission](https://developers.openai.com/plugins/deploy/submission)
+- [Plugins in ChatGPT](https://help.openai.com/en/articles/20001256)
+- [Projects in ChatGPT](https://help.openai.com/en/articles/10169521)
+- [Custom GPT retirement and migration FAQ](https://help.openai.com/en/articles/20001519-custom-gpt-retirement-and-migration-faq)
+- [Gemini skills help](https://support.google.com/gemini/answer/17094296)
+- [Gems to skills in Gemini](https://support.google.com/gemini/answer/18560919)
+- [Gemini productivity overview](https://gemini.google/overview/productivity/)
 
 [Back to project README](../README.md)

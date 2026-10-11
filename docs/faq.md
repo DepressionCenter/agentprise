@@ -5,7 +5,8 @@ Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
 Last Modified: 2026-10-10
 Summary: The questions people ask about Agentprise, with the same answers the
-         Help page inside the app gives.
+         Help page inside the app gives, plus questions about tools, plugins,
+         and what changes in each download.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -22,8 +23,8 @@ See <https://www.gnu.org/licenses/fdl-1.3.html>. See README for full license inf
 [Back to project README](../README.md)
 
 These are the questions people ask most, with the same answers as the Help page
-inside the app. If your question is about a particular download, the
-[formats page](formats.md) goes deeper.
+inside the app, plus a few about tools and plugins. If your question is about
+a particular download, the [formats page](formats.md) goes deeper.
 
 ### What is Agentprise?
 
@@ -48,11 +49,16 @@ It depends on where people will use the assistant.
   list in the Microsoft 365 Copilot app and in Teams.
 - **Teams Chat** gives you a `.agent` file for a Teams group chat, channel, or
   meeting. You put the file in a SharePoint library first.
-- **Gemini** and **Claude** each get a skill. It is the same file, and it works
-  in both.
-- **ChatGPT** gets text to copy and paste, because it has no file to upload.
+- **Gemini** and **Claude** each get a skill (`.zip`), written for that
+  product.
+- **ChatGPT** gets project instructions to copy and paste into a ChatGPT
+  project.
 - **Gemini Notebook** gets a `.md` file to add as a source, or the same text
   to paste.
+- **Claude plugin** gives you every assistant and skill in the project, with
+  their tools, as one plugin for claude.ai, Cowork, and Claude Code.
+- **Plugin** gives you the same for ChatGPT, Codex, GitHub Copilot, Cursor,
+  and other tools that read Agent Plugins.
 
 Not sure yet? Download a backup. You can come back any time and download it
 for another product.
@@ -86,8 +92,57 @@ Copilot may use everything the person can see.
 ### Who can use my assistant?
 
 In Microsoft 365, people need a Copilot license and permission to any files you
-linked. Guests cannot use it in Teams chats. Gemini skills may need a paid Google
-AI plan, and Claude skills need a paid Claude plan.
+linked. Guests cannot use it in Teams chats. Gemini skills work only with
+personal Google accounts for now, not work or school accounts, and may need a
+paid Google AI plan. Claude skills need a paid Claude plan, and Claude plugins
+need Skills turned on for the organization. In
+ChatGPT, a plugin is uploaded by a workspace owner or someone with permission
+to upload plugins.
+
+### What are tools?
+
+A tool lets an assistant do something on its own, such as search PubMed and
+read the results. Tools come with Library entries and with files you open, and
+the **Tools** list in the editor shows how each product connects them. Some
+tools need a step after you download, such as turning on a connector or
+pasting a server address. Without its tool, the assistant does what it can and
+says that no tool was used. See
+[Connect the tools in a download](how-to/connect-tools.md).
+
+### What does "needs setup" mean?
+
+On the Inspect page, the list **What changes in this download** marks each part
+of a download as kept, changed, needs setup, left out, or blocked. "Needs
+setup" means the part is in the download but works only after a step from you
+or your admin. The steps are in the `SETUP.md` file inside the download, or on
+the Inspect page for the Copilot app package.
+
+### Why is a download button turned off?
+
+Either a required question is still empty, or the download is blocked. The
+card lists empty questions as links. A blocked download shows why in the list
+**What changes in this download** on the Inspect page. Common reasons are a web
+search list over Copilot's limit of four sites, or instructions longer than
+Copilot's limit of 8,000 characters. Fix what the list names and the button
+turns back on.
+
+### Why does my assistant's description start with "Persona:"?
+
+Gemini, Claude, and plugins have skills but no separate place for an always-on
+assistant. So Agentprise writes the assistant as a skill and starts its
+description with "Persona:". Copilot, Teams Chat, ChatGPT project
+instructions, and Gemini Notebook have the opposite problem, so a skill
+becomes an assistant there, and an assistant's skills are added to its
+instructions.
+
+### Can I bring over a custom GPT or a Gem?
+
+Custom GPTs retire on December 11, 2026, and ChatGPT has no file to export
+one. Copy the GPT's name, description, instructions, and conversation starters
+into a new assistant with **Create new**. Gems are turning into Gemini skills.
+Once a Gem is a skill, download it from Gemini under **Settings**, then
+**Skills**, then **More**, then **Download**, and drop the `.zip` file on the
+Workspace page.
 
 ### How do I change an assistant I already shared?
 
@@ -117,7 +172,8 @@ Before you download, the app looks through your assistant's text and plain-text
 files for shapes that often mean personal information, such as Social Security
 numbers, phone numbers, email addresses, dates, street addresses, and long
 numbers, and for phrases common in prompt injection, such as "ignore previous
-instructions" or invisible characters. Each match is listed with where it was
+instructions" or invisible characters. It checks the text of each tool too.
+Each match is listed with where it was
 found and a masked sample. It is a hint to look, not proof: a help desk
 assistant may hold a phone number on purpose. It also misses plenty, including
 people's names, so it is not a privacy review and never blocks a download. The
@@ -151,11 +207,15 @@ or start the included server as the README describes.
 | `.agent` file | No | Yes | No | No | No |
 | Skill (`.zip`) | No | No | Yes | Yes | No |
 | Plain skill, SKILL.md (`.skill.zip`) | No | No | Yes | Yes | No |
-| Copy text | No | No | Notebook only | No | Yes |
+| Copy text | No | No | Notebook only | No | Yes, as project instructions |
 | `.md` file | No | No | Notebook only | No | No |
+| Claude plugin (`.claude-plugin.zip`) | No | No | No | Yes | No |
+| Plugin (`.plugin.zip`) | No | No | No | No | Yes, uploaded in a workspace |
 | Backup (`.agentprise.zip`) | No | No | No | No | No |
 
-The backup opens only in Agentprise. Keep it to change the project later.
+The backup opens only in Agentprise. Keep it to change the project later. The
+Plugin download also works in Codex, GitHub Copilot, Cursor, and other tools
+that read Agent Plugins.
 
 ### Conclusion
 
@@ -168,6 +228,7 @@ issue on GitHub, so the answer can be added here.
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
 - [Using Agentprise](usage.md)
 - [Formats: which download goes where](formats.md)
+- [Connect the tools in a download](how-to/connect-tools.md)
 - [Add your assistant to the Library](how-to/add-to-library.md)
 - [Ask a question or send an assistant on GitHub](https://github.com/DepressionCenter/agentprise/issues/new)
 

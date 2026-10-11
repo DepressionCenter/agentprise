@@ -5,8 +5,9 @@ Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
 Last Modified: 2026-10-10
 Summary: How to use Agentprise, job by job: keep your projects, create an
-         assistant, add skills, open a file you have, start from the Library,
-         download it for each product, and download a backup.
+         assistant, add skills, check its tools, open a file you have, start
+         from the Library, download it for each product or as a plugin, read
+         what changes in each download, and download a backup.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -138,6 +139,48 @@ To take an assistant or a skill out of a project, open it, open
 appears only when the project holds two or more things, because a project
 always keeps at least one.
 
+### Tools
+
+Some assistants and skills use tools, such as a search of PubMed. A tool lets
+the assistant do something on its own, like run a search and read the
+results. You cannot write a new tool in Agentprise. Tools come with Library
+entries, such as the **PubMed Search** skill, and with skill or plugin files
+you open.
+
+When the assistant or skill you are editing has tools, a **Tools** list
+appears under the questions. Each card shows:
+
+- The tool's name and what it does. "(needed for its main job)" after the
+  name means the assistant cannot do what it was made for without it.
+- How each product connects it: Microsoft 365 Copilot, Claude, ChatGPT,
+  Gemini, and coding tools. "Works without the tool and says so" means that
+  product has no way to use it.
+- "Comes with the skill" and a skill's name, when the tool belongs to a skill
+  the assistant uses. Change or remove those tools in the skill itself.
+- **Remove this tool**, for the item's own tools. The app asks first. After
+  that, no download mentions the tool.
+
+Without a tool, the assistant still does the work it can and tells people
+that no tool was used. It never claims a search was done when no tool
+returned results.
+
+Some tools reach a tool server, which is a service on the web or on your
+computer. The servers belong to the whole project and are listed under
+**More settings**, then **Tool connections**:
+
+- A server on the web has a box called **Address of the** followed by its
+  name. When a tool says you supply your own server, paste its address here
+  before you download. The address must start with `https://` and cannot hold
+  a user name, a password, a `#` part, or a key or token. You can also leave
+  it empty and fill it in after you download; the setup steps say where.
+- A server that runs on the computer shows its command. Agentprise never runs
+  it. Tools such as Claude Code and Codex can.
+- **Remove this connection** takes the server out of the project. Tools that
+  used it stop mentioning it in every download.
+
+To finish connecting tools after you download, see
+[Connect the tools in a download](how-to/connect-tools.md).
+
 ### Add more detail
 
 Choose **More settings** under the questions to open the extra settings. None
@@ -246,7 +289,7 @@ Library needs the app to run from a web address, so it is empty when you open
 
 ### Download it for a product
 
-The downloads are for one assistant or skill at a time. A line at the top of
+Most downloads are for one assistant or skill at a time. A line at the top of
 the **Download** card says which one, such as "The downloads below are for
 Caveman." To download something else in the project, choose it in the
 **In this project** bar first.
@@ -258,13 +301,67 @@ for the product people will use:
 |---|---|---|
 | The Agents list in the Microsoft 365 Copilot app or in Teams | **Copilot / Teams Apps** | An app package (`.zip`) |
 | A Teams group chat, channel, or meeting | **Teams Chat** | One `.agent` file |
-| Gemini or Claude | **Gemini** or **Claude** | A skill (`.zip`), the same file for both |
-| ChatGPT | **ChatGPT**, then **Copy** | Text to paste |
+| Gemini | **Gemini** | A skill (`.zip`) |
+| Claude | **Claude** | A skill (`.zip`) |
+| A ChatGPT project | **ChatGPT**, then **Copy** | Project instructions to paste |
 | Gemini Notebook | **Gemini Notebook** | A `.md` file to add as a source |
 | Any other tool that reads Agent Skills | **SKILL.md** | A plain skill (`.skill.zip`) with nothing specific to this app |
 
+Each download is written for its own product. For example, the Gemini skill
+leaves out Word, Excel, PowerPoint, and OneNote files, because Gemini skills
+do not accept them, and each product gets its own notes on how to reach the
+tools.
+
+When you choose **Copy** on the ChatGPT row, the Inspect page opens with one
+box called **Project instructions**. In ChatGPT, open a project, open its
+menu, then **Project settings**, and paste the box into **Instructions**. Add
+any files the assistant uses to the project yourself. For skills and tools in
+ChatGPT, use the **Plugin** download below instead.
+
+Under **For the whole project**, two more rows give you every assistant and
+skill in the project in one file, with the tools they use:
+
+| Product | Button | What you get |
+|---|---|---|
+| Claude: claude.ai, Cowork, or Claude Code | **Claude plugin** | One plugin (`.claude-plugin.zip`) |
+| ChatGPT, Codex, GitHub Copilot, Cursor, or another tool that reads Agent Plugins | **Plugin** | One plugin (`.plugin.zip`) |
+
+To upload the Claude plugin, open **Customize**, then **Plugins** in Claude,
+choose **Add**, then **Upload plugin**. Then open the plugin's
+**Connectors** tab to connect any tool servers. In ChatGPT, a workspace owner
+or someone allowed to upload plugins uploads the Plugin download from the
+Admin console, under **Plugins**.
+
 The [formats page](formats.md) explains what to do with each file once you have
-it, and what the app package leaves out.
+it, and what each one leaves out.
+
+### What changes in each download, and setup steps
+
+Products differ, so a download is not always an exact copy of what you wrote.
+For example, Gemini and Claude have no separate place for an assistant, so the
+assistant becomes a skill whose description starts with "Persona:". Copilot
+has no skills, so a skill's steps are added to the assistant's instructions.
+
+To see what changes, choose **Inspect**, pick the product's tab, and read the
+list called **What changes in this download**. Each line has one of five
+labels:
+
+- **kept**: works the same way in that product.
+- **changed**: rewritten to fit the product. The note says how.
+- **needs setup**: in the download, but it works only after a step from you
+  or your admin, such as turning on a connector.
+- **left out**: that product has no way to use it.
+- **blocked**: the download would break, or would let the assistant use more
+  than you asked for. The download button stays off until you fix it, and
+  the note says what to change.
+
+Downloads with tools come with setup steps. When something needs setting up,
+the skill ZIPs and the two plugins hold a file called `SETUP.md`, and their `README.md` repeats the list
+under **What changed in this export**. The Copilot app package has no place
+for extra files, so its steps show on the Inspect page as
+**Setup steps (not in the package)**.
+[Connect the tools in a download](how-to/connect-tools.md) walks through each
+kind of step.
 
 ### Review before sharing
 
@@ -275,8 +372,9 @@ project for shapes that often mean personal information, such as Social
 Security numbers, phone numbers, email addresses, dates, street addresses, and
 long numbers. It also looks for phrases common in prompt injection, such as
 "ignore previous instructions", invisible characters, and hidden HTML
-comments. Each line says where the match is and shows a masked sample, and
-clicking it takes you to the field.
+comments. The text of each tool is checked too, because it goes into the
+instructions of every download. Each line says where the match is and shows a
+masked sample, and clicking it takes you to the field.
 
 A match is a hint, not proof. A help desk assistant may hold a phone number on
 purpose. The check also misses plenty, including people's names, so it is not a
@@ -302,8 +400,11 @@ buttons. The left side shows every field as a plain form, and the right side
 shows the files for the output format you pick, with your own words
 highlighted. Changes you make here show up in the Workspace too. The tabs run
 in alphabetical order and include **SKILL.md**, a plain Agent Skill with
-nothing specific to this app, and **Agentprise Backup**, which shows the files
-of the whole project. Each tab has its own download button under the files.
+nothing specific to this app, **Claude Plugin** and **Plugin**, which show the
+files of the two plugins, and **Agentprise Backup**, which shows the files of
+the whole project. Each tab has its own download button under the files. When
+a download changes something, the list **What changes in this download**
+appears above the files.
 
 When the project holds more than one assistant or skill, a list called
 **Part of the project** sits above the tabs. Pick the one you want to see.
@@ -324,14 +425,17 @@ keep a backup of anything you care about.
 ### Conclusion
 
 You can now keep several projects, describe an assistant, give it skills,
-start from a sample or a file you have, and download it for Copilot, Teams,
-Gemini, Claude, or ChatGPT. For what to do with each file afterwards, see the
-formats page. For questions, see the FAQ.
+check its tools, start from a sample or a file you have, and download it for
+Copilot, Teams, Gemini, Claude, or ChatGPT, one item at a time or as a whole
+plugin. For what to do with each file afterwards, see the formats page. To
+finish connecting tools, see the guide on connecting tools. For questions, see
+the FAQ.
 
 ### Additional resources
 
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
 - [Formats: which download goes where](formats.md)
+- [Connect the tools in a download](how-to/connect-tools.md)
 - [Frequently asked questions](faq.md)
 - [Step-by-step guides with screenshots](README.md#step-by-step-guides)
 - [Add your assistant to the Library](how-to/add-to-library.md)

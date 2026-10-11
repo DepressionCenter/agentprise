@@ -88,7 +88,11 @@ listed under known gaps.
   of override, orders to hide things from the person, invisible characters,
   image links with a query string, HTML comments). Findings are shown in the
   browser with a masked sample, never stored, never logged, and never sent.
-  They warn and never block. The check is a hint for a person, not a privacy
+  They warn and never block. Tool text (each tool's label, description,
+  fallback, connector names, and route instructions) is checked as well,
+  because it goes into the instructions of every export. Evidence: the
+  "Tool text goes into every export's instructions" block in `scanProject` in
+  `index.html`, read on 2026-10-10. The check is a hint for a person, not a privacy
   review: it does not detect names and it over-flags ordinary dates and
   numbers. The first five identifier patterns come from Field Station AI.
   Evidence: `tests/scan.test.mjs`, with one example and one near miss per
@@ -97,7 +101,25 @@ listed under known gaps.
   `.agent` file and the `agentprise.json` file in each skill `.zip` and backup
   carry a `_license` notice naming the creator and then the app, and
   `LICENSE.txt` holds the creator's license; the Teams package carries no
-  notice because its schemas reject extra keys.
+  notice because its schemas reject extra keys. The same holds for the Copilot
+  plugin manifests and the plugin `plugin.json` and `mcp.json` files, whose
+  schemas are closed, so both plugins carry the license in `LICENSE.txt`, the
+  manifest's `license` field, and a hidden comment at the top of `README.md`
+  and `SETUP.md`.
+- Tool server addresses never keep credentials. `cleanServerUrl` keeps an
+  address only when it is https and has no user name, password, or `#`
+  fragment, and no query parameter named like a key, token, secret, password,
+  auth value, or signature. The editor's **Address of the** box and every
+  import use the same check, and an address that fails it is removed with a
+  notice. Exported `mcp.json` and `.mcp.json` files hold only a server's type
+  and address, or its command and arguments, never `headers` or `env`; a
+  server without an address gets the reserved placeholder
+  `https://example.com/replace-with-your-mcp-server-address`. Copilot actions
+  that need a sign-in carry the placeholder id
+  `replace-with-your-auth-registration-id`, so no credential is ever written
+  into a package; an admin registers the sign-in in the tenant. Evidence:
+  `cleanServerUrl`, `normalizeServers`, `mcpManifest`, and `copilotAuth` in
+  `index.html`, and the golden files under `tests/fixtures/exports/`.
 - A license is never relabeled. A skill or plugin from elsewhere that names no
   license opens with the license "Not stated" and a notice, its `LICENSE.txt`
   says the license was not stated, and a license file the author brought is
@@ -111,8 +133,10 @@ listed under known gaps.
   anything reaches the form. Ids that are not UUIDs are replaced, and only
   known keys of the Agentprise extension in `plugin.json` are copied. Evidence:
   `tests/engine.test.mjs`, `tests/formats.test.mjs`, `tests/library.test.mjs`,
-  `tests/project.test.mjs`, and `tests/scan.test.mjs` (149 tests passing on
-  2026-10-10).
+  `tests/project.test.mjs`, `tests/scan.test.mjs`, and `tests/tools.test.mjs`.
+  `npm test` on 2026-10-10 ran 220 tests, and 219 passed. The one failure was
+  a content check on the Library entry `pubmed-search.zip` (it must refuse
+  legal and medical advice), not a control on this page.
 - Importing executes nothing and contacts nothing. Plugin manifests, MCP
   server files, skill files, hooks, commands, and agents are read as data. A
   local tool server's command is stored as text and never run. Server
@@ -138,6 +162,34 @@ listed under known gaps.
   inflating as soon as output passes the declared size. Evidence: the `zip`
   test suite, including a path-traversal name, an oversize declared length, a
   mislabeled inflated size, a damaged checksum, and a repeated name.
+- Nothing from a file runs, and exports run nothing either. Tool
+  declarations are data: a script a skill carries is stored and exported as
+  bytes, an OpenAPI description is copied into the Copilot package as bytes,
+  and a local server's command is written as text for the product to run.
+  The app never calls a tool server, an API, or a script. Tool declarations
+  pass through `normalizeCapability` and `normalizeProvider`, which accept
+  only the six provider kinds in `PROVIDER_KINDS`, cap every text field, and
+  check every file path with `cleanArchivePath`. A `#` at the start of any
+  line of tool text is escaped and labels are put on one line, so tool text
+  cannot add headings to the composed instructions. Evidence: `planExport`,
+  `quoteHeadings`, and `oneLine` in `index.html`, and `tests/tools.test.mjs`.
+- Validation runs offline against pinned schemas. The tests check exports
+  against exact copies of the Agent Plugins 1.0.0 `plugin.json` and `mcp.json`
+  schemas, the declarative agent v1.8 schema, the Copilot plugin manifest v2.4
+  schema, and the Teams manifest 1.28 schema, kept in `tests/schemas/` with
+  each file's URL, download date (2026-10-10), and SHA-256 hash in
+  `tests/schemas/SOURCES.md`. The validator is a small file in the repository
+  (`tests/schema-validator.mjs`) with its own tests, so no dependency was
+  added. The page never fetches a schema: the schema ids it writes, such as
+  `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`, are
+  identifiers that readers must not fetch. Evidence: the script's only two
+  `fetch` calls are for the Library (see Privacy above).
+- A download whose conversion report has a blocked entry cannot be written.
+  Blocked cases include a Copilot source list that the writer would drop,
+  which would widen the assistant to the whole source, and more web search
+  sites than Copilot allows. `assertNotBlocked` refuses the write and the
+  download button is disabled. Evidence: `widenedSources`,
+  `mergeWebSearchSites`, and `assertNotBlocked` in `index.html`.
 - JSON and YAML are parsed, never evaluated. The YAML reader handles only the
   subset the app's files use and skips anything else with a warning.
 - All text reaches the page through `textContent`. The script never assigns
@@ -296,6 +348,15 @@ borders.
 - Status messages go to one polite live region. Nothing moves, flashes, or
   auto-advances. Smooth scrolling is applied only when the system does not ask
   for reduced motion.
+- In the tools parts of the editor, read from the code on 2026-10-10: the
+  **Tools** list is a `fieldset` with a `legend` and a list of cards; each
+  **Remove this tool** and **Remove this connection** button carries the tool
+  or server name as hidden text and asks first in the same native `dialog`.
+  Each server address box has a visible label, "Address of the" and the
+  server name, with its hint and error joined through `aria-describedby`. On
+  the Inspect page, each line of **What changes in this download** starts with
+  its status as a word (kept, changed, needs setup, left out, or blocked), so
+  the colored border on blocked lines never carries the meaning alone.
 - In the project workspace, read from the code on 2026-10-10: each project tile
   opens from a button that is the project name, and its other actions sit in a
   native `details` menu named "More actions for" the project, with buttons whose
@@ -326,13 +387,25 @@ borders.
   kind labels, and the Rename, Delete, Remove, and Keep both or Replace mine
   dialogs. Focus after Delete moves to Create new in the code, but no one has
   confirmed it by hand.
+- The tools parts have not been scanned with axe-core or walked through with
+  a keyboard, at 320 pixels, or for contrast: the **Tools** cards,
+  **Tool connections** with its address boxes, the
+  **What changes in this download** list and its status colors, the blocked
+  notice, the **For the whole project** download rows, and the one-box
+  ChatGPT tab.
 - A screen reader pass on the main flows (NVDA or JAWS on Windows, VoiceOver on
   macOS) has not been done. The question blanks, the live region, the dialog, and
   the product tabs are the parts most worth listening to.
 - 200 percent zoom was checked only through the 320 pixel reflow test, not by a
   person zooming a desktop browser.
-- Uploads to real Gemini, Claude, SharePoint, and Teams accounts are open; see
-  the [formats page](formats.md).
+- Uploads to real Gemini, Claude, ChatGPT, SharePoint, and Teams accounts are
+  open, including both plugins and Copilot packages with actions; see the
+  open tests V1 to V8 and the others on the [formats page](formats.md).
+- Agentprise does not check what a script in a skill does. It checks that the
+  file is plain text and not a program, then carries it. The setup steps ask
+  the installer to allow its network access, and the
+  [guide to connecting tools](how-to/connect-tools.md) asks people to read the
+  script or have someone read it first.
 - No statement on this page is a claim of HIPAA compliance. The app handles agent
   descriptions, not health data, and keeps nothing on a server. The sharing
   check is a short pattern list, not a review of the text, and a clean result
@@ -347,6 +420,7 @@ given. Rerun the test suite and the browser walkthrough after any change to
 ### Additional resources
 
 - [Formats and verified vendor facts](formats.md)
+- [Connect the tools in a download](how-to/connect-tools.md)
 - [Accessibility skill](../skills/accessibility/SKILL.md)
 - [WCAG 2.2 quick reference](https://www.w3.org/WAI/WCAG22/quickref/)
 - [axe-core](https://github.com/dequelabs/axe-core)
