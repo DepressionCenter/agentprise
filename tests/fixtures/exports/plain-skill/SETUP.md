@@ -17,15 +17,15 @@ Without it, the assistant still does the work it can and says that no tool was u
 
 ## Connect the Example search server
 
-The instructions mention the Example search server. Connect it in the product's settings for tools or connectors, using the address https://mcp.example.org/mcp. Without it, the assistant works without the tool and says so.
+The instructions mention the Example search server. Connect it in the product's settings for tools or connectors, using the address https://mcp.example.org/mcp. Until you do, the assistant tells people it can't use this tool.
 
 ## Connect the Pinned tools server
 
-The instructions mention the Pinned tools server. Connect it in the product's settings for tools or connectors, using the address https://tools.example.org/mcp. Without it, the assistant works without the tool and says so.
+The instructions mention the Pinned tools server. Connect it in the product's settings for tools or connectors, using the address https://tools.example.org/mcp. Until you do, the assistant tells people it can't use this tool.
 
 ## Connect the Local helper server
 
-The instructions mention the Local helper server. Connect it in the product's settings for tools or connectors. Without it, the assistant works without the tool and says so.
+The instructions mention the Local helper server. Connect it in the product's settings for tools or connectors. Until you do, the assistant tells people it can't use this tool.
 
 ## Let the script reach the internet
 

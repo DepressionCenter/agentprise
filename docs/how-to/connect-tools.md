@@ -272,8 +272,8 @@ The **Tools** list shows the same thing for your own copy.
 ### Conclusion
 
 You can now read the report for any download, fix a blocked download, and
-finish each kind of setup step. Start with the tools you need most. The
-assistant works without the rest and says so. To see what each download holds,
+finish each kind of setup step. Start with the tools you need most. Until
+you connect the rest, the assistant tells people it can't use them. To see what each download holds,
 read [Formats](../formats.md).
 
 ### Additional resources

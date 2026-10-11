@@ -169,15 +169,16 @@ chats, mail, or meetings. Turn off Teams messages, email, and meetings under
 Copilot settings and answers post straight to the chat. Web search does not
 cause this.
 
-### What does "Review before sharing" check?
+### What does the check for sensitive data look for?
 
 Before you download, the app looks through your assistant's text and plain-text
-files for shapes that often mean personal information, such as Social Security
-numbers, phone numbers, email addresses, dates, street addresses, and long
-numbers, and for phrases common in prompt injection, such as "ignore previous
-instructions" or invisible characters. It checks the text of each tool too.
-Each match is listed with where it was
-found and a masked sample. It is a hint to look, not proof: a help desk
+files for things that often mean personal information, such as Social Security
+numbers, phone numbers, email addresses, street addresses, and dates labelled
+as a birth date or a hospital stay. It also looks for text that tries to take
+over an assistant, such as "ignore previous instructions" or invisible
+characters. It checks the text of each tool too. If it finds something, a
+yellow box appears under **Download**. Choose **View details** to see where
+each match is, with the digits hidden. It is a hint to look, not proof: a help desk
 assistant may hold a phone number on purpose. It also misses plenty, including
 people's names, so it is not a privacy review and never blocks a download. The
 check runs in your browser and nothing is sent anywhere.
