@@ -14,7 +14,8 @@ Files: openapi/records.yaml, scripts/lookup.py, references/guide.md.
 ## How to use
 
 - Gemini: open Settings, then Skills, then Upload, and choose this ZIP file.
-- Claude: open Settings, then Capabilities, then Skills, and upload this ZIP file.
+- Claude: open Customize, then Skills, choose the plus button, then Create skill, then Upload a skill, and pick this ZIP file.
+- Claude Code, Codex, Kimi Code CLI, OpenClaw, and other tools that read Agent Skills: unzip this file into the folder where the tool looks for skills, such as .agents/skills.
 - Microsoft 365 Copilot, ChatGPT, or to edit it: open this ZIP file at https://code.depressioncenter.org/agentprise/
 
 SKILL.md holds the instructions. LICENSE.txt holds the license.

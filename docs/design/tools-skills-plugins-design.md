@@ -1,9 +1,9 @@
 <!--
 This file is part of Agentprise
-docs/design/tools-skills-plugins.md
+docs/design/tools-skills-plugins-design.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-10
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Design and work plan for extending Agentprise from instruction-only
          agents to projects that carry skills, reference knowledge, and
          external tools (MCP servers, OpenAPI plugins, scripts, connectors),
@@ -51,7 +51,9 @@ These things are out of scope and should not be built:
   a vendor service is up. It is a library and a converter.
 - No export target is added until it has a real file to download. Kimi chat,
   Mistral Le Chat, and Copilot Notebooks stay out until a documented file format
-  exists for them.
+  exists for them. OpenClaw, a Kimi Claw run by its owner, and Kimi Code CLI
+  read the plain skill and the plugins Agentprise already makes, so they need
+  no target of their own.
 - Copilot Studio exports are deferred. Copilot Studio moves agents between
   environments as Power Platform solution zips (`solution.xml`, customizations,
   and `botcomponents` records with environment-bound identifiers), exported from

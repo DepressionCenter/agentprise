@@ -15,7 +15,7 @@ A fixed project for export tests.
 ## How to install
 
 - ChatGPT: a workspace owner or someone with upload permission opens the Admin console, then Plugins, chooses Add, then Upload plugin, and picks this ZIP file.
-- Codex, GitHub Copilot, Cursor, and other tools that read Agent Plugins: unzip this file and add the folder as a plugin, following the tool's own steps.
+- Codex, GitHub Copilot, Cursor, OpenClaw, and other tools that read Agent Plugins: unzip this file and add the folder as a plugin, following the tool's own steps.
 
 To change it or download it for another product, open the backup of this project at https://code.depressioncenter.org/agentprise/
 

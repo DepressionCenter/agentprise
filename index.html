@@ -1217,7 +1217,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                     <li>
                                         <span class="destination-text">
                                             <span class="destination-name">Plugin</span>
-                                            <span class="destination-file">ChatGPT, Codex, GitHub Copilot, Cursor (.zip)</span>
+                                            <span class="destination-file">ChatGPT, Codex, Cursor, OpenClaw, and more (.zip)</span>
                                         </span>
                                         <button type="button" class="download-button" data-format="portablePlugin"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the plugin with the whole project for ChatGPT and other tools</span></button>
                                     </li>
@@ -1354,10 +1354,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                         <li><strong>Teams Chat</strong> gives you a .agent file for a Teams group chat, channel, or meeting. You put the file in a SharePoint library first.</li>
                         <li><strong>Gemini</strong> and <strong>Claude</strong> each get a skill (.zip) made for that product.</li>
                         <li><strong>ChatGPT</strong> gets project instructions to paste into a ChatGPT project.</li>
-                        <li><strong>Claude plugin</strong> and <strong>Plugin</strong> hold the whole project, with its skills and tools. The Plugin works in ChatGPT, Codex, GitHub Copilot, and Cursor.</li>
+                        <li><strong>Claude plugin</strong> and <strong>Plugin</strong> hold the whole project, with its skills and tools. The Plugin works in ChatGPT, Codex, GitHub Copilot, Cursor, and OpenClaw.</li>
+                        <li><strong>SKILL.md</strong> gives you a plain skill (.zip) for Claude Code, Codex, Kimi Code CLI, OpenClaw, and other tools that read Agent Skills.</li>
                         <li><strong>Gemini Notebook</strong> gets a .md file to add as a source, or the same text to paste.</li>
                     </ul>
                     <p>Not sure yet? Download a backup. You can come back any time and download it for another product.</p>
+                    <h2>Does it work with Kimi or OpenClaw?</h2>
+                    <p>Partly. Kimi Code CLI and an OpenClaw you run yourself both read the SKILL.md download and the Plugin download, and OpenClaw also reads the Claude plugin. The Inspect page has the steps for each. Kimi chat, Kimi Agent mode, and the Kimi Claw that Kimi hosts for you have no way to upload a skill file yet, so Agentprise cannot make a download for them.</p>
                     <h2>What does "Download Backup" do?</h2>
                     <p>It saves the whole project, with every assistant, skill, and file, as one .zip file on your computer. Drop that file on the Workspace page later to open it again, change it, or download it for a different product. To upload to Gemini or Claude, use their own Download buttons instead.</p>
                     <h2>What are tools, and what does "needs setup" mean?</h2>
@@ -5361,7 +5364,8 @@ function itemReadme(project, item, report, ownText) {
         "## How to use",
         "",
         "- Gemini: open Settings, then Skills, then Upload, and choose this ZIP file.",
-        "- Claude: open Settings, then Capabilities, then Skills, and upload this ZIP file.",
+        "- Claude: open Customize, then Skills, choose the plus button, then Create skill, then Upload a skill, and pick this ZIP file.",
+        "- Claude Code, Codex, Kimi Code CLI, OpenClaw, and other tools that read Agent Skills: unzip this file into the folder where the tool looks for skills, such as .agents/skills.",
         "- Microsoft 365 Copilot, ChatGPT, or to edit it: open this ZIP file at " + APP_SITE_URL,
         "",
         "SKILL.md holds the instructions. LICENSE.txt holds the license.",
@@ -6308,7 +6312,7 @@ function pluginReadme(project, report, exportId) {
     } else {
         lines.push(
             "- ChatGPT: a workspace owner or someone with upload permission opens the Admin console, then Plugins, chooses Add, then Upload plugin, and picks this ZIP file.",
-            "- Codex, GitHub Copilot, Cursor, and other tools that read Agent Plugins: unzip this file and add the folder as a plugin, following the tool's own steps."
+            "- Codex, GitHub Copilot, Cursor, OpenClaw, and other tools that read Agent Plugins: unzip this file and add the folder as a plugin, following the tool's own steps."
         );
     }
     lines.push("", "To change it or download it for another product, open the backup of this project at " + APP_SITE_URL, "", "## " + REPORT_HEADING, "", reportMarkdown(report));
@@ -6780,9 +6784,9 @@ const PRODUCT_HINTS = {
     teamsZip: "When you change the assistant later, download this again from the same project. Copilot then updates the app you shared instead of adding a new one.",
     chatgpt: "There is no file to upload. Paste the text into the instructions of a ChatGPT project. To include skills and tools, use the Plugin download instead.",
     claudePlugin: "The whole project as one Claude plugin, with every assistant and skill and the tool servers Claude can connect to.",
-    portablePlugin: "The whole project as one plugin that ChatGPT, Codex, GitHub Copilot, Cursor, and other tools can read.",
+    portablePlugin: "The whole project as one plugin that ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw, and other tools can read.",
     notebook: "Add the .md file as a source, or paste the instructions.",
-    skill: "A standard skill for any tool that reads Agent Skills. It leaves out the picture, the welcome message, the example questions, and the Copilot settings.",
+    skill: "A standard skill for any tool that reads Agent Skills, such as Claude Code, Codex, Kimi Code CLI, and OpenClaw. It leaves out the picture, the welcome message, the example questions, and the Copilot settings.",
     backup: "The whole project in one .zip, with every assistant, skill, and file. You can open it here any time."
 };
 const AFTER_STEPS = {
@@ -6806,13 +6810,15 @@ const AFTER_STEPS = {
     ],
     portablePlugin: [
         ["In ChatGPT", ["A workspace owner, or someone allowed to upload plugins, opens the Admin console, then Plugins.", "Choose Add, then Upload plugin, and pick this .zip file."]],
-        ["In Codex, GitHub Copilot, Cursor, and similar tools", ["Unzip the file and add the folder as a plugin, following the tool's own steps.", "If the download has a SETUP.md file, follow its steps."]]
+        ["In Codex, GitHub Copilot, Cursor, OpenClaw, and similar tools", ["Unzip the file and add the folder as a plugin, following the tool's own steps.", "If the download has a SETUP.md file, follow its steps."]]
     ],
     notebook: [
         ["In Gemini Notebook", ["Open the notebook, then More, then Notebook settings.", "Add the .md download as a source.", "Or paste the instructions into the instructions field."]]
     ],
     skill: [
-        ["In a tool that reads Agent Skills", ["Upload or unzip this file where the tool looks for skills, such as the .agents/skills folder.", "SKILL.md holds the instructions, and the other folders hold its files."]]
+        ["In a tool that reads Agent Skills", ["Upload or unzip this file where the tool looks for skills, such as the .agents/skills folder.", "SKILL.md holds the instructions, and the other folders hold its files."]],
+        ["In OpenClaw or a Kimi Claw you run yourself", ["Unzip this file into the skills folder of your OpenClaw workspace.", "Or unzip it anywhere and run openclaw skills install with the path to the folder."]],
+        ["In Kimi Code CLI", ["Unzip this file into the .agents/skills folder of your project, or into .kimi-code/skills in your home folder to use it everywhere."]]
     ],
     backup: [
         ["In Agentprise", ["Keep this file somewhere safe. Browsers can clear what they store.", "Drop it on the Workspace page to keep working on it or to download it for another product."]]

@@ -161,7 +161,7 @@ name the file to change.
 | Download | File to change |
 |---|---|
 | Claude plugin | `.mcp.json` |
-| Plugin for ChatGPT, Codex, GitHub Copilot, Cursor | `mcp.json` |
+| Plugin for ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw | `mcp.json` |
 | Copilot app package | `plugin-` followed by a short name and `.json`, such as `plugin-notes.json` |
 
 1. Unzip the download.
@@ -217,7 +217,7 @@ The script runs only where the product allows it to reach the internet.
   need adding.
 - **Gemini:** Gemini skills cannot run scripts that reach the internet. The
   skill still works in Gemini without the script.
-- **Coding tools such as Claude Code or Codex:** allow the command when the
+- **Coding tools such as Claude Code, Codex, Kimi Code CLI, or OpenClaw:** allow the command when the
   tool asks.
 - **Copilot, Teams Chat, ChatGPT project instructions, and Gemini Notebook:**
   these cannot run scripts, so Agentprise leaves the script out and says so

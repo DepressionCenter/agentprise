@@ -38,9 +38,9 @@ maintainers", holds the technical details behind each file.
 | Claude | Claude | A skill (`.zip`) |
 | A ChatGPT project | ChatGPT, Copy | Project instructions to paste |
 | Gemini Notebook | Gemini Notebook | A `.md` file to add as a source |
-| Another tool that reads Agent Skills | SKILL.md | A plain skill (`.skill.zip`) with nothing specific to this app |
+| Another tool that reads Agent Skills, such as Claude Code, Codex, Kimi Code CLI, or OpenClaw | SKILL.md | A plain skill (`.skill.zip`) with nothing specific to this app |
 | Claude (claude.ai, Cowork, or Claude Code), with every assistant, skill, and tool in the project | Claude plugin | One plugin (`.claude-plugin.zip`) |
-| ChatGPT, Codex, GitHub Copilot, Cursor, or another tool that reads Agent Plugins, with every assistant, skill, and tool in the project | Plugin | One plugin (`.plugin.zip`) |
+| ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw, or another tool that reads Agent Plugins, with every assistant, skill, and tool in the project | Plugin | One plugin (`.plugin.zip`) |
 | Nowhere yet, or you want to edit it later | Download Backup | The whole project as one `.agentprise.zip` |
 
 The first seven downloads are for one assistant or skill: the one named at the
@@ -205,9 +205,22 @@ Skills turned on for your organization.
 
 **Plugin.** In ChatGPT, a workspace owner, or someone allowed to upload
 plugins, opens the Admin console, then Plugins, chooses Add, then Upload
-plugin, and picks the `.zip` file. In Codex, GitHub Copilot, Cursor, and
-similar tools, unzip the file and add the folder as a plugin, following the
-tool's own steps.
+plugin, and picks the `.zip` file. In Codex, GitHub Copilot, Cursor,
+OpenClaw, and similar tools, unzip the file and add the folder as a plugin,
+following the tool's own steps.
+
+**Plain skill (.skill.zip).** Unzip the file where your tool looks for skills,
+such as the `.agents/skills` folder of a project.
+
+- In OpenClaw, or a Kimi Claw you run yourself, unzip it into the `skills`
+  folder of your OpenClaw workspace. Or unzip it anywhere and run
+  `openclaw skills install` with the path to the folder.
+- In Kimi Code CLI, unzip it into the `.agents/skills` folder of your project,
+  or into `.kimi-code/skills` in your home folder to use it in every project.
+
+Kimi chat, Kimi Agent mode, and the Kimi Claw that Kimi hosts for you have no
+way to upload a skill file today. They offer skills only from Kimi's own list,
+from ClawHub, or made inside Kimi.
 
 **Backup (.agentprise.zip).** Keep it somewhere safe, because browsers can
 clear what they store. Drop it on the Workspace page to open the project
@@ -257,9 +270,9 @@ a real account. Read it before changing any converter in `index.html`.
 |---|---|---|---|---|---|
 | Agentprise project backup (Agent Plugins 1.0 folder) | `.agentprise.zip` | Yes | Yes | Yes, for the whole project | Keeping a project to edit later |
 | Skill (Agent Skill folder with a sidecar) | `.zip` | Yes | Yes | Yes for one item, without the project's organization and version | Gemini and Claude |
-| Plain skill | `.skill.zip` | Yes | Yes | Standard Agent Skills fields only | Any tool that reads Agent Skills |
+| Plain skill | `.skill.zip` | Yes | Yes | Standard Agent Skills fields only | Any tool that reads Agent Skills, such as Claude Code, Codex, Kimi Code CLI, and OpenClaw |
 | Claude plugin | `.claude-plugin.zip` | Yes, as skills and servers | Yes | No: instructions are composed for Claude, and local servers are left out | claude.ai, Cowork, and Claude Code |
-| Plugin (Agent Plugins 1.0 folder with the project record) | `.plugin.zip` | Yes, as a project | Yes | No: instructions are composed for ChatGPT | ChatGPT, Codex, GitHub Copilot, Cursor |
+| Plugin (Agent Plugins 1.0 folder with the project record) | `.plugin.zip` | Yes, as a project | Yes | No: instructions are composed for ChatGPT | ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw |
 | Agent Plugins folder, Claude plugin, or Codex plugin made elsewhere | `.zip` | Yes | As the backup or either plugin | Skills and servers; everything else is kept as unrecognized files | Bringing a plugin into a project |
 | Microsoft `.agent` | `.agent` | Yes | Yes | All but attached files | SharePoint libraries and Teams chats |
 | Teams app package | `.zip` | Yes | Yes | No (see below) | The Microsoft 365 Copilot app |
@@ -872,6 +885,18 @@ real account, unless the line names a tenant test.
 | Gems become skills in November 2026 for personal accounts, March 2027 for Workspace business, enterprise, and nonprofit accounts, and June 2027 for Workspace education accounts. The 2026-10-09 check recorded 2026-11-17 for personal accounts | [Gems to skills](https://support.google.com/gemini/answer/18560919), checked 2026-10-10 |
 | A Gemini skill can be downloaded as a `.zip` from Settings, Skills, More, Download | [Gemini skills help](https://support.google.com/gemini/answer/17094296), checked 2026-10-10 |
 
+#### OpenClaw and Kimi
+
+| Fact | Source |
+|---|---|
+| OpenClaw follows the Agent Skills specification; a `SKILL.md` needs only `name` and `description`, and `metadata.openclaw` is optional | [OpenClaw skills](https://docs.openclaw.ai/skills) and [Creating skills](https://docs.openclaw.ai/tools/creating-skills), checked 2026-10-11 |
+| OpenClaw loads skills from `<workspace>/skills`, `<workspace>/.agents/skills`, and `~/.agents/skills`, and `openclaw skills install` takes a folder path | [OpenClaw skills](https://docs.openclaw.ai/skills) and [ClawHub skill format](https://docs.openclaw.ai/clawhub/skill-format), checked 2026-10-11 |
+| OpenClaw reads the skills in an Agent Plugins folder (root `plugin.json`), a Claude plugin (`.claude-plugin/plugin.json`), and Codex and Cursor plugins, without checking them against those formats | [OpenClaw plugin manifest](https://docs.openclaw.ai/plugins/manifest), checked 2026-10-11 |
+| Kimi Claw is OpenClaw hosted by Kimi; its help pages offer skills from Kimi's list, from ClawHub, or synced from Agent mode, and document no upload of a `SKILL.md` or `.zip` | [Kimi Claw overview](https://www.kimi.com/help/kimi-claw/overview) and [Use skills in Claw](https://www.kimi.com/en/help/plugins-and-skills/use-skills-in-claw), checked 2026-10-11 |
+| Kimi Agent mode makes a custom skill from up to three Office or PDF files, or from a chat with its skill creator; it documents no upload of a `SKILL.md` or `.zip` | [Use skills in Agent](https://www.kimi.com/en/help/plugins-and-skills/use-skills-in-agent), checked 2026-10-11 |
+| Kimi Code CLI reads skills from `.kimi-code/skills` and `.agents/skills` in a project and from `~/.kimi-code/skills` and `~/.agents/skills` for one person | [Kimi Code CLI skills](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/skills.html), checked 2026-10-11 |
+| Kimi Code CLI plugins use their own `kimi.plugin.json` or `.kimi-plugin/plugin.json`, with `skills` and `mcpServers`, and install with `/plugins install` and a folder or `.zip` | [Kimi Code CLI plugins](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html), checked 2026-10-11 |
+
 ### Tests run in this repository
 
 - `npm test` on 2026-10-10 ran 220 tests, and 219 passed. The one failure was
@@ -932,6 +957,9 @@ documentation settled some of them. The rest need a real account.
 
 #### Other open tests
 
+- Install a plain skill and a Plugin made by Agentprise in an OpenClaw you run
+  yourself and in Kimi Code CLI, and confirm the skills load. The steps above
+  come from their documentation; a real install has not been recorded.
 - Upload a skill `.zip` made by Agentprise to a Gemini account and to a Claude
   account, and confirm both accept the `agentprise.json` file beside
   `SKILL.md`. The Claude upload path itself was settled by the documentation
@@ -988,6 +1016,9 @@ or importer changes.
 - [Add your assistant to the Library](how-to/add-to-library.md)
 - [Agent Skills specification](https://agentskills.io/specification)
 - [Agent Plugins specification](https://agent-plugins.org/specification)
+- [OpenClaw skills](https://docs.openclaw.ai/skills)
+- [OpenClaw plugin manifest](https://docs.openclaw.ai/plugins/manifest)
+- [Kimi Code CLI skills](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/skills.html)
 - [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8)
 - [Plugin manifest 2.4](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-manifest-2.4)
 - [Dynamic tool discovery for Copilot plugins](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-dynamic-tool-discovery)
