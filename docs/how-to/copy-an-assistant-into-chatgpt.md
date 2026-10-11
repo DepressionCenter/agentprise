@@ -62,7 +62,7 @@ If the list **What changes in this download** appears above the box, read it.
 For example, it tells you when the assistant has files that you need to add
 to the ChatGPT project yourself.
 
-![The Output Format card of the Inspect page on the ChatGPT tab for Caveman. Under the heading Copy and paste is one box, Project instructions, holding the Caveman instructions, with a button that reads Copy the project instructions. A note says there is no file to upload, and three next steps for a ChatGPT project follow.](../../images/guides/details-chatgpt.png)
+![The Files for each product card of the Inspect page on the ChatGPT tab for Caveman. Under the heading Copy and paste is one box, Project instructions, holding the Caveman instructions, with a button that reads Copy the project instructions. A note says there is no file to upload, and three next steps for a ChatGPT project follow.](../../images/guides/details-chatgpt.png)
 
 If a copy button says copying is blocked, the app selects the text for you.
 Press Ctrl+C on Windows or Command+C on a Mac to copy it.

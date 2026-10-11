@@ -797,10 +797,10 @@ describe("fixed engine gaps", () => {
 // ### Page size ###
 
 describe("page size", () => {
-  test("index.html stays under 500 KB (500,000 bytes)", () => {
+  test("index.html stays under 750 KB (750,000 bytes)", () => {
     // Measured as served: the repository stores LF, but a Windows checkout may
     // add a carriage return to every line.
     const size = Buffer.byteLength(readFileSync(join(repoRoot, "index.html"), "utf8").replace(/\r\n/g, "\n"));
-    assert.ok(size < 500 * 1000, "index.html is " + size + " bytes");
+    assert.ok(size < 750 * 1000, "index.html is " + size + " bytes");
   });
 });

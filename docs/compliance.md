@@ -366,7 +366,7 @@ borders.
   native `details` menu named "More actions for" the project, with buttons whose
   hidden text names the project. The item bar is a `nav` whose current item
   carries `aria-current`. "Skills it can use" is a `fieldset` with a `legend`.
-  The Library View, Try it, and Read more buttons carry the entry name as
+  The Library View, Open, and Read more buttons carry the entry name as
   hidden text.
 - On each Library card, read from the code on 2026-10-11: the picture is a
   second way to open the View dialog for pointer users. It is a button left
@@ -392,10 +392,10 @@ borders.
 
 - The project workspace has not been scanned with axe-core or walked through
   with a keyboard, at 320 pixels, or for contrast. That covers Your projects
-  and each tile's More menu, the Recent list in the sidebar, the
+  and each tile's Edit button and ... menu, the Recent list in the sidebar, the
   "In this project" bar, Add a skill and Add from a file, "Skills it can use",
   the "Part of the project" picker in Inspect, the Library View dialog, the
-  card layout with View and Try it beside the picture and Read more, the kind
+  card layout with View and Open beside the picture and Read more, the kind
   labels, and the Rename, Delete, Remove, and Keep both or Replace mine
   dialogs. Focus after Delete moves to Create new in the code, but no one has
   confirmed it by hand.

@@ -47,7 +47,7 @@ without showing anyone's private work.
 1. Go to [code.depressioncenter.org/agentprise](https://code.depressioncenter.org/agentprise/).
 2. Drag the file onto the dotted box, or choose **Choose a file** and pick it.
 
-![The dotted drop box on the start page. It reads Drop an agent or skill file here. It says it accepts an Agentprise backup, a plugin or skill .zip, a .zip from the Copilot app, a .agent file, or a SKILL.md file, and that each file opens as a new project. A Choose a file button sits below.](../../images/guides/dropzone.png)
+![The dotted drop box on the start page. It reads Drop an agent or skill file here. It says you can open an Agentprise backup, a skill or plugin .zip, an app package .zip from Copilot, a .agent file, or a SKILL.md file, and that each file opens as a new project. A Choose a file button sits below.](../../images/guides/dropzone.png)
 
 If you are in the middle of a project, the start page is not showing.
 Choose **Workspace** on the left, or the home button at the top, to get back
@@ -123,17 +123,16 @@ project, ready to open in Agentprise again. Your project also stays under
 download a backup of anything you want to keep.
 
 To see what is inside, choose **Inspect** on the left. The Inspect page shows
-every field as a plain form on the left, and the files for one product on the
-right.
+the files for one product at a time.
 
-![The Inspect page for Caveman. The left card, titled Assistant details, shows the name, description, instructions, and prompt suggestions as form fields. The right card, titled Output Format, has ten tabs: Agentprise Backup, ChatGPT, Claude, Claude Plugin, Copilot / Teams Apps, Gemini, Gemini Notebook, Plugin, SKILL.md, and Teams Chat, with Gemini selected. Under the tabs, a report titled What changes in this download says the assistant is written as a skill whose description starts with Persona:, and the files in the caveman folder are listed below it, with SKILL.md shown.](../../images/guides/details.png)
+![The Inspect page for Caveman. In the menu on the left, Caveman and Inspect are listed under Workspace, with Inspect highlighted. A Back to the simple view button is at the top right. The card titled Files for each product has ten tabs: Agentprise Backup, ChatGPT, Claude, Claude Plugin, Copilot / Teams Apps, Gemini, Gemini Notebook, Plugin, SKILL.md, and Teams Chat, with Gemini selected. Under the tabs, a report titled What changes in this download says the assistant is written as a skill whose description starts with Persona:, and the files in the caveman folder are listed below it, with SKILL.md shown.](../../images/guides/details.png)
 
 Choose the **Gemini** tab, or the **Claude** tab for Claude. It lists the
 files, with your own words highlighted. If the list
 **What changes in this download** appears above the files, read it. It says
 what was changed or left out for that product, and what needs setup.
 
-![The Output Format card on the Gemini tab for Caveman. The report What changes in this download says the assistant is written as a skill whose description starts with Persona:. The files SKILL.md, agentprise.json, icon.png, LICENSE.txt, and README.md are listed inside a folder named caveman, with the contents of SKILL.md shown. At the bottom are a button that reads Download Caveman.zip and three steps for Gemini.](../../images/guides/details-gemini-claude.png)
+![The Files for each product card on the Gemini tab for Caveman. The report What changes in this download says the assistant is written as a skill whose description starts with Persona:. The files SKILL.md, agentprise.json, icon.png, LICENSE.txt, and README.md are listed inside a folder named caveman, with the contents of SKILL.md shown. At the bottom are a button that reads Download Caveman.zip and three steps for Gemini.](../../images/guides/details-gemini-claude.png)
 
 ### Step 4: Upload it to Gemini
 

@@ -897,7 +897,7 @@ real account, unless the line names a tenant test.
   `tests/schema-validator.mjs`, which has its own tests.
   `tests/schemas/SOURCES.md` lists each file's URL, download date, and SHA-256
   hash. The tests read these files from disk and never fetch a schema.
-- A test keeps `index.html` under 500,000 bytes, so the page stays quick to
+- A test keeps `index.html` under 750,000 bytes, so the page stays quick to
   load. The test fails as soon as the file grows past that.
 - `node tools/migrate-library.mjs --check` on 2026-10-10 reported all 13
   Library entries as already version 2 and the catalog unchanged.

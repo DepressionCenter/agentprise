@@ -117,7 +117,7 @@ dropped file. So an entry is a backup plus one catalog line.
    search and image creation on, have SharePoint, Teams messages, email, and
    meetings off, link no SharePoint files, and have a 192 by 192 pixel picture.
 5. Start the local server and open the Library page to see the card. Choose
-   **View** and **Try it** to check that it opens.
+   **View** and **Open** to check that it opens.
 
 To replace an entry, overwrite its `.zip` and update its catalog line. The
 page has no copy of any entry inside it, so adding, replacing, or removing a

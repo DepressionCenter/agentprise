@@ -47,16 +47,18 @@ There are three ways to get there:
 
 The Library page shows one card for each entry.
 
-![The Library page. A search box sits at the top right. Under the title is a row of tag buttons, starting with All, fun, persona, research, and copilot. A line reads 16 entries. The first row of cards shows Caveman, Pirate First Mate, and Dude, and the next row starts with Aussie Battler, Evidence Scout, and Study Planner. Each card has a picture with View and Try it buttons at its top right, then a label such as Assistant, the name, the author, a short summary, and tags.](../../images/guides/library.png)
+![The Library page. A search box sits at the top right. Under the title is a row of filter buttons: All, Assistant, Skill, and Assistant with skills, then tags such as fun, persona, research, and copilot. A line reads 16 entries. The first row of cards shows Caveman, Pirate First Mate, and Dude, and the next row starts with Aussie Battler, Evidence Scout, and Study Planner. Each card has a picture with View and Open buttons at its top right, then a label such as Assistant, the name, the author, a short summary, and tags.](../../images/guides/library.png)
 
 ### Step 2: Find one and look inside
 
 When the list is long, type in the search box to narrow it by name, summary,
-kind, or tag. You can also choose one of the tag buttons to show only that tag.
-**All** or **Show all** brings everything back.
+kind, or tag. You can also choose **Assistant**, **Skill**, or
+**Assistant with skills** to show only that kind of entry. The buttons after
+them show only one tag. **All** or **Show all** brings everything
+back.
 
 Each card has two buttons at the top right, beside the picture: **View** and
-**Try it**. Under them, the card shows:
+**Open**. Under them, the card shows:
 
 - What kind of entry it is: **Assistant**, **Skill**, or
   **Assistant with skills**.
@@ -67,7 +69,7 @@ Each card has two buttons at the top right, beside the picture: **View** and
   can use.
 - Up to three tags. Choose a tag to show only the entries that have it.
 
-![The Library card for Caveman. View and Try it buttons sit at the top right, next to the picture. Below are the label Assistant, the name Caveman, By Gabriel Mongefranco, the summary Me agent, answer questions, big brain., and the tags fun, persona, and copilot.](../../images/guides/library-card.png)
+![The Library card for Caveman. View and Open buttons sit at the top right, next to the picture. Below are the label Assistant, the name Caveman, By Gabriel Mongefranco, the summary Me agent, answer questions, big brain., and the tags fun, persona, and copilot.](../../images/guides/library-card.png)
 
 To look inside before you take it, choose **View** on the card. Choosing the
 picture or **Read more** does the same. A window opens with the kind of
@@ -76,13 +78,13 @@ summary, a few questions people might ask it, and the start of its
 instructions. For an entry that holds more than one thing, such as Evidence
 Scout, it lists what is inside.
 
-![The View window for the Caveman Library entry. It shows the picture, the name, and the line Assistant. by Gabriel Mongefranco. GPL-3.0-or-later, then the summary, three questions under People might ask, and the start of its instructions. Close and Try it buttons are at the bottom.](../../images/guides/library-view.png)
+![The View window for the Caveman Library entry. It shows the picture, the name, and the line Assistant. by Gabriel Mongefranco. GPL-3.0-or-later, then the summary, three questions under People might ask, and the start of its instructions. An X to close the window is in the top right corner, and Add to Current Project and Open buttons are at the bottom.](../../images/guides/library-view.png)
 
-Choose **Close** to go back, or **Try it** to take it.
+Choose the **X** in the top right corner to go back, or **Open** to take it.
 
-### Step 3: Choose Try it
+### Step 3: Choose Open
 
-Choose **Try it** on the card or in the View window. Agentprise adds a copy
+Choose **Open** on the card or in the View window. Agentprise adds a copy
 of the entry to **Your projects** on the Workspace page and opens it.
 
 If you already tried the same entry before, the app asks what to do:
@@ -140,22 +142,27 @@ The guides for each product walk through the rest:
 Choose **Download Backup** to save your version of the whole project as a
 `.zip` you can open here again.
 
-### Add a skill from the Library
+### Add an assistant or skill to your project
 
-Some Library entries are skills: sets of steps an assistant follows only when
-a question needs them. **PubMed Search** is one. To give a skill to an
-assistant you are working on:
+You can add a Library entry to the project you have open instead of opening it
+on its own. This is how you give a skill to an assistant you are working on.
+Skills are sets of steps an assistant follows only when a question needs
+them. **PubMed Search** is one.
 
 1. Open your project, then go to the Library.
-2. Choose **View** on the skill.
-3. Choose **Add to** followed by the name of your project. This button shows
-   only for a skill that is not in the project yet.
-4. Back in the project, choose your assistant in the **In this project** bar,
-   and check the skill under **Skills it can use**.
+2. Choose **View** on the entry.
+3. Choose **Add to Current Project**. Agentprise adds the entry to your project
+   and shows the project page. If the project already has something with the
+   same name, the new one gets "copy" at the end of its name.
+4. If your project has one assistant, a skill you add is checked for it under
+   **Skills it can use**. If it has more than one, choose the assistant in the
+   **In this project** bar and check the skill there.
 
-An entry marked **Assistant with skills** already has its skills inside.
-When you try Evidence Scout, for example, the **In this project** bar shows
-both the assistant and its skill.
+**Add to Current Project** works only while a project is open, and only for an
+entry with one assistant or one skill. An entry marked **Assistant with
+skills**, such as Evidence Scout, already has its skills inside, so choose
+**Open** for it instead. The **In this project** bar then shows both the
+assistant and its skill.
 
 ![The editor after trying Evidence Scout from the Library. A note says Loaded Evidence Scout. The In this project bar shows two items, Evidence Scout marked Assistant and PubMed Search marked Skill, with the buttons Add a skill and Add from a file. The questions and preview for Evidence Scout start below.](../../images/guides/editor-evidence-scout.png)
 
