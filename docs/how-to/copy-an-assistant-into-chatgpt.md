@@ -71,7 +71,7 @@ These steps happen in ChatGPT, so Agentprise cannot show them.
 
 If you would rather add the whole assistant as a source, open the **Gemini
 Notebook** tab on the Inspect page, or choose **Download** on the Gemini
-Notebook row under **Download** on the Workspace page. You get a small
+Notebook row under **Download** in the project editor. You get a small
 `.md` file, such as `Caveman.md`, with everything in one place. Add that
 file to the notebook as a source.
 

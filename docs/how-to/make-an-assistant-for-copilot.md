@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/make-an-assistant-for-copilot.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-10
 Summary: Step-by-step guide with screenshots: make a new assistant in Agentprise
          and add it to the Agents list in Microsoft 365 Copilot or Teams.
 Notes: See README file for documentation and full license information.
@@ -85,9 +85,10 @@ Copilot. Choose **More settings** under the questions to open them.
 - **Picture.** Choose **Choose an image** and pick a square PNG or JPG. The
   app resizes it to the sizes Copilot wants. Without one, Copilot shows the
   first letter of the name on a blue square.
-- **Agent publisher details.** Open this section and fill in your name, your website, and
+- **Publisher details.** Open this section and fill in your name, your website, and
   links to a privacy page and a terms page. The Copilot app package needs all
-  four. If you leave any blank, the app fills in placeholder values and tells
+  four. The screenshot above shows this section under its earlier name, Agent
+  publisher details. If you leave any blank, the app fills in placeholder values and tells
   you so before you download.
 - **File attachments.** Add files from your computer. Files can be documents,
   OneNote pages, or plain text, including scripts, which Copilot receives as
@@ -139,12 +140,13 @@ license and permission to any SharePoint files you linked.
 
 ### Step 7: Download a backup
 
-Choose **Download Backup** at the bottom of the **Download
-go** card. You get a small `.zip` file, such as `lab-helper.zip`. Keep it
-somewhere safe.
+Choose **Download Backup** at the bottom of the **Download** card. You get a
+small `.zip` file with the whole project, such as `lab-helper.agentprise.zip`.
+Keep it somewhere safe.
 
-To change the assistant later, drop that file on the Workspace start page,
-make your changes, and download the app package again. Upload the new file in
+To change the assistant later, open it from **Your projects** on the Workspace
+page, or drop the backup on the Workspace start page. Make your changes, and
+download the app package again. Upload the new file in
 place of the old one. It keeps the same id, so Copilot treats it as an update
 rather than a second assistant.
 

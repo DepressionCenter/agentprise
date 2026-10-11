@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/compliance.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-10
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
          the controls in place, the evidence behind them, and the known gaps.
 Notes: See README file for documentation and full license information.
@@ -42,8 +42,8 @@ listed under known gaps.
   else.
 - Library entries are untrusted input like any dropped file. Each catalog line
   is type-checked and capped, its file name must be a plain name ending in
-  `.zip` so it cannot point outside the folder, and each bundle goes through the
-  same importer and `normalizeAgent` path as an upload. Evidence:
+  `.zip` so it cannot point outside the folder, and each backup goes through the
+  same importer and `normalizeProject` path as an upload. Evidence:
   `tests/library.test.mjs`.
 - The page loads no web font. Its font stacks name IBM Plex first, so the face is
   used where it is installed, and fall back to the system interface font. A font
@@ -54,11 +54,26 @@ listed under known gaps.
   `index.html` returns before adding the tag on any other host; the headless
   browser walkthrough on `localhost` on 2026-10-09 recorded no request to any host
   other than `localhost`.
-- The draft is kept in the browser only: the text under one `localStorage` key
-  and attached files in one IndexedDB database, both named with the
-  `agentprise-` prefix because other EFDC apps share the origin. "Start over" on
-  the Workspace page removes both after asking. When storage is blocked, the app
-  still works and the sidebar says the draft will not be kept.
+- Projects are kept in the browser only, under names with the `agentprise-`
+  prefix because other EFDC apps share the origin. The IndexedDB database
+  `agentprise-projects` has two stores: `projects`, keyed by project id, holds
+  each project record, and `files`, keyed by `<projectId>/<itemId>/<path>`,
+  holds pictures and attached files. The `localStorage` key
+  `agentprise-workspace-v2` holds only the last opened project id, the recent
+  project ids, and preferences. A new project is not stored until something is
+  typed in it. Delete on a project tile removes its record and files after
+  asking. Evidence: the storage constants and `saveStoredProject` and
+  `deleteStoredProject` in `index.html`, read on 2026-10-10.
+- On every load the app deletes the version 1 draft, the `localStorage` key
+  `agentprise-draft-v1` and the IndexedDB database `agentprise-draft-files`,
+  without reading either. Evidence: `removeLegacyStorage` in `index.html`.
+- Stored projects are treated as untrusted when they are read back: each record
+  goes through `normalizeProject`, and only well-formed ids survive in the
+  recent list. Evidence: `tests/project.test.mjs` ("a damaged record is
+  normalized like any untrusted input").
+- When storage is blocked or a save fails, editing and downloads keep working
+  for the visit, and the sidebar says projects will not be kept after the page
+  closes and asks the person to download a backup.
 - No secrets, keys, tokens, or configuration files exist in this repository, so
   there is no `.env` file and no `.env.example`.
 - Agent instructions are the creator's own text. The app never sends them
@@ -79,16 +94,44 @@ listed under known gaps.
   Evidence: `tests/scan.test.mjs`, with one example and one near miss per
   pattern and a check that no sample holds two consecutive digits.
 - Exported files carry the creator's own copyright and license first. The
-  `.agent` file and the bundle carry a notice naming the creator and then the
-  app; the Teams package carries no notice because its schemas reject extra keys.
+  `.agent` file and the `agentprise.json` file in each skill `.zip` and backup
+  carry a `_license` notice naming the creator and then the app, and
+  `LICENSE.txt` holds the creator's license; the Teams package carries no
+  notice because its schemas reject extra keys.
+- A license is never relabeled. A skill or plugin from elsewhere that names no
+  license opens with the license "Not stated" and a notice, its `LICENSE.txt`
+  says the license was not stated, and a license file the author brought is
+  kept. Evidence: `UNKNOWN_LICENSE` and `readItemFolders` in `index.html`.
 
 ### Security controls
 
 - Uploaded files are untrusted input. Every value read from a file passes through
-  `normalizeAgent`, which type-checks and length-caps each field before it reaches
-  the form. Evidence: `tests/engine.test.mjs`, `tests/formats.test.mjs`, and
-  `tests/library.test.mjs` and `tests/scan.test.mjs` (92 tests passing on 2026-10-10).
-- The ZIP reader caps the entry count at 200, each entry at 10 MB, and the whole
+  `normalizeProject`, which type-checks and length-caps each project field and
+  runs `normalizeItem` and `normalizeAgent` on each assistant and skill before
+  anything reaches the form. Ids that are not UUIDs are replaced, and only
+  known keys of the Agentprise extension in `plugin.json` are copied. Evidence:
+  `tests/engine.test.mjs`, `tests/formats.test.mjs`, `tests/library.test.mjs`,
+  `tests/project.test.mjs`, and `tests/scan.test.mjs` (149 tests passing on
+  2026-10-10).
+- Importing executes nothing and contacts nothing. Plugin manifests, MCP
+  server files, skill files, hooks, commands, and agents are read as data. A
+  local tool server's command is stored as text and never run. Server
+  `headers`, `env`, and `cwd` settings are dropped on import with a notice,
+  because they can hold secrets. Hooks, commands, agents folders, and every
+  other file the app does not understand are kept as unrecognized files, which
+  are written back only into the backup and appear in no other download. Files
+  outside the plugin folder are left out. Evidence: `readPluginArchive` and
+  `serversFromMcp` in `index.html`, and `tests/project.test.mjs` (Claude,
+  Codex, and Agent Plugins imports; "unrecognized files keep safe paths and
+  never hold programs").
+- Programs are refused everywhere a file can arrive: attached files, files in
+  a skill folder, and unrecognized files. A file with a program signature, a
+  program extension, or a program extension hidden before its last extension
+  is left out with a notice. Paths with `..`, a leading slash, a backslash, or
+  a hidden folder are refused. Evidence: `cleanSkillFiles` and
+  `cleanArchivePath` in `index.html`, and `tests/project.test.mjs` ("unsafe,
+  empty, and program files in a skill are refused").
+- The ZIP reader caps the entry count at 1,200, each entry at 10 MB, and the whole
   archive at 50 MB. It rejects names containing `..`, a leading slash, a
   backslash, or a drive letter; refuses encrypted and 64-bit archives; refuses
   an archive that lists one name twice; verifies every checksum; and stops
@@ -96,11 +139,11 @@ listed under known gaps.
   test suite, including a path-traversal name, an oversize declared length, a
   mislabeled inflated size, a damaged checksum, and a repeated name.
 - JSON and YAML are parsed, never evaluated. The YAML reader handles only the
-  subset the bundle uses and skips anything else with a warning.
+  subset the app's files use and skips anything else with a warning.
 - All text reaches the page through `textContent`. The script never assigns
-  `innerHTML`. The Details code view, which highlights the person's own words
+  `innerHTML`. The Inspect code view, which highlights the person's own words
   inside the generated files, is built from text nodes and `mark` elements only.
-  Evidence: a search of `index.html` for `innerHTML` on 2026-10-09 found no use,
+  Evidence: searches of `index.html` for `innerHTML` on 2026-10-09 and 2026-10-10 found no use,
   and the browser walkthrough confirms that a description containing a script tag
   appears as literal text in the code view.
 - Icons are decoded through an `Image` element and redrawn on a canvas, which
@@ -141,8 +184,9 @@ listed under known gaps.
 
 ### Accessibility
 
-Target: WCAG 2.2 AA. The app is one page with four views (Workspace, Library,
-Details, Help) reached from a sidebar of links.
+Target: WCAG 2.2 AA. The app is one page with five views (Workspace, the
+project editor, Library, Inspect, and Help). The sidebar links to Workspace,
+Library, Inspect, and Help, and lists up to five recent projects.
 
 #### Automated scan
 
@@ -153,30 +197,32 @@ page, the editor, Details, and Help in dark mode. A second run the same day
 scanned the Library with the Caveman card in light and dark mode. A third run
 the same day scanned the Library with ten cards in light and dark mode; each
 card name is a second-level heading under the page title, so the heading order
-rule passes. Zero violations in every run.
+rule passes. Zero violations in every run. These runs came before the project
+workspace was added, so the parts listed under known gaps below have not been
+scanned yet.
 
 #### Keyboard and reflow checks run in the walkthrough
+
+These checks ran in the 2026-10-09 walkthrough, before the project workspace
+was added. Each one still describes the current code.
 
 - "Create new" opens the editor with focus on the name blank. Each blank sits
   under a visible question that is its label; the example question blanks are
   named "Example question 1", "Example question 2", and so on.
 - "Add another question" adds a blank and moves focus to it.
-- Confirmations in the status bar ("Copied.", "Started over.") clear themselves
+- Confirmations in the status bar, such as "Copied.", clear themselves
   after eight seconds. They are announced when they appear, so nothing is lost.
   Errors, such as a file the app cannot open, stay until the person acts.
 - Links that leave the app open in a new tab and carry hidden text that says so.
-- The product tabs in Details move with Left, Right, Home, and End, with roving
+- The product tabs in Inspect move with Left, Right, Home, and End, with roving
   `tabindex`, and the file list is a set of buttons.
 - Inline link errors appear on blur and clear when fixed.
 - The template button asks before replacing text, in a native dialog that
   returns focus when closed.
-- Opening a file while a draft exists asks first in the same dialog.
 - The old hashes `#home`, `#build`, `#check`, and `#download` still open the
   matching view.
-- No horizontal scrolling at 320 CSS pixels wide on any view; the sidebar becomes
-  a strip above the content.
-- The draft survives a reload and reopens the editor. "Start over" removes it
-  and returns focus to "Create new".
+- No horizontal scrolling at 320 CSS pixels wide on any view that existed at
+  the time; the sidebar becomes a strip above the content.
 
 #### Contrast
 
@@ -241,7 +287,7 @@ borders.
   `tabpanel` roles for the product files, `fieldset` and `legend` for grouped
   controls, a captioned table with header cells, and native `details`, `dialog`,
   and `button` elements.
-- Every input has a visible label. In the Workspace editor the label is the
+- Every input has a visible label. In the project editor the label is the
   question above the blank. Hints and errors are joined to their inputs with
   `aria-describedby`, and invalid inputs carry `aria-invalid`.
 - Required fields that are still empty are listed as links beside the download
@@ -250,19 +296,36 @@ borders.
 - Status messages go to one polite live region. Nothing moves, flashes, or
   auto-advances. Smooth scrolling is applied only when the system does not ask
   for reduced motion.
+- In the project workspace, read from the code on 2026-10-10: each project tile
+  opens from a button that is the project name, and its other actions sit in a
+  native `details` menu named "More actions for" the project, with buttons whose
+  hidden text names the project. The item bar is a `nav` whose current item
+  carries `aria-current`. "Skills it can use" is a `fieldset` with a `legend`.
+  The Library Preview and Try it buttons carry the entry name as hidden text.
+  Rename, Delete, Remove, and Keep both or Replace mine use the same native
+  `dialog` elements as the rest of the app.
 - Pointer targets are at least 44 by 44 CSS pixels, except the file list buttons
-  in Details, which are 36 pixels tall and well above the 24 pixel minimum. Focus
-  is a 3 pixel ring. The scrollable code view is focusable and named.
+  in Inspect, which are 36 pixels tall and well above the 24 pixel minimum. This
+  was measured before the project workspace was added. Focus is a 3 pixel ring.
+  The scrollable code view is focusable and named.
 - Text is 16 pixels at the base size with a 1.5 line height. Help text is capped
   at about 72 characters per line and left aligned.
-- Dropping a file has a button alternative (Choose a file on the start page, Open
-  a file in the editor). Reordering prompt suggestions is done by editing the
-  list, one per line, on the Inspect page.
+- Dropping a file has a button alternative (Choose a file on the start page,
+  Open a file and Add from a file in the editor). Reordering prompt suggestions
+  is done by editing the list, one per line, on the Inspect page.
 - Interface text aims at a grade 7 to 9 reading level and avoids exclamation
   marks in system messages.
 
 ### Known gaps and checks that still need a person
 
+- The project workspace has not been scanned with axe-core or walked through
+  with a keyboard, at 320 pixels, or for contrast. That covers Your projects
+  and each tile's More menu, the Recent list in the sidebar, the
+  "In this project" bar, Add a skill and Add from a file, "Skills it can use",
+  the "Part of the project" picker in Inspect, the Library Preview dialog and
+  kind labels, and the Rename, Delete, Remove, and Keep both or Replace mine
+  dialogs. Focus after Delete moves to Create new in the code, but no one has
+  confirmed it by hand.
 - A screen reader pass on the main flows (NVDA or JAWS on Windows, VoiceOver on
   macOS) has not been done. The question blanks, the live region, the dialog, and
   the product tabs are the parts most worth listening to.
