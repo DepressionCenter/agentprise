@@ -1,0 +1,79 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "golden-kit",
+  "version": "1.2.3",
+  "description": "A fixed project for export tests.",
+  "author": {
+    "name": "Example Creator",
+    "url": "https://example.org"
+  },
+  "license": "GPL-3.0-or-later",
+  "extensions": {
+    "org.depressioncenter.agentprise": {
+      "schemaVersion": 2,
+      "id": "10000000-0000-4000-8000-000000000001",
+      "name": "Golden Kit",
+      "description": "A fixed project for export tests.",
+      "version": "1.2.3",
+      "creator": {
+        "name": "Example Creator",
+        "organization": "Example Org",
+        "url": "https://example.org",
+        "privacy": "https://example.org/privacy",
+        "terms": "https://example.org/terms"
+      },
+      "copyright": "Copyright (C) 2026 Example Creator",
+      "license": "GPL-3.0-or-later",
+      "created": "2026-10-10T00:00:00.000Z",
+      "modified": "2026-10-10T00:00:00.000Z",
+      "servers": {
+        "remote": {
+          "label": "Example search server",
+          "transport": "http",
+          "url": "https://mcp.example.org/mcp",
+          "userSupplied": false,
+          "auth": "none",
+          "tools": []
+        },
+        "pinned": {
+          "label": "Pinned tools server",
+          "transport": "http",
+          "url": "https://tools.example.org/mcp",
+          "userSupplied": false,
+          "auth": "oauth",
+          "tools": [
+            "search",
+            "fetch"
+          ]
+        },
+        "local": {
+          "label": "Local helper server",
+          "transport": "stdio",
+          "url": "",
+          "userSupplied": false,
+          "auth": "none",
+          "tools": [],
+          "command": "npx",
+          "args": [
+            "-y",
+            "example-mcp-server"
+          ]
+        }
+      },
+      "items": [
+        {
+          "kind": "agent",
+          "id": "20000000-0000-4000-8000-000000000002",
+          "skillName": "golden-scout"
+        },
+        {
+          "kind": "skill",
+          "id": "30000000-0000-4000-8000-000000000003",
+          "skillName": "record-finder"
+        }
+      ],
+      "unrecognized": [],
+      "pluginExtras": {}
+    }
+  }
+}

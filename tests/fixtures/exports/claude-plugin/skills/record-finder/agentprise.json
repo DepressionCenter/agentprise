@@ -1,0 +1,179 @@
+{
+  "_license": "Copyright (C) 2026 Example Creator. Licensed under GPL-3.0-or-later. Made with Agentprise, free software under the GNU GPL v3.0 or later: https://github.com/DepressionCenter/agentprise",
+  "schemaVersion": 2,
+  "kind": "skill",
+  "id": "30000000-0000-4000-8000-000000000003",
+  "name": "Record Finder",
+  "appId": "",
+  "license": "",
+  "capabilities": [
+    {
+      "id": "records.connector",
+      "label": "Record connector",
+      "description": "Looks up records through a connector.",
+      "required": false,
+      "fallback": "Explain that no record connector is connected and offer to help write the request instead.",
+      "providers": {
+        "*": [
+          {
+            "kind": "connector",
+            "instructions": "Search with the record title.",
+            "name": "Example Records"
+          }
+        ]
+      }
+    },
+    {
+      "id": "records.server",
+      "label": "Record server",
+      "description": "Searches records on a tool server.",
+      "required": false,
+      "fallback": "Say that no record server is connected.",
+      "providers": {
+        "*": [
+          {
+            "kind": "mcp",
+            "instructions": "Ask the server for its tools first.",
+            "server": "remote",
+            "tools": []
+          },
+          {
+            "kind": "mcp",
+            "instructions": "Use search, then fetch.",
+            "server": "pinned",
+            "tools": [
+              "search",
+              "fetch"
+            ]
+          },
+          {
+            "kind": "mcp",
+            "instructions": "Use the local helper.",
+            "server": "local",
+            "tools": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "records.api",
+      "label": "Record API",
+      "description": "Calls the records API.",
+      "required": false,
+      "fallback": "Say that the records API is not connected.",
+      "providers": {
+        "*": [
+          {
+            "kind": "openapi",
+            "instructions": "Call searchRecords first.",
+            "spec": "openapi/records.yaml",
+            "operations": [
+              "searchRecords",
+              "getRecord"
+            ],
+            "auth": "none"
+          }
+        ]
+      }
+    },
+    {
+      "id": "records.script",
+      "label": "Record script",
+      "description": "Runs the lookup script.",
+      "required": false,
+      "fallback": "Say that the script cannot run here.",
+      "providers": {
+        "*": [
+          {
+            "kind": "script",
+            "instructions": "Run python3 scripts/lookup.py with the search words.",
+            "path": "scripts/lookup.py",
+            "runtime": "python3"
+          }
+        ]
+      }
+    },
+    {
+      "id": "records.web",
+      "label": "Record web search",
+      "description": "Finds record pages on the web.",
+      "required": false,
+      "fallback": "Say that web search is off.",
+      "providers": {
+        "*": [
+          {
+            "kind": "websearch",
+            "instructions": "Treat results as discovery, not a finished search.",
+            "sites": [
+              "https://records.example.org"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "records.manual",
+      "label": "Manual check",
+      "description": "Checks a record by hand.",
+      "required": false,
+      "fallback": "Ask the person to paste the record.",
+      "providers": {
+        "*": [
+          {
+            "kind": "none"
+          }
+        ]
+      }
+    }
+  ],
+  "copyright": "Copyright (C) 2026 Example Creator",
+  "files": [
+    {
+      "path": "openapi/records.yaml",
+      "type": "yaml"
+    },
+    {
+      "path": "scripts/lookup.py",
+      "type": "py"
+    },
+    {
+      "path": "references/guide.md",
+      "type": "md"
+    }
+  ],
+  "composed": true,
+  "servers": {
+    "remote": {
+      "label": "Example search server",
+      "transport": "http",
+      "url": "https://mcp.example.org/mcp",
+      "userSupplied": false,
+      "auth": "none",
+      "tools": []
+    },
+    "pinned": {
+      "label": "Pinned tools server",
+      "transport": "http",
+      "url": "https://tools.example.org/mcp",
+      "userSupplied": false,
+      "auth": "oauth",
+      "tools": [
+        "search",
+        "fetch"
+      ]
+    },
+    "local": {
+      "label": "Local helper server",
+      "transport": "stdio",
+      "url": "",
+      "userSupplied": false,
+      "auth": "none",
+      "tools": [],
+      "command": "npx",
+      "args": [
+        "-y",
+        "example-mcp-server"
+      ]
+    }
+  }
+}

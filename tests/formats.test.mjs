@@ -27,6 +27,7 @@ import { loadEngine } from "./load-engine.mjs";
 import { makePng, sampleAgent, agentFields, BYTE_SHAPES } from "./helpers.mjs";
 
 const engine = loadEngine();
+await engine.ready;
 const encode = (text) => new TextEncoder().encode(text);
 const decode = (bytes) => new TextDecoder().decode(bytes);
 const teamsIcons = () => ({ color: makePng(192, 192), outline: makePng(32, 32, [255, 255, 255, 255]) });
@@ -279,16 +280,18 @@ describe("Agent Skill ZIP", () => {
   test("the skill ZIP of an agent writes its folder with SKILL.md, the sidecar, and the icon", async () => {
     const agent = sampleAgent(engine);
     const project = projectOf(agent);
-    const { fileName, entries, report } = await engine.exports.skillZip(project, project.items[0]);
+    const { fileName, entries, report } = await engine.exports.skillZip(project, project.items[0], "claude");
     assert.equal(fileName, "Caveman.zip");
-    assert.deepEqual(report, []);
+    // Claude has no separate place for assistants, so the report says the agent became a skill.
+    assert.deepEqual(report.map((e) => [e.component, e.status]), [["Caveman", "transformed"]]);
+    assert.ok(report[0].note.includes("Persona:"));
     assert.deepEqual(entries.map((e) => e.name), ["caveman/SKILL.md", "caveman/agentprise.json", "caveman/icon.png", "caveman/LICENSE.txt", "caveman/README.md", "caveman/references/notes.txt"]);
     const byName = new Map(entries.map((e) => [e.name, e.bytes]));
     const skillMd = decode(byName.get("caveman/SKILL.md"));
     assert.ok(skillMd.startsWith("---\nname: caveman\n"));
     const { data, body } = engine.yaml.parseFrontmatter(skillMd);
     assert.deepEqual(Object.keys(data), ["name", "description", "license", "metadata"]);
-    assert.equal(data.description, agent.description);
+    assert.equal(data.description, "Persona: " + agent.description);
     assert.equal(data.license, "GPL-3.0-or-later. See LICENSE.txt.");
     for (const value of Object.values(data.metadata)) {
       assert.equal(typeof value, "string");
@@ -323,6 +326,8 @@ describe("Agent Skill ZIP", () => {
     assert.deepEqual(sidecar.capabilities, []);
     assert.equal(sidecar.copyright, agent.copyright);
     assert.deepEqual(sidecar.files, [{ path: "references/notes.txt", type: "txt" }]);
+    // An export marks its composed text so a re-import can take the additions back out.
+    assert.equal(sidecar.composed, true);
     assert.ok(sidecar._license.includes("GPL-3.0-or-later"));
     assert.deepEqual(Array.from(byName.get("caveman/icon.png")), Array.from(agent.icon.bytes));
     assert.ok(decode(byName.get("caveman/LICENSE.txt")).includes("GNU GENERAL PUBLIC LICENSE"));
@@ -337,7 +342,7 @@ describe("Agent Skill ZIP", () => {
     const agent = sampleAgent(engine);
     agent.copilot.appId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     const project = projectOf(agent);
-    const { fileName, bytes } = await engine.exports.skillZip(project, project.items[0]);
+    const { fileName, bytes } = await engine.exports.skillZip(project, project.items[0], "claude");
     assert.equal(engine.detectFormat(fileName, bytes), "skillZip");
     const result = await engine.imports.any(fileName, bytes);
     assert.equal(result.error, undefined);
@@ -357,7 +362,7 @@ describe("Agent Skill ZIP", () => {
       }],
     });
     const item = project.items[0];
-    const { fileName, entries } = await engine.exports.skillZip(project, item);
+    const { fileName, entries } = await engine.exports.skillZip(project, item, "claude");
     assert.equal(fileName, "Data Tools.zip");
     assert.deepEqual(entries.map((e) => e.name), ["data-tools/SKILL.md", "data-tools/agentprise.json", "data-tools/LICENSE.txt", "data-tools/README.md", "data-tools/scripts/run.py", "data-tools/references/guide.md"]);
     const { data, body } = engine.yaml.parseFrontmatter(decode(entries[0].bytes));
@@ -416,7 +421,7 @@ describe("Agent Skill ZIP", () => {
     const agent = sampleAgent(engine);
     agent.license = "MIT";
     const project = projectOf(agent);
-    const { entries } = await engine.exports.skillZip(project, project.items[0]);
+    const { entries } = await engine.exports.skillZip(project, project.items[0], "claude");
     const license = decode(entries.find((e) => e.name === "caveman/LICENSE.txt").bytes);
     assert.ok(license.includes("MIT"));
     assert.ok(!license.includes("GNU GENERAL PUBLIC LICENSE"));
@@ -430,7 +435,7 @@ describe("Agent Skill ZIP", () => {
     const agent = sampleAgent(engine);
     agent.license = "MIT";
     const project = projectOf(agent);
-    const { fileName, bytes } = await engine.exports.skillZip(project, project.items[0]);
+    const { fileName, bytes } = await engine.exports.skillZip(project, project.items[0], "gemini");
     const back = await engine.imports.any(fileName, bytes);
     assert.equal(back.project.license, "MIT");
     assert.equal(viewOf(back.project).license, "MIT");
@@ -501,12 +506,13 @@ describe("Agent Skill ZIP", () => {
     const project = projectOf(agent);
     const { fileName, entries, report } = await engine.exports.plainSkill(project, project.items[0]);
     assert.equal(fileName, "Caveman.skill.zip");
-    assert.deepEqual(report, []);
+    assert.deepEqual(report.map((e) => [e.component, e.status]), [["Caveman", "transformed"]]);
     assert.deepEqual(entries.map((e) => e.name), ["caveman/SKILL.md", "caveman/LICENSE.txt", "caveman/README.md", "caveman/references/notes.txt"]);
     const { data, body } = engine.yaml.parseFrontmatter(decode(entries[0].bytes));
     assert.deepEqual(Object.keys(data), ["name", "description", "license"]);
     assert.equal(data.name, "caveman");
-    assert.equal(data.description, agent.description);
+    // Without a sidecar nothing marks the text as composed, so the Persona prefix stays on re-import.
+    assert.equal(data.description, "Persona: " + agent.description);
     assert.equal(body.trim(), agent.instructions);
     // It still opens here, as any standard skill does, but as a skill without the extras.
     const result = await engine.imports.any(fileName, engine.zip.write(entries));
@@ -625,7 +631,7 @@ describe("Teams app package", () => {
     const back = await engine.formats.teamsZip.import(bytes);
     assert.deepEqual(back.agent.files.map((f) => f.name), ["deploy.ps1", "notes.txt"]);
     const project = projectOf(back.agent);
-    const skillZip = await engine.exports.skillZip(project, project.items[0]);
+    const skillZip = await engine.exports.skillZip(project, project.items[0], "claude");
     assert.ok(skillZip.entries.some((e) => e.name === "caveman/references/deploy.ps1"));
     const backup = await engine.exports.backup(project);
     assert.ok(backup.entries.some((e) => e.name === "caveman/skills/caveman/references/deploy.ps1"));
@@ -704,7 +710,7 @@ describe("Teams app package", () => {
     assert.deepEqual([...entries.keys()].slice(4), ["page.onepart", "deploy.ps1.txt"]);
     assert.ok(warnings.some((w) => w.includes("notes.one") && w.includes("can't carry")));
     const project = projectOf(agent);
-    const skillZip = await engine.zip.read((await engine.exports.skillZip(project, project.items[0])).bytes);
+    const skillZip = await engine.zip.read((await engine.exports.skillZip(project, project.items[0], "claude")).bytes);
     assert.ok(skillZip.has("caveman/references/notes.one"));
   });
 
@@ -739,16 +745,20 @@ describe("copy text and detection", () => {
     assert.equal(copy.fileName, "Caveman.md");
     // The project writer gives the same text for the agent item.
     const project = projectOf(agent);
-    const fromProject = engine.exports.copyText(project, project.items[0]);
+    const fromProject = engine.exports.copyText(project, project.items[0], "notebook");
     assert.equal(fromProject.markdown, copy.markdown);
-    assert.deepEqual(fromProject.report, []);
+    // Copied text cannot carry the attached file, so the installer adds it by hand.
+    assert.deepEqual(fromProject.report, [{ component: "Attached files", status: "requires-setup", note: "Copied text can't carry files. Add them to the notebook yourself." }]);
+    const chatgpt = engine.exports.copyText(project, project.items[0], "chatgpt");
+    assert.equal(chatgpt.instructions, agent.instructions);
+    assert.ok(chatgpt.report[0].note.includes("ChatGPT project"));
   });
 
   test("detectFormat picks the right importer", async () => {
     const agent = sampleAgent(engine);
     const project = projectOf(agent);
     const backup = await engine.exports.backup(project);
-    const skillZip = await engine.exports.skillZip(project, project.items[0]);
+    const skillZip = await engine.exports.skillZip(project, project.items[0], "claude");
     const plain = await engine.exports.plainSkill(project, project.items[0]);
     const teams = await engine.formats.teamsZip.export(agent, teamsIcons());
     assert.equal(engine.detectFormat("Caveman.agent", encode("{}")), "msAgent");

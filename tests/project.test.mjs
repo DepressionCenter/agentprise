@@ -27,6 +27,7 @@ import { loadEngine } from "./load-engine.mjs";
 import { makePng, makeDeflatedZip, sampleAgent, agentFields, BYTE_SHAPES } from "./helpers.mjs";
 
 const engine = loadEngine();
+await engine.ready;
 const encode = (text) => new TextEncoder().encode(text);
 const decode = (bytes) => new TextDecoder().decode(bytes);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -687,7 +688,7 @@ describe("skill ZIP of an agent", () => {
     const agent = sampleAgent(engine);
     agent.copilot.appId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
     const project = engine.project.fromAgent(agent).project;
-    const back = await reopen(await engine.exports.skillZip(project, project.items[0]));
+    const back = await reopen(await engine.exports.skillZip(project, project.items[0], "claude"));
     assert.equal(back.format, "skillZip");
     assert.deepEqual(back.notices, []);
     const item = back.project.items[0];
@@ -703,7 +704,7 @@ describe("skill ZIP of an agent", () => {
 
   test("an agent that uses skills keeps its list, and its tools come back", async () => {
     const project = richProject();
-    const back = await reopen(await engine.exports.skillZip(project, project.items[0]));
+    const back = await reopen(await engine.exports.skillZip(project, project.items[0], "claude"));
     // The skill ZIP holds only the agent, so the skills it named are not in the opened project.
     assert.deepEqual(back.project.items[0].uses, []);
     assert.ok(back.notices.some((n) => n.includes("not in this project")));
@@ -716,16 +717,16 @@ describe("skill ZIP of an agent", () => {
     const agentProject = engine.project.fromAgent(sampleAgent(engine)).project;
     const { project: skillProject } = engine.project.normalize({ items: [{ kind: "skill", name: "Notes", description: "d", body: "b", files: [{ path: "README.md", bytes: encode("# Notes\n\nMy own readme.\n") }] }] });
     for (const start of [agentProject, skillProject]) {
-      let written = await engine.exports.skillZip(start, start.items[0]);
+      let written = await engine.exports.skillZip(start, start.items[0], "claude");
       for (let round = 0; round < 3; round++) {
         assert.equal(countReports(readmeOf(written)), 1);
         const back = await reopen(written);
-        written = await engine.exports.skillZip(back.project, back.project.items[0]);
+        written = await engine.exports.skillZip(back.project, back.project.items[0], "claude");
       }
       assert.equal(countReports(readmeOf(written)), 1);
     }
     // A skill's own README keeps its text, with the report after it.
-    const own = readmeOf(await engine.exports.skillZip(skillProject, skillProject.items[0]));
+    const own = readmeOf(await engine.exports.skillZip(skillProject, skillProject.items[0], "claude"));
     assert.ok(own.startsWith("# Notes\n\nMy own readme.\n\n## What changed in this export\n"));
   });
 });
@@ -789,10 +790,16 @@ describe("project helpers", () => {
     const skill = project.items[1];
     const ms = engine.exports.msAgent(project, skill);
     assert.equal(ms.fileName, "Data Tools.agent");
-    assert.equal(JSON.parse(ms.text).customCopilotConfig.gptDefinition.instructions, skill.body);
-    assert.deepEqual(ms.report, []);
-    const copy = engine.exports.copyText(project, skill);
+    // The skill's steps come first, then the tools section composed for Copilot.
+    const instructions = JSON.parse(ms.text).customCopilotConfig.gptDefinition.instructions;
+    assert.equal(instructions, engine.tools.composeInstructions(project, skill, "msAgent"));
+    assert.ok(instructions.startsWith(skill.body + "\n\n## " + engine.tools.TOOLS_HEADING + "\n"));
+    assert.ok(instructions.endsWith(engine.tools.COMPLETION_RULE));
+    assert.deepEqual(ms.report.map((e) => [e.component, e.status]), [["Data Tools", "transformed"], ["Record lookup", "requires-setup"], ["Attached files", "unsupported"]]);
+    const copy = engine.exports.copyText(project, skill, "chatgpt");
     assert.ok(copy.markdown.startsWith("# Data Tools\n"));
+    assert.equal(copy.instructions, engine.tools.composeInstructions(project, skill, "chatgpt"));
+    assert.ok(Array.isArray(copy.report));
   });
 
   test("a new project and new items start from documented defaults", () => {

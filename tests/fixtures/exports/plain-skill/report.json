@@ -1,0 +1,37 @@
+[
+  {
+    "component": "Record connector",
+    "status": "requires-setup",
+    "note": "Works once the Example Records connector is turned on where you use it. The setup steps say how."
+  },
+  {
+    "component": "Record server",
+    "status": "requires-setup",
+    "note": "Works once the Example search server is connected where you use it."
+  },
+  {
+    "component": "Record server",
+    "status": "requires-setup",
+    "note": "Works once the Pinned tools server is connected where you use it."
+  },
+  {
+    "component": "Record server",
+    "status": "requires-setup",
+    "note": "Works once the Local helper server is connected where you use it."
+  },
+  {
+    "component": "Record API",
+    "status": "requires-setup",
+    "note": "Works only where an action for this API is connected."
+  },
+  {
+    "component": "Record script",
+    "status": "preserved",
+    "note": "The script travels with the skill. It runs only where python3 can run with network access."
+  },
+  {
+    "component": "Record web search",
+    "status": "requires-setup",
+    "note": "Works where the product can search the web."
+  }
+]

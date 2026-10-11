@@ -25,6 +25,7 @@ import { loadEngine } from "./load-engine.mjs";
 import { makePng, makeDeflatedZip, makeOfficeZip, findCentralDirectory, sampleAgent, BYTE_SHAPES } from "./helpers.mjs";
 
 const engine = loadEngine();
+await engine.ready;
 const encode = (text) => new TextEncoder().encode(text);
 const decode = (bytes) => new TextDecoder().decode(bytes);
 

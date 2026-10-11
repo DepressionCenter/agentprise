@@ -1,0 +1,39 @@
+{
+  "version": "1.YYYYMMDD.HHMMSS",
+  "id": "40000000-0000-4000-8000-000000000004",
+  "developer": {
+    "name": "Example Creator",
+    "websiteUrl": "https://example.org",
+    "privacyUrl": "https://example.org/privacy",
+    "termsOfUseUrl": "https://example.org/terms"
+  },
+  "name": {
+    "short": "Golden Scout",
+    "full": "Golden Scout"
+  },
+  "description": {
+    "short": "Finds records and explains them.",
+    "full": "Finds records and explains them."
+  },
+  "icons": {
+    "outline": "outline.png",
+    "color": "color.png"
+  },
+  "accentColor": "#E0F6FC",
+  "validDomains": [
+    "*.botframework.com",
+    "*.*.botframework.com",
+    "copilotstudio.microsoft.com",
+    "copilotstudio.preview.microsoft.com"
+  ],
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.28/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.28",
+  "copilotAgents": {
+    "declarativeAgents": [
+      {
+        "id": "40000000-0000-4000-8000-000000000004",
+        "file": "declarativeAgent_0.json"
+      }
+    ]
+  }
+}

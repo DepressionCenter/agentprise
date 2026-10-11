@@ -27,6 +27,7 @@ import { join } from "node:path";
 import { loadEngine, repoRoot } from "./load-engine.mjs";
 
 const engine = loadEngine();
+await engine.ready;
 const libraryDir = join(repoRoot, "library");
 const catalog = JSON.parse(readFileSync(join(libraryDir, "catalog.json"), "utf8"));
 
@@ -168,11 +169,15 @@ describe("Caveman entry", () => {
     const backup = await engine.exports.backup(project);
     assert.equal(backup.fileName, "caveman.agentprise.zip");
     assert.deepEqual(backup.report, []);
-    const skillZip = await engine.exports.skillZip(project, item);
-    assert.equal(skillZip.fileName, "Caveman.zip");
-    assert.deepEqual(skillZip.report, []);
+    for (const exportId of ["claude", "gemini"]) {
+      const skillZip = await engine.exports.skillZip(project, item, exportId);
+      assert.equal(skillZip.fileName, "Caveman.zip");
+      // The only change is the persona written as a skill, since skill products have no place for assistants.
+      assert.deepEqual(skillZip.report.map((e) => [e.component, e.status]), [["Caveman", "transformed"]]);
+    }
     const ms = engine.exports.msAgent(project, item);
     assert.deepEqual(ms.warnings, []);
+    assert.deepEqual(ms.report, []);
     assert.equal(ms.fileName, "Caveman.agent");
   });
 });
