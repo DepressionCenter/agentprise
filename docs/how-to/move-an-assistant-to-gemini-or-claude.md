@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/move-an-assistant-to-gemini-or-claude.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-10
 Summary: Step-by-step guide with screenshots: open an assistant file you already
          have, check it, and download it as a skill for Gemini or Claude.
 Notes: See README file for documentation and full license information.
@@ -30,12 +30,15 @@ Agentprise opens these files:
 
 - A `.agent` file from SharePoint.
 - An app package `.zip` from the Microsoft 365 Copilot app.
-- Any file Agentprise made, including the copy you kept.
+- Any file Agentprise made, including a backup you kept.
 - Any Agent Skill `.zip` or `SKILL.md` file, from Gemini, Claude, or
   elsewhere.
+- A plugin `.zip` made for Claude, for Codex, or for any tool that reads the
+  Agent Plugins format.
 
 The example uses the Caveman sample, so the screens show a real assistant
-without showing anyone's private work.
+without showing anyone's private work. Some screenshots on this page show an
+earlier version of the app, so a few buttons and labels may look different.
 
 ### Step 1: Open the file
 
@@ -44,9 +47,22 @@ without showing anyone's private work.
 
 ![The dotted drop box on the start page. It says Drop an agent or skill file here, lists the kinds of file it accepts, and has a Choose a file button.](../../images/guides/dropzone.png)
 
-If you are already working on something, the start page is not showing.
-Choose **Open a file** at the top of the editor instead. The app asks before
-it replaces work you have not saved.
+If you are in the middle of a project, the start page is not showing.
+Choose **Open a file** at the top of the editor instead.
+
+The file opens as a new project and is added to **Your projects**. It never
+replaces work you already have unless you say so. If the same project is
+already in your workspace, for example because you are opening a backup you
+downloaded earlier, the app asks what to do:
+
+- **Keep both** adds the file as a second project, with "(copy)" at the end of
+  its name.
+- **Replace mine** puts the file in place of your project, and any changes you
+  made to yours are lost.
+- **Cancel** leaves everything as it was.
+
+The screenshot below shows an earlier version of this question, which had two
+buttons instead of three.
 
 ![A small dialog titled Replace your current work. It explains that loading the file will replace the assistant you are working on, and offers two buttons: Keep my work and Replace it.](../../images/guides/replace-dialog.png)
 
@@ -63,7 +79,10 @@ what it does, how it behaves, the example questions, and the picture.
 
 Read through the four questions and fix anything you want to change. Then
 open **More settings** under the questions and check the picture and the
-Agent publisher details section.
+**Publisher details** section.
+
+If the file held more than one assistant or skill, each one is listed in the
+**In this project** bar at the top. Choose a name in the bar to check it.
 
 Two things are worth knowing when the file came from Microsoft:
 
@@ -77,6 +96,11 @@ Two things are worth knowing when the file came from Microsoft:
 
 ### Step 3: Download the skill
 
+The downloads are for one assistant or skill at a time. The line at the top
+of the **Download** card says which one, such as "The downloads below are for
+Caveman." To download another one in the project, choose it in the
+**In this project** bar first.
+
 Under **Download**, choose **Download** on the Gemini row or on the Claude
 row. Both buttons give the same file, so one download works for both
 products. The file is a `.zip` named after the assistant, such as
@@ -84,8 +108,11 @@ products. The file is a `.zip` named after the assistant, such as
 
 ![The Download card. The Gemini and Claude rows each say Skill (.zip) and have a Download button on the right.](../../images/guides/where-it-can-go.png)
 
-This file is also the complete copy of your assistant. Keep it, and drop it on
-the Workspace page any time to edit the assistant again.
+This skill file is not the same as **Download Backup**. The skill holds one
+assistant or skill, ready for Gemini and Claude. The backup holds the whole
+project, ready to open in Agentprise again. Your project also stays under
+**Your projects** in this browser, but browsers can clear what they store, so
+download a backup of anything you want to keep.
 
 To see what is inside, choose **Inspect** on the left. The Inspect page shows
 every field as a plain form on the left, and the files for one product on the
@@ -115,9 +142,9 @@ Claude skills need a paid plan with code execution turned on.
 
 ### Conclusion
 
-Your assistant now works in Gemini and Claude from one file, and that same
-file brings it back into Agentprise whenever you want to change it. To send
-the same assistant to ChatGPT, see
+Your assistant now works in Gemini and Claude from one file. To change it
+later, open it from **Your projects** or drop your backup on the Workspace
+page. To send the same assistant to ChatGPT, see
 [Copy an assistant into ChatGPT or Gemini Notebook](copy-an-assistant-into-chatgpt.md).
 
 ### Additional resources

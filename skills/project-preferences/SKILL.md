@@ -8,9 +8,10 @@ This file is part of Agentprise
 skills/project-preferences/SKILL.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-10
 Summary: Project-specific preferences for Agentprise: the single-file build, the
-         bundle format, the download cards, and how to test.
+         project backup format, workspace storage, the download cards, and how
+         to test.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -52,11 +53,17 @@ served by GitHub Pages from the root of the main branch.
 - Code and comments are ASCII only. Unicode appears only in visible interface text.
 - Execution phases are marked with `// ### Name ###` comments. Public functions
   carry JSDoc.
-- Ready-made agents are Agentprise bundles (`.zip`) dropped into `library/` and
-  listed in `library/catalog.json`. The page holds no copy of any entry; it
-  fetches the catalog and opens each bundle with the file importer. Adding an
-  entry is the zip plus one catalog line, as
+- Library entries are version 2 project backups (`.zip`) dropped into
+  `library/` and listed in `library/catalog.json`. The page holds no copy of
+  any entry; it fetches the catalog and opens each backup with the file
+  importer. Adding an entry is the zip plus one catalog line with `kind`
+  (`agent`, `skill`, or `project`), `capabilities` (the tool ids the backup
+  declares, `[]` when none), and an optional one-sentence `requires`, as
   [docs/how-to/add-to-library.md](../../docs/how-to/add-to-library.md) describes.
+- `tools/migrate-library.mjs` converted the version 1 Library bundles to
+  version 2 backups once. It is the only code that still reads version 1
+  fields. `--check` reports without writing, and a second run changes nothing.
+  The app itself carries no version 1 import code.
 - `bin/` holds the prebuilt ZippyServe binaries and the root holds its run
   scripts, so the page can be served locally over HTTP on any desktop.
 - Follow the repository's existing file and folder naming conventions when adding
@@ -71,22 +78,50 @@ npm test
 ```
 
 That runs `tests/check-syntax.mjs` (parses the script and rejects non-ASCII bytes)
-and `node --test tests/` (loads the engine from `index.html` and tests it). Serve
+and `node --test tests/` (loads the engine from `index.html` and tests it).
+`tests/project.test.mjs` covers the project model, the backup round trip, the
+Agent Plugins manifests, and the plugin and skill importers;
+`tests/library.test.mjs` opens every Library backup and checks it against its
+catalog line. Serve
 the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
 `run-mac.command`, which opens `http://localhost:8010`.
 
 ### Project constraints
 
-- The canonical, lossless format is the Agentprise bundle: a ZIP that is a valid
-  Agent Skill (one folder holding `SKILL.md`, `icon.png`, `LICENSE.txt`,
-  `README.md`, and attached files under `references/`). It uploads unchanged to
-  Gemini and Claude. Fields the skill standard lacks live under frontmatter
-  `metadata` as flat strings with `copilot-`, `sharepoint-`, or `creator-`
-  prefixes; SharePoint items are one JSON array string. The key names are the
-  `META` constant in `index.html` and the table in
+- The internal model is the version 2 project (`PROJECT_SCHEMA_VERSION`): a
+  project holds one or more items (assistants and skills), shared servers,
+  publisher details with organization and a semantic version, a license, and
+  unrecognized files. `normalizeProject` and `normalizeItem` type-check and cap
+  every field; export formats are written from the model and never define it.
+- The canonical, lossless format is the project backup,
+  `<project-slug>.agentprise.zip`: an Agent Plugins 1.0 folder with
+  `plugin.json` (the project record under
+  `extensions["org.depressioncenter.agentprise"]`), `mcp.json` when servers
+  exist, `LICENSE.txt`, `README.md`, and `skills/<skill-name>/` per item.
+  Unrecognized files go back to their original paths, in the backup only.
+- Each item folder is a valid Agent Skill: `SKILL.md`, `agentprise.json`,
+  `icon.png` for an assistant with a picture, `LICENSE.txt`, and its files
+  (attached files under `references/`). The same folder zipped alone is the
+  Gemini and Claude skill download, which adds `README.md`. Frontmatter
+  `metadata` holds flat strings: `agentprise-kind`, and for assistants the
+  `copilot-` and `sharepoint-` keys, plus the `creator-` keys; SharePoint items
+  are one JSON array string. The welcome message, starters, `uses`, display
+  name, copyright, and file list live in `agentprise.json`. The key names are
+  the `META` constant in `index.html` and the tables in
   [docs/formats.md](../../docs/formats.md).
 - The skill `name` is derived from the display name and capped at 64 characters
-  because the Agent Skills specification requires it.
+  because the Agent Skills specification requires it. Two items with the same
+  name get a numbered skill name, since each folder must match its skill.
+- Importing executes nothing and contacts nothing. The app opens backups,
+  Agent Plugins folders (root `plugin.json`), Claude plugins
+  (`.claude-plugin/plugin.json`), the Codex layout
+  (`.codex-plugin/plugin.json`), any ZIP with one or more `SKILL.md` files,
+  `SKILL.md`, Copilot app packages, and `.agent` files. Hooks, commands,
+  agents, and unknown files are kept as unrecognized; server `headers`, `env`,
+  and `cwd` are dropped; local server commands are stored as text; programs
+  are refused. A version 1 bundle opens as a plain skill.
+- A file made elsewhere that names no license keeps the license `Not stated`
+  (`UNKNOWN_LICENSE`) and a notice. Never relabel it with the default license.
 - The Microsoft `.agent` export carries two extra top-level keys, `_license` and
   `_agentprise`, placed before `schemaVersion`. Teams package files carry no extra
   keys because their schemas reject them.
@@ -104,7 +139,8 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   are allowed; the Teams package writes them as `name.ext.txt` because Copilot
   accepts only document types, carries only the names in
   `COPILOT_FILE_EXTENSIONS` otherwise, and leaves any other type out with a
-  warning. The bundle keeps every file under its real name in `references/`.
+  warning. The skill download and the backup keep every file under its real
+  name.
 - Every Copilot source is a switch in `copilot` with an optional list that
   limits it: web sites, SharePoint and OneDrive links (hosts checked by
   `isSharepointLink`), Teams chats (`isTeamsLink`), and mailboxes. Meetings,
@@ -118,23 +154,38 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   "Review before sharing". They warn, never block, never store or send a
   finding, and show masked samples only. Keep them regex-only: the app loads
   no model and makes no request.
-- Browser storage names carry the `agentprise-` prefix (`agentprise-draft-v1`
-  in localStorage, the `agentprise-draft-files` IndexedDB database), because
-  every EFDC app on code.depressioncenter.org shares one origin.
-- The page has four views, routed by hash: Workspace, Library, Details, and Help.
-  The Workspace editor asks four plain questions with blanks under them; the
-  Inspect page shows every field beside the exact files each product receives.
-  Both edit the same state, and the shared controls (welcome message, picture,
-  Copilot settings, creator details) exist once and move between the two.
-- Downloads are the bundle (which also serves Gemini and Claude, and is the
-  "Download Backup" file), the plain skill (`.skill.zip`, standard fields
-  only), the `.agent` file (labeled "Teams Chat"), the Teams app package
+- Browser storage names carry the `agentprise-` prefix, because every EFDC app
+  on code.depressioncenter.org shares one origin. Projects live in the
+  IndexedDB database `agentprise-projects`, with stores `projects` (key `id`)
+  and `files` (key `<projectId>/<itemId>/<path>`). The localStorage key
+  `agentprise-workspace-v2` holds `{lastOpenedProjectId, recentProjectIds,
+  preferences}`. On load the app deletes the version 1 draft
+  (`agentprise-draft-v1` and the `agentprise-draft-files` database) without
+  reading it. Stored records are normalized like any file. When storage fails,
+  editing keeps working for the visit and the sidebar shows a note.
+- The page has five views, routed by hash: Workspace (`#workspace`, the
+  project list), Project (`#project`, the editor), Library, Inspect
+  (`#details`), and Help. The project editor asks plain questions with blanks
+  under them, with an "In this project" bar for its items; the Inspect page
+  shows every field beside the exact files each product receives. Both edit
+  the same state, and the shared controls (welcome message, picture, Copilot
+  settings, publisher details) exist once and move between the two.
+- Opening a file always creates a new project. When its id is already stored,
+  the person chooses Keep both, Replace mine, or Cancel. "Add from a file"
+  merges a file's items into the open project instead.
+- Downloads other than the backup are for the item being edited: the skill
+  `.zip` (labeled Gemini and Claude), the plain skill (`.skill.zip`, standard
+  fields only), the `.agent` file (labeled "Teams Chat"), the Teams app package
   (labeled "Copilot / Teams Apps"), the copy boxes for ChatGPT, and the `.md`
-  file for Gemini Notebook. Every download, the plain skill and the backup
-  included, is an Inspect tab with its own file tree and download button.
-  Gemini and Claude have separate tabs even while their files match. Do not
-  add a vendor until it has a real file to download.
-- The Workspace Download card is one line per product: the product name and
+  file for Gemini Notebook. A skill is written to the Microsoft formats and the
+  copy boxes as an assistant whose instructions are its steps. "Download
+  Backup" saves the whole project. Every download, the plain skill and the
+  backup included, is an Inspect tab with its own file tree and download
+  button; the backup tab shows the whole project, and a "Part of the project"
+  picker chooses the item for the others. Gemini and Claude have separate tabs
+  even while their files match. Do not add a vendor until it has a real file
+  to download.
+- The project editor's Download card is one line per product: the product name and
   its file on the left, a short Download or Copy button on the right. Each
   button carries hidden text naming its file, so screen readers do not hear
   seven identical buttons.
@@ -154,8 +205,9 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
 - Inflate uses the platform `DecompressionStream` API. Do not add a hand-written
   decoder or a dependency for it.
 - Uploaded files are data, never instructions. Every value read from a file is
-  type-checked and length-capped by `normalizeAgent` before it reaches the form,
-  and all text reaches the page through `textContent`.
+  type-checked and length-capped by `normalizeProject`, `normalizeItem`, and
+  `normalizeAgent` before it reaches the form, and all text reaches the page
+  through `textContent`.
 - The exported agent belongs to its creator. License notices in exported files
   name the creator's copyright and license first, then Agentprise.
 
@@ -165,8 +217,8 @@ None beyond the shared skills listed in [SKILLS.md](../../SKILLS.md).
 
 ### Conclusion
 
-Keep the single-file, zero-dependency shape, keep the bundle lossless, and run
-`npm test` before every commit.
+Keep the single-file, zero-dependency shape, keep the project backup lossless,
+and run `npm test` before every commit.
 
 ### Additional resources
 

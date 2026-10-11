@@ -21,8 +21,8 @@ See <https://www.gnu.org/licenses/fdl-1.3.html>. See README for full license inf
 
 [Back to project README](../README.md)
 
-Agentprise lets you describe an AI assistant once and download it for Microsoft
-365 Copilot, Teams, Gemini, Claude, or ChatGPT. This folder holds the pages that
+Agentprise lets you describe an AI assistant once, give it skills, and download
+it for Microsoft 365 Copilot, Teams, Gemini, Claude, or ChatGPT. This folder holds the pages that
 go deeper than the Help page inside the app. Most pages are for people who use
 Agentprise. The ones for developers say so.
 
@@ -33,14 +33,17 @@ page inside the app answers the common questions: which download you need, who
 can use your assistant, and where your work is kept.
 
 - [Using Agentprise](usage.md): a walkthrough of each thing you can do, from
-  creating an assistant to downloading it for a product.
+  keeping your projects and creating an assistant to adding skills and
+  downloading it for a product.
 - [Frequently asked questions](faq.md): the same answers as the Help page inside
   the app, in one place you can link to.
 - [Formats](formats.md): what each download is for, what each one keeps, and what
-  to do with the file once you have it. The second half of the page holds the
-  technical details for maintainers.
+  to do with the file once you have it, and which files Agentprise can open.
+  The second half of the page holds the technical details for maintainers,
+  including what is inside the project backup.
 - [Add your assistant to the Library](how-to/add-to-library.md): what to send and
-  what happens next, with a section for the maintainer who adds it.
+  what happens next, with sections for the maintainer who adds it and for the
+  one-time Library conversion.
 
 ### Step-by-step guides
 
@@ -56,7 +59,7 @@ screen you will see along the way.
 - [Copy an assistant into ChatGPT or Gemini Notebook](how-to/copy-an-assistant-into-chatgpt.md):
   find the text to copy and see which field each piece goes in.
 - [Try a library assistant and change it](how-to/try-a-library-assistant.md):
-  start from the Caveman sample and make it your own.
+  preview the Caveman sample, add it to your projects, and make it your own.
 
 ### Trust and privacy
 
@@ -68,6 +71,9 @@ screen you will see along the way.
 
 - [Current design specification](design/agentprise-design.md): a short baseline
   of the implemented tool as of October 10, 2026.
+- [Design: tools, skills, and plugins](design/tools-skills-plugins-design.md):
+  the plan for projects, skills, and tools, in phases. The first phase,
+  projects and skills, is in the app now. The later phases are still plans.
 - [Documentation template](doc-template.md) and
   [skill authoring examples](skill-examples.md): guides that came with the
   repository template, kept for reference.

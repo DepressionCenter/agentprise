@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/formats.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-10
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
          need: field mappings, vendor facts with check dates, and open tests.
@@ -38,18 +38,26 @@ maintainers", holds the technical details behind each file.
 | ChatGPT | ChatGPT, Copy | Text to paste |
 | Gemini Notebook | Gemini Notebook | A `.md` file to add as a source |
 | Another tool that reads Agent Skills | SKILL.md | A plain skill (`.skill.zip`) with nothing specific to this app |
-| Nowhere yet, or you want to edit it later | Download Backup | The same `.zip` as the Gemini and Claude skill |
+| Nowhere yet, or you want to edit it later | Download Backup | The whole project as one `.agentprise.zip` |
 
-The skill `.zip` is the complete copy. Drop it on the Workspace page any time to
-change the assistant or download it for another product. The plain skill drops
-the welcome message, the starters, the picture, and the Copilot settings, so it
-is not a backup.
+Every download in the table except the backup is for one assistant or skill:
+the one named at the top of the Download card. The backup is the complete copy
+of the whole project, with every assistant, skill, and file in it. Drop it on
+the Workspace page any time to change the project or download it for another
+product. The backup is meant for Agentprise, so use the Gemini or Claude
+button when you want to upload to those products. The plain skill drops the
+welcome message, the starters, the picture, and the Copilot settings, so it is
+not a backup either.
 
 ### What each download keeps
 
-Everything you write survives in the skill `.zip`. The `.agent` file keeps
-everything except attached files, which it has no place for. The app package
-cannot carry two things, and the app tells you so before you download it:
+The backup keeps everything in the project. The skill `.zip` for Gemini and
+Claude keeps everything about one assistant or skill, so Agentprise can open
+it again. It leaves out only what belongs to the whole project: the other
+assistants and skills, your organization, and the version number. The
+`.agent` file keeps everything about one assistant except attached files,
+which it has no place for. The app package cannot carry two things, and the
+app tells you so before you download it:
 
 - The welcome message. Copilot has no place for it in an app package.
 - Your copyright line and license name. The package's files reject extra fields.
@@ -76,8 +84,12 @@ every file and refuses anything that does not match its name, so a program
 renamed to `.pdf` never gets in. Copilot accepts only the document types,
 `.onepart`, and `.txt` as uploads, so the app package carries a script as
 plain text under its own name plus `.txt`, for example `deploy.ps1.txt`, and
-leaves out a `.one` file with a warning. The skill `.zip` keeps every file
-under its real name.
+leaves out a `.one` file with a warning. The skill `.zip` and the backup keep
+every file under its real name.
+
+A skill can be downloaded for Copilot, Teams Chat, ChatGPT, and Gemini
+Notebook too. Those products have no skills, so the skill's steps become the
+assistant's instructions.
 
 ### What to do with the file
 
@@ -101,12 +113,34 @@ and paste each box into the matching field. In Gemini Notebook, open the
 notebook, then More, then Notebook settings, and paste the instructions, or add
 the `.md` file as a source.
 
+**Backup (.agentprise.zip).** Keep it somewhere safe, because browsers can
+clear what they store. Drop it on the Workspace page to open the project
+again.
+
 ### Opening a file you already have
 
-Agentprise opens any of its own downloads, plus files made elsewhere: a `.agent`
-file exported from SharePoint, a `.zip` exported from the Copilot app, and any
-Agent Skill `.zip` or `SKILL.md` file. Drop the file on the Workspace page, or
-choose Open a file in the editor.
+Agentprise opens any of its own downloads, plus files made elsewhere:
+
+- A `.agent` file exported from SharePoint.
+- A `.zip` exported from the Microsoft 365 Copilot app.
+- Any Agent Skill `.zip` or `SKILL.md` file. A `.zip` with several skills
+  inside opens with each one as its own skill.
+- A plugin `.zip` in the Agent Plugins format, a Claude plugin, or a Codex
+  plugin. Its skills become skills in the project, and its tool servers are
+  kept with the project.
+
+Drop the file on the drop area of the Workspace page, or choose Open a file in
+a project. Each file opens as a new project. When the same project is already
+in your workspace, the app asks whether to keep both or replace yours. To add a
+file's skills to the project you have open instead, choose Add from a file in
+the project.
+
+Plugins sometimes carry hooks, commands, agents folders, or other files
+Agentprise does not understand. The app keeps them with the project and writes
+them back only into the backup. It never reads or runs them, and it never
+keeps a program. A skill or plugin that names no license opens with the
+license "Not stated" and a note, so you can check with its author before you
+share it.
 
 ## For maintainers
 
@@ -118,52 +152,110 @@ a real account. Read it before changing any converter in `index.html`.
 
 | Format | File | Opens in Agentprise | Downloads from Agentprise | Keeps every field | Who it is for |
 |---|---|---|---|---|---|
-| Agentprise bundle (Agent Skill) | `.zip` | Yes | Yes | Yes | Gemini, Claude, and keeping a copy to edit later |
+| Agentprise project backup (Agent Plugins 1.0 folder) | `.agentprise.zip` | Yes | Yes | Yes, for the whole project | Keeping a project to edit later |
+| Skill (Agent Skill folder with a sidecar) | `.zip` | Yes | Yes | Yes for one item, without the project's organization and version | Gemini and Claude |
+| Plain skill | `.skill.zip` | Yes | Yes | Standard Agent Skills fields only | Any tool that reads Agent Skills |
+| Agent Plugins folder, Claude plugin, or Codex plugin made elsewhere | `.zip` | Yes | Only as the backup | Skills and servers; everything else is kept as unrecognized files | Bringing a plugin into a project |
 | Microsoft `.agent` | `.agent` | Yes | Yes | All but attached files | SharePoint libraries and Teams chats |
 | Teams app package | `.zip` | Yes | Yes | No (see below) | The Microsoft 365 Copilot app |
 | Copy-ready text | none, or `.md` | No | Copy buttons and a `.md` download | Not applicable | ChatGPT custom GPTs and Gemini Notebook |
 
-The bundle, the Gemini upload, and the Claude upload are the same bytes, so
-the Gemini row, the Claude row, and "Download Backup" all produce the same
-file. Gemini and Claude have separate tabs on the Inspect
-page because their skill support may diverge. In the app, the Teams app package
-is labeled "Copilot / Teams Apps" and the `.agent` file is labeled "Teams Chat".
+The Gemini upload and the Claude upload are the same bytes, so the Gemini row
+and the Claude row produce the same skill `.zip`. Gemini and Claude have
+separate tabs on the Inspect page because their skill support may diverge. The
+backup is a different file: it holds the whole project, while every other
+download holds one item. In the app, the Teams app package is labeled
+"Copilot / Teams Apps" and the `.agent` file is labeled "Teams Chat".
 
-Every download is named after the assistant, such as `Caveman.zip`,
-`Caveman.agent`, and `Caveman.md`. The app package adds "Copilot app" to its
-name, as in `Caveman Copilot app.zip`, so the two `.zip` downloads never
-overwrite each other. Inside the skill `.zip`, the folder keeps the skill name.
+Every download except the backup is named after the item, such as
+`Caveman.zip`, `Caveman.skill.zip`, `Caveman.agent`, and `Caveman.md`. The app
+package adds "Copilot app" to its name, as in `Caveman Copilot app.zip`, so the
+`.zip` downloads never overwrite each other. Inside the skill `.zip`, the
+folder keeps the skill name. The backup is named after the project in skill
+name form, such as `caveman.agentprise.zip`.
 
-### The Agentprise bundle
+### The project backup
 
-The bundle is a ZIP holding one folder named after the skill:
+The backup is an Agent Plugins 1.0 directory, zipped, inside one folder named
+after the project:
 
 ```
 caveman/
-  SKILL.md       Required by the Agent Skills standard. Frontmatter plus instructions.
-  icon.png       The full-color icon, when one was set.
-  LICENSE.txt    The full GPL v3 text for the default license, or a short notice.
-  README.md      Name, description, creator, and how to use the file.
-  references/    Attached files, when there are any, under their real names.
+  plugin.json        Agent Plugins manifest. The project record sits under
+                     extensions["org.depressioncenter.agentprise"].
+  mcp.json           Tool servers, written only when the project has any.
+  LICENSE.txt        The project license.
+  README.md          What is inside and how to open it again.
+  skills/
+    caveman/         One item folder per assistant or skill (see below).
+    meeting-notes/
+  hooks/...          Unrecognized files from an import, at their original paths.
 ```
 
+`plugin.json` keeps to the closed Agent Plugins 1.0.0 schema: `$schema`,
+`name` (the project name in skill name form), `version` (the Version number
+field, three numbers such as `1.0.0`), `description`, `author` (only when a
+creator name is set, with `name`, `email`, and `url` only), `homepage`,
+`repository`, `license`, `keywords`, and `extensions`. The Agentprise entry in
+`extensions` holds the project record without item contents: `schemaVersion`
+(`2`), `id`, `name`, `description`, `version`, `creator` (name, organization,
+website, privacy and terms links), `copyright`, `license`, `created`,
+`modified`, `servers`, `items` (kind, id, and skill name of each item, in
+order), `unrecognized` (path and note of each kept file), and `pluginExtras`
+(manifest fields from a plugin made elsewhere, so they are written back).
+Other tools' `extensions` entries are kept.
+
+`mcp.json` names the Agent Plugins MCP schema and lists each server under
+`mcpServers`: a remote server as `type` `streamable-http` (or `sse`) with its
+`url`, and a local server as `type` `stdio` with its `command` and `args`. A
+server whose address the installer must supply is written with a placeholder
+address. The app writes these files and never runs or contacts the servers.
+
+A plugin made elsewhere keeps its own root `LICENSE.txt` and `README.md`; the
+app writes its own only where the author had none. The project `id` is a UUID
+made once and kept through every backup, which is how the app notices that a
+project being opened is already in the workspace.
+
+### Item folders
+
+Each assistant or skill is one Agent Skill folder named after its skill name.
+The same folder, zipped on its own, is the skill `.zip` for Gemini and Claude:
+
+```
+caveman/
+  SKILL.md         Required by the Agent Skills standard. Frontmatter plus instructions.
+  agentprise.json  The item fields the standard has no place for.
+  icon.png         The full-color icon of an assistant, when one was set.
+  LICENSE.txt      The full GPL v3 text for the default license, or a short notice.
+  README.md        Skill .zip and plain skill only: name, description, creator, and how to use the file.
+  references/      Attached files, when there are any, under their real names.
+```
+
+A skill brought in from elsewhere keeps its own `LICENSE.txt` and `README.md`,
+and keeps its other files in their own folders, such as `scripts/`, when they
+are types the app accepts for attachments. Any other file in the folder that is
+not a program is kept as an unrecognized file, which only the backup writes
+back. The plain skill
+(`.skill.zip`) is the same folder without `agentprise.json` or `icon.png`, and
+its `SKILL.md` carries only the standard fields.
+
 `SKILL.md` keeps the fields the Agent Skills standard defines (`name`,
-`description`, `license`) at the top level. Everything the Microsoft formats need
-but the standard lacks lives under `metadata`, as flat strings, because the
-standard defines `metadata` as a map from string keys to string values and some
-readers reject anything else. Gemini and Claude ignore metadata they do not know.
+`description`, `license`, and for a skill `compatibility` and `allowed-tools`)
+at the top level. `compatibility` is the "What it needs to work" field.
+Everything the Microsoft formats need but the standard lacks lives under
+`metadata`, as flat strings, because the standard defines `metadata` as a map
+from string keys to string values and some readers reject anything else.
+Gemini and Claude ignore metadata they do not know. A skill's own metadata
+from elsewhere is kept as it was.
 
 | Metadata key | Holds | Example |
 |---|---|---|
-| `agentprise-version` | The bundle layout version | `"1"` |
-| `display-name` | The name people see, with capitals and spaces | `Caveman` |
-| `welcome` | The first message people see in SharePoint and Teams | |
-| `starters` | Conversation starters, one per line | |
+| `agentprise-kind` | Whether the folder is an assistant or a skill | `agent` |
 | `sharepoint-sources` | SharePoint links a person pasted, one per line | |
 | `sharepoint-items` | SharePoint items that came from a Microsoft file, as one JSON array; each has `by` (`id` or `url`) plus the keys the builder wrote | |
 | `copilot-web-search` | Copilot capability on or off | `"true"` |
 | `copilot-web-sites` | Sites web search is limited to, one per line, at most four | |
-| `copilot-sharepoint` | Copilot capability on or off. A bundle without this key reads as on when it has SharePoint links or items and off otherwise | `"false"` |
+| `copilot-sharepoint` | Copilot capability on or off. An assistant without this key reads as on when it has SharePoint links or items and off otherwise | `"false"` |
 | `copilot-teams-messages` | Copilot capability on or off | `"true"` |
 | `copilot-teams-links` | Teams chats the source is limited to, one link per line, at most five | |
 | `copilot-email` | Copilot capability on or off | `"false"` |
@@ -177,14 +269,69 @@ readers reject anything else. Gemini and Claude ignore metadata they do not know
 | `copilot-prefer-my-files` | Tell Copilot to answer from the sources, not its own knowledge | `"false"` |
 | `copilot-response-mode` | `Auto`, `Quick response`, or `Think deeper` | `Auto` |
 | `copilot-app-id` | The Teams app id, kept so re-exports update the same app | |
-| `creator-name`, `creator-website`, `creator-privacy`, `creator-terms` | Shown in the Teams manifest | |
-| `copyright` | A free-text copyright line | `Copyright (C) 2026 Example Creator` |
+| `creator-name`, `creator-website`, `creator-privacy`, `creator-terms` | The project's publisher details, shown in the Teams manifest | |
+
+The `sharepoint-` and `copilot-` keys are written for assistants only. A skill
+carries `agentprise-kind`, its own metadata, and the `creator-` keys.
+
+`agentprise.json` sits next to `SKILL.md` and holds what neither the standard
+fields nor the metadata map can carry, so a folder copied out of a project
+stays complete. It starts with a `_license` key, like the other JSON files the
+app writes.
+
+| Key | Holds |
+|---|---|
+| `schemaVersion` | `2` |
+| `kind` | `agent` or `skill` |
+| `id` | The item's UUID |
+| `name` | The name people see, with capitals and spaces |
+| `welcome`, `starters`, `uses` | Assistants only: the welcome message, the conversation starters, and the skill names of the skills it can use |
+| `appId`, `license` | Skills only: the Teams app id, and the skill's own license when it differs from the project's |
+| `capabilities` | Tool declarations, empty for items made in the app |
+| `copyright` | The project's free-text copyright line |
+| `files` | The path and type of each of the item's own files |
 
 The skill `name` is derived from the display name: lowercase letters, digits, and
 single hyphens, at most 64 characters, never starting or ending with a hyphen.
-`SKILL.md` has no HTML comment at the top because the standard requires the YAML
-frontmatter to be the very first bytes. The license lives in the `license` field
-and in `LICENSE.txt` instead.
+Two items with the same name get a number at the end, so their folders stay
+apart. `SKILL.md` has no HTML comment at the top because the standard requires
+the YAML frontmatter to be the very first bytes. The license lives in the
+`license` field and in `LICENSE.txt` instead.
+
+Backups made by version 1 of the app were a single Agent Skill folder that
+kept every field in the frontmatter metadata. The app no longer reads those
+fields, so such a file opens as a plain skill. The maintainer script
+`tools/migrate-library.mjs` converted the Library from version 1 to version 2
+once (see [Add your assistant to the Library](how-to/add-to-library.md)).
+
+### Opening files made elsewhere
+
+Every file is untrusted input. The importers read structure and text only, and
+everything passes through the same project normalizer before it reaches the
+form.
+
+- A root `plugin.json` with the Agentprise extension is a backup. Without the
+  extension it is an Agent Plugins folder made elsewhere. One wrapping folder
+  around the plugin is allowed.
+- `.claude-plugin/plugin.json` is a Claude plugin and
+  `.codex-plugin/plugin.json` is the Codex layout. Both read servers from
+  `.mcp.json` or from `mcpServers` in the manifest, and both may name another
+  skills folder in the manifest's `skills` path.
+- A ZIP with one or more `SKILL.md` files and no plugin manifest is read as
+  skills. Each folder with a `SKILL.md` becomes an item, and files outside
+  every skill folder are kept as unrecognized.
+- A plugin's `displayName` or `name`, `description`, `version`, `author`, and
+  `license` fill in the project. Its `homepage`, `repository`, `keywords`, and
+  `extensions` are kept, so the backup writes them back.
+- MCP servers become project servers. Their `headers`, `env`, and `cwd`
+  settings are dropped with a notice, because they can hold secrets. A local
+  server's command is stored as text and never run.
+- `hooks/`, `commands/`, `agents/`, and every other file the app does not
+  understand are kept as unrecognized files, written back only into the
+  backup, and never read or run. Programs are refused everywhere.
+- A plugin or skill with no license field and no license file opens with the
+  license `Not stated` and a notice. A license file alone gives
+  `See LICENSE.txt`. The app never replaces either with its default license.
 
 ### The Microsoft `.agent` file
 
@@ -341,10 +488,18 @@ Checked on 2026-10-09 unless a line says otherwise.
 
 ### Tests run in this repository
 
-- `npm test` on 2026-10-11: 105 tests pass, including a round trip of a sample
-  agent through bundle, `.agent`, bundle, Teams package, and bundle, a synthetic
-  copy of the Copilot app's 2026-10-10 export shape, and a check that every
-  bundle listed in `library/catalog.json` opens and matches its catalog line.
+- `npm test` on 2026-10-10: 149 tests pass. They include a project exported to
+  the backup and opened again normalizing to an identical record, the closed
+  Agent Plugins 1.0.0 shape of `plugin.json` and the schema and transport of
+  `mcp.json`, imports of a Claude plugin, two Codex plugins, a generic Agent
+  Plugins folder, and a version 1 bundle (which opens as a skill), a skill
+  `.zip` of an assistant restoring its kind, starters, welcome message, icon,
+  and Copilot settings, hostile project input, a synthetic copy of the Copilot
+  app's 2026-10-10 export shape, and a check that every backup listed in
+  `library/catalog.json` opens without notices, survives a backup round trip,
+  and matches its catalog line.
+- `node tools/migrate-library.mjs --check` on 2026-10-10 reported all 13
+  Library entries as already version 2 and the catalog unchanged.
 - The real Caveman `.agent` and Teams package exports both import. The `.agent`
   import returns every field, and the Teams import returns every field except the
   welcome message and starters (that export had none).
@@ -358,7 +513,12 @@ Checked on 2026-10-09 unless a line says otherwise.
 
 These are open. Record the date and result here when someone runs them.
 
-- Upload a bundle made by Agentprise to a Gemini account and to a Claude account.
+- Upload a skill `.zip` made by Agentprise to a Gemini account and to a Claude
+  account, and confirm both accept the `agentprise.json` file beside
+  `SKILL.md`.
+- Confirm the Claude upload path. The vendor fact above, checked 2026-10-09,
+  says Settings, then Capabilities; the app's steps on the Inspect page say
+  Customize, then Skills.
 - Load a `.agent` file written by Agentprise, with `_license` and `_agentprise`,
   in a SharePoint library and in a Teams chat. The tenant test recorded above
   used a hand-edited file, not this app's output.
@@ -391,14 +551,17 @@ These are open. Record the date and result here when someone runs them.
 ### Conclusion
 
 Pick the download for the product you use, and download a backup if you are unsure.
-Maintainers: keep the bundle lossless, keep the Microsoft files free of extra keys
-where their schemas forbid them, and update the tables above whenever a converter
+Maintainers: keep the project backup lossless, keep each item folder a valid
+Agent Skill, keep the Microsoft files free of extra keys where their schemas
+forbid them, and update the tables above whenever a converter or importer
 changes.
 
 ### Additional resources
 
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
+- [Add your assistant to the Library](how-to/add-to-library.md)
 - [Agent Skills specification](https://agentskills.io/specification)
+- [Agent Plugins specification](https://agent-plugins.org/specification)
 - [Declarative agent schema 1.8](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-manifest-1.8)
 - [App package for Microsoft 365](https://learn.microsoft.com/office/dev/add-ins/overview/app-package-for-microsoft-365)
 - [Manifest developer object](https://learn.microsoft.com/microsoft-365/extensibility/schema/root-developer)

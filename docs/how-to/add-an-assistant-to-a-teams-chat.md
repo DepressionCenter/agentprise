@@ -38,8 +38,8 @@ or
 [Open an assistant you have](move-an-assistant-to-gemini-or-claude.md).
 
 Teams chats show a welcome message when someone opens the assistant, so this
-is a good time to write one. Choose **More** under the questions and type it
-in the **Welcome message** box.
+is a good time to write one. Choose **More settings** under the questions and
+type it in the **Welcome message** box.
 
 ![The More section opened, with the Welcome message box at the top. Its hint says it is optional and is the first thing people see when they open the assistant.](../../images/guides/more-settings.png)
 
@@ -78,8 +78,9 @@ it in Teams chats.
 
 ### Changing it later
 
-Drop the `.agent` file on the Workspace start page in Agentprise, make your
-changes, and download it again. Upload the new file to SharePoint in place of
+Open the project from **Your projects** on the Workspace page in Agentprise,
+or drop the `.agent` file on the drop area there. Make your changes, and
+download it again. Upload the new file to SharePoint in place of
 the old one, and the chat picks up the change.
 
 ### Conclusion

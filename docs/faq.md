@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/faq.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-10
 Summary: The questions people ask about Agentprise, with the same answers the
          Help page inside the app gives.
 Notes: See README file for documentation and full license information.
@@ -31,6 +31,15 @@ A place to describe an AI assistant once and get it in the form each product
 wants, whether that is Microsoft 365 Copilot, a Teams chat, Gemini, Claude, or
 ChatGPT. It runs in your browser. Nothing you type is sent anywhere.
 
+### What are projects and skills?
+
+A project is one thing you are building, kept in your browser under Your
+projects on the Workspace page. Most projects hold one assistant. A project
+can also hold skills: sets of steps an assistant follows only when a question
+needs them, such as how to search PubMed. Choose Add a skill in a project to
+write one, or add one from the Library or a skill file, then tick it under
+Skills it can use.
+
 ### Which download do I need?
 
 It depends on where people will use the assistant.
@@ -50,9 +59,10 @@ for another product.
 
 ### What does "Download Backup" do?
 
-It saves a small `.zip` file to your computer. Drop that file on the Workspace
-page later to change the assistant or download it for a different product. The
-same file also works as a skill in Gemini and Claude.
+It saves the whole project, with every assistant, skill, and file, as one
+`.zip` file on your computer. Drop that file on the Workspace page later to
+open it again, change it, or download it for a different product. To upload to
+Gemini or Claude, use their own Download buttons instead.
 
 ### Which files can I attach?
 
@@ -64,6 +74,15 @@ a document. Copilot accepts only document types, `.onepart`, and `.txt`, so a
 script reaches it as a `.txt` file with the same name, and a `.one` file stays
 out of the app package. The skill `.zip` keeps every file under its real name.
 
+### Where do links go?
+
+Each Copilot source has its own box under Copilot settings. Web sites go under
+Web search, up to 4. SharePoint and OneDrive links go under SharePoint and
+OneDrive, up to 20. Links to teams, channels, group chats, or meeting chats go
+under Teams messages, up to 5. Shared or group mailbox addresses go under
+Email. A box only matters while its source is on, and leaving it empty means
+Copilot may use everything the person can see.
+
 ### Who can use my assistant?
 
 In Microsoft 365, people need a Copilot license and permission to any files you
@@ -72,9 +91,10 @@ AI plan, and Claude skills need a paid Claude plan.
 
 ### How do I change an assistant I already shared?
 
-Drop the file you downloaded before on the Workspace page, make your changes, and
-download it again. For an app package, upload the new file in place of the old
-one. It keeps the same id, so Copilot treats it as an update.
+Open it from Your projects on the Workspace page, or drop the file you
+downloaded before on that page, make your changes, and download it again. For
+an app package, upload the new file in place of the old one. It keeps the same
+id, so Copilot treats it as an update.
 
 ### Why does my assistant not answer in a Teams chat?
 
@@ -129,10 +149,13 @@ or start the included server as the README describes.
 |---|---|---|---|---|---|
 | App package (`.zip`) | Yes | No | No | No | No |
 | `.agent` file | No | Yes | No | No | No |
-| Skill, also Download Backup (`.zip`) | No | No | Yes | Yes | No |
+| Skill (`.zip`) | No | No | Yes | Yes | No |
 | Plain skill, SKILL.md (`.skill.zip`) | No | No | Yes | Yes | No |
 | Copy text | No | No | Notebook only | No | Yes |
 | `.md` file | No | No | Notebook only | No | No |
+| Backup (`.agentprise.zip`) | No | No | No | No | No |
+
+The backup opens only in Agentprise. Keep it to change the project later.
 
 ### Conclusion
 
