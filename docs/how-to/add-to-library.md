@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/add-to-library.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: How to get an assistant or skill listed in the Agentprise Library, and
          how a maintainer adds one to the repository.
 Notes: See README file for documentation and full license information.
@@ -101,7 +101,7 @@ dropped file. So an entry is a backup plus one catalog line.
    | `file` | The file name in `library/` |
    | `name`, `summary`, `author`, `license` | The name, description, publisher name, and license of the first item in the backup, exactly as the backup says them |
    | `kind` | `agent` for one assistant, `skill` for a skill, or `project` for an assistant with skills. The card shows these as Assistant, Skill, and Assistant with skills |
-   | `capabilities` | The tool ids the backup declares, as a list. Entries made in the app declare none, so this is `[]` |
+   | `capabilities` | The tool ids the backup declares, as a list. Use `[]` when the backup has no tools |
    | `requires` | Optional. One plain sentence for the card about what the entry needs, such as "Optional: a PubMed tool for live search." Up to 200 characters |
    | `tags` | Free text for the search box and the tag buttons |
 
@@ -111,10 +111,11 @@ dropped file. So an entry is a backup plus one catalog line.
 4. Run `npm test`. The library tests open every listed backup and check that
    it opens without notices, carries no files the app cannot read, survives a
    backup round trip, and matches its catalog line, including `kind` and
-   `capabilities`. An `agent` entry must hold exactly one assistant. The first
-   item must carry the safety section, have web search and image creation on,
-   have SharePoint, Teams messages, email, and meetings off, link no SharePoint
-   files, and have a 192 by 192 pixel picture.
+   `capabilities`. An `agent` entry must hold exactly one assistant, and a
+   `skill` entry exactly one skill within the Agent Skills limits. When the
+   first item is an assistant, it must carry the safety section, have web
+   search and image creation on, have SharePoint, Teams messages, email, and
+   meetings off, link no SharePoint files, and have a 192 by 192 pixel picture.
 5. Start the local server and open the Library page to see the card. Choose
    **View** and **Try it** to check that it opens.
 
@@ -187,3 +188,7 @@ catalog line, and run the tests.
 - [Project preferences for maintainers](../../skills/project-preferences/SKILL.md)
 
 [Back to project README](../../README.md)
+
+----
+
+Copyright © 2026 The Regents of the University of Michigan

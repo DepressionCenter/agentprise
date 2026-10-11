@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/connect-tools.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-10
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Guide for people who install a download that uses tools: what "needs
          setup" means, and how to turn on connectors, fill in a server address,
          allow custom apps and sign-in ids in Copilot, and let scripts reach
@@ -56,6 +56,8 @@ shows each tool, what it does, and how it connects in Microsoft 365 Copilot,
 Claude, ChatGPT, Gemini, and coding tools. A tool that came with a skill the
 assistant uses says "Comes with the skill" and the skill's name.
 
+![Part of the editor for Evidence Scout. Under Skills it can use, PubMed Search is ticked. Under Tools are four tool cards: Run a PubMed query, Get article details, Read abstracts, and Browse PubMed pages. Each card says what the tool does, that it comes with the skill PubMed Search, and how Microsoft 365 Copilot, Claude, ChatGPT, Gemini, and coding tools connect it.](../../images/guides/editor-tools.png)
+
 ### Find out what needs setup
 
 Agentprise tells you what each download needs in three places.
@@ -68,6 +70,8 @@ Agentprise tells you what each download needs in three places.
 3. Read the list called **What changes in this download**, above the files.
 
 Each line names a part of the assistant and gives it one of five labels.
+
+![The Output Format card of the Inspect page on the Claude Plugin tab for the Evidence Scout project, with Part of the project set to Evidence Scout (assistant). The report What changes in this download has one changed line, saying the assistant is written as a skill whose description starts with Persona:, and six needs setup lines for the PubMed Search tools. Those lines say each tool works once the PubMed connector is turned on, or that the script runs only where python3 has network access and, on claude.ai, a workspace Owner must allow the address it calls.](../../images/guides/details-claude-plugin.png)
 
 | Label | What it means | What you do |
 |---|---|---|
@@ -218,6 +222,11 @@ The script runs only where the product allows it to reach the internet.
 - **Copilot, Teams Chat, ChatGPT project instructions, and Gemini Notebook:**
   these cannot run scripts, so Agentprise leaves the script out and says so
   in the report.
+
+A script can also need a setting from you. For example, the PubMed Search
+script runs only when the `NCBI_EMAIL` environment variable holds the contact
+address of the person or team who set up the skill. The skill's `SKILL.md`
+names what its script needs.
 
 Before you allow a script, open it and check what it does, or ask someone who
 can read code. Agentprise checks that the file is plain text, but it does not

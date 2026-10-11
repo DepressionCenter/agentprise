@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/move-an-assistant-to-gemini-or-claude.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Step-by-step guide with screenshots: open an assistant file you already
          have, check it, and download it as a skill for Gemini or Claude.
 Notes: See README file for documentation and full license information.
@@ -36,16 +36,18 @@ Agentprise opens these files:
 - A plugin `.zip` made for Claude, for Codex, or for any tool that reads the
   Agent Plugins format.
 
+If your assistant is a Gem in Gemini or a custom GPT in ChatGPT, see
+[Move a Gem or a custom GPT into Agentprise](move-a-gem-or-gpt.md) first.
+
 The example uses the Caveman sample, so the screens show a real assistant
-without showing anyone's private work. Some screenshots on this page show an
-earlier version of the app, so a few buttons and labels may look different.
+without showing anyone's private work.
 
 ### Step 1: Open the file
 
 1. Go to [code.depressioncenter.org/agentprise](https://code.depressioncenter.org/agentprise/).
 2. Drag the file onto the dotted box, or choose **Choose a file** and pick it.
 
-![The dotted drop box on the start page. It says Drop an agent or skill file here, lists the kinds of file it accepts, and has a Choose a file button.](../../images/guides/dropzone.png)
+![The dotted drop box on the start page. It reads Drop an agent or skill file here. It says it accepts an Agentprise backup, a plugin or skill .zip, a .zip from the Copilot app, a .agent file, or a SKILL.md file, and that each file opens as a new project. A Choose a file button sits below.](../../images/guides/dropzone.png)
 
 If you are in the middle of a project, the start page is not showing.
 Choose **Open a file** at the top of the editor instead.
@@ -61,21 +63,18 @@ downloaded earlier, the app asks what to do:
   made to yours are lost.
 - **Cancel** leaves everything as it was.
 
-The screenshot below shows an earlier version of this question, which had two
-buttons instead of three.
-
-![A small dialog titled Replace your current work. It explains that loading the file will replace the assistant you are working on, and offers two buttons: Keep my work and Replace it.](../../images/guides/replace-dialog.png)
+![A dialog titled You already have Caveman. It says the project is already in your workspace and asks whether to replace it with the one you opened or keep both, and warns that replacing loses your changes. It has three buttons: Cancel, Replace mine, and Keep both.](../../images/guides/replace-dialog.png)
 
 A short note at the top confirms the file opened.
 
-![A note bar that reads Opened caveman.zip.](../../images/guides/status-opened.png)
+![A note bar that reads Opened caveman.zip as a project.](../../images/guides/status-opened.png)
 
 ### Step 2: Check what came through
 
 The assistant appears in the editor with everything from the file: the name,
 what it does, how it behaves, the example questions, and the picture.
 
-![The editor with Caveman loaded. The name, description, and behavior are filled in. The preview on the right shows the Caveman picture, the name, and three example questions. A note at the top says Loaded Caveman.](../../images/guides/editor-caveman.png)
+![The editor with Caveman loaded. A note at the top reads Loaded Caveman. Change anything you like; it is your copy now. The In this project bar shows Caveman as an Assistant. The name, description, and instructions are filled in, and the preview on the right shows the Caveman picture, the name, the welcome line, and three example questions. The Download card, headed For Caveman, starts below the preview.](../../images/guides/editor-caveman.png)
 
 Read through the four questions and fix anything you want to change. Then
 open **More settings** under the questions and check the picture and the
@@ -96,10 +95,10 @@ Two things are worth knowing when the file came from Microsoft:
 
 ### Step 3: Download the skill
 
-The downloads are for one assistant or skill at a time. The line at the top
-of the **Download** card says which one, such as "The downloads below are for
-Caveman." To download another one in the project, choose it in the
-**In this project** bar first.
+The downloads are for one assistant or skill at a time. The heading at the
+top of the **Download** card says which one, such as "For Caveman." To
+download another one in the project, choose it in the **In this project** bar
+first.
 
 Under **Download**, choose **Download** on the Gemini row or on the Claude
 row. Each button gives a skill written for that product, so download the one
@@ -108,7 +107,7 @@ as `Caveman.zip`. The two files have the same layout, but they can differ in
 small ways. For example, the Gemini skill leaves out Word, Excel, PowerPoint,
 and OneNote files, because Gemini skills do not accept them.
 
-![The Download card. The Gemini and Claude rows each say Skill (.zip) and have a Download button on the right.](../../images/guides/where-it-can-go.png)
+![The Download card, shown here for an assistant called Team Helper. Under the heading For Team Helper, the Gemini and Claude rows each say Skill (.zip) and have a Download button on the right. The other rows are Copilot / Teams Apps, Teams Chat, Gemini Notebook, ChatGPT, and SKILL.md, followed by the Claude plugin and Plugin rows under For the whole project and a blue Download Backup button.](../../images/guides/where-it-can-go.png)
 
 Gemini and Claude have skills but no separate place for an assistant, so the
 skill's description starts with "Persona:". If the assistant uses skills, the
@@ -126,14 +125,14 @@ To see what is inside, choose **Inspect** on the left. The Inspect page shows
 every field as a plain form on the left, and the files for one product on the
 right.
 
-![The Inspect page. The left card, titled Agent Details, shows the name, description, and instructions as form fields. The right card, titled Output Format, has eight tabs in alphabetical order: Agentprise Backup, ChatGPT, Claude, Copilot / Teams Apps, Gemini, Gemini Notebook, SKILL.md, and Teams Chat, with Agentprise Backup selected and its files listed below.](../../images/guides/details.png)
+![The Inspect page for Caveman. The left card, titled Assistant details, shows the name, description, instructions, and prompt suggestions as form fields. The right card, titled Output Format, has ten tabs: Agentprise Backup, ChatGPT, Claude, Claude Plugin, Copilot / Teams Apps, Gemini, Gemini Notebook, Plugin, SKILL.md, and Teams Chat, with Gemini selected. Under the tabs, a report titled What changes in this download says the assistant is written as a skill whose description starts with Persona:, and the files in the caveman folder are listed below it, with SKILL.md shown.](../../images/guides/details.png)
 
-Choose the **Gemini** tab. It lists the files, with your own words
-highlighted. If the list **What changes in this download** appears above the
-files, read it. It says what was changed or left out for Gemini, and what
-needs setup.
+Choose the **Gemini** tab, or the **Claude** tab for Claude. It lists the
+files, with your own words highlighted. If the list
+**What changes in this download** appears above the files, read it. It says
+what was changed or left out for that product, and what needs setup.
 
-![The Inspect page on the Gemini tab. The files SKILL.md, LICENSE.txt, and README.md are listed inside a folder named caveman, with the contents of SKILL.md shown. Below are a Download button and the steps for Gemini and for Claude.](../../images/guides/details-gemini-claude.png)
+![The Output Format card on the Gemini tab for Caveman. The report What changes in this download says the assistant is written as a skill whose description starts with Persona:. The files SKILL.md, agentprise.json, icon.png, LICENSE.txt, and README.md are listed inside a folder named caveman, with the contents of SKILL.md shown. At the bottom are a button that reads Download Caveman.zip and three steps for Gemini.](../../images/guides/details-gemini-claude.png)
 
 ### Step 4: Upload it to Gemini
 
@@ -171,6 +170,7 @@ page. To send the same assistant to a ChatGPT project, see
 
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
 - [Make a new assistant for Microsoft 365 Copilot](make-an-assistant-for-copilot.md)
+- [Move a Gem or a custom GPT into Agentprise](move-a-gem-or-gpt.md)
 - [Copy an assistant into a ChatGPT project or Gemini Notebook](copy-an-assistant-into-chatgpt.md)
 - [Connect the tools in a download](connect-tools.md)
 - [Formats: what each download keeps](../formats.md)
@@ -181,3 +181,7 @@ page. To send the same assistant to a ChatGPT project, see
 - [Gemini skills help](https://support.google.com/gemini/answer/17094296)
 
 [Back to project README](../../README.md)
+
+----
+
+Copyright © 2026 The Regents of the University of Michigan

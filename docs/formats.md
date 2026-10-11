@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/formats.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
          need: field mappings, tools, conversion reports, vendor facts with
@@ -788,7 +788,10 @@ setup.
 
 Custom GPTs retire on 2026-12-11 and have no export file, so Agentprise no
 longer writes for them and has no importer for them. To move a GPT, copy its
-fields into Create new.
+fields into Create new. A Gem that Google has turned into a Gemini skill can
+be downloaded from Gemini as a `.zip` and opened with the regular skill
+importer. [Move a Gem or a custom GPT into Agentprise](how-to/move-a-gem-or-gpt.md)
+gives the steps for both.
 
 ### Verified vendor facts
 
@@ -981,6 +984,7 @@ or importer changes.
 
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
 - [Connect the tools in a download](how-to/connect-tools.md)
+- [Move a Gem or a custom GPT into Agentprise](how-to/move-a-gem-or-gpt.md)
 - [Add your assistant to the Library](how-to/add-to-library.md)
 - [Agent Skills specification](https://agentskills.io/specification)
 - [Agent Plugins specification](https://agent-plugins.org/specification)
@@ -1015,3 +1019,7 @@ or importer changes.
 - [Gemini productivity overview](https://gemini.google/overview/productivity/)
 
 [Back to project README](../README.md)
+
+----
+
+Copyright © 2026 The Regents of the University of Michigan

@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/README.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Index of the Agentprise documentation: one linked line per page, with
          who each page is for.
 Notes: See README file for documentation and full license information.
@@ -62,11 +62,16 @@ every Agentprise screen you will see along the way.
   download the `.agent` file, put it in SharePoint, and add it to the chat.
 - [Copy an assistant into a ChatGPT project or Gemini Notebook](how-to/copy-an-assistant-into-chatgpt.md):
   find the text to copy and see where each piece goes.
+- [Move a Gem or a custom GPT into Agentprise](how-to/move-a-gem-or-gpt.md):
+  keep an assistant from Gemini or ChatGPT before Gems and custom GPTs
+  retire, by opening the Gemini skill download or copying the GPT's parts
+  into Create new.
 - [Connect the tools in a download](how-to/connect-tools.md): what "needs
   setup" means, and how to turn on connectors, fill in a server address,
   allow custom apps in Copilot, and let scripts reach the internet.
 - [Try a library assistant and change it](how-to/try-a-library-assistant.md):
-  preview the Caveman sample, add it to your projects, and make it your own.
+  look inside the Caveman sample with View, add it to your projects, make it
+  your own, and add a skill such as PubMed Search from the Library.
 
 ### Trust and privacy
 
@@ -97,3 +102,7 @@ contains, how your work is protected, or how the code is put together.
 - [Project instructions for contributors](../AGENTS.md)
 
 [Back to project README](../README.md)
+
+----
+
+Copyright © 2026 The Regents of the University of Michigan

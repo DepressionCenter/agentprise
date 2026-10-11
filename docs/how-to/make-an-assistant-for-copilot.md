@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/make-an-assistant-for-copilot.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Step-by-step guide with screenshots: make a new assistant in Agentprise
          and add it to the Agents list in Microsoft 365 Copilot or Teams.
 Notes: See README file for documentation and full license information.
@@ -26,8 +26,9 @@ the Microsoft 365 Copilot app or Teams. It takes about ten minutes. You need a
 web browser and a Microsoft 365 account that includes Copilot. Agentprise
 itself needs no account, and nothing you type leaves your browser.
 
-The example assistant is called Lab Helper. It answers questions about lab
-procedures and safety. Use your own idea in its place.
+The example assistant is called Team Helper. It answers questions about a
+team's processes and points people to the right forms. Use your own idea in
+its place.
 
 ### Step 1: Open Agentprise and choose Create new
 
@@ -35,7 +36,7 @@ procedures and safety. Use your own idea in its place.
    The Workspace start page opens.
 2. Choose **Create new** on the right.
 
-![The Agentprise start page. The menu on the left lists Workspace, Library, Inspect, and Help. The main area has a dotted box for dropping a file, and two cards on the right: Create new and Use a sample. A row at the bottom shows pictures of sample assistants from the library.](../../images/guides/workspace-start.png)
+![The Agentprise Workspace start page. The menu on the left lists Workspace, Library, Inspect, and Help, with a Recent list under it. In the middle is a dotted box for dropping a file, with two cards on the right: Create new and Use a sample. Under them, Your projects shows three project cards, Evidence Scout, Caveman, and Team Helper, each with a More button. At the bottom, a row titled Or start from the library shows pictures such as Pirate First Mate, Ticket Goblin, Survey Sleuth, Study Coach, Admin Ally, and Red Team Raccoon, with an arrow at each end and a See the whole library link.](../../images/guides/workspace-start.png)
 
 ### Step 2: Answer the four questions
 
@@ -43,12 +44,13 @@ The editor shows four questions with a blank under each one. Gray example text
 in a blank shows the kind of answer that goes there. It disappears when you
 type.
 
-![The empty editor. The four questions are What should it be called, What does it do, How should it behave, and What might people ask it first, each with gray example text. On the right, a gray box titled Download lists what is still missing: a name, what it does, and how it should behave.](../../images/guides/editor-blank.png)
+![The editor for a new, untitled project. At the top, a bar titled In this project shows one item, New assistant, with the buttons Add a skill and Add from a file. The four questions, What should it be called, What does it do, How should it behave, and What might people ask it first, show gray example text such as Team Helper. On the right, a gray box in the Download card titled Required information lists a name, what it does, and how it should behave, and the download buttons are grayed out.](../../images/guides/editor-blank.png)
 
 1. Under **What should it be called?**, type a short name. This is how the
-   assistant will be listed in Copilot. The example is Lab Helper.
+   assistant will be listed in Copilot. The example is Team Helper.
 2. Under **What does it do?**, write one sentence that says what it is for.
-   The example is "Answers questions about lab procedures and safety."
+   The example is "Answers questions about our team's processes and points
+   to the right forms."
 3. Under **How should it behave?**, describe how you want it to answer, what
    it should focus on, and what it should avoid. Plain English works. If you
    are not sure where to start, choose **Help me write this** to get a short
@@ -60,7 +62,7 @@ type.
 The preview on the right updates as you type, so you can see roughly what
 people will get.
 
-![The editor with Lab Helper filled in. The preview on the right shows a blue square with the letter L, the name Lab Helper, its description, and three example questions as buttons: What do I wear in the lab, How do I label a sample, and Where is the spill kit.](../../images/guides/editor-filled.png)
+![The editor with Team Helper filled in: the name, the description Answers questions about our team's processes and points to the right forms, short friendly instructions, and the first example questions. The preview on the right shows a blue square with the letter T, the name and description, and three example questions as buttons: Where do I find the travel form, Who approves time off, and What is our meeting schedule. The top of the Download card, headed For Team Helper, shows under the preview.](../../images/guides/editor-filled.png)
 
 ### Step 3: Check that it is ready to travel
 
@@ -69,26 +71,25 @@ description, or the behavior is still empty, the card lists what is missing
 and the download buttons stay gray. Each item in the list is a link that takes
 you to that blank.
 
-![The Download card before the assistant is ready. A gray box says Required information, followed by three links: a name, what it does, and how it should behave. The download buttons under it are grayed out.](../../images/guides/where-not-ready.png)
+![The Download card before the assistant is ready. A gray box says Required information, followed by three links: a name, what it does, and how it should behave. Every Download button, the Claude plugin and Plugin rows under For the whole project, and the Download Backup button are grayed out. Only the Copy button on the ChatGPT row is active.](../../images/guides/where-not-ready.png)
 
 Once all three are filled in, the buttons turn on.
 
-![The Download card when the assistant is ready. Each row names a product and its file, with a small Download button on the right: Copilot / Teams Apps, Teams Chat, Gemini, Gemini Notebook, Claude, ChatGPT with a Copy button, and SKILL.md. A blue button at the bottom says Download Backup.](../../images/guides/where-it-can-go.png)
+![The Download card when Team Helper is ready. Under the heading For Team Helper, each row names a product and its file, with a Download button on the right: Copilot / Teams Apps, Teams Chat, Gemini, Gemini Notebook, Claude, ChatGPT with Project instructions to paste and a Copy button, and SKILL.md. Under the heading For the whole project are the Claude plugin and Plugin rows. A blue Download Backup button sits at the bottom, with a link to Inspect output files.](../../images/guides/where-it-can-go.png)
 
 ### Step 4: Add a picture and your name
 
 These settings are optional, but they make the assistant look finished in
 Copilot. Choose **More settings** under the questions to open them.
 
-![The More section opened. It shows a Welcome message box, a Picture area with a blue square showing the letter L and the buttons Choose an image and Use the default, a File attachments area with an Add files button, and two closed sections: Microsoft Copilot settings, and Agent publisher details.](../../images/guides/more-settings.png)
+![More settings opened for Team Helper. It shows an empty Welcome message box, a Picture area with a blue square showing the letter T and the buttons Choose an image and Use the default, a File attachments area with an Add files button, and two closed sections: Microsoft Copilot settings and Publisher details.](../../images/guides/more-settings.png)
 
 - **Picture.** Choose **Choose an image** and pick a square PNG or JPG. The
   app resizes it to the sizes Copilot wants. Without one, Copilot shows the
   first letter of the name on a blue square.
 - **Publisher details.** Open this section and fill in your name, your website, and
   links to a privacy page and a terms page. The Copilot app package needs all
-  four. The screenshot above shows this section under its earlier name, Agent
-  publisher details. If you leave any blank, the app fills in placeholder values and tells
+  four. If you leave any blank, the app fills in placeholder values and tells
   you so before you download.
 - **File attachments.** Add files from your computer. Files can be documents,
   OneNote pages, or plain text, including scripts, which Copilot receives as
@@ -112,7 +113,7 @@ Copilot. Choose **More settings** under the questions to open them.
 1. Under **Download**, find the **Copilot / Teams Apps** row and choose
    **Download**.
 2. Your browser saves a `.zip` file named after the assistant, such as
-   `Lab Helper Copilot app.zip`. Leave it zipped. Copilot wants the whole
+   `Team Helper Copilot app.zip`. Leave it zipped. Copilot wants the whole
    package.
 
 If you want to see what is inside first, choose **Inspect** on the left and
@@ -120,7 +121,7 @@ then the **Copilot / Teams Apps** tab. The files are listed on the right, and
 the words you wrote are highlighted. The same **Download** button is there
 too.
 
-![The Inspect page on the Copilot / Teams Apps tab. A yellow note explains that placeholder values were used for the creator name and links. Below it the files manifest.json, declarativeAgent_0.json, color.png, and outline.png are listed, with the contents of manifest.json shown and Lab Helper highlighted. At the bottom is a Download button and the steps to follow after downloading.](../../images/guides/details-copilot-teams-apps.png)
+![The Inspect page on the Copilot / Teams Apps tab for Team Helper. A report titled What changes in this download says placeholder values were used for the publisher name, website, privacy link, and terms link. Below it, the files manifest.json, declarativeAgent_0.json, color.png, and outline.png are listed, with the contents of manifest.json shown and Team Helper highlighted. At the bottom are a button that reads Download Team Helper Copilot app.zip and three steps for the Microsoft 365 Copilot app or Teams.](../../images/guides/details-copilot-teams-apps.png)
 
 ### Step 6: Upload it to Copilot
 
@@ -141,7 +142,7 @@ license and permission to any SharePoint files you linked.
 ### Step 7: Download a backup
 
 Choose **Download Backup** at the bottom of the **Download** card. You get a
-small `.zip` file with the whole project, such as `lab-helper.agentprise.zip`.
+small `.zip` file with the whole project, such as `team-helper.agentprise.zip`.
 Keep it somewhere safe.
 
 To change the assistant later, open it from **Your projects** on the Workspace
@@ -169,3 +170,7 @@ the guides for [Teams chats](add-an-assistant-to-a-teams-chat.md),
 - [Agents for Microsoft 365 Copilot](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agents-overview)
 
 [Back to project README](../../README.md)
+
+----
+
+Copyright © 2026 The Regents of the University of Michigan
