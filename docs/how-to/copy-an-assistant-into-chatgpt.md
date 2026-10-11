@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/copy-an-assistant-into-chatgpt.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Step-by-step guide with screenshots: copy an assistant's text into
          the instructions of a ChatGPT project or a Gemini Notebook.
 Notes: See README file for documentation and full license information.
@@ -32,7 +32,8 @@ questions. The picture, the welcome message, attached files, and the Copilot
 settings do not carry over, because these products have no place for them.
 
 ChatGPT custom GPTs retire on December 11, 2026, so this guide uses ChatGPT
-projects instead. If you want skills and tools in ChatGPT, use the **Plugin**
+projects instead. To bring an existing GPT into Agentprise first, see
+[Move a Gem or a custom GPT into Agentprise](move-a-gem-or-gpt.md). If you want skills and tools in ChatGPT, use the **Plugin**
 download under **For the whole project** instead of copying text. A workspace
 owner, or someone allowed to upload plugins, adds it in the ChatGPT Admin
 console.
@@ -49,10 +50,9 @@ if you need help with that part.
 ### Step 2: Choose Copy
 
 Under **Download**, find the **ChatGPT** row, which says
-**Project instructions to paste**, and choose **Copy**. The screenshot shows
-an earlier version of the card, where the row said Text to paste.
+**Project instructions to paste**, and choose **Copy**.
 
-![The Download card. The ChatGPT row says Text to paste and has a Copy button on the right.](../../images/guides/where-it-can-go.png)
+![The Download card, shown here for an assistant called Team Helper. Under the heading For Team Helper, the ChatGPT row says Project instructions to paste and has a Copy button on the right. The other rows have Download buttons: Copilot / Teams Apps, Teams Chat, Gemini, Gemini Notebook, Claude, and SKILL.md, followed by the Claude plugin and Plugin rows under For the whole project and a blue Download Backup button.](../../images/guides/where-it-can-go.png)
 
 The Inspect page opens on the **ChatGPT** tab. It shows one box called
 **Project instructions**, with a button under it called
@@ -62,10 +62,7 @@ If the list **What changes in this download** appears above the box, read it.
 For example, it tells you when the assistant has files that you need to add
 to the ChatGPT project yourself.
 
-The screenshot below shows an earlier version of this tab, which had four
-boxes for a custom GPT.
-
-![The Inspect page on the ChatGPT tab. Four boxes are stacked: Name, Description, Instructions, and Conversation starters, each with a button such as Copy the name under it. Below them are the steps for ChatGPT.](../../images/guides/details-chatgpt.png)
+![The Output Format card of the Inspect page on the ChatGPT tab for Caveman. Under the heading Copy and paste is one box, Project instructions, holding the Caveman instructions, with a button that reads Copy the project instructions. A note says there is no file to upload, and three next steps for a ChatGPT project follow.](../../images/guides/details-chatgpt.png)
 
 If a copy button says copying is blocked, the app selects the text for you.
 Press Ctrl+C on Windows or Command+C on a Mac to copy it.
@@ -112,6 +109,7 @@ the assistant uses tools, see
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
 - [Make a new assistant for Microsoft 365 Copilot](make-an-assistant-for-copilot.md)
 - [Open an assistant you have and move it to Gemini or Claude](move-an-assistant-to-gemini-or-claude.md)
+- [Move a Gem or a custom GPT into Agentprise](move-a-gem-or-gpt.md)
 - [Connect the tools in a download](connect-tools.md)
 - [Formats: what each download keeps](../formats.md)
 - [Frequently asked questions](../faq.md)
@@ -119,3 +117,7 @@ the assistant uses tools, see
 - [Custom GPT retirement and migration FAQ](https://help.openai.com/en/articles/20001519-custom-gpt-retirement-and-migration-faq)
 
 [Back to project README](../../README.md)
+
+----
+
+Copyright © 2026 The Regents of the University of Michigan

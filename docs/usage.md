@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/usage.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: How to use Agentprise, job by job: keep your projects, create an
          assistant, add skills, check its tools, open a file you have, start
          from the Library, download it for each product or as a plugin, read
@@ -263,6 +263,9 @@ A few things are worth knowing about files made elsewhere:
   as "Not stated", and a note asks you to check with its author before you
   share it. The app never puts its own license on someone else's work.
 - Backups made by the first version of Agentprise open as a plain skill.
+- Gemini Gems and ChatGPT custom GPTs have no file of their own. To bring one
+  over before it retires, see
+  [Move a Gem or a custom GPT into Agentprise](how-to/move-a-gem-or-gpt.md).
 
 ### Start from the Library
 
@@ -270,14 +273,27 @@ A few things are worth knowing about files made elsewhere:
 2. Search by name, summary, kind, or tag if the list is long. The row of tags
    under the search box narrows the list to one tag. Choose **All** or
    **Show all** to see everything again.
-3. Each card says whether it is an **Assistant**, a **Skill**, or an
-   **Assistant with skills**. Some cards also have a line that says what the
+3. Read the cards. Each card has **View** and **Try it** buttons at the top
+   right, beside the picture. Under them, it says whether the entry is an
+   **Assistant**, a **Skill**, or an **Assistant with skills**, and shows the
+   name, the author, a short summary, and up to three tags. A long summary
+   ends with **Read more**. Some cards also have a line that says what the
    entry needs to work.
-4. Choose **View** to look inside before you take it. The preview shows
-   what the entry holds, a few example questions, and the start of its
-   instructions.
+4. Choose **View** to look inside before you take it. Choosing the picture or
+   **Read more** does the same. The window shows the kind of entry, the
+   author, the license, the full summary, what the entry holds, a few example
+   questions, and the start of its instructions. For a skill, it can also
+   have an **Add to** button that adds the skill to the project you have
+   open.
 5. Choose **Try it**. The entry is added to Your projects as a new project and
    opens, ready to change or download.
+
+The Library holds fun characters, such as Caveman and Red Team Raccoon, and
+helpers for work, such as Survey Sleuth for surveys and questionnaires. Some
+entries do research. **PubMed Search** is a skill that builds and runs PubMed
+literature searches. **Evidence Scout** is an assistant that comes with the
+PubMed Search skill. Both work without a PubMed tool and prepare searches you
+can run in PubMed yourself.
 
 The start page also shows a strip of up to ten entries from the Library,
 in a random order, under the drop area. Choose one to try it. The arrows on
@@ -289,10 +305,9 @@ Library needs the app to run from a web address, so it is empty when you open
 
 ### Download it for a product
 
-Most downloads are for one assistant or skill at a time. A line at the top of
-the **Download** card says which one, such as "The downloads below are for
-Caveman." To download something else in the project, choose it in the
-**In this project** bar first.
+Most downloads are for one assistant or skill at a time. A heading at the top
+of the **Download** card says which one, such as "For Caveman." To download
+something else in the project, choose it in the **In this project** bar first.
 
 Each row names a product and the file it gets. Choose **Download** on the row
 for the product people will use:
@@ -436,8 +451,13 @@ the FAQ.
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
 - [Formats: which download goes where](formats.md)
 - [Connect the tools in a download](how-to/connect-tools.md)
+- [Move a Gem or a custom GPT into Agentprise](how-to/move-a-gem-or-gpt.md)
 - [Frequently asked questions](faq.md)
 - [Step-by-step guides with screenshots](README.md#step-by-step-guides)
 - [Add your assistant to the Library](how-to/add-to-library.md)
 
 [Back to project README](../README.md)
+
+----
+
+Copyright © 2026 The Regents of the University of Michigan

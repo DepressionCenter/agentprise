@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/faq.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: The questions people ask about Agentprise, with the same answers the
          Help page inside the app gives, plus questions about tools, plugins,
          and what changes in each download.
@@ -28,9 +28,9 @@ a particular download, the [formats page](formats.md) goes deeper.
 
 ### What is Agentprise?
 
-A place to describe an AI assistant once and get it in the form each product
-wants, whether that is Microsoft 365 Copilot, a Teams chat, Gemini, Claude, or
-ChatGPT. It runs in your browser. Nothing you type is sent anywhere.
+An app that lets you describe an AI assistant or skill once and download it
+in the form each product wants: Microsoft 365 Copilot, Teams, Gemini, Claude,
+ChatGPT, and more. It runs in your browser. Nothing you type is sent anywhere.
 
 ### What are projects and skills?
 
@@ -142,7 +142,10 @@ one. Copy the GPT's name, description, instructions, and conversation starters
 into a new assistant with **Create new**. Gems are turning into Gemini skills.
 Once a Gem is a skill, download it from Gemini under **Settings**, then
 **Skills**, then **More**, then **Download**, and drop the `.zip` file on the
-Workspace page.
+Workspace page. Gems retire in November 2026 for personal Google accounts,
+March 2027 for Workspace business, enterprise, and nonprofit accounts, and
+June 2027 for Workspace education accounts. [Move a Gem or a custom GPT into Agentprise](how-to/move-a-gem-or-gpt.md)
+walks through both, step by step.
 
 ### How do I change an assistant I already shared?
 
@@ -229,7 +232,12 @@ issue on GitHub, so the answer can be added here.
 - [Using Agentprise](usage.md)
 - [Formats: which download goes where](formats.md)
 - [Connect the tools in a download](how-to/connect-tools.md)
+- [Move a Gem or a custom GPT into Agentprise](how-to/move-a-gem-or-gpt.md)
 - [Add your assistant to the Library](how-to/add-to-library.md)
 - [Ask a question or send an assistant on GitHub](https://github.com/DepressionCenter/agentprise/issues/new)
 
 [Back to project README](../README.md)
+
+----
+
+Copyright © 2026 The Regents of the University of Michigan

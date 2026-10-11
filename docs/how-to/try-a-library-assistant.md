@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/try-a-library-assistant.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Step-by-step guide with screenshots: pick a ready-made assistant from
          the Library, preview it, add it to your projects, change it, and
          download it.
@@ -26,8 +26,12 @@ The Library holds ready-made assistants and skills that anyone can try.
 Starting from one is the fastest way to see what Agentprise does, and a good
 way to make your own without writing everything from scratch. This guide picks
 the Caveman sample, changes it, and downloads it. It takes about five minutes.
-Some screenshots on this page show an earlier version of the app, so a few
-buttons and labels may look different.
+
+The Library has fun characters such as Caveman, Pirate First Mate, and Red
+Team Raccoon, which pokes holes in plans. It also has helpers for work, such
+as Survey Sleuth for reviewing surveys and Evidence Scout for finding research.
+Evidence Scout comes with the **PubMed Search** skill, which is also in the
+Library on its own.
 
 ### Step 1: Open the Library
 
@@ -39,11 +43,11 @@ There are three ways to get there:
   Choosing a picture adds that assistant to your projects and opens it right
   away.
 
-![The row on the start page titled Or start from the library. It shows a row of pictures from the library, each with its name over it, such as Admin Ally and Ticket Goblin, an arrow at each end to scroll, and a link on the right that reads See the whole library.](../../images/guides/start-strip.png)
+![The row on the start page titled Or start from the library. Pictures with their names, Pirate First Mate, Ticket Goblin, Survey Sleuth, Study Coach, Admin Ally, and Red Team Raccoon, sit between a back arrow and a forward arrow. A link at the top right reads See the whole library.](../../images/guides/start-strip.png)
 
 The Library page shows one card for each entry.
 
-![The Library page. A search box sits at the top right. Under the title is a row of tag buttons, starting with All, research, fun, and operations. A line reads 10 assistants, and the first three tiles show Caveman, Evidence Scout, and Study Planner, each with its picture, the name, the author, a one-line summary, its tags, its license, and a Try it button.](../../images/guides/library.png)
+![The Library page. A search box sits at the top right. Under the title is a row of tag buttons, starting with All, fun, persona, research, and copilot. A line reads 16 entries. The first row of cards shows Caveman, Pirate First Mate, and Dude, and the next row starts with Aussie Battler, Evidence Scout, and Study Planner. Each card has a picture with View and Try it buttons at its top right, then a label such as Assistant, the name, the author, a short summary, and tags.](../../images/guides/library.png)
 
 ### Step 2: Find one and look inside
 
@@ -51,25 +55,35 @@ When the list is long, type in the search box to narrow it by name, summary,
 kind, or tag. You can also choose one of the tag buttons to show only that tag.
 **All** or **Show all** brings everything back.
 
-Each card shows:
+Each card has two buttons at the top right, beside the picture: **View** and
+**Try it**. Under them, the card shows:
 
 - What kind of entry it is: **Assistant**, **Skill**, or
   **Assistant with skills**.
-- Who made it, what it does, and the license it comes with.
+- Its name and who made it.
+- A short summary of what it does. When the summary is long, the card shows
+  the start of it and a **Read more** link.
 - For some entries, a line that says what it needs to work, such as a tool it
   can use.
+- Up to three tags. Choose a tag to show only the entries that have it.
 
-![One Library tile for Caveman: the picture, the name, By Gabriel Mongefranco, the summary Me agent answer questions big brain, three tags, the license GPL-3.0-or-later, and a Try it button.](../../images/guides/library-card.png)
+![The Library card for Caveman. View and Try it buttons sit at the top right, next to the picture. Below are the label Assistant, the name Caveman, By Gabriel Mongefranco, the summary Me agent, answer questions, big brain., and the tags fun, persona, and copilot.](../../images/guides/library-card.png)
 
-To look inside before you take it, choose **View** on the card. A window
-opens with what the entry holds, a few questions people might ask it, and the
-start of its instructions. Choose **Close** to go back, or **Try it** to take
-it.
+To look inside before you take it, choose **View** on the card. Choosing the
+picture or **Read more** does the same. A window opens with the kind of
+entry, who made it, and the license it comes with. It also shows the full
+summary, a few questions people might ask it, and the start of its
+instructions. For an entry that holds more than one thing, such as Evidence
+Scout, it lists what is inside.
+
+![The View window for the Caveman Library entry. It shows the picture, the name, and the line Assistant. by Gabriel Mongefranco. GPL-3.0-or-later, then the summary, three questions under People might ask, and the start of its instructions. Close and Try it buttons are at the bottom.](../../images/guides/library-view.png)
+
+Choose **Close** to go back, or **Try it** to take it.
 
 ### Step 3: Choose Try it
 
-Choose **Try it** on the card or in the preview. Agentprise adds a copy of the
-entry to **Your projects** on the Workspace page and opens it.
+Choose **Try it** on the card or in the View window. Agentprise adds a copy
+of the entry to **Your projects** on the Workspace page and opens it.
 
 If you already tried the same entry before, the app asks what to do:
 
@@ -78,17 +92,14 @@ If you already tried the same entry before, the app asks what to do:
   to yours are lost.
 - **Cancel** leaves your projects as they were.
 
-The screenshot below shows an earlier version of this question, which had two
-buttons instead of three.
-
-![A small dialog titled Replace your current work. It says loading Caveman will replace the assistant you are working on, with the buttons Keep my work and Replace it.](../../images/guides/replace-dialog.png)
+![A dialog titled You already have Caveman. It says the project is already in your workspace and asks whether to replace it with the one you opened or keep both, and warns that replacing loses your changes. It has three buttons: Cancel, Replace mine, and Keep both.](../../images/guides/replace-dialog.png)
 
 ### Step 4: Look it over
 
 The sample opens in the project editor with everything filled in. A note at
 the top says it loaded.
 
-![The editor with Caveman loaded. The questions on the left are filled in, and the preview on the right shows the Caveman picture, the name, the description, and three example questions, starting with Caveman, what can you do. A note at the top reads Loaded Caveman.](../../images/guides/editor-caveman.png)
+![The editor with Caveman loaded from the Library. A note at the top reads Loaded Caveman. Change anything you like; it is your copy now. The In this project bar shows Caveman as an Assistant. The name, description, and instructions are filled in, and the preview on the right shows the Caveman picture, the name, the welcome line, and three example questions. The Download card, headed For Caveman, starts below the preview.](../../images/guides/editor-caveman.png)
 
 Read the four answers to see how the sample is written. The behavior answer
 is the longest, and it is a good example of how to tell an assistant what to
@@ -103,9 +114,12 @@ browser as you type.
 For example, click the first example question and replace it with your own.
 The preview updates as you type.
 
-![The editor questions for Caveman, with the first example question changed to Caveman, how do I make fire. The other three questions are unchanged, and the second still reads Weather good for smash rock today.](../../images/guides/editor-caveman-changed.png)
+![The editor questions for Caveman, with the first example question changed to Caveman, how do I make fire, and outlined to show it has focus. The other three questions are unchanged, starting with Weather good for smash rock today. More settings is closed at the bottom.](../../images/guides/editor-caveman-changed.png)
 
-![The preview card showing the Caveman picture and name, with the first example question now reading Caveman, how do I make fire, followed by the next two questions from the sample.](../../images/guides/preview-caveman.png)
+![The preview card with the Caveman picture, name, and welcome line, and three example questions as buttons. One of them now reads Caveman, how do I make fire.](../../images/guides/preview-caveman.png)
+
+The preview shows three of the questions at a time, picked at random, so the
+order can change each time it updates.
 
 If you change the name, the file names change with it. Open **More settings**
 under the questions to change the picture, add a welcome message, or put your
@@ -129,13 +143,24 @@ Choose **Download Backup** to save your version of the whole project as a
 ### Add a skill from the Library
 
 Some Library entries are skills: sets of steps an assistant follows only when
-a question needs them. To give a skill to an assistant you are working on:
+a question needs them. **PubMed Search** is one. To give a skill to an
+assistant you are working on:
 
 1. Open your project, then go to the Library.
 2. Choose **View** on the skill.
-3. Choose **Add to** followed by the name of your project.
+3. Choose **Add to** followed by the name of your project. This button shows
+   only for a skill that is not in the project yet.
 4. Back in the project, choose your assistant in the **In this project** bar,
    and tick the skill under **Skills it can use**.
+
+An entry marked **Assistant with skills** already has its skills inside.
+When you try Evidence Scout, for example, the **In this project** bar shows
+both the assistant and its skill.
+
+![The editor after trying Evidence Scout from the Library. A note says Loaded Evidence Scout. The In this project bar shows two items, Evidence Scout marked Assistant and PubMed Search marked Skill, with the buttons Add a skill and Add from a file. The questions and preview for Evidence Scout start below.](../../images/guides/editor-evidence-scout.png)
+
+A skill such as PubMed Search can come with tools. To learn what they do and
+how to turn them on, see [Connect the tools in a download](connect-tools.md).
 
 ### If the Library is empty
 
@@ -159,6 +184,11 @@ other people would find useful, the Library can list it. See
 - [Put an assistant in a Teams group chat](add-an-assistant-to-a-teams-chat.md)
 - [Open an assistant you have and move it to Gemini or Claude](move-an-assistant-to-gemini-or-claude.md)
 - [Copy an assistant into ChatGPT or Gemini Notebook](copy-an-assistant-into-chatgpt.md)
+- [Connect the tools in a download](connect-tools.md)
 - [Using Agentprise](../usage.md)
 
 [Back to project README](../../README.md)
+
+----
+
+Copyright © 2026 The Regents of the University of Michigan

@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/compliance.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-11
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
          the controls in place, the evidence behind them, and the known gaps.
 Notes: See README file for documentation and full license information.
@@ -362,7 +362,14 @@ borders.
   native `details` menu named "More actions for" the project, with buttons whose
   hidden text names the project. The item bar is a `nav` whose current item
   carries `aria-current`. "Skills it can use" is a `fieldset` with a `legend`.
-  The Library Preview and Try it buttons carry the entry name as hidden text.
+  The Library View, Try it, and Read more buttons carry the entry name as
+  hidden text.
+- On each Library card, read from the code on 2026-10-11: the picture is a
+  second way to open the View dialog for pointer users. It is a button left
+  out of the tab order and hidden from screen readers, because the View
+  button beside it does the same thing from the keyboard. Each card shows at
+  most three tag buttons; the filter row and the search box reach the other
+  tags.
   Rename, Delete, Remove, and Keep both or Replace mine use the same native
   `dialog` elements as the rest of the app.
 - Pointer targets are at least 44 by 44 CSS pixels, except the file list buttons
@@ -383,8 +390,9 @@ borders.
   with a keyboard, at 320 pixels, or for contrast. That covers Your projects
   and each tile's More menu, the Recent list in the sidebar, the
   "In this project" bar, Add a skill and Add from a file, "Skills it can use",
-  the "Part of the project" picker in Inspect, the Library Preview dialog and
-  kind labels, and the Rename, Delete, Remove, and Keep both or Replace mine
+  the "Part of the project" picker in Inspect, the Library View dialog, the
+  card layout with View and Try it beside the picture and Read more, the kind
+  labels, and the Rename, Delete, Remove, and Keep both or Replace mine
   dialogs. Focus after Delete moves to Create new in the code, but no one has
   confirmed it by hand.
 - The tools parts have not been scanned with axe-core or walked through with
@@ -426,3 +434,7 @@ given. Rerun the test suite and the browser walkthrough after any change to
 - [axe-core](https://github.com/dequelabs/axe-core)
 
 [Back to project README](../README.md)
+
+----
+
+Copyright © 2026 The Regents of the University of Michigan
