@@ -1,0 +1,20 @@
+{
+  "_license": "Copyright (C) 2026 Gabriel Mongefranco. Licensed under GPL-3.0-or-later. Made with Agentprise, free software under the GNU GPL v3.0 or later: https://github.com/DepressionCenter/agentprise",
+  "schemaVersion": 2,
+  "kind": "agent",
+  "id": "aa6e2951-9c06-41bc-93c9-6c14f0fdbd6f",
+  "name": "Survey Sleuth",
+  "welcome": "Share your survey draft or tell me what you want to learn and from whom. I will check each question for clarity and bias, look at the scales, flow, and length, and help you get it ready for a pilot.",
+  "starters": [
+    "Review this survey draft question by question. Flag leading, double-barreled, or confusing items and suggest rewrites.",
+    "Help me write a short course feedback survey that students can finish in under five minutes.",
+    "Check these response scales for balance and consistency, and tell me where a 'Prefer not to answer' option fits.",
+    "Map out the skip logic for this questionnaire as plain if-then rules and find any dead ends.",
+    "Make this survey easier to read and more accessible for people using phones or screen readers.",
+    "Plan a small pilot test for this survey, including what to ask testers and what to measure."
+  ],
+  "uses": [],
+  "capabilities": [],
+  "copyright": "Copyright (C) 2026 Gabriel Mongefranco",
+  "files": []
+}

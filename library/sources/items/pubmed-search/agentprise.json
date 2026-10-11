@@ -1,0 +1,214 @@
+{
+  "_license": "Copyright (C) 2026 Gabriel Mongefranco. Licensed under GPL-3.0-or-later. Made with Agentprise, free software under the GNU GPL v3.0 or later: https://github.com/DepressionCenter/agentprise",
+  "schemaVersion": 2,
+  "kind": "skill",
+  "id": "84c971d6-3b0f-4695-9bd6-f0dffd7b5a70",
+  "name": "PubMed Search",
+  "appId": "",
+  "license": "",
+  "capabilities": [
+    {
+      "id": "pubmed.search",
+      "label": "Run a PubMed query",
+      "description": "Run a Boolean PubMed query and return the count, PMIDs, query translation, and warnings.",
+      "required": false,
+      "fallback": "No PubMed search tool is connected. Prepare the query with a PubMed link (https://pubmed.ncbi.nlm.nih.gov/?term=<url-encoded query>), label it \"Prepared search strategy (not executed)\", and never say a search was completed.",
+      "providers": {
+        "claude": [
+          {
+            "kind": "connector",
+            "name": "PubMed",
+            "instructions": "Use the PubMed connector's search tool to run the exact query you prepared, asking for 20 results unless the person needs more. Record the query sent, the date, the result count, the PMIDs, and any query translation or warnings it reports, and label the output \"Search completed on <date>\"."
+          },
+          {
+            "kind": "script",
+            "path": "scripts/pubmed.py",
+            "runtime": "python3",
+            "instructions": "Run the bundled script from the skill folder: python3 scripts/pubmed.py search --query '<query>' --retmax 20. It needs Python 3, network access to eutils.ncbi.nlm.nih.gov, and the NCBI_EMAIL environment variable set to the maintainer's contact address (NCBI_API_KEY is optional). It prints one JSON object. If the command fails because the network call is blocked or times out, or because NCBI_EMAIL is not set, stop using it, switch to query preparation, and tell the person in one sentence why the search could not run. On claude.ai this works only when the workspace's code execution network settings allow eutils.ncbi.nlm.nih.gov, which the default allowlist does not."
+          }
+        ],
+        "copilot": [
+          {
+            "kind": "openapi",
+            "spec": "openapi/pubmed-eutils.yaml",
+            "operations": [
+              "searchPubMed"
+            ],
+            "auth": "none",
+            "instructions": "Call searchPubMed with the exact prepared query as term, retmax 20 (50 at most), and sort relevance. Record esearchresult.count as the total, idlist as the PMIDs, and querytranslation, warninglist, and errorlist, and label the output \"Search completed on <date>\"."
+          }
+        ],
+        "chatgpt": [
+          {
+            "kind": "mcp",
+            "server": "pubmed",
+            "instructions": "If an MCP server named pubmed is connected, use its search tool to run the exact query you prepared, and record the query sent, the date, the result count, the PMIDs, and any query translation or warnings it reports. Label the output \"Search completed on <date>\". If no such server is connected, this route is not available.",
+            "tools": []
+          }
+        ],
+        "gemini": [],
+        "cli": [
+          {
+            "kind": "script",
+            "path": "scripts/pubmed.py",
+            "runtime": "python3",
+            "instructions": "Run the bundled script from the skill folder: python3 scripts/pubmed.py search --query '<query>' --retmax 20. It needs Python 3, network access to eutils.ncbi.nlm.nih.gov, and the NCBI_EMAIL environment variable set to the maintainer's contact address (NCBI_API_KEY is optional). It prints one JSON object. If the command fails because the network call is blocked or times out, or because NCBI_EMAIL is not set, stop using it, switch to query preparation, and tell the person in one sentence why the search could not run."
+          }
+        ],
+        "*": []
+      }
+    },
+    {
+      "id": "pubmed.metadata",
+      "label": "Get article details",
+      "description": "Get the title, authors, journal, date, and identifiers for a list of PMIDs.",
+      "required": false,
+      "fallback": "No PubMed metadata tool is connected. Never fill in article details from memory; link each PMID as https://pubmed.ncbi.nlm.nih.gov/<PMID>/ instead.",
+      "providers": {
+        "claude": [
+          {
+            "kind": "connector",
+            "name": "PubMed",
+            "instructions": "Use the PubMed connector's article metadata tool to get the title, authors, journal, and date for the PMIDs a search returned. Show only the details it returns, and list any PMID it could not find as not retrieved."
+          },
+          {
+            "kind": "script",
+            "path": "scripts/pubmed.py",
+            "runtime": "python3",
+            "instructions": "Run the bundled script from the skill folder: python3 scripts/pubmed.py summary --ids <PMID>,<PMID>. It needs Python 3, network access to eutils.ncbi.nlm.nih.gov, and the NCBI_EMAIL environment variable set to the maintainer's contact address (NCBI_API_KEY is optional). It prints one JSON object. If the command fails because the network call is blocked or times out, or because NCBI_EMAIL is not set, stop using it, switch to query preparation, and tell the person in one sentence why the search could not run. On claude.ai this works only when the workspace's code execution network settings allow eutils.ncbi.nlm.nih.gov, which the default allowlist does not."
+          }
+        ],
+        "copilot": [
+          {
+            "kind": "openapi",
+            "spec": "openapi/pubmed-eutils.yaml",
+            "operations": [
+              "getSummaries"
+            ],
+            "auth": "none",
+            "instructions": "Call getSummaries with up to 20 comma-separated PMIDs as id. Show only the details it returns; a record with an error field was not found, so list that PMID as not retrieved."
+          }
+        ],
+        "chatgpt": [
+          {
+            "kind": "mcp",
+            "server": "pubmed",
+            "instructions": "If an MCP server named pubmed is connected, use its metadata or summary tool to get the title, authors, journal, and date for the PMIDs a search returned, and show only the details it returns. If no such server is connected, this route is not available.",
+            "tools": []
+          }
+        ],
+        "gemini": [],
+        "cli": [
+          {
+            "kind": "script",
+            "path": "scripts/pubmed.py",
+            "runtime": "python3",
+            "instructions": "Run the bundled script from the skill folder: python3 scripts/pubmed.py summary --ids <PMID>,<PMID>. It needs Python 3, network access to eutils.ncbi.nlm.nih.gov, and the NCBI_EMAIL environment variable set to the maintainer's contact address (NCBI_API_KEY is optional). It prints one JSON object. If the command fails because the network call is blocked or times out, or because NCBI_EMAIL is not set, stop using it, switch to query preparation, and tell the person in one sentence why the search could not run."
+          }
+        ],
+        "*": []
+      }
+    },
+    {
+      "id": "pubmed.abstracts",
+      "label": "Read abstracts",
+      "description": "Get abstract text for a list of PMIDs so the records can be reviewed.",
+      "required": false,
+      "fallback": "No PubMed abstract tool is connected. Review only abstracts the person pastes into the conversation and mark every other record as metadata-only.",
+      "providers": {
+        "claude": [
+          {
+            "kind": "connector",
+            "name": "PubMed",
+            "instructions": "Use the PubMed connector's article tools to get the abstract for each PMID you will review. Mark each record as abstract-read or metadata-only, draw conclusions only from abstracts you read, and say when a claim would need the full text."
+          },
+          {
+            "kind": "script",
+            "path": "scripts/pubmed.py",
+            "runtime": "python3",
+            "instructions": "Run the bundled script from the skill folder: python3 scripts/pubmed.py abstract --ids <PMID>,<PMID>. It needs Python 3, network access to eutils.ncbi.nlm.nih.gov, and the NCBI_EMAIL environment variable set to the maintainer's contact address (NCBI_API_KEY is optional). It prints one JSON object. If the command fails because the network call is blocked or times out, or because NCBI_EMAIL is not set, stop using it, switch to query preparation, and tell the person in one sentence why the search could not run. On claude.ai this works only when the workspace's code execution network settings allow eutils.ncbi.nlm.nih.gov, which the default allowlist does not."
+          }
+        ],
+        "copilot": [
+          {
+            "kind": "openapi",
+            "spec": "openapi/pubmed-eutils.yaml",
+            "operations": [
+              "getAbstracts"
+            ],
+            "auth": "none",
+            "instructions": "Call getAbstracts with up to 20 comma-separated PMIDs as id; it returns plain text. Mark each record abstract-read or metadata-only, and draw conclusions only from abstracts you read."
+          }
+        ],
+        "chatgpt": [
+          {
+            "kind": "mcp",
+            "server": "pubmed",
+            "instructions": "If an MCP server named pubmed is connected, use its abstract or full-record tool to get the abstract for each PMID you will review. Mark each record as abstract-read or metadata-only and draw conclusions only from abstracts you read. If no such server is connected, this route is not available.",
+            "tools": []
+          }
+        ],
+        "gemini": [],
+        "cli": [
+          {
+            "kind": "script",
+            "path": "scripts/pubmed.py",
+            "runtime": "python3",
+            "instructions": "Run the bundled script from the skill folder: python3 scripts/pubmed.py abstract --ids <PMID>,<PMID>. It needs Python 3, network access to eutils.ncbi.nlm.nih.gov, and the NCBI_EMAIL environment variable set to the maintainer's contact address (NCBI_API_KEY is optional). It prints one JSON object. If the command fails because the network call is blocked or times out, or because NCBI_EMAIL is not set, stop using it, switch to query preparation, and tell the person in one sentence why the search could not run."
+          }
+        ],
+        "*": []
+      }
+    },
+    {
+      "id": "pubmed.browse",
+      "label": "Browse PubMed pages",
+      "description": "Web search scoped to pubmed.ncbi.nlm.nih.gov, for discovery only.",
+      "required": false,
+      "fallback": "No scoped web search of PubMed is available. Prepare a query the person can run in PubMed instead.",
+      "providers": {
+        "claude": [],
+        "copilot": [
+          {
+            "kind": "websearch",
+            "sites": [
+              "https://pubmed.ncbi.nlm.nih.gov"
+            ],
+            "instructions": "Use only when searchPubMed is unavailable or fails. Label these results \"Web discovery\", never \"Search completed\", report no count or query translation, and also give a prepared query the person can run in PubMed."
+          }
+        ],
+        "chatgpt": [],
+        "gemini": [],
+        "cli": [],
+        "*": []
+      }
+    }
+  ],
+  "copyright": "Copyright (C) 2026 Gabriel Mongefranco",
+  "files": [
+    {
+      "path": "README.md",
+      "type": "md"
+    },
+    {
+      "path": "references/pubmed-syntax-guide.md",
+      "type": "md"
+    },
+    {
+      "path": "references/mobile-tech-search-blocks.md",
+      "type": "md"
+    },
+    {
+      "path": "references/query-test-cases.md",
+      "type": "md"
+    },
+    {
+      "path": "scripts/pubmed.py",
+      "type": "py"
+    },
+    {
+      "path": "openapi/pubmed-eutils.yaml",
+      "type": "yaml"
+    }
+  ]
+}

@@ -64,6 +64,11 @@ served by GitHub Pages from the root of the main branch.
   version 2 backups once. It is the only code that still reads version 1
   fields. `--check` reports without writing, and a second run changes nothing.
   The app itself carries no version 1 import code.
+- Entries kept as plain files live under `library/sources/` (item folders in
+  `items/`, one `.json` per entry in `entries/`) and are built with
+  `node tools/build-library.mjs`. The build is deterministic, and the tests run
+  `--check`, so never edit those `.zip` files by hand. A skill shared by two
+  entries has one source folder, which keeps the copies identical.
 - `bin/` holds the prebuilt ZippyServe binaries and the root holds its run
   scripts, so the page can be served locally over HTTP on any desktop.
 - Follow the repository's existing file and folder naming conventions when adding

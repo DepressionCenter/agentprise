@@ -1,0 +1,244 @@
+# This file is part of Agentprise
+# pubmed-search/openapi/pubmed-eutils.yaml
+# Author(s): Gabriel Mongefranco.
+# Created: 2026-10-10
+# Last Modified: 2026-10-10
+# Summary: OpenAPI 3.0.3 description of three read-only NCBI E-utilities calls
+#          (search, summaries, abstracts) used as a Microsoft 365 Copilot API plugin.
+# Notes: See README file for documentation and full license information.
+#
+# Copyright © 2026 The Regents of the University of Michigan
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program. If not, see <https://www.gnu.org/licenses/>.
+
+openapi: 3.0.3
+info:
+  title: PubMed E-utilities
+  version: 1.0.0
+  description: >-
+    Read-only access to PubMed through the NCBI E-utilities API. Search PubMed,
+    get article summaries, and get abstracts. No authentication is used; NCBI
+    asks callers to identify their tool and a contact email.
+servers:
+  - url: https://eutils.ncbi.nlm.nih.gov/entrez/eutils
+paths:
+  /esearch.fcgi:
+    get:
+      operationId: searchPubMed
+      summary: Run a PubMed search
+      description: >-
+        Runs a Boolean PubMed query and returns the total count, a list of PMIDs,
+        the query translation, and any warnings. Use it only to run a query the
+        user asked for, and report the exact query sent, the count, and the
+        translation exactly as returned.
+      parameters:
+        - name: db
+          in: query
+          required: true
+          description: Database to search. Always pubmed.
+          schema:
+            type: string
+            enum: [pubmed]
+            default: pubmed
+        - name: term
+          in: query
+          required: true
+          description: The PubMed query, for example ("smart ring*"[tw]) AND sleep[mh]. Boolean operators must be in capital letters.
+          schema:
+            type: string
+        - name: retmode
+          in: query
+          required: true
+          description: Response format. Always json.
+          schema:
+            type: string
+            enum: [json]
+            default: json
+        - name: retmax
+          in: query
+          required: false
+          description: Number of PMIDs to return. Default 20, maximum 50.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: sort
+          in: query
+          required: false
+          description: Sort order. relevance is PubMed's Best Match; pub_date is newest first.
+          schema:
+            type: string
+            enum: [relevance, pub_date]
+            default: relevance
+        - name: tool
+          in: query
+          required: true
+          description: Name of the calling application, as NCBI asks.
+          schema:
+            type: string
+            default: agentprise-pubmed-search
+        - name: email
+          in: query
+          required: false
+          description: Contact email of whoever deployed this plugin, as NCBI asks. Never the end user's own address.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Search result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  esearchresult:
+                    type: object
+                    properties:
+                      count:
+                        type: string
+                        description: Total number of matching records, as a string.
+                      retmax:
+                        type: string
+                      retstart:
+                        type: string
+                      idlist:
+                        type: array
+                        description: PMIDs of the returned records.
+                        items:
+                          type: string
+                      querytranslation:
+                        type: string
+                        description: How PubMed translated the query.
+                      warninglist:
+                        type: object
+                        description: Warnings such as quoted phrases not found.
+                      errorlist:
+                        type: object
+                        description: Errors such as phrases not found.
+  /esummary.fcgi:
+    get:
+      operationId: getSummaries
+      summary: Get article summaries
+      description: >-
+        Returns the title, authors, journal, publication date, and identifiers
+        for up to 20 PMIDs. Use it after searchPubMed to show readable results,
+        and never fill in details it did not return.
+      parameters:
+        - name: db
+          in: query
+          required: true
+          description: Database. Always pubmed.
+          schema:
+            type: string
+            enum: [pubmed]
+            default: pubmed
+        - name: id
+          in: query
+          required: true
+          description: Comma-separated PMIDs, digits only, at most 20.
+          schema:
+            type: string
+            pattern: "^[0-9]+(,[0-9]+){0,19}$"
+        - name: retmode
+          in: query
+          required: true
+          description: Response format. Always json.
+          schema:
+            type: string
+            enum: [json]
+            default: json
+        - name: tool
+          in: query
+          required: true
+          description: Name of the calling application, as NCBI asks.
+          schema:
+            type: string
+            default: agentprise-pubmed-search
+        - name: email
+          in: query
+          required: false
+          description: Contact email of whoever deployed this plugin, as NCBI asks. Never the end user's own address.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Summaries keyed by PMID under result. A PMID that could not be found has an error field instead of a title.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: object
+                    description: Contains uids (the list of PMIDs) and one summary object per PMID with title, authors, source (journal), pubdate, and articleids.
+  /efetch.fcgi:
+    get:
+      operationId: getAbstracts
+      summary: Get abstracts as plain text
+      description: >-
+        Returns the abstracts for up to 20 PMIDs as plain text. Use it only when
+        the user wants abstracts reviewed, and mark any record whose abstract is
+        missing as metadata-only.
+      parameters:
+        - name: db
+          in: query
+          required: true
+          description: Database. Always pubmed.
+          schema:
+            type: string
+            enum: [pubmed]
+            default: pubmed
+        - name: id
+          in: query
+          required: true
+          description: Comma-separated PMIDs, digits only, at most 20.
+          schema:
+            type: string
+            pattern: "^[0-9]+(,[0-9]+){0,19}$"
+        - name: rettype
+          in: query
+          required: true
+          description: Record type. Always abstract.
+          schema:
+            type: string
+            enum: [abstract]
+            default: abstract
+        - name: retmode
+          in: query
+          required: true
+          description: Response format. Always text; EFetch has no JSON output for PubMed.
+          schema:
+            type: string
+            enum: [text]
+            default: text
+        - name: tool
+          in: query
+          required: true
+          description: Name of the calling application, as NCBI asks.
+          schema:
+            type: string
+            default: agentprise-pubmed-search
+        - name: email
+          in: query
+          required: false
+          description: Contact email of whoever deployed this plugin, as NCBI asks. Never the end user's own address.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Plain-text citations with abstracts, one block per PMID.
+          content:
+            text/plain:
+              schema:
+                type: string

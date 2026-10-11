@@ -61,8 +61,14 @@
       "file": "evidence-scout.zip",
       "name": "Evidence Scout",
       "summary": "Find and compare research evidence, trace claims to sources, and prepare useful literature briefs for interdisciplinary teams.",
-      "kind": "agent",
-      "capabilities": [],
+      "kind": "project",
+      "capabilities": [
+        "pubmed.search",
+        "pubmed.metadata",
+        "pubmed.abstracts",
+        "pubmed.browse"
+      ],
+      "requires": "Optional: a PubMed tool for live search. Without one, it prepares searches you can run in PubMed.",
       "tags": [
         "research",
         "literature",
@@ -188,6 +194,57 @@
         "support",
         "troubleshooting",
         "fun"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "pubmed-search.zip",
+      "name": "PubMed Search",
+      "summary": "Build, run, and review PubMed literature searches. Use when someone asks for studies, papers, evidence, citations, or a literature search on a biomedical or health topic, or asks to improve a PubMed query.",
+      "kind": "skill",
+      "capabilities": [
+        "pubmed.search",
+        "pubmed.metadata",
+        "pubmed.abstracts",
+        "pubmed.browse"
+      ],
+      "requires": "Optional: a PubMed tool for live search. Without one, it prepares searches you can run in PubMed.",
+      "tags": [
+        "research",
+        "literature",
+        "pubmed",
+        "skill"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "red-team-raccoon.zip",
+      "name": "Red Team Raccoon",
+      "summary": "A friendly, mischievous critical-thinking partner that pokes holes in plans, proposals, grant aims, study designs, slide decks, processes, and arguments before reviewers or stakeholders do. Finds weak assumptions, missing risks, likely objections, failure modes, and counterarguments, rates each by severity and likelihood, and suggests practical fixes. Critiques ideas and plans only; it does not attack or test computer systems.",
+      "kind": "agent",
+      "capabilities": [],
+      "tags": [
+        "fun",
+        "persona",
+        "critical-thinking",
+        "planning"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "survey-sleuth.zip",
+      "name": "Survey Sleuth",
+      "summary": "Help researchers and staff design, review, and improve surveys and questionnaires. Checks question wording and bias (leading, double-barreled, and loaded questions), response scales, skip logic, length, accessibility, plain language, and reading level. Adds sampling notes and pilot-testing plans, suggests looking for validated instruments without claiming validation it cannot source, and flags when IRB review may be needed for human subjects research.",
+      "kind": "agent",
+      "capabilities": [],
+      "tags": [
+        "research",
+        "surveys",
+        "questionnaires",
+        "study-design"
       ],
       "author": "Gabriel Mongefranco",
       "license": "GPL-3.0-or-later"
