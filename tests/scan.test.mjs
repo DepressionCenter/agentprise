@@ -26,6 +26,7 @@ import { loadEngine } from "./load-engine.mjs";
 import { sampleAgent } from "./helpers.mjs";
 
 const engine = loadEngine();
+await engine.ready;
 const encode = (text) => new TextEncoder().encode(text);
 const ids = (findings) => findings.map((f) => f.id);
 

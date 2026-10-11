@@ -1,0 +1,42 @@
+[
+  {
+    "component": "Golden Scout",
+    "status": "transformed",
+    "note": "The assistant is written as a skill whose description starts with \"Persona:\", because the Claude plugin has no separate place for assistants."
+  },
+  {
+    "component": "Record Finder: Record connector",
+    "status": "requires-setup",
+    "note": "Works once the Example Records connector is turned on where you use it. The setup steps say how."
+  },
+  {
+    "component": "Record Finder: Record server",
+    "status": "preserved",
+    "note": "Connected through the Example search server."
+  },
+  {
+    "component": "Record Finder: Record server",
+    "status": "preserved",
+    "note": "Connected through the Pinned tools server."
+  },
+  {
+    "component": "Record Finder: Record server",
+    "status": "unsupported",
+    "note": "Left out the Local helper server, because it runs on the computer, and claude.ai can reach only tool servers on the web."
+  },
+  {
+    "component": "Record Finder: Record API",
+    "status": "unsupported",
+    "note": "Left out the records API action, because the Claude plugin cannot use it."
+  },
+  {
+    "component": "Record Finder: Record script",
+    "status": "requires-setup",
+    "note": "The script travels with the skill. It runs only where python3 can run with network access. On claude.ai, a workspace Owner must allow the address it calls."
+  },
+  {
+    "component": "Record Finder: Record web search",
+    "status": "requires-setup",
+    "note": "Works where the product can search the web."
+  }
+]

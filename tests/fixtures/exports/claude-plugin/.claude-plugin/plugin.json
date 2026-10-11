@@ -1,0 +1,11 @@
+{
+  "name": "golden-kit",
+  "displayName": "Golden Kit",
+  "version": "1.2.3",
+  "description": "A fixed project for export tests.",
+  "author": {
+    "name": "Example Creator",
+    "url": "https://example.org"
+  },
+  "license": "GPL-3.0-or-later"
+}

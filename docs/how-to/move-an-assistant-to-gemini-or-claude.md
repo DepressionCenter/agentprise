@@ -23,8 +23,8 @@ See <https://www.gnu.org/licenses/fdl-1.3.html>. See README for full license inf
 
 You already have an assistant as a file. Maybe you built it in SharePoint or
 in the Microsoft 365 Copilot app, or you downloaded it from Agentprise before.
-This guide opens that file, lets you check it, and gives you a skill file that
-Gemini and Claude can use. It takes about five minutes.
+This guide opens that file, lets you check it, and gives you a skill file for
+Gemini or Claude. It takes about five minutes.
 
 Agentprise opens these files:
 
@@ -102,14 +102,22 @@ Caveman." To download another one in the project, choose it in the
 **In this project** bar first.
 
 Under **Download**, choose **Download** on the Gemini row or on the Claude
-row. Both buttons give the same file, so one download works for both
-products. The file is a `.zip` named after the assistant, such as
-`Caveman.zip`.
+row. Each button gives a skill written for that product, so download the one
+for the product you use. The file is a `.zip` named after the assistant, such
+as `Caveman.zip`. The two files have the same layout, but they can differ in
+small ways. For example, the Gemini skill leaves out Word, Excel, PowerPoint,
+and OneNote files, because Gemini skills do not accept them.
 
 ![The Download card. The Gemini and Claude rows each say Skill (.zip) and have a Download button on the right.](../../images/guides/where-it-can-go.png)
 
+Gemini and Claude have skills but no separate place for an assistant, so the
+skill's description starts with "Persona:". If the assistant uses skills, the
+skill file holds only the assistant. Download each skill too, or use the
+**Claude plugin** download under **For the whole project**, which holds every
+assistant and skill in the project in one file.
+
 This skill file is not the same as **Download Backup**. The skill holds one
-assistant or skill, ready for Gemini and Claude. The backup holds the whole
+assistant or skill, ready for Gemini or Claude. The backup holds the whole
 project, ready to open in Agentprise again. Your project also stays under
 **Your projects** in this browser, but browsers can clear what they store, so
 download a backup of anything you want to keep.
@@ -121,7 +129,9 @@ right.
 ![The Inspect page. The left card, titled Agent Details, shows the name, description, and instructions as form fields. The right card, titled Output Format, has eight tabs in alphabetical order: Agentprise Backup, ChatGPT, Claude, Copilot / Teams Apps, Gemini, Gemini Notebook, SKILL.md, and Teams Chat, with Agentprise Backup selected and its files listed below.](../../images/guides/details.png)
 
 Choose the **Gemini** tab. It lists the files, with your own words
-highlighted.
+highlighted. If the list **What changes in this download** appears above the
+files, read it. It says what was changed or left out for Gemini, and what
+needs setup.
 
 ![The Inspect page on the Gemini tab. The files SKILL.md, LICENSE.txt, and README.md are listed inside a folder named caveman, with the contents of SKILL.md shown. Below are a Download button and the steps for Gemini and for Claude.](../../images/guides/details-gemini-claude.png)
 
@@ -129,32 +139,45 @@ highlighted.
 
 1. In Gemini, open **Settings**, then **Skills**.
 2. Choose **Upload** and pick the `.zip` file.
+3. Check the skill and choose **Create**.
 
-Gemini Skills may need a paid Google AI plan.
+Gemini skills work only with personal Google accounts for now, not work or
+school accounts. They may need a paid Google AI plan.
 
 ### Step 5: Upload it to Claude
 
-1. In Claude, open **Settings**, then **Capabilities**, then **Skills**.
-2. Choose **Upload** and pick the `.zip` file.
-3. Turn the skill on.
+1. In Claude, open **Customize**, then **Skills**.
+2. Choose the plus button (**+**), then **Create skill**, then
+   **Upload a skill**, and pick the `.zip` file.
+3. Turn the skill on. It stays private to you until you share it.
 
 Claude skills need a paid plan with code execution turned on.
 
+### Step 6: Connect any tools
+
+If the assistant uses tools, such as a search of PubMed, the skill holds a
+file called `SETUP.md`. It lists the steps for each tool, such as turning on a
+connector in Claude. You can skip this step if there is no `SETUP.md`. See
+[Connect the tools in a download](connect-tools.md) for help with each step.
+
 ### Conclusion
 
-Your assistant now works in Gemini and Claude from one file. To change it
+Your assistant now works in Gemini or Claude. To change it
 later, open it from **Your projects** or drop your backup on the Workspace
-page. To send the same assistant to ChatGPT, see
-[Copy an assistant into ChatGPT or Gemini Notebook](copy-an-assistant-into-chatgpt.md).
+page. To send the same assistant to a ChatGPT project, see
+[Copy an assistant into a ChatGPT project or Gemini Notebook](copy-an-assistant-into-chatgpt.md).
 
 ### Additional resources
 
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
 - [Make a new assistant for Microsoft 365 Copilot](make-an-assistant-for-copilot.md)
-- [Copy an assistant into ChatGPT or Gemini Notebook](copy-an-assistant-into-chatgpt.md)
+- [Copy an assistant into a ChatGPT project or Gemini Notebook](copy-an-assistant-into-chatgpt.md)
+- [Connect the tools in a download](connect-tools.md)
 - [Formats: what each download keeps](../formats.md)
 - [Frequently asked questions](../faq.md)
 - [Gemini productivity overview](https://gemini.google/overview/productivity/)
 - [Claude skills documentation](https://claude.com/docs/skills/how-to)
+- [Use skills in Claude](https://support.claude.com/en/articles/12512180-use-skills-in-claude)
+- [Gemini skills help](https://support.google.com/gemini/answer/17094296)
 
 [Back to project README](../../README.md)

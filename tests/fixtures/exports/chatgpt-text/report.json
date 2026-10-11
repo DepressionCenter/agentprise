@@ -1,0 +1,42 @@
+[
+  {
+    "component": "Record connector",
+    "status": "requires-setup",
+    "note": "Works once the Example Records connector is turned on where you use it."
+  },
+  {
+    "component": "Record server",
+    "status": "requires-setup",
+    "note": "Works once the Example search server is connected where you use it."
+  },
+  {
+    "component": "Record server",
+    "status": "requires-setup",
+    "note": "Works once the Pinned tools server is connected where you use it."
+  },
+  {
+    "component": "Record server",
+    "status": "requires-setup",
+    "note": "Works once the Local helper server is connected where you use it."
+  },
+  {
+    "component": "Record API",
+    "status": "requires-setup",
+    "note": "Works only where an action for this API is connected."
+  },
+  {
+    "component": "Record script",
+    "status": "unsupported",
+    "note": "Left out the script scripts/lookup.py, because the ChatGPT text cannot use it."
+  },
+  {
+    "component": "Record web search",
+    "status": "requires-setup",
+    "note": "Works where the product can search the web."
+  },
+  {
+    "component": "Skill Record Finder",
+    "status": "transformed",
+    "note": "Its steps were added to the instructions under \"Skill: Record Finder\", because the ChatGPT text has no skills."
+  }
+]

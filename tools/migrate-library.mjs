@@ -38,6 +38,7 @@ import { makeDeflatedZip } from "../tests/helpers.mjs";
 
 // ### Load Configuration ###
 const engine = loadEngine();
+await engine.ready;
 const checkOnly = process.argv.includes("--check");
 const libraryDir = join(repoRoot, "library");
 const catalogPath = join(libraryDir, "catalog.json");

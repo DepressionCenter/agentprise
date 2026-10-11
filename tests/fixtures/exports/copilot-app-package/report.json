@@ -1,0 +1,62 @@
+[
+  {
+    "component": "Record connector",
+    "status": "requires-setup",
+    "note": "Works once the Example Records connector is turned on where you use it. The setup steps say how."
+  },
+  {
+    "component": "Record server",
+    "status": "preserved",
+    "note": "Connected through the Example search server."
+  },
+  {
+    "component": "Record server",
+    "status": "requires-setup",
+    "note": "Connected through the Pinned tools server. An admin must register its sign-in and paste the id into plugin-pinned.json."
+  },
+  {
+    "component": "Record server",
+    "status": "unsupported",
+    "note": "Left out the Local helper server, because Copilot can reach only tool servers on the web."
+  },
+  {
+    "component": "Record API",
+    "status": "preserved",
+    "note": "Written as a Copilot action, with its API description inside the package. Your admin must allow custom apps."
+  },
+  {
+    "component": "Record script",
+    "status": "unsupported",
+    "note": "Left out the script scripts/lookup.py, because the Copilot app package cannot use it."
+  },
+  {
+    "component": "Record web search",
+    "status": "preserved",
+    "note": "Copilot's web search covers https://records.example.org."
+  },
+  {
+    "component": "Skill Record Finder",
+    "status": "transformed",
+    "note": "Its steps were added to the instructions under \"Skill: Record Finder\", because the Copilot app package has no skills."
+  },
+  {
+    "component": "Welcome message",
+    "status": "unsupported",
+    "note": "The Copilot app package has no place for it."
+  },
+  {
+    "component": "Copyright and license",
+    "status": "unsupported",
+    "note": "The Copilot app package's files reject extra fields."
+  },
+  {
+    "component": "guide.md",
+    "status": "transformed",
+    "note": "From the skill Record Finder. Copilot accepts only document types, so it goes in as guide.md.txt."
+  },
+  {
+    "component": "Web search",
+    "status": "transformed",
+    "note": "Turned on web search, limited to https://records.example.org, for the tools that need it."
+  }
+]

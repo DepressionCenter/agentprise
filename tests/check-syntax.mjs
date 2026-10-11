@@ -2,9 +2,10 @@
 // tests/check-syntax.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-09
+// Last Modified: 2026-10-10
 // Summary: Parses the script inside index.html and fails if it has a syntax
-//          error or contains non-ASCII characters outside string literals.
+//          error, contains non-ASCII characters, or contains ASCII control
+//          characters other than tab, newline, and carriage return.
 // Notes: See README file for documentation and full license information.
 //
 // Copyright © 2026 The Regents of the University of Michigan
@@ -47,4 +48,21 @@ lines.forEach((line, index) => {
 if (nonAscii > 0) {
   process.exit(1);
 }
-console.log("index.html script: syntax OK, ASCII only");
+
+// ### Control character check ###
+// A stray control character, such as a backspace pasted from a terminal, is
+// invisible in most editors but changes the text the page writes into exports.
+// Tab, newline, and carriage return are the only ones allowed.
+let controls = 0;
+lines.forEach((line, index) => {
+  const match = line.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/);
+  if (match) {
+    controls += 1;
+    const code = match[0].charCodeAt(0).toString(16).toUpperCase().padStart(2, "0");
+    console.error("Control character 0x" + code + " on script line " + (index + 1) + ", column " + (match.index + 1));
+  }
+});
+if (controls > 0) {
+  process.exit(1);
+}
+console.log("index.html script: syntax OK, ASCII only, no control characters");

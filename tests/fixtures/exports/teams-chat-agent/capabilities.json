@@ -1,0 +1,21 @@
+[
+  {
+    "name": "WebSearch",
+    "sites": [
+      {
+        "url": "https://records.example.org"
+      }
+    ]
+  },
+  {
+    "name": "CodeInterpreter"
+  },
+  {
+    "name": "GraphicArt"
+  },
+  {
+    "name": "OneDriveAndSharePoint",
+    "items_by_sharepoint_ids": [],
+    "items_by_url": []
+  }
+]

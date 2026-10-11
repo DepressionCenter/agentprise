@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "remote": {
+      "type": "http",
+      "url": "https://mcp.example.org/mcp"
+    },
+    "pinned": {
+      "type": "http",
+      "url": "https://tools.example.org/mcp"
+    }
+  }
+}

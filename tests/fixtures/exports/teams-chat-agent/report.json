@@ -1,0 +1,47 @@
+[
+  {
+    "component": "Record connector",
+    "status": "requires-setup",
+    "note": "Works once the Example Records connector is turned on where you use it."
+  },
+  {
+    "component": "Record server",
+    "status": "unsupported",
+    "note": "Left out the Example search server, because the Teams Chat file cannot use it."
+  },
+  {
+    "component": "Record server",
+    "status": "unsupported",
+    "note": "Left out the Pinned tools server, because the Teams Chat file cannot use it."
+  },
+  {
+    "component": "Record server",
+    "status": "unsupported",
+    "note": "Left out the Local helper server, because the Teams Chat file cannot use it."
+  },
+  {
+    "component": "Record API",
+    "status": "unsupported",
+    "note": "Left out the records API action, because the Teams Chat file cannot use it."
+  },
+  {
+    "component": "Record script",
+    "status": "unsupported",
+    "note": "Left out the script scripts/lookup.py, because the Teams Chat file cannot use it."
+  },
+  {
+    "component": "Record web search",
+    "status": "preserved",
+    "note": "Copilot's web search covers https://records.example.org."
+  },
+  {
+    "component": "Skill Record Finder",
+    "status": "transformed",
+    "note": "Its steps were added to the instructions under \"Skill: Record Finder\", because the Teams Chat file has no skills."
+  },
+  {
+    "component": "Web search",
+    "status": "transformed",
+    "note": "Turned on web search, limited to https://records.example.org, for the tools that need it."
+  }
+]

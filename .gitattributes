@@ -2,10 +2,11 @@
 # .gitattributes
 # Author(s): Gabriel Mongefranco.
 # Created: 2026-10-09
-# Last Modified: 2026-10-09
+# Last Modified: 2026-10-10
 # Summary: Keeps the launch scripts and prebuilt server binaries byte-exact on
 #          every platform, so the Linux and macOS scripts run after a Windows checkout,
-#          and keeps the library bundles untouched by line-ending conversion.
+#          and keeps the library bundles, pinned test schemas, and golden export
+#          files untouched by line-ending conversion.
 # Notes: See README file for documentation and full license information.
 #
 # Copyright © 2026 The Regents of the University of Michigan
@@ -24,3 +25,7 @@
 *.command text eol=lf
 bin/* binary
 library/*.zip binary
+# Pinned schemas are checked by SHA-256 hash, and golden export files by exact
+# text, so line-ending conversion must never touch them.
+tests/schemas/** -text
+tests/fixtures/exports/** -text
