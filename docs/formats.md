@@ -856,6 +856,12 @@ Root files that cannot be attached because of their contents, name, or the
 Each refused attachment gets a notice. Empty files and files with invalid
 document contents are preserved for you to inspect.
 
+Only the color icon actually loaded by an assistant counts as imported.
+Other icons stay in the backup, including both icons in a package with
+only skills or connectors. A connector with an unsafe or missing tool
+description path still opens as a server. A notice asks you to fix the
+reference, and the source manifest stays in the backup.
+
 | Package part | Becomes | Limits |
 |---|---|---|
 | `copilotAgents.declarativeAgents[].file` | One assistant each, read by `teamsAgentRaw` | A file named twice is read once. Without a list, `declarativeAgent_0.json` is read. Only the first assistant keeps the manifest `id` as its app id; the others get a new one on download, with a notice |
@@ -1154,11 +1160,12 @@ real account, unless the line names a tenant test.
   listed, unlisted, or rejected nested skills.
   Root-skill precedence and retained paths at their depth and length limits
   are checked through backup round trips too. Further cases check refused
-  root attachments and packages with more than 20 assistants and skills.
+  root attachments, packages with more than 20 assistants and skills,
+  unused icons, and invalid connector description paths.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 291 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 293 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

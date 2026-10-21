@@ -115,6 +115,39 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("icons not consumed by an assistant survive backups", async () => {
+    for (const entries of [skillOnlyEntries(), connectorOnlyEntries(), agentOnlyEntries()]) {
+      const { project } = await openPackage(entries);
+      const { project: again } = await backupRoundTrip(project);
+      const hasAgent = project.items.some((item) => item.kind === "agent");
+      for (const name of hasAgent ? ["outline.png"] : ["color.png", "outline.png"]) {
+        const original = entries.find((entry) => entry.name === name).bytes;
+        assert.deepEqual(project.unrecognized.find((entry) => entry.path === "microsoft-package/" + name).bytes, original);
+        assert.deepEqual(again.unrecognized.find((entry) => entry.path === "microsoft-package/" + name).bytes, original);
+      }
+      if (hasAgent) {
+        assert.ok(project.items[0].icon);
+        assert.equal(project.unrecognized.some((entry) => entry.path === "microsoft-package/color.png"), false);
+      }
+    }
+  });
+
+  test("invalid connector description paths get a notice and retain the manifest", async () => {
+    for (const file of ["../outside.json", "/absolute.json", "tools/../description.json", "https://example.org/tools.json", "missing.json", "", null, 42]) {
+      const manifest = appManifest({ agentConnectors: [{ id: "example", toolSource: { remoteMcpServer: {
+        mcpServerUrl: "https://example.org/mcp", mcpToolDescription: { file },
+      } } }] });
+      const entries = [{ name: "manifest.json", bytes: encode(JSON.stringify(manifest)) }];
+      const { project, notices } = await openPackage(entries);
+      assert.equal(project.servers.example.url, "https://example.org/mcp");
+      assert.ok(notices.some((notice) => notice.includes("tool description with an unsafe, empty, or missing file path")));
+      const { project: again } = await backupRoundTrip(project);
+      for (const result of [project, again]) {
+        assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/manifest.json").bytes, entries[0].bytes);
+      }
+    }
+  });
+
   test("safe root files refused as attachments remain in the backup", async () => {
     const entries = agentOnlyEntries();
     const rejected = [
@@ -352,7 +385,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     // The registration id belongs to another tenant: the notice says so without showing it.
     assert.ok(notices.some((n) => n.includes("\"lookup\"") && n.includes("registers it again")));
     assert.equal(everythingShown(project, notices).includes("tenant-registration-1"), false);
-    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/agents/plugins/desktop.json", "microsoft-package/en.json"]);
+    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/agents/plugins/desktop.json", "microsoft-package/en.json", "microsoft-package/outline.png"]);
     assert.ok(project.unrecognized.every((entry) => entry.note === KEPT_NOTE));
     // The Copilot app package writes the OpenAPI action again from the item's file.
     const teams = await engine.exports.teamsPackage(project, agent, teamsIcons());
@@ -370,7 +403,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     assert.equal(project.name, "Example Tools for Copilot");
     assert.equal(project.license, "MIT");
     assert.ok(notices.some((n) => n.includes("1 skill folder (skills/draft-only/)")));
-    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/skills/draft-only/SKILL.md"]);
+    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/color.png", "microsoft-package/outline.png", "microsoft-package/skills/draft-only/SKILL.md"]);
   });
 
   test("connectors only: remote servers become tool connections; a local one is reported and the manifest kept", async () => {
@@ -384,7 +417,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     assert.ok(notices.some((n) => n.startsWith("Added 2 connectors to Tool connections")));
     // The kept manifest has the registration id replaced, so no copy of it survives.
     assert.equal(everythingShown(project, notices).includes("tenant-registration-2"), false);
-    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/manifest.json", "microsoft-package/tools/legal-tools.json"]);
+    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/color.png", "microsoft-package/manifest.json", "microsoft-package/outline.png", "microsoft-package/tools/legal-tools.json"]);
     const keptManifest = JSON.parse(decode(project.unrecognized.find((entry) => entry.path === "microsoft-package/manifest.json").bytes));
     assert.equal(keptManifest.agentConnectors[0].toolSource.remoteMcpServer.authorization.referenceId, "replace-with-your-auth-registration-id");
     assert.equal(keptManifest.agentConnectors[2].toolSource.localMcpServer.mcpServerIdentifier, "example.desktop", "the rest of the file is unchanged");
@@ -397,7 +430,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     assert.deepEqual(project.items[0].uses, ["contract-analysis"]);
     assert.deepEqual(Object.keys(project.servers), ["example-legal"]);
     assert.equal(project.servers["example-legal"].auth, "none");
-    assert.deepEqual(project.unrecognized, []);
+    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/outline.png"]);
     assert.equal(notices.some((n) => n.includes("left out")), false);
   });
 
@@ -629,7 +662,7 @@ describe("unsafe and broken packages", () => {
     has("Left out 1 program file.");
     // The unknown sign-in is refused rather than written back as no sign-in.
     assert.equal(project.items[0].capabilities.some((c) => c.id === "action.vault"), false);
-    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/manifest.json", "microsoft-package/plugin-broken.json", "microsoft-package/plugin-vault.json", "microsoft-package/plugin-webspec.json", "microsoft-package/skills/real/SKILL.md"]);
+    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/manifest.json", "microsoft-package/outline.png", "microsoft-package/plugin-broken.json", "microsoft-package/plugin-vault.json", "microsoft-package/plugin-webspec.json", "microsoft-package/skills/real/SKILL.md"]);
   });
 
   test("a key or token in an address or a kept file is never kept or shown", async () => {

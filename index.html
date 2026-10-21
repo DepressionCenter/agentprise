@@ -7099,6 +7099,9 @@ function readAgentConnectors(entries, list, state) {
         const descriptionPath = packagePath(description);
         if (descriptionPath && entries.has(descriptionPath)) {
             state.keep.add(descriptionPath);
+        } else if (remote.mcpToolDescription !== undefined) {
+            state.notices.push(subject + " has a tool description with an unsafe, empty, or missing file path. The server was opened, and the manifest is kept in the backup. Correct the path and include the description file before using the package.");
+            state.keepManifest = true;
         }
         const address = packageServerAddress(remote.mcpServerUrl, subject, state.notices);
         const label = typeof connector.displayName === "string" && connector.displayName.trim() ? connector.displayName : id;
@@ -7167,7 +7170,7 @@ function readTeamsArchive(entries) {
     if (agentFiles.length === 0 && rootSkills.length === 0 && connectors.length === 0) {
         return { error: "This ZIP has no assistant, skill, or connector that Agentprise can read, so it isn't a Copilot app package." };
     }
-    teamsReservedNames(manifest, agentFiles).forEach(function (name) { state.used.add(name); });
+    ["manifest.json"].concat(agentFiles).forEach(function (name) { state.used.add(name); });
 
     // ### Read each assistant, its actions, and its skills ###
     const agents = [];
@@ -7211,6 +7214,19 @@ function readTeamsArchive(entries) {
         }
         agents.push(raw);
         importedAgentFiles.push(file);
+    });
+    const declaredColorFile = readPath(source, ["icons", "color"]);
+    const colorFile = typeof declaredColorFile === "string" ? declaredColorFile : "color.png";
+    const hasImportedIcon = agents.some(function (agent) { return Boolean(agent.icon); });
+    teamsReservedNames(manifest, []).forEach(function (name) {
+        if (name === "manifest.json") {
+            return;
+        }
+        if (name === colorFile && hasImportedIcon) {
+            state.used.add(name);
+        } else {
+            state.keep.add(name);
+        }
     });
     rootSkills.forEach(function (entry) {
         const folder = packageSkillFolder(entries, entry, notices);
