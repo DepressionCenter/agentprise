@@ -618,8 +618,10 @@ creator fields stay blank and nothing the file ever had is lost. The importer
 never requires the key.
 
 Microsoft is retiring the format. From mid-November 2026, SharePoint and
-OneDrive stop saving new agents as `.agent` files and offer the owner an
-"Upgrade to Microsoft 365 agent" button. Existing files keep answering until
+OneDrive stop saving new agents as `.agent` files and show an
+"Upgrade to Microsoft 365 agent" button to anyone with edit permission on the
+file who can also share agents, usually the file's owner, its creator, or a
+site owner. Existing files keep answering until
 the end of March 2027 and then stop responding. After an upgrade the original
 file can no longer be edited, sharing and usage history do not transfer, and a
 Teams chat needs the upgraded agent added again by its sharing link. Each form
@@ -908,7 +910,7 @@ real account, unless the line names a tenant test.
 | In a Teams group chat, an answer that used the web, or only sources everyone in the chat can see, posts to everyone; an answer that used sources not everyone can see is shown first to the person who asked, with Approve and Reject | [How to use Microsoft Copilot in Teams group chats](https://support.microsoft.com/office/how-to-use-microsoft-365-copilot-in-teams-group-chats-2c613de4-cd26-4ae3-9e4b-6905d745d991), checked 2026-10-10 |
 | A `.agent` file written by Agentprise that listed `WebSearch`, `TeamsMessages`, and `Meetings` answered from the web in a Teams group chat and asked the person who asked to approve each answer; a SharePoint-made file with no switches answered without approval and without the web | Tenant tests on 2026-10-10 |
 | `.agent` files stop responding after the end of March 2027; from mid-November 2026, SharePoint and OneDrive create agents in Copilot Agent Builder instead of saving `.agent` files, an "Upgrade to Microsoft 365 agent" button appears in the SharePoint builder, and a `convert-agent-file-to-skill` skill arrives in Copilot in SharePoint; the retirement also applies to Government Cloud | [Upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents), checked 2026-10-21 |
-| The upgrade is started by the agent's owner, never automatically; after it, the original `.agent` file can no longer be edited, sharing does not carry over except org-wide sharing, usage history does not transfer, and an agent in a Teams chat or channel must be removed and added again by its sharing link | [Upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents), checked 2026-10-21 |
+| The upgrade is started by a person, never automatically, and needs edit permission on the `.agent` file, the ability to share agents, and permission to edit pages (Microsoft names the owner, creator, or site owner as best suited); after it, the original `.agent` file can no longer be edited, sharing does not carry over except org-wide sharing, usage history does not transfer, and an agent in a Teams chat or channel must be removed and added again by its sharing link | [Upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents), checked 2026-10-21 |
 | Microsoft's upgrade paths by role: a site Q&A agent moves to Copilot in SharePoint, a repeatable site task becomes a skill, a named Q&A or retrieval agent moves to Agent Builder, and a Copilot Studio custom engine agent publishes to the Copilot app | [Upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents), checked 2026-10-21 |
 | Files uploaded to Copilot Agent Builder become embedded content the agent reads (knowledge); no import of a `.agent` file or any other definition file into Agent Builder is documented | [Add knowledge sources in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge), checked 2026-10-21 |
 

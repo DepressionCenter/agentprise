@@ -180,8 +180,10 @@ chat.
 Until the end of March 2027. After that, Microsoft retires `.agent` files and
 they stop answering, in SharePoint, in Teams chats, and in the Copilot app.
 Only the file type is going away, not your assistant, and the Copilot / Teams
-Apps download is not affected. From mid-November 2026, Microsoft gives the
-file's owner an Upgrade to Microsoft 365 agent button in SharePoint.
+Apps download is not affected. From mid-November 2026, an Upgrade to
+Microsoft 365 agent button appears when the file is edited in SharePoint;
+anyone with permission to edit the file and share agents can run it, usually
+the file's owner, its creator, or a site owner.
 [When Microsoft retires this file](how-to/add-an-assistant-to-a-teams-chat.md#when-microsoft-retires-this-file)
 in the Teams chat guide explains the choices, and
 [Microsoft's upgrade page](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents)

@@ -112,7 +112,10 @@ on what it does:
 | Works in the Agents list in Teams or the Copilot app | The Copilot / Teams Apps download, which is a different file type and is not affected |
 
 Before you choose, know what Microsoft's upgrade button does and does not do.
-Only the file's owner can run it, and nothing upgrades on its own. After the
+Nothing upgrades on its own. Running the upgrade takes edit permission on the
+`.agent` file, permission to share agents, and permission to edit the site's
+pages, so it is usually done by the file's owner, its creator, or a site
+owner. If you only use the agent, ask one of them. After the
 upgrade, the original `.agent` file can no longer be edited. Sharing does not
 move to the upgraded agent unless the agent was shared with the whole
 organization, so you share it again yourself. Usage history does not move
