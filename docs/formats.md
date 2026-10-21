@@ -834,7 +834,7 @@ entries with the same name.
 | `actions[]` with a `RemoteMCPServer` runtime | A tool with an `mcp` provider, and a project server named after the `namespace` | The address goes through `cleanServerUrl`; one with a key or token is dropped, and the server is marked for the installer to supply |
 | `run_for_functions`, or `functions[].name` when it is `["*"]` | The provider's `operations` or `tools`, and the server's `tools` | |
 | Runtime `auth.type` | `None`, `OAuthPluginVault`, `ApiKeyPluginVault`, and `DynamicClientRegistration` (kept as `oauth`) | Any other type leaves the runtime out, so a sign-in is never written back as none. `reference_id` is not kept |
-| `agent_skills[].folder` and root `agentSkills[].folder` | Skill items, read by `readItemFolders`; an assistant's own list becomes its `uses` | A folder named by both is read once. A folder without `SKILL.md` is left out |
+| `agent_skills[].folder` and root `agentSkills[].folder` | Skill items, read by `readItemFolders`; an assistant's own list becomes its `uses`, matched by folder after `normalizeProject` numbers repeated skill names | A folder named by both is read once. A folder without `SKILL.md` is left out |
 | Root `agentConnectors[]` with `toolSource.remoteMcpServer` | A project server named after the connector `id`, with `displayName` as its label | No `authorization` means `oauth`, since Microsoft registers a client itself. A repeated `id` is read once. Other tool sources are left out, and the manifest is kept |
 
 A plugin manifest with a runtime the app can't read, an assistant file that
@@ -842,11 +842,17 @@ isn't JSON, a connector's tool description file, a skill folder the manifest
 doesn't list, and every other file the importer did not use are kept as
 unrecognized files under `microsoft-package/` with the note "From a Microsoft
 365 app package." The folder keeps a kept `SKILL.md` or `plugin.json` from
-being read as part of the backup when it opens again. Before a text file is
-kept, `CREDENTIAL_TEXT_PATTERN` looks for a key, token, or password in a query
-string, a JSON value, or a bearer header; a match leaves the file out, and the
-notice names only the file. Programs are refused by `normalizeProject`, as for
-every import.
+being read as part of the backup when it opens again. Every text file the
+importer would keep, whether as a skill file, an API description, an attached
+file, or a kept file, first goes through `holdsCredential`, which looks for a
+key, token, or password in a query string, a JSON value, or a bearer header
+(`CREDENTIAL_TEXT_PATTERN`). A match leaves the file out, and the notice names
+only the file. A skill whose `SKILL.md` matches is left out whole, and an
+action whose API description matches is left out. In a kept JSON or YAML
+file, `withoutRegistrationIds` replaces each `reference_id` and `referenceId`
+value with `replace-with-your-auth-registration-id`, so no tenant's
+registration id reaches the backup. Programs are refused by
+`normalizeProject`, as for every import.
 
 A package that Agentprise wrote opens with the same three actions, and the
 next Copilot app package writes the same plugin manifests, API description,
@@ -1043,7 +1049,7 @@ real account, unless the line names a tenant test.
   assistants, and a hostile package with unsafe paths, repeated entries, an
   unknown sign-in, and keys in addresses and files. The synthetic packages
   follow Microsoft's documentation and were not checked by Microsoft's
-  package validator. `npm test` on 2026-10-21 ran 268 tests, and all passed.
+  package validator. `npm test` on 2026-10-21 ran 270 tests, and all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
   tool of each provider kind, to every download and compares each result with

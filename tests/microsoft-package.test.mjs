@@ -160,9 +160,12 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     assert.equal(project.servers["example-open"].auth, "oauth");
     assert.ok(notices.some((n) => n.includes("\"Example Desktop\"") && n.includes("left out")));
     assert.ok(notices.some((n) => n.startsWith("Added 2 connectors to Tool connections")));
-    assert.equal(everythingShown(project, notices).includes("tenant-registration-2"), true, "the kept manifest holds it, unchanged");
-    assert.equal(notices.join("\n").includes("tenant-registration-2"), false);
+    // The kept manifest has the registration id replaced, so no copy of it survives.
+    assert.equal(everythingShown(project, notices).includes("tenant-registration-2"), false);
     assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/manifest.json", "microsoft-package/tools/legal-tools.json"]);
+    const keptManifest = JSON.parse(decode(project.unrecognized.find((entry) => entry.path === "microsoft-package/manifest.json").bytes));
+    assert.equal(keptManifest.agentConnectors[0].toolSource.remoteMcpServer.authorization.referenceId, "replace-with-your-auth-registration-id");
+    assert.equal(keptManifest.agentConnectors[2].toolSource.localMcpServer.mcpServerIdentifier, "example.desktop", "the rest of the file is unchanged");
     assert.equal(project.license, "Not stated");
   });
 
@@ -174,6 +177,19 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     assert.equal(project.servers["example-legal"].auth, "none");
     assert.deepEqual(project.unrecognized, []);
     assert.equal(notices.some((n) => n.includes("left out")), false);
+  });
+
+  test("two skill folders with the same name: the assistant uses the one it listed, under its new name", async () => {
+    const entries = [
+      { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "helper", file: "declarativeAgent_0.json" }] } }))) },
+      { name: "declarativeAgent_0.json", bytes: encode(JSON.stringify({ version: "v1.9", name: "Legal Helper", description: "Helps.", instructions: "Help.", agent_skills: [{ folder: "skills/contract-analysis" }, { folder: "skills/second-copy" }] })) },
+      { name: "skills/contract-analysis/SKILL.md", bytes: skillMd("contract-analysis", "The first skill.") },
+      { name: "skills/second-copy/SKILL.md", bytes: skillMd("contract-analysis", "A second skill with the same name.") },
+    ];
+    const { project } = await openPackage(entries);
+    const skills = project.items.filter((i) => i.kind === "skill");
+    assert.deepEqual(skills.map((s) => [s.skillName, s.description]), [["contract-analysis", "The first skill."], ["contract-analysis-2", "A second skill with the same name."]]);
+    assert.deepEqual(project.items[0].uses, ["contract-analysis", "contract-analysis-2"]);
   });
 
   test("two assistants: each is an assistant, they share one tool server, and only the first keeps the app id", async () => {
@@ -237,6 +253,35 @@ describe("unsafe and broken packages", () => {
     assert.deepEqual([project.servers.token.url, project.servers.token.userSupplied], ["", true]);
     assert.deepEqual([project.servers.leaky.url, project.servers.leaky.userSupplied], ["", true]);
     assert.ok(notices.some((n) => n.startsWith("Left out 2 files that look like they hold a password, key, or token: manifest.json, config/settings.json.")));
+    // A kept plugin file keeps its shape but not the tenant's registration id.
+    assert.equal(everythingShown(project, notices).includes("vault-1"), false);
+  });
+
+  test("a key in a skill file, an API description, or an attached file leaves that file out", async () => {
+    const leak = (label) => encode("# " + label + "\nUse Authorization: Bearer " + SECRET + "\n");
+    const entries = [
+      { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "a", file: "declarativeAgent_0.json" }] }, agentSkills: [{ folder: "skills/clean" }, { folder: "skills/leaky" }] }))) },
+      { name: "declarativeAgent_0.json", bytes: encode(JSON.stringify({ version: "v1.9", name: "Key Helper", description: "Helps.", instructions: "Help.", agent_skills: [{ folder: "skills/leaky" }], actions: [{ id: "api", file: "plugin-api.json" }] })) },
+      { name: "plugin-api.json", bytes: encode(JSON.stringify({ schema_version: "v2.4", name_for_human: "API", namespace: "api", description_for_human: "API.", functions: [{ name: "go" }], runtimes: [{ type: "OpenApi", auth: { type: "None" }, spec: { url: "apis/api.yaml" }, run_for_functions: ["go"] }] })) },
+      { name: "apis/api.yaml", bytes: encode("openapi: 3.0.3\nservers:\n  - url: https://api.example.org/v1?api_key=" + SECRET + "\n") },
+      { name: "skills/clean/SKILL.md", bytes: skillMd("clean", "A clean skill.") },
+      { name: "skills/clean/references/notes.md", bytes: leak("Notes") },
+      { name: "skills/clean/references/fine.md", bytes: encode("# Fine\n") },
+      { name: "skills/leaky/SKILL.md", bytes: leak("Leaky skill") },
+      { name: "secret.txt", bytes: leak("Attachment") },
+    ];
+    const { project, notices } = await openPackage(entries);
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.deepEqual(project.items.map((i) => i.skillName), ["key-helper", "clean"]);
+    assert.deepEqual(project.items[1].files.map((f) => f.path), ["references/fine.md"]);
+    assert.deepEqual(project.items[0].capabilities, []);
+    assert.deepEqual(project.items[0].files, []);
+    assert.deepEqual(project.items[0].uses, []);
+    assert.ok(notices.some((n) => n.includes("The skill in skills/leaky/ has a SKILL.md that looks like it holds")));
+    assert.ok(notices.some((n) => n.includes("The action \"api\" has an API description that looks like it holds")));
+    assert.ok(notices.some((n) => n.startsWith("Left out 4 files that look like they hold a password, key, or token:")));
+    const { backup } = await backupRoundTrip(project);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
   });
 
   test("a manifest.json that is not valid JSON is refused, and one that isn't Microsoft's opens as skills", async () => {

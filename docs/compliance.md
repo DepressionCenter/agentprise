@@ -156,17 +156,24 @@ listed under known gaps.
   file must be inside the package and survive `cleanArchivePath` unchanged,
   or that part is left out with a notice. An API description on the web is
   never fetched. A sign-in type the app can't write back leaves the action or
-  connector out instead of turning its sign-in off, and registration ids are
-  not kept. Server addresses with a key or token are dropped, and a file kept
-  for the backup is left out when `CREDENTIAL_TEXT_PATTERN` finds a key,
-  token, or password in it. Notices name parts and files, never the matched
-  text. Kept files sit under `microsoft-package/` in the backup and appear in
-  no other download. Evidence: `readTeamsArchive`, `packagePath`,
-  `authFromCopilot`, and `packageServerAddress` in `index.html`, and
-  `tests/microsoft-package.test.mjs` ("unsafe references, repeated paths, an
-  unknown sign-in, and web-only descriptions are left out with a notice
-  each" and "a key or token in an address or a kept file is never kept or
-  shown"). `npm test` on 2026-10-21 ran 268 tests, and all passed.
+  connector out instead of turning its sign-in off. Registration ids are not
+  kept: they are dropped from tools and servers and replaced with a
+  placeholder in kept files. Server addresses with a key or token are
+  dropped. Any text file that would become a skill file, an API description,
+  an attached file, or a kept file is left out when `CREDENTIAL_TEXT_PATTERN`
+  finds a key, token, or password in it. Notices name parts and files, never
+  the matched text. Kept files sit under `microsoft-package/` in the backup
+  and appear in no other download. This is a pattern check, so a key in an
+  unusual shape can still get through, and a person should still read a
+  package from an unknown source before sharing it. Evidence:
+  `readTeamsArchive`, `packagePath`, `holdsCredential`,
+  `withoutRegistrationIds`, `authFromCopilot`, and `packageServerAddress` in
+  `index.html`, and `tests/microsoft-package.test.mjs` ("unsafe references,
+  repeated paths, an unknown sign-in, and web-only descriptions are left out
+  with a notice each", "a key or token in an address or a kept file is never
+  kept or shown", and "a key in a skill file, an API description, or an
+  attached file leaves that file out"). `npm test` on 2026-10-21 ran 270
+  tests, and all passed.
 - Programs are refused everywhere a file can arrive: attached files, files in
   a skill folder, and unrecognized files. A file with a program signature, a
   program extension, or a program extension hidden before its last extension

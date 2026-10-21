@@ -6734,6 +6734,37 @@ function packagePath(value) {
     return path && path === plain ? path : "";
 }
 
+/** A text file whose content looks like it holds a key, token, or password. */
+function holdsCredential(name, bytes) {
+    const textual = fileKind(name) === "text" || /\.(json|ya?ml)$/i.test(name) || !/\.[^\/.]+$/.test(name);
+    return textual && CREDENTIAL_TEXT_PATTERN.test(fromBytes(bytes));
+}
+
+/**
+ * A kept text file with each Microsoft registration id replaced by this
+ * app's placeholder, since the id belongs to the tenant the package came from.
+ * Other files are returned as they are.
+ */
+function withoutRegistrationIds(name, bytes) {
+    if (!/\.(json|ya?ml)$/i.test(name)) {
+        return bytes;
+    }
+    const text = fromBytes(bytes);
+    const pattern = /(["']?(?:reference_id|referenceId)["']?\s*:\s*["']?)([^"'\s,}\]]+)/g;
+    const cleaned = text.replace(pattern, function (match, start, value) {
+        return value === COPILOT_AUTH_PLACEHOLDER ? match : start + COPILOT_AUTH_PLACEHOLDER;
+    });
+    return cleaned === text ? bytes : toBytes(cleaned);
+}
+
+/** Records a file left out for holding a key, once. */
+function leaveOutForKey(state, name) {
+    state.used.add(name);
+    if (state.withKeys.indexOf(name) < 0) {
+        state.withKeys.push(name);
+    }
+}
+
 /** A short, one-line name from a file for a notice. */
 function packageLabel(value, fallback) {
     const text = typeof value === "string" ? oneLine(value).slice(0, 40) : "";
@@ -6828,6 +6859,11 @@ function actionProvider(entries, manifest, runtime, subject, state, files) {
         const path = packagePath(address);
         if (!path || !entries.has(path)) {
             state.notices.push(subject + " names an API description that isn't in the package, so it was left out.");
+            return null;
+        }
+        if (holdsCredential(path, entries.get(path))) {
+            leaveOutForKey(state, path);
+            state.notices.push(subject + " has an API description that looks like it holds a password, key, or token, so it was left out.");
             return null;
         }
         state.used.add(path);
@@ -7004,7 +7040,7 @@ function readTeamsArchive(entries) {
     }
     const source = manifest || {};
     const notices = [];
-    const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), notices: notices, keepManifest: false };
+    const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), withKeys: [], notices: notices, keepManifest: false };
 
     // ### Find the declarative agents ###
     const listed = readPath(source, ["copilotAgents", "declarativeAgents"]);
@@ -7069,19 +7105,30 @@ function readTeamsArchive(entries) {
     const connectorCount = readAgentConnectors(entries, connectors, state);
 
     // ### Read the skill folders ###
-    const read = readItemFolders(entries, skillFolderList);
-    notices.push.apply(notices, read.notices);
-    const skillNameOf = {};
-    skillFolderList.forEach(function (folder, index) {
-        const item = read.items[index];
-        item.kind = "skill";
-        skillNameOf[folder] = toSkillName(item.skillName || item.name || "");
+    // A skill whose SKILL.md looks like it holds a key is left out whole; any
+    // other file that does is left out of its skill.
+    const skillEntries = new Map();
+    const readFolders = skillFolderList.filter(function (folder) {
+        if (holdsCredential("SKILL.md", entries.get(folder + "SKILL.md"))) {
+            notices.push("The skill in " + folder + " has a SKILL.md that looks like it holds a password, key, or token, so it was left out.");
+            return false;
+        }
+        return true;
     });
     entries.forEach(function (bytes, name) {
-        if (skillFolderList.some(function (folder) { return name.indexOf(folder) === 0; })) {
-            state.used.add(name);
+        if (!skillFolderList.some(function (folder) { return name.indexOf(folder) === 0; })) {
+            return;
         }
+        if (holdsCredential(name, bytes)) {
+            leaveOutForKey(state, name);
+            return;
+        }
+        state.used.add(name);
+        skillEntries.set(name, bytes);
     });
+    const read = readItemFolders(skillEntries, readFolders);
+    notices.push.apply(notices, read.notices);
+    read.items.forEach(function (item) { item.kind = "skill"; });
 
     // ### Sort the remaining files ###
     // Root files of accepted types are attached files, as the Copilot app
@@ -7089,7 +7136,6 @@ function readTeamsArchive(entries) {
     // program or looks like it holds a key.
     const attachments = [];
     const kept = [];
-    const withKeys = [];
     if (state.keepManifest && manifest) {
         state.keep.add("manifest.json");
     }
@@ -7097,19 +7143,18 @@ function readTeamsArchive(entries) {
         if (state.used.has(name) && !state.keep.has(name)) {
             return;
         }
+        if (holdsCredential(name, bytes)) {
+            leaveOutForKey(state, name);
+            return;
+        }
         if (!state.keep.has(name) && agents.length > 0 && name.indexOf("/") < 0 && !/\.(json|ya?ml)$/i.test(name) && fileKind(name)) {
             attachments.push({ name: originalTextName(name), bytes: bytes });
             return;
         }
-        const textual = fileKind(name) === "text" || /\.(json|ya?ml)$/i.test(name) || !/\.[^\/.]+$/.test(name);
-        if (textual && CREDENTIAL_TEXT_PATTERN.test(fromBytes(bytes))) {
-            withKeys.push(name);
-            return;
-        }
-        kept.push({ path: PACKAGE_KEPT_FOLDER + name, note: PACKAGE_KEPT_NOTE, bytes: bytes, name: name });
+        kept.push({ path: PACKAGE_KEPT_FOLDER + name, note: PACKAGE_KEPT_NOTE, bytes: withoutRegistrationIds(name, bytes), name: name });
     });
-    if (withKeys.length > 0) {
-        notices.push("Left out " + countOf(withKeys.length, "file", "files") + " that look like they hold a password, key, or token: " + listNames(withKeys) + ". Agentprise never keeps those.");
+    if (state.withKeys.length > 0) {
+        notices.push("Left out " + countOf(state.withKeys.length, "file", "files") + " that look like they hold a password, key, or token: " + listNames(state.withKeys) + ". Agentprise never keeps those.");
     }
     const unlistedSkills = skillFolders(entries, "").filter(function (folder) {
         return folder && !skillFolderList.some(function (listedFolder) { return folder.indexOf(listedFolder) === 0; });
@@ -7139,7 +7184,7 @@ function readTeamsArchive(entries) {
         return Object.assign({}, agent, {
             kind: "agent",
             capabilities: raw.capabilities,
-            uses: raw.skillFolders.map(function (folder) { return skillNameOf[folder]; }).filter(Boolean),
+            uses: [],
             files: agent.files.map(function (file) { return { path: BUNDLE_FILES_FOLDER + file.name, bytes: file.bytes }; }).concat(raw.toolFiles)
         });
     }).concat(read.items);
@@ -7170,6 +7215,18 @@ function readTeamsArchive(entries) {
         notices.push("The file doesn't say which license it uses. Check with its author before you share it.");
     }
     const result = normalizeProject(raw);
+    // Skill names are final only once normalizeProject numbers repeated ones,
+    // so each assistant's skills are matched by folder after it runs.
+    const skillItems = result.project.items.slice(agents.length);
+    result.project.items.slice(0, agents.length).forEach(function (item, index) {
+        item.uses = [];
+        agents[index].skillFolders.forEach(function (folder) {
+            const skill = skillItems[readFolders.indexOf(folder)];
+            if (skill && item.uses.indexOf(skill.skillName) < 0) {
+                item.uses.push(skill.skillName);
+            }
+        });
+    });
     return { project: result.project, notices: notices.concat(result.notices) };
 }
 
