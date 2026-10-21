@@ -834,7 +834,9 @@ there when the ZIP has a root `manifest.json` and no root `SKILL.md` or plugin
 layout. A root `plugin.json` alone would send it to the plugin importer, so
 `importProject` first checks `isMicrosoftManifest`: a root `manifest.json`
 that lists assistants, skills, or connectors opens as a package even when a
-connector names `plugin.json` as its tool description. When the manifest
+connector names `plugin.json` as its tool description. A root `SKILL.md`
+cannot override that manifest either: the unlisted root skill stays in the
+backup only and never becomes an assistant attachment. When the manifest
 names no assistant, skill, or connector, the
 importer falls back to `readSkillArchive` if the ZIP holds skill folders, so a
 web app's `manifest.json` beside skills still opens as skills. Every path the
@@ -900,6 +902,12 @@ file, `withoutRegistrationIds` replaces each `reference_id` and `referenceId`
 value with `replace-with-your-auth-registration-id`, so no tenant's
 registration id reaches the backup. Programs are refused by
 `normalizeProject`, as for every import.
+
+For retained package files, the `microsoft-package/` prefix does not count
+toward the original path's limit of eight components and 200 characters.
+Normalization checks the original path, then adds the fixed prefix back.
+This preserves the longest supported paths through backup round trips,
+while still refusing traversal and paths beyond those limits.
 
 The root manifest is checked before any of its values are used. A match
 blocks the package, including attempts to open its contents as a skill ZIP
@@ -1129,14 +1137,16 @@ real account, unless the line names a tenant test.
   trips, colliding servers between skills in package, plugin, and skill ZIP
   imports, and API descriptions at five, six, and eight path components.
   Root-manifest tests cover publisher URLs, descriptions, connector addresses,
-  and rejection without a skill fallback through either detection route.
+  and rejection without a skill fallback through all three detection routes.
   Action and assistant metadata tests include misleading binary extensions.
   Other cases check disguised text attachments, unique action ids, and
   listed, unlisted, or rejected nested skills.
+  Root-skill precedence and retained paths at their depth and length limits
+  are checked through backup round trips too.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 287 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 289 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

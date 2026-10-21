@@ -3061,7 +3061,12 @@ function normalizeProject(input) {
             dropped.unusable += 1;
             return;
         }
-        const path = cleanArchivePath(entry.path, { depth: LIMITS.itemPathDepth + 3, hidden: true });
+        // The backup-only package prefix is storage metadata, not part of the
+        // original path's depth or length allowance.
+        const packageFile = typeof entry.path === "string" && entry.path.indexOf(PACKAGE_KEPT_FOLDER) === 0;
+        const relative = packageFile ? entry.path.slice(PACKAGE_KEPT_FOLDER.length) : entry.path;
+        const cleanedPath = cleanArchivePath(relative, { depth: LIMITS.itemPathDepth + 3, hidden: true });
+        const path = cleanedPath ? (packageFile ? PACKAGE_KEPT_FOLDER : "") + cleanedPath : "";
         if (!path) {
             dropped.unusable += 1;
             return;
@@ -6121,7 +6126,7 @@ async function importProject(fileName, bytes) {
         }
         // A Microsoft package may name a root plugin.json as a tool description,
         // so its manifest decides before the plugin file does.
-        if (format === "plugin" && isMicrosoftManifest(archive.entries)) {
+        if (isMicrosoftManifest(archive.entries)) {
             format = "teamsZip";
         }
         result = format === "teamsZip" ? readTeamsArchive(archive.entries) : format === "plugin" ? readPluginArchive(archive.entries) : readSkillArchive(archive.entries);
@@ -7254,6 +7259,9 @@ function readTeamsArchive(entries) {
     if (state.keepManifest && manifest) {
         state.keep.add("manifest.json");
     }
+    if (entries.has("SKILL.md")) {
+        state.keep.add("SKILL.md");
+    }
     entries.forEach(function (bytes, name) {
         if (state.used.has(name) && !state.keep.has(name)) {
             return;
@@ -7272,10 +7280,11 @@ function readTeamsArchive(entries) {
         notices.push("Left out " + countOf(state.withKeys.length, "file", "files") + (state.withKeys.length === 1 ? " that looks like it holds" : " that look like they hold") + " a password, key, or token: " + listNames(state.withKeys) + ". Remove the credentials from the source files and open the package again.");
     }
     const unlistedSkills = allSkillFolders.filter(function (folder) {
-        return folder && skillFolderList.indexOf(folder) < 0;
+        return skillFolderList.indexOf(folder) < 0;
     });
     if (unlistedSkills.length > 0) {
-        notices.push("The manifest doesn't list " + countOf(unlistedSkills.length, "skill folder", "skill folders") + " (" + listNames(unlistedSkills) + "), so Copilot doesn't use " + (unlistedSkills.length === 1 ? "it" : "them") + ", and Agentprise didn't open " + (unlistedSkills.length === 1 ? "it" : "them") + " as a skill.");
+        const locations = unlistedSkills.map(function (folder) { return folder || "the package root"; });
+        notices.push("The manifest doesn't list " + countOf(unlistedSkills.length, "skill folder", "skill folders") + " (" + listNames(locations) + "), so Copilot doesn't use " + (unlistedSkills.length === 1 ? "it" : "them") + ", and Agentprise didn't open " + (unlistedSkills.length === 1 ? "it" : "them") + " as a skill.");
     }
     // Programs are refused by normalizeProject, which reports them itself.
     const keptNames = kept.filter(function (entry) { return !isProgramFile(entry.path, entry.bytes); }).map(function (entry) { return entry.name; });

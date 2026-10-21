@@ -197,12 +197,17 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-21 ran 287 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-21 ran 289 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
   rejected skill cannot be imported as files of its parent. Evidence: the
   nested-skill tests in `tests/microsoft-package.test.mjs`.
+  A root skill cannot override a Microsoft manifest or become an assistant
+  attachment. Retained package paths keep their original depth and length
+  allowance without counting the fixed backup prefix; traversal and excess
+  depth or length remain refused. The same test file covers both rules and
+  their backup round trips.
 - A plugin or Microsoft package cannot replace a skill's server settings
   merely by using the same name. Different definitions get separate names;
   assistant tool references follow the renamed package server. The same rule

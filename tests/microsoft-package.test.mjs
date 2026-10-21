@@ -115,6 +115,50 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("a root skill cannot override a Microsoft manifest or become an assistant attachment", async () => {
+    for (const entries of [agentOnlyEntries(), connectorOnlyEntries()]) {
+      const baseline = await openPackage(entries);
+      entries.push({ name: "SKILL.md", bytes: skillMd("unlisted", "Not listed by the package.") });
+      assert.equal(engine.detectFormat("package.zip", engine.zip.write(entries)), "skillZip");
+      const { project, format, notices } = await openPackage(entries);
+      assert.equal(format, "teamsZip");
+      assert.deepEqual(project.items.map((item) => [item.kind, item.skillName]), baseline.project.items.map((item) => [item.kind, item.skillName]));
+      assert.deepEqual(project.servers, baseline.project.servers);
+      assert.ok(project.items.every((item) => item.files.every((file) => !file.path.endsWith("SKILL.md"))));
+      assert.ok(unrecognizedPaths(project).includes("microsoft-package/SKILL.md"));
+      assert.ok(notices.some((notice) => notice.includes("manifest doesn't list") && notice.includes("the package root")));
+      const { project: again } = await backupRoundTrip(project);
+      assert.deepEqual(again.items.map((item) => item.skillName), project.items.map((item) => item.skillName));
+      assert.ok(unrecognizedPaths(again).includes("microsoft-package/SKILL.md"));
+    }
+  });
+
+  test("kept package files retain the full original path depth and length allowance", async () => {
+    const paths = ["a/b/c/d/e/f/g/unsupported.json", "a".repeat(95) + "/" + "b".repeat(94) + "/file.json"];
+    for (const path of paths) {
+      const entries = agentOnlyEntries();
+      const agentEntry = entries.find((entry) => entry.name === "agents/records.json");
+      const agent = JSON.parse(decode(agentEntry.bytes));
+      agent.actions.find((action) => action.id === "desktop").file = path;
+      agentEntry.bytes = encode(JSON.stringify(agent));
+      const source = entries.find((entry) => entry.name === "agents/plugins/desktop.json");
+      source.name = path;
+      const { project, notices } = await openPackage(entries);
+      const kept = project.unrecognized.find((entry) => entry.path === "microsoft-package/" + path);
+      assert.ok(kept, "the prefix must not consume the source path's allowance");
+      assert.deepEqual(kept.bytes, source.bytes);
+      assert.equal(notices.some((notice) => notice.includes("unusable")), false);
+      const { project: again } = await backupRoundTrip(project);
+      assert.deepEqual(again.unrecognized.find((entry) => entry.path === kept.path).bytes, source.bytes);
+    }
+    const refused = engine.project.normalize({ unrecognized: [
+      { path: "microsoft-package/a/b/c/d/e/f/g/h/file.json", bytes: encode("{}") },
+      { path: "microsoft-package/../outside.json", bytes: encode("{}") },
+      { path: "microsoft-package/" + "a".repeat(96) + "/" + "b".repeat(94) + "/file.json", bytes: encode("{}") },
+    ] });
+    assert.deepEqual(refused.project.unrecognized, [], "source path limits and traversal protection still apply");
+  });
+
   test("action namespace separators and normalized collisions never drop a distinct action", async () => {
     const namespaces = ["foo-bar", "foobar", "foo_bar", "foo-bar", "foo!bar", "x".repeat(61), "x".repeat(62)];
     const entries = [
@@ -420,23 +464,23 @@ describe("unsafe and broken packages", () => {
       (manifest) => { manifest.agentConnectors = [{ id: "leaky", toolSource: { remoteMcpServer: { mcpServerUrl: "https://example.org/mcp?api_key=" + SECRET } } }]; },
     ];
     for (const change of changes) {
-      for (const withPlugin of [false, true]) {
+      for (const detected of ["teamsZip", "plugin", "skillZip"]) {
         const entries = multiAgentEntries();
         const manifest = JSON.parse(decode(entries[0].bytes));
         manifest.agentSkills = [{ folder: "skills/helper" }];
         change(manifest);
         entries[0].bytes = encode(JSON.stringify(manifest));
         entries.push({ name: "skills/helper/SKILL.md", bytes: skillMd("helper", "Helps.") });
-        if (withPlugin) {
+        if (detected !== "teamsZip") {
           for (const [index, agent] of manifest.copilotAgents.declarativeAgents.entries()) {
             entries.find((entry) => entry.name === agent.file).name = "agents/assistant" + index + ".json";
             agent.file = "agents/assistant" + index + ".json";
           }
           entries[0].bytes = encode(JSON.stringify(manifest));
-          entries.push({ name: "plugin.json", bytes: encode("{}") });
+          entries.push(detected === "plugin" ? { name: "plugin.json", bytes: encode("{}") } : { name: "SKILL.md", bytes: skillMd("unlisted", "Unlisted root skill.") });
         }
         const bytes = engine.zip.write(entries);
-        assert.equal(engine.detectFormat("unsafe.zip", bytes), withPlugin ? "plugin" : "teamsZip");
+        assert.equal(engine.detectFormat("unsafe.zip", bytes), detected);
         const result = await engine.imports.any("unsafe.zip", bytes);
         assert.equal(result.project, undefined, "nothing can be stored or exported");
         assert.equal(result.blocked, true);
