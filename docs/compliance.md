@@ -165,8 +165,11 @@ listed under known gaps.
   connector out instead of turning its sign-in off. Registration ids are not
   kept: they are dropped from tools and servers and replaced with a
   placeholder in kept files. Server addresses with a key or token are
-  dropped. Assistant files are checked before their text is imported. A match
-  excludes the assistant and its file from the project and backup. Any text
+  dropped. The root manifest is scanned before any field is imported; a match
+  blocks the whole package, with no fallback to a skill import. Assistant
+  and action description files are checked as text before parsing, even with
+  a misleading binary extension. A match excludes that part and its source
+  file from the project and backup. Any text
   file that would become a skill file, an API description,
   an attached file, or a kept file is left out when `CREDENTIAL_TEXT_PATTERN`
   or `CREDENTIAL_LINE_PATTERN` finds a key, token, or password in it, in a
@@ -189,8 +192,10 @@ listed under known gaps.
   in an assistant file leaves the assistant out of the project and backup",
   and "unknown text types and private keys are scanned while binary files
   are preserved", and "API descriptions at the item path limit import;
-  deeper ones are rejected with instructions"). `npm test` on 2026-10-21 ran
-  281 tests, and all passed.
+  deeper ones are rejected with instructions", "credentials in root
+  manifest fields block the package without a skill fallback", and
+  "credentials in action descriptions exclude the action and its source
+  file"). `npm test` on 2026-10-21 ran 283 tests, and all passed.
 - A plugin or Microsoft package cannot replace a skill's server settings
   merely by using the same name. Different definitions get separate names;
   assistant tool references follow the renamed package server. The same rule

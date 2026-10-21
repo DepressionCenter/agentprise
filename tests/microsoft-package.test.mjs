@@ -334,12 +334,73 @@ describe("Microsoft 365 app packages made elsewhere", () => {
 });
 
 describe("unsafe and broken packages", () => {
+  test("credentials in root manifest fields block the package without a skill fallback", async () => {
+    const changes = [
+      (manifest) => { manifest.developer.websiteUrl = "https://example.org/?token=" + SECRET; },
+      (manifest) => { manifest.description.full = "Authorization: Bearer " + SECRET; },
+      (manifest) => { manifest.agentConnectors = [{ id: "leaky", toolSource: { remoteMcpServer: { mcpServerUrl: "https://example.org/mcp?api_key=" + SECRET } } }]; },
+    ];
+    for (const change of changes) {
+      for (const withPlugin of [false, true]) {
+        const entries = multiAgentEntries();
+        const manifest = JSON.parse(decode(entries[0].bytes));
+        manifest.agentSkills = [{ folder: "skills/helper" }];
+        change(manifest);
+        entries[0].bytes = encode(JSON.stringify(manifest));
+        entries.push({ name: "skills/helper/SKILL.md", bytes: skillMd("helper", "Helps.") });
+        if (withPlugin) {
+          for (const [index, agent] of manifest.copilotAgents.declarativeAgents.entries()) {
+            entries.find((entry) => entry.name === agent.file).name = "agents/assistant" + index + ".json";
+            agent.file = "agents/assistant" + index + ".json";
+          }
+          entries[0].bytes = encode(JSON.stringify(manifest));
+          entries.push({ name: "plugin.json", bytes: encode("{}") });
+        }
+        const bytes = engine.zip.write(entries);
+        assert.equal(engine.detectFormat("unsafe.zip", bytes), withPlugin ? "plugin" : "teamsZip");
+        const result = await engine.imports.any("unsafe.zip", bytes);
+        assert.equal(result.project, undefined, "nothing can be stored or exported");
+        assert.equal(result.blocked, true);
+        assert.ok(result.error.includes("manifest.json") && result.error.includes("Remove the credentials"));
+        assert.equal(JSON.stringify(result).includes(SECRET), false);
+      }
+    }
+  });
+
+  test("credentials in action descriptions exclude the action and its source file", async () => {
+    for (const name of ["plugin-lookup.json", "plugin-lookup.pdf"]) {
+      const entries = multiAgentEntries();
+      const plugin = entries.find((entry) => entry.name === "plugin-lookup.json");
+      const manifest = JSON.parse(decode(plugin.bytes));
+      manifest.description_for_model = "Authorization: Bearer " + SECRET;
+      plugin.bytes = encode(JSON.stringify(manifest));
+      plugin.name = name;
+      for (const entry of entries.filter((entry) => entry.name.startsWith("declarativeAgent_"))) {
+        const agent = JSON.parse(decode(entry.bytes));
+        agent.actions[0].file = name;
+        entry.bytes = encode(JSON.stringify(agent));
+      }
+      const { project, notices } = await openPackage(entries);
+      assert.ok(project.items.every((item) => item.capabilities.length === 0));
+      assert.equal(everythingShown(project, notices).includes(SECRET), false);
+      assert.ok(notices.some((notice) => notice.includes("description file") && notice.includes("Remove the credentials")));
+      const { backup } = await backupRoundTrip(project);
+      assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+    }
+  });
+
   test("a credential in an assistant file leaves the assistant out of the project and backup", async () => {
     for (const field of ["instructions", "description"]) {
       const entries = multiAgentEntries();
       const manifest = JSON.parse(decode(entries.find((entry) => entry.name === "manifest.json").bytes));
-      const path = manifest.copilotAgents.declarativeAgents[0].file;
+      let path = manifest.copilotAgents.declarativeAgents[0].file;
       const entry = entries.find((entry) => entry.name === path);
+      if (field === "description") {
+        path = "assistant.pdf";
+        entry.name = path;
+        manifest.copilotAgents.declarativeAgents[0].file = path;
+        entries.find((entry) => entry.name === "manifest.json").bytes = encode(JSON.stringify(manifest));
+      }
       const agent = JSON.parse(decode(entry.bytes));
       agent[field] = "Authorization: Bearer " + SECRET;
       entry.bytes = encode(JSON.stringify(agent));
@@ -393,7 +454,7 @@ describe("unsafe and broken packages", () => {
     has("Left out 1 program file.");
     // The unknown sign-in is refused rather than written back as no sign-in.
     assert.equal(project.items[0].capabilities.some((c) => c.id === "action.vault"), false);
-    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/plugin-broken.json", "microsoft-package/plugin-vault.json", "microsoft-package/plugin-webspec.json", "microsoft-package/skills/real/SKILL.md"]);
+    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/manifest.json", "microsoft-package/plugin-broken.json", "microsoft-package/plugin-vault.json", "microsoft-package/plugin-webspec.json", "microsoft-package/skills/real/SKILL.md"]);
   });
 
   test("a key or token in an address or a kept file is never kept or shown", async () => {
@@ -401,10 +462,10 @@ describe("unsafe and broken packages", () => {
     assert.equal(everythingShown(project, notices).includes(SECRET), false);
     const { backup } = await backupRoundTrip(project);
     assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
-    // The servers keep no address, so the installer adds a clean one.
-    assert.deepEqual([project.servers.token.url, project.servers.token.userSupplied], ["", true]);
+    // An action description with a key is excluded; an unsafe URL without a key is cleared.
+    assert.equal(project.servers.token, undefined);
     assert.deepEqual([project.servers.leaky.url, project.servers.leaky.userSupplied], ["", true]);
-    assert.ok(notices.some((n) => n.startsWith("Left out 2 files that look like they hold a password, key, or token: manifest.json, config/settings.json.")));
+    assert.ok(notices.some((n) => n.startsWith("Left out 2 files that look like they hold a password, key, or token: plugin-token.json, config/settings.json.")));
     // A kept plugin file keeps its shape but not the tenant's registration id.
     assert.equal(everythingShown(project, notices).includes("vault-1"), false);
   });

@@ -291,6 +291,9 @@ A Microsoft 365 app package opens like this:
   so is a server address with a key in it.
 - An assistant whose file appears to contain a key is left out. Remove the
   key from the source file and open the package again.
+- If the package's `manifest.json` appears to contain a key, the whole
+  package is refused. Remove the credentials and open the package again.
+  A key in an action's description file leaves that action out too.
 - Assistants open with the license "Not stated", because the package has no
   place to declare one. This also applies to packages made by Agentprise.
 - When an assistant came from an Agentprise download, its instructions still
@@ -888,7 +891,12 @@ value with `replace-with-your-auth-registration-id`, so no tenant's
 registration id reaches the backup. Programs are refused by
 `normalizeProject`, as for every import.
 
-Assistant files are checked before parsing too. A match leaves the assistant
+The root manifest is checked before any of its values are used. A match
+blocks the package, including attempts to open its contents as a skill ZIP
+instead. This covers publisher links and project descriptions as well as
+connector addresses. The error asks the author to remove the credentials.
+Assistant and action description files are checked as JSON text before
+parsing, regardless of their filename extension. A match leaves that part
 out, and its file is excluded from the backup. `holdsCredential` also checks
 unknown file types, such as `.env`, `.toml`, and `.pem`, as text unless the
 first 8 KiB contains a zero byte. Known binary types are not scanned. Private
@@ -1107,10 +1115,13 @@ real account, unless the line names a tenant test.
   file preservation, and unstated assistant licenses through backup round
   trips, colliding servers between skills in package, plugin, and skill ZIP
   imports, and API descriptions at five, six, and eight path components.
+  Root-manifest tests cover publisher URLs, descriptions, connector addresses,
+  and rejection without a skill fallback through either detection route.
+  Action and assistant metadata tests include misleading binary extensions.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 281 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 283 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

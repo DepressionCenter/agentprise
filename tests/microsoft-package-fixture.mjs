@@ -181,7 +181,7 @@ export function hostileEntries() {
       copilotAgents: { declarativeAgents: [{ id: "a", file: "declarativeAgent_0.json" }, { id: "b", file: "../outside.json" }, { id: "c", file: "declarativeAgent_0.json" }] },
       agentSkills: [{ folder: "/etc/skills" }, { folder: "skills/../skills/real" }, { folder: "skills/missing" }, { nope: true }],
       agentConnectors: [
-        { id: "leaky", displayName: "Leaky", toolSource: { remoteMcpServer: { mcpServerUrl: "https://leaky.example.org/mcp?api_key=" + SECRET, authorization: { type: "None" } } } },
+        { id: "leaky", displayName: "Leaky", toolSource: { remoteMcpServer: { mcpServerUrl: "http://leaky.example.org/mcp", authorization: { type: "None" } } } },
         { id: "leaky", displayName: "Leaky again", toolSource: { remoteMcpServer: { mcpServerUrl: "https://leaky.example.org/mcp" } } },
         "not an object",
       ],

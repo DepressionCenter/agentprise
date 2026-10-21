@@ -6108,7 +6108,7 @@ async function importProject(fileName, bytes) {
         }
         result = readTeamsArchive(archive.entries);
         // A manifest.json that isn't Microsoft's may sit beside ordinary skills.
-        if (result.error && skillFolders(archive.entries, "").length > 0) {
+        if (result.error && !result.blocked && skillFolders(archive.entries, "").length > 0) {
             result = readSkillArchive(archive.entries);
             format = "skillZip";
         }
@@ -7004,6 +7004,11 @@ function readCopilotActions(entries, actions, state, files) {
         }
         state.actionFiles.set(file, null);
         state.used.add(file);
+        if (holdsCredential("manifest.json", entries.get(file))) {
+            leaveOutForKey(state, file);
+            state.notices.push(subject + " has a description file that looks like it holds a password, key, or token, so it was left out. Remove the credentials from that file and open the package again.");
+            return;
+        }
         const manifest = parseJsonObject(fromBytes(entries.get(file)));
         const runtimes = manifest && Array.isArray(manifest.runtimes) ? manifest.runtimes.filter(isPlainObject) : [];
         if (runtimes.length === 0) {
@@ -7113,9 +7118,12 @@ function isMicrosoftManifest(entries) {
  * are skills; connectors are tool servers. Files the app can't use, and
  * files with a part it can't read, are kept for the backup only.
  * @param {Map<string, Uint8Array>} entries
- * @returns {{project: object, notices: string[]}|{error: string}}
+ * @returns {{project: object, notices: string[]}|{error: string, blocked?: boolean}}
  */
 function readTeamsArchive(entries) {
+    if (entries.has("manifest.json") && holdsCredential("manifest.json", entries.get("manifest.json"))) {
+        return { error: "The manifest.json file looks like it holds a password, key, or token, so this package was not opened. Remove the credentials from that file and open the package again.", blocked: true };
+    }
     const manifest = entries.has("manifest.json") ? parseJsonObject(fromBytes(entries.get("manifest.json"))) : null;
     if (entries.has("manifest.json") && !manifest) {
         return { error: "The manifest.json file inside this ZIP is not valid JSON, so it can't be opened as a Copilot app package." };
@@ -7153,7 +7161,7 @@ function readTeamsArchive(entries) {
     const agents = [];
     const skillFolderList = [];
     agentFiles.forEach(function (file) {
-        if (holdsCredential(file, entries.get(file))) {
+        if (holdsCredential("manifest.json", entries.get(file))) {
             leaveOutForKey(state, file);
             notices.push("The assistant file " + file + " looks like it holds a password, key, or token, so the assistant was left out. Remove the key from the file and open the package again.");
             return;
