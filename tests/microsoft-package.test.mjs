@@ -28,7 +28,7 @@ import assert from "node:assert/strict";
 import { loadEngine } from "./load-engine.mjs";
 import { goldenRaw, teamsIcons } from "./tools-fixture.mjs";
 import {
-  APP_ID, SECRET, appManifest, skillMd, agentOnlyEntries, skillOnlyEntries, connectorOnlyEntries, mixedEntries, multiAgentEntries, hostileEntries,
+  APP_ID, SECRET, appManifest, declarativeAgent, skillMd, serverPlugin, agentOnlyEntries, skillOnlyEntries, connectorOnlyEntries, mixedEntries, multiAgentEntries, hostileEntries,
 } from "./microsoft-package-fixture.mjs";
 
 const engine = loadEngine();
@@ -205,6 +205,38 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     assert.ok(notices.some((n) => n.includes("each assistant got a copy")));
   });
 
+  test("a root plugin.json that a connector names as its tool list still opens as a package", async () => {
+    const entries = connectorOnlyEntries();
+    const manifest = JSON.parse(decode(entries[0].bytes));
+    manifest.agentConnectors[0].toolSource.remoteMcpServer.mcpToolDescription.file = "plugin.json";
+    entries[0] = { name: "manifest.json", bytes: encode(JSON.stringify(manifest)) };
+    entries.push({ name: "plugin.json", bytes: encode(JSON.stringify({ tools: [{ name: "search_case_law" }] })) });
+    // The file name alone looks like an Agent Plugin; the manifest decides.
+    assert.equal(engine.detectFormat("connectors.zip", engine.zip.write(entries)), "plugin");
+    const { project, format } = await openPackage(entries);
+    assert.equal(format, "teamsZip");
+    assert.deepEqual(Object.keys(project.servers), ["example-legal", "example-open"]);
+  });
+
+  test("a skill's own server and an action server with the same name both keep their addresses", async () => {
+    const golden = engine.project.normalize(goldenRaw()).project;
+    const skill = await engine.exports.skillZip(golden, golden.items[1], "claude");
+    const entries = [
+      { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "a", file: "declarativeAgent_0.json" }] }, agentSkills: [{ folder: "skills/record-finder" }] }))) },
+      { name: "declarativeAgent_0.json", bytes: encode(JSON.stringify(declarativeAgent("Server Helper", { actions: [{ id: "remote", file: "plugin-remote.json" }] }))) },
+      { name: "plugin-remote.json", bytes: encode(JSON.stringify(serverPlugin("remote", "https://other.example.org/mcp"))) },
+      ...skill.entries.map((entry) => ({ name: "skills/" + entry.name, bytes: entry.bytes })),
+    ];
+    const { project } = await openPackage(entries);
+    const servers = (item) => item.capabilities.flatMap((c) => c.providers["*"]).filter((p) => p.kind === "mcp").map((p) => p.server);
+    const [agent, finder] = project.items;
+    assert.equal(finder.skillName, "record-finder");
+    assert.ok(servers(finder).includes("remote"));
+    assert.equal(project.servers.remote.url, "https://mcp.example.org/mcp", "the skill keeps its server");
+    assert.deepEqual(servers(agent), ["remote-2"]);
+    assert.equal(project.servers["remote-2"].url, "https://other.example.org/mcp", "the action uses its own server");
+  });
+
   test("a backup keeps every preserved file and opens again the same", async () => {
     for (const entries of [agentOnlyEntries(), connectorOnlyEntries(), skillOnlyEntries()]) {
       const { project } = await openPackage(entries);
@@ -282,6 +314,21 @@ describe("unsafe and broken packages", () => {
     assert.ok(notices.some((n) => n.startsWith("Left out 4 files that look like they hold a password, key, or token:")));
     const { backup } = await backupRoundTrip(project);
     assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+  });
+
+  test("a key set on a YAML or settings line leaves the file out, and a reference to a key does not", async () => {
+    const entries = skillOnlyEntries();
+    entries.push(
+      { name: "config/app.yaml", bytes: encode("name: example\nauth:\n  client_secret: " + SECRET + "\n") },
+      { name: "config/settings", bytes: encode("export EXAMPLE_API_KEY=" + SECRET + "\n") },
+      { name: "skills/meeting-notes/references/auth.yaml", bytes: encode("- token: '" + SECRET + "'\n") },
+      { name: "config/reference.yaml", bytes: encode("client_secret: ${CLIENT_SECRET}\npassword:\n  type: string\ntoken: true\n") },
+    );
+    const { project, notices } = await openPackage(entries);
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.ok(notices.some((n) => n.startsWith("Left out 3 files that look like they hold a password, key, or token:")));
+    assert.ok(unrecognizedPaths(project).includes("microsoft-package/config/reference.yaml"));
+    assert.deepEqual(project.items[1].files, []);
   });
 
   test("a manifest.json that is not valid JSON is refused, and one that isn't Microsoft's opens as skills", async () => {

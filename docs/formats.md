@@ -818,7 +818,11 @@ which would let Copilot load skills as folders instead of inlined text, but on
 
 `readTeamsArchive` reads a package into a project. `detectFormat` sends it
 there when the ZIP has a root `manifest.json` and no root `SKILL.md` or plugin
-layout. When the manifest names no assistant, skill, or connector, the
+layout. A root `plugin.json` alone would send it to the plugin importer, so
+`importProject` first checks `isMicrosoftManifest`: a root `manifest.json`
+that lists assistants, skills, or connectors opens as a package even when a
+connector names `plugin.json` as its tool description. When the manifest
+names no assistant, skill, or connector, the
 importer falls back to `readSkillArchive` if the ZIP holds skill folders, so a
 web app's `manifest.json` beside skills still opens as skills. Every path the
 manifest names goes through `packagePath`: an optional `./` start is allowed,
@@ -837,6 +841,12 @@ entries with the same name.
 | `agent_skills[].folder` and root `agentSkills[].folder` | Skill items, read by `readItemFolders`; an assistant's own list becomes its `uses`, matched by folder after `normalizeProject` numbers repeated skill names | A folder named by both is read once. A folder without `SKILL.md` is left out |
 | Root `agentConnectors[]` with `toolSource.remoteMcpServer` | A project server named after the connector `id`, with `displayName` as its label | No `authorization` means `oauth`, since Microsoft registers a client itself. A repeated `id` is read once. Other tool sources are left out, and the manifest is kept |
 
+A skill's `agentprise.json` can name its own servers. A skill keeps its
+server names, and a server from an action or connector whose name a skill
+already uses for a different server gets a numbered name, such as
+`remote-2`. The assistant's tools are pointed at the numbered name, so each
+tool still connects to its own address.
+
 A plugin manifest with a runtime the app can't read, an assistant file that
 isn't JSON, a connector's tool description file, a skill folder the manifest
 doesn't list, and every other file the importer did not use are kept as
@@ -846,7 +856,11 @@ being read as part of the backup when it opens again. Every text file the
 importer would keep, whether as a skill file, an API description, an attached
 file, or a kept file, first goes through `holdsCredential`, which looks for a
 key, token, or password in a query string, a JSON value, or a bearer header
-(`CREDENTIAL_TEXT_PATTERN`). A match leaves the file out, and the notice names
+(`CREDENTIAL_TEXT_PATTERN`), and on a YAML or settings line such as
+`client_secret: abc123` or `export EXAMPLE_API_KEY=abc123`
+(`CREDENTIAL_LINE_PATTERN`). A line whose value names a key kept elsewhere,
+such as `${CLIENT_SECRET}`, or says only `true` or `false`, is not a match
+(`CREDENTIAL_REFERENCE_VALUE`). A match leaves the file out, and the notice names
 only the file. A skill whose `SKILL.md` matches is left out whole, and an
 action whose API description matches is left out. In a kept JSON or YAML
 file, `withoutRegistrationIds` replaces each `reference_id` and `referenceId`
@@ -1047,9 +1061,12 @@ real account, unless the line names a tenant test.
   also opens synthetic packages from `tests/microsoft-package-fixture.mjs`:
   an assistant with actions, skills only, connectors only, a mix, two
   assistants, and a hostile package with unsafe paths, repeated entries, an
-  unknown sign-in, and keys in addresses and files. The synthetic packages
-  follow Microsoft's documentation and were not checked by Microsoft's
-  package validator. `npm test` on 2026-10-21 ran 270 tests, and all passed.
+  unknown sign-in, and keys in addresses and files. Other tests cover keys on
+  YAML and settings lines, a connector that names a root `plugin.json`, and a
+  skill server and an action server with the same name. The synthetic
+  packages follow Microsoft's documentation and were not checked by
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 273 tests, and
+  all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
   tool of each provider kind, to every download and compares each result with

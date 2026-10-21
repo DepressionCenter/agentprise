@@ -6120,7 +6120,12 @@ async function importProject(fileName, bytes) {
         if (archive.error) {
             return { error: archive.error };
         }
-        result = format === "plugin" ? readPluginArchive(archive.entries) : readSkillArchive(archive.entries);
+        // A Microsoft package may name a root plugin.json as a tool description,
+        // so its manifest decides before the plugin file does.
+        if (format === "plugin" && isMicrosoftManifest(archive.entries)) {
+            format = "teamsZip";
+        }
+        result = format === "teamsZip" ? readTeamsArchive(archive.entries) : format === "plugin" ? readPluginArchive(archive.entries) : readSkillArchive(archive.entries);
         // A ZIP that only looked like a plugin may still hold skills.
         if (format === "plugin" && result.error && skillFolders(archive.entries, "").length > 0) {
             result = readSkillArchive(archive.entries);
@@ -6712,6 +6717,14 @@ const COPILOT_AUTH_KINDS = Object.freeze({ None: "none", OAuthPluginVault: "oaut
 // otherwise keep for the backup.
 const CREDENTIAL_TEXT_PATTERN = /[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]{4,}"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}/i;
 
+// A YAML or settings line that sets a key, such as "client_secret: abc123" or
+// "export OPENAI_API_KEY=abc123". The value is the second group.
+const CREDENTIAL_LINE_PATTERN = /^[ \t]*(?:-[ \t]+|export[ \t]+)?["']?(?:[a-z0-9]+[_-])*(api[_-]?key|apikey|client[_-]?secret|password|passwd|access[_-]?token|refresh[_-]?token|bearer[_-]?token|private[_-]?key|secret|token)["']?[ \t]*[:=][ \t]*["']?([^\s"'#]{4,})/gim;
+
+// Values on such a line that name a key kept somewhere else, such as
+// "${API_KEY}" or "{{ secrets.token }}", or that say nothing, such as "true".
+const CREDENTIAL_REFERENCE_VALUE = /^(?:[$%{<*&]|(?:true|false|null|none|yes|no)$)/i;
+
 // The backup note on files kept from a Microsoft package.
 const PACKAGE_KEPT_NOTE = "From a Microsoft 365 app package. Not interpreted by Agentprise.";
 
@@ -6737,7 +6750,14 @@ function packagePath(value) {
 /** A text file whose content looks like it holds a key, token, or password. */
 function holdsCredential(name, bytes) {
     const textual = fileKind(name) === "text" || /\.(json|ya?ml)$/i.test(name) || !/\.[^\/.]+$/.test(name);
-    return textual && CREDENTIAL_TEXT_PATTERN.test(fromBytes(bytes));
+    if (!textual) {
+        return false;
+    }
+    const text = fromBytes(bytes);
+    if (CREDENTIAL_TEXT_PATTERN.test(text)) {
+        return true;
+    }
+    return Array.from(text.matchAll(CREDENTIAL_LINE_PATTERN)).some(function (match) { return !CREDENTIAL_REFERENCE_VALUE.test(match[2]); });
 }
 
 /**
@@ -7025,6 +7045,12 @@ function packageSkillFolder(entries, entry, notices) {
     return folder + "/";
 }
 
+/** True when the root manifest.json lists Copilot assistants, skills, or connectors. */
+function isMicrosoftManifest(entries) {
+    const manifest = entries.has("manifest.json") ? parseJsonObject(fromBytes(entries.get("manifest.json"))) : null;
+    return Boolean(manifest) && (Array.isArray(readPath(manifest, ["copilotAgents", "declarativeAgents"])) || Array.isArray(manifest.agentSkills) || Array.isArray(manifest.agentConnectors));
+}
+
 /**
  * A Microsoft 365 app package as a project: each declarative agent is an
  * assistant with its actions as tools and its skills; skills the app lists
@@ -7130,6 +7156,30 @@ function readTeamsArchive(entries) {
     notices.push.apply(notices, read.notices);
     read.items.forEach(function (item) { item.kind = "skill"; });
 
+    // ### Combine the servers ###
+    // A skill keeps the server names in its own file. A package server whose
+    // name a skill already uses for another server gets a numbered name, and
+    // the assistants' tools are pointed at it.
+    const servers = Object.assign({}, read.servers);
+    const serverNames = Object.create(null);
+    Object.keys(state.servers).forEach(function (name) {
+        const same = servers[name] && JSON.stringify(servers[name]) === JSON.stringify(state.servers[name]);
+        serverNames[name] = same ? name : addPackageServer(servers, name, state.servers[name]);
+    });
+    const renamedProviders = new Set();
+    agents.forEach(function (raw) {
+        raw.capabilities.forEach(function (capability) {
+            Object.keys(capability.providers).forEach(function (key) {
+                capability.providers[key].forEach(function (provider) {
+                    if (provider.kind === "mcp" && serverNames[provider.server] && !renamedProviders.has(provider)) {
+                        renamedProviders.add(provider);
+                        provider.server = serverNames[provider.server];
+                    }
+                });
+            });
+        });
+    });
+
     // ### Sort the remaining files ###
     // Root files of accepted types are attached files, as the Copilot app
     // writes them; everything else is kept for the backup, unless it is a
@@ -7207,7 +7257,7 @@ function readTeamsArchive(entries) {
         copyright: read.copyright,
         // A package names no license; skills keep their own, as from any skill ZIP.
         license: first ? DEFAULT_LICENSE : read.license,
-        servers: Object.assign({}, read.servers, state.servers),
+        servers: servers,
         items: items,
         unrecognized: kept
     };
