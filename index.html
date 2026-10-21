@@ -3070,7 +3070,7 @@ function normalizeProject(input) {
             dropped.repeated += 1;
             return;
         }
-        if (executableSignature(entry.bytes) || EXECUTABLE_EXTENSIONS.indexOf(fileTypeOf(path)) >= 0 || hidesExecutableExtension(pathLeaf(path))) {
+        if (isProgramFile(path, entry.bytes)) {
             dropped.programs += 1;
             return;
         }
@@ -3101,6 +3101,11 @@ function normalizeProject(input) {
         project.description = project.items[0].description.slice(0, LIMITS.description);
     }
     return { project: project, notices: notices };
+}
+
+/** A program by its first bytes, its type, or a hidden program extension. */
+function isProgramFile(path, bytes) {
+    return Boolean(executableSignature(bytes)) || EXECUTABLE_EXTENSIONS.indexOf(fileTypeOf(path)) >= 0 || hidesExecutableExtension(pathLeaf(path));
 }
 
 /**
@@ -6088,15 +6093,26 @@ function readPluginArchive(entries) {
  * @returns {Promise<{project: object, notices: string[], format: string}|{error: string}>}
  */
 async function importProject(fileName, bytes) {
-    const format = detectFormat(fileName, bytes);
+    let format = detectFormat(fileName, bytes);
     let result;
-    if (format === "msAgent" || format === "teamsZip") {
-        const opened = format === "msAgent" ? msAgentImport(fromBytes(bytes)) : await teamsZipImport(bytes);
+    if (format === "msAgent") {
+        const opened = msAgentImport(fromBytes(bytes));
         if (opened.error) {
             return opened;
         }
         const wrapped = projectFromAgent(opened.agent);
         result = { project: wrapped.project, notices: opened.notices.concat(wrapped.notices) };
+    } else if (format === "teamsZip") {
+        const archive = await readArchiveForImport(bytes);
+        if (archive.error) {
+            return { error: archive.error };
+        }
+        result = readTeamsArchive(archive.entries);
+        // A manifest.json that isn't Microsoft's may sit beside ordinary skills.
+        if (result.error && skillFolders(archive.entries, "").length > 0) {
+            result = readSkillArchive(archive.entries);
+            format = "skillZip";
+        }
     } else if (format === "skillMd") {
         result = readSkillMd(fromBytes(bytes));
     } else if (format === "plugin" || format === "skillZip") {
@@ -6598,6 +6614,62 @@ async function teamsZipImport(bytes) {
     if (!declarative) {
         return { error: "The declarative agent file inside this ZIP is not valid JSON." };
     }
+    const raw = teamsAgentRaw(entries, manifest, declarative, notices);
+    if (Array.isArray(declarative.actions) && declarative.actions.length > 0) {
+        notices.push("Left out " + countOf(declarative.actions.length, "action", "actions") + " (Copilot plugins), which this app doesn't support.");
+    }
+    // Other entries are attachments, or action and language files this app skips;
+    // JSON and YAML silently. "name.ext.txt" regains its real name.
+    const reserved = teamsReservedNames(manifest, [declarativeFile]);
+    const skipped = [];
+    raw.files = [];
+    entries.forEach(function (bytes, name) {
+        if (reserved.indexOf(name) >= 0 || /\.(json|ya?ml)$/i.test(name)) {
+            return;
+        }
+        if (fileKind(name) && name.indexOf("/") < 0) {
+            raw.files.push({ name: originalTextName(name), bytes: bytes });
+        } else {
+            skipped.push(name);
+        }
+    });
+    if (skipped.length > 0) {
+        notices.push("Left out " + countOf(skipped.length, "file", "files") + " this app can't use: " + listNames(skipped) + ".");
+    }
+    notices.push("Copilot app packages don't include a welcome message, so that field is empty.");
+    const result = normalizeAgent(raw);
+    return { agent: result.agent, notices: notices.concat(result.notices) };
+}
+
+/** The manifest's developer as agent creator fields; this app's placeholders read as blank. */
+function teamsCreator(manifest) {
+    const developer = manifest && isPlainObject(manifest.developer) ? manifest.developer : {};
+    const developerFields = { name: "name", website: "websiteUrl", privacy: "privacyUrl", terms: "termsOfUseUrl" };
+    const creator = {};
+    Object.keys(developerFields).forEach(function (key) {
+        const value = developer[developerFields[key]];
+        creator[key] = value === CREATOR_PLACEHOLDERS[key] ? "" : value;
+    });
+    return creator;
+}
+
+/** The manifest, its icons, and the given declarative agent files. */
+function teamsReservedNames(manifest, declarativeFiles) {
+    const colorFile = readPath(manifest || {}, ["icons", "color"]);
+    const outlineFile = readPath(manifest || {}, ["icons", "outline"]);
+    return ["manifest.json", colorFile, outlineFile, "color.png", "outline.png"].concat(declarativeFiles).filter(function (name) { return typeof name === "string"; });
+}
+
+/**
+ * One declarative agent's fields as a raw agent, without files: the text,
+ * example questions, Copilot sources, publisher details, and picture.
+ * @param {Map<string, Uint8Array>} entries
+ * @param {object|null} manifest
+ * @param {object} declarative
+ * @param {string[]} notices
+ * @returns {object} for normalizeAgent
+ */
+function teamsAgentRaw(entries, manifest, declarative, notices) {
     const raw = {
         name: declarative.name,
         description: declarative.description,
@@ -6620,40 +6692,485 @@ async function teamsZipImport(bytes) {
         creator: {}
     };
     readCopilotCapabilities(declarative.capabilities, raw, notices);
-    if (Array.isArray(declarative.actions) && declarative.actions.length > 0) {
-        notices.push("Left out " + countOf(declarative.actions.length, "action", "actions") + " (Copilot plugins), which this app doesn't support.");
-    }
-    const developer = manifest && isPlainObject(manifest.developer) ? manifest.developer : {};
-    const developerFields = { name: "name", website: "websiteUrl", privacy: "privacyUrl", terms: "termsOfUseUrl" };
-    Object.keys(developerFields).forEach(function (key) {
-        const value = developer[developerFields[key]];
-        raw.creator[key] = value === CREATOR_PLACEHOLDERS[key] ? "" : value;
-    });
+    raw.creator = teamsCreator(manifest);
     const colorFile = readPath(manifest || {}, ["icons", "color"]);
-    const outlineFile = readPath(manifest || {}, ["icons", "outline"]);
-    const iconBytes = entries.get(typeof colorFile === "string" ? colorFile : "color.png");
-    raw.icon = iconFromBytes(iconBytes, notices);
-    // Other entries are attachments, or action and language files this app skips;
-    // JSON and YAML silently. "name.ext.txt" regains its real name.
-    const reserved = ["manifest.json", declarativeFile, colorFile, outlineFile, "color.png", "outline.png"];
-    const skipped = [];
-    raw.files = [];
-    entries.forEach(function (bytes, name) {
-        if (reserved.indexOf(name) >= 0 || /\.(json|ya?ml)$/i.test(name)) {
+    raw.icon = iconFromBytes(entries.get(typeof colorFile === "string" ? colorFile : "color.png"), notices);
+    return raw;
+}
+
+// ### Format: Microsoft 365 app package read as a project ###
+// A package can hold declarative agents with actions and skills, plus skills
+// and connectors for the whole app. Each part is read from the path the
+// manifest names. Parts this app can't use stay in the backup only, and
+// nothing in the package is run or contacted.
+
+// Microsoft sign-in types this app can write back. Dynamic client registration
+// is an OAuth sign-in, so it is kept as one; any other type is refused.
+const COPILOT_AUTH_KINDS = Object.freeze({ None: "none", OAuthPluginVault: "oauth", ApiKeyPluginVault: "apikey", DynamicClientRegistration: "oauth" });
+
+// Text that looks like a key, token, or password in a file the import would
+// otherwise keep for the backup.
+const CREDENTIAL_TEXT_PATTERN = /[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]{4,}"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}/i;
+
+// The backup note on files kept from a Microsoft package.
+const PACKAGE_KEPT_NOTE = "From a Microsoft 365 app package. Not interpreted by Agentprise.";
+
+// Files kept from a package sit in this backup folder, so a kept SKILL.md or
+// plugin.json is never read as part of the backup when it opens again.
+const PACKAGE_KEPT_FOLDER = "microsoft-package/";
+
+/**
+ * A path the manifest names, with an optional "./" start, when it is safe and
+ * needed no cleaning; "" otherwise. Callers check that the entry exists.
+ * @param {*} value
+ * @returns {string}
+ */
+function packagePath(value) {
+    if (typeof value !== "string") {
+        return "";
+    }
+    const plain = value.replace(/^(\.\/)+/, "").replace(/\/+$/, "");
+    const path = cleanArchivePath(plain, { depth: LIMITS.itemPathDepth + 3, hidden: false });
+    return path && path === plain ? path : "";
+}
+
+/** A short, one-line name from a file for a notice. */
+function packageLabel(value, fallback) {
+    const text = typeof value === "string" ? oneLine(value).slice(0, 40) : "";
+    return text || fallback;
+}
+
+/**
+ * The sign-in kind for a Microsoft auth object, or "" when this app has no
+ * safe match. A registration id is never kept: it belongs to one tenant.
+ * @param {*} auth {type, reference_id} or {type, referenceId}
+ * @param {string} subject such as "The action \"records\"", for notices
+ * @param {string[]} notices
+ * @returns {string} one of AUTH_KINDS, or ""
+ */
+function authFromCopilot(auth, subject, notices) {
+    const type = isPlainObject(auth) && typeof auth.type === "string" ? auth.type : "";
+    const kind = Object.prototype.hasOwnProperty.call(COPILOT_AUTH_KINDS, type) ? COPILOT_AUTH_KINDS[type] : "";
+    if (!kind) {
+        notices.push(subject + " uses a kind of sign-in this app can't write back, so it was left out.");
+        return "";
+    }
+    const reference = auth.reference_id !== undefined ? auth.reference_id : auth.referenceId;
+    if (kind !== "none" && typeof reference === "string" && reference && reference !== COPILOT_AUTH_PLACEHOLDER) {
+        notices.push(subject + " signs in through a registration in the tenant it came from. Agentprise keeps the kind of sign-in but not the registration, so your admin registers it again where you install it.");
+    }
+    return kind;
+}
+
+/** A web server address, or a blank one the installer supplies; never one with a key in it. */
+function packageServerAddress(value, subject, notices) {
+    const raw = typeof value === "string" ? value.trim() : "";
+    if (!raw || raw === MCP_URL_PLACEHOLDER) {
+        return { url: "", userSupplied: true };
+    }
+    const url = raw.length <= LIMITS.sharepointLinkText ? cleanServerUrl(raw) : "";
+    if (!url) {
+        notices.push(subject + " has an address this app can't keep, because it isn't https or it holds a sign-in, key, or token. Add the address again under Tool connections.");
+    }
+    return { url: url, userSupplied: !url };
+}
+
+/** Adds a server under a unique name built from key, and returns the name. */
+function addPackageServer(servers, key, server) {
+    const cleaned = String(key || "").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^[-_]+/, "").replace(/-+$/, "").slice(0, 56);
+    const base = SERVER_NAME_PATTERN.test(cleaned) ? cleaned : "server";
+    let name = base;
+    for (let n = 2; Object.prototype.hasOwnProperty.call(servers, name); n++) {
+        name = base + "-" + n;
+    }
+    servers[name] = server;
+    return name;
+}
+
+/** The functions a runtime runs: its own list, or the manifest's when it runs all. */
+function runtimeFunctions(manifest, runtime) {
+    const own = Array.isArray(runtime.run_for_functions) ? runtime.run_for_functions.filter(function (name) { return typeof name === "string"; }) : [];
+    if (own.length > 0 && own.indexOf("*") < 0) {
+        return own;
+    }
+    const listed = Array.isArray(manifest.functions) ? manifest.functions : [];
+    return listed.map(function (entry) { return isPlainObject(entry) ? entry.name : ""; }).filter(function (name) { return typeof name === "string" && name; });
+}
+
+/**
+ * One plugin manifest runtime as a tool provider: an OpenAPI description in
+ * the package, or a tool server on the web. Null, with a notice, otherwise.
+ * @param {Map<string, Uint8Array>} entries
+ * @param {object} manifest the plugin manifest
+ * @param {object} runtime
+ * @param {string} subject for notices
+ * @param {object} state {servers, used, notices}
+ * @param {Array<{path: string, bytes: Uint8Array}>} files the assistant's files, added to
+ * @returns {object|null}
+ */
+function actionProvider(entries, manifest, runtime, subject, state, files) {
+    if (runtime.type !== "OpenApi" && runtime.type !== "RemoteMCPServer") {
+        state.notices.push(subject + " runs in a way this app can't use" + (typeof runtime.type === "string" ? " (" + packageLabel(runtime.type, "") + ")" : "") + ", so that part was left out.");
+        return null;
+    }
+    const auth = authFromCopilot(runtime.auth, subject, state.notices);
+    if (!auth) {
+        return null;
+    }
+    const spec = isPlainObject(runtime.spec) ? runtime.spec : {};
+    const functions = runtimeFunctions(manifest, runtime);
+    if (runtime.type === "OpenApi") {
+        const address = typeof spec.url === "string" ? spec.url : "";
+        if (/^[a-z][a-z0-9+.-]*:/i.test(address)) {
+            state.notices.push(subject + " reads its API description from the web, and Agentprise never downloads files, so it was left out.");
+            return null;
+        }
+        const path = packagePath(address);
+        if (!path || !entries.has(path)) {
+            state.notices.push(subject + " names an API description that isn't in the package, so it was left out.");
+            return null;
+        }
+        state.used.add(path);
+        if (!files.some(function (file) { return file.path === path; })) {
+            files.push({ path: path, bytes: entries.get(path) });
+        }
+        return { kind: "openapi", spec: path, operations: functions, auth: auth };
+    }
+    const address = packageServerAddress(spec.url, subject, state.notices);
+    const label = actionLabel(manifest);
+    const server = { label: label, transport: "http", url: address.url, userSupplied: address.userSupplied, auth: auth, tools: functions };
+    return { kind: "mcp", server: addPackageServer(state.servers, manifest.namespace, server), tools: functions };
+}
+
+/** The full name when description_for_human holds the untruncated name_for_human, as this app writes it. */
+function actionLabel(manifest) {
+    const short = typeof manifest.name_for_human === "string" ? oneLine(manifest.name_for_human) : "";
+    const long = typeof manifest.description_for_human === "string" ? oneLine(manifest.description_for_human) : "";
+    if (short && long.indexOf(short) === 0 && long.length <= LIMITS.capabilityLabel) {
+        return long;
+    }
+    return short || long.slice(0, LIMITS.capabilityLabel) || packageLabel(manifest.namespace, "Copilot action");
+}
+
+/**
+ * A declarative agent's actions as tools on the assistant, one tool per
+ * plugin manifest. A manifest with a part this app can't use is also kept
+ * for the backup.
+ * @param {Map<string, Uint8Array>} entries
+ * @param {*} actions the declarative agent's list, untrusted
+ * @param {object} state {servers, used, keep, notices}
+ * @param {Array<{path: string, bytes: Uint8Array}>} files the assistant's files, added to
+ * @returns {Array<object>} capabilities for normalizeItem
+ */
+function readCopilotActions(entries, actions, state, files) {
+    const capabilities = [];
+    const seenHere = Object.create(null);
+    (Array.isArray(actions) ? actions : []).forEach(function (action, index) {
+        const subject = "The action \"" + packageLabel(isPlainObject(action) ? action.id : "", "number " + (index + 1)) + "\"";
+        const file = isPlainObject(action) ? packagePath(action.file) : "";
+        if (!file || !entries.has(file)) {
+            state.notices.push(subject + " points at a file that isn't in the package, or at an unsafe path, so it was left out.");
             return;
         }
-        if (fileKind(name) && name.indexOf("/") < 0) {
-            raw.files.push({ name: originalTextName(name), bytes: bytes });
-        } else {
-            skipped.push(name);
+        if (seenHere[file]) {
+            state.notices.push(subject + " uses the same file as another action, so Agentprise read that file once.");
+            return;
+        }
+        seenHere[file] = true;
+        // Another assistant in the package already read this file: share its tool and server.
+        if (state.actionFiles.has(file)) {
+            const shared = state.actionFiles.get(file);
+            if (shared) {
+                capabilities.push(JSON.parse(JSON.stringify(shared.capability)));
+                shared.files.forEach(function (path) {
+                    if (!files.some(function (other) { return other.path === path; })) {
+                        files.push({ path: path, bytes: entries.get(path) });
+                    }
+                });
+            }
+            return;
+        }
+        state.actionFiles.set(file, null);
+        state.used.add(file);
+        const manifest = parseJsonObject(fromBytes(entries.get(file)));
+        const runtimes = manifest && Array.isArray(manifest.runtimes) ? manifest.runtimes.filter(isPlainObject) : [];
+        if (runtimes.length === 0) {
+            state.notices.push(subject + " has a file this app can't read, so it was left out.");
+            state.keep.add(file);
+            return;
+        }
+        const providers = [];
+        const ownFiles = [];
+        runtimes.forEach(function (runtime) {
+            const provider = actionProvider(entries, manifest, runtime, subject, state, ownFiles);
+            if (provider) {
+                providers.push(provider);
+            }
+        });
+        if (providers.length < runtimes.length) {
+            state.keep.add(file);
+        }
+        if (providers.length === 0) {
+            return;
+        }
+        ownFiles.forEach(function (own) {
+            if (!files.some(function (other) { return other.path === own.path; })) {
+                files.push(own);
+            }
+        });
+        const namespace = typeof manifest.namespace === "string" ? manifest.namespace.replace(/[^A-Za-z0-9]/g, "").slice(0, 60) : "";
+        const capability = {
+            id: "action." + (namespace || "tools" + (index + 1)),
+            label: actionLabel(manifest),
+            description: typeof manifest.description_for_model === "string" ? manifest.description_for_model : manifest.description_for_human,
+            providers: { "*": providers }
+        };
+        state.actionFiles.set(file, { capability: capability, files: ownFiles.map(function (own) { return own.path; }) });
+        capabilities.push(capability);
+    });
+    return capabilities;
+}
+
+/**
+ * Connectors for the whole app as project tool servers. Only remote tool
+ * servers are read; the manifest is kept for the backup when one isn't.
+ * @param {*} list the manifest's agentConnectors, untrusted
+ * @param {object} state {servers, used, keep, notices}
+ * @returns {number} how many were read
+ */
+function readAgentConnectors(entries, list, state) {
+    let read = 0;
+    const seen = Object.create(null);
+    (Array.isArray(list) ? list : []).forEach(function (connector, index) {
+        const id = isPlainObject(connector) && typeof connector.id === "string" ? connector.id : "";
+        const subject = "The connector \"" + packageLabel(isPlainObject(connector) ? connector.displayName || id : "", "number " + (index + 1)) + "\"";
+        if (!isPlainObject(connector) || !id) {
+            state.notices.push("A connector in the manifest has no id, so it was left out.");
+            state.keepManifest = true;
+            return;
+        }
+        if (seen[id]) {
+            state.notices.push(subject + " has the same id as another connector, so Agentprise read it once.");
+            return;
+        }
+        seen[id] = true;
+        const remote = readPath(connector, ["toolSource", "remoteMcpServer"]);
+        if (!isPlainObject(remote)) {
+            state.notices.push(subject + " isn't a tool server on the web, which is the only kind this app reads, so it was left out.");
+            state.keepManifest = true;
+            return;
+        }
+        // Without a sign-in entry, Microsoft registers an OAuth client itself.
+        const auth = remote.authorization === undefined ? "oauth" : authFromCopilot(remote.authorization, subject, state.notices);
+        if (!auth) {
+            state.keepManifest = true;
+            return;
+        }
+        const description = readPath(remote, ["mcpToolDescription", "file"]);
+        const descriptionPath = packagePath(description);
+        if (descriptionPath && entries.has(descriptionPath)) {
+            state.keep.add(descriptionPath);
+        }
+        const address = packageServerAddress(remote.mcpServerUrl, subject, state.notices);
+        const label = typeof connector.displayName === "string" && connector.displayName.trim() ? connector.displayName : id;
+        addPackageServer(state.servers, id, { label: label, transport: "http", url: address.url, userSupplied: address.userSupplied, auth: auth, tools: [] });
+        read += 1;
+    });
+    return read;
+}
+
+/** A skill folder a manifest entry names, ending in "/", or "" with a notice. */
+function packageSkillFolder(entries, entry, notices) {
+    const folder = packagePath(isPlainObject(entry) ? entry.folder : "");
+    if (!folder || !entries.has(folder + "/SKILL.md")) {
+        notices.push("A skill in the manifest points at " + (folder ? "the folder " + folder + ", which has no SKILL.md" : "an unsafe or empty folder") + ", so it was left out.");
+        return "";
+    }
+    return folder + "/";
+}
+
+/**
+ * A Microsoft 365 app package as a project: each declarative agent is an
+ * assistant with its actions as tools and its skills; skills the app lists
+ * are skills; connectors are tool servers. Files the app can't use, and
+ * files with a part it can't read, are kept for the backup only.
+ * @param {Map<string, Uint8Array>} entries
+ * @returns {{project: object, notices: string[]}|{error: string}}
+ */
+function readTeamsArchive(entries) {
+    const manifest = entries.has("manifest.json") ? parseJsonObject(fromBytes(entries.get("manifest.json"))) : null;
+    if (entries.has("manifest.json") && !manifest) {
+        return { error: "The manifest.json file inside this ZIP is not valid JSON, so it can't be opened as a Copilot app package." };
+    }
+    const source = manifest || {};
+    const notices = [];
+    const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), notices: notices, keepManifest: false };
+
+    // ### Find the declarative agents ###
+    const listed = readPath(source, ["copilotAgents", "declarativeAgents"]);
+    const agentFiles = [];
+    (Array.isArray(listed) ? listed : []).forEach(function (entry) {
+        const file = packagePath(isPlainObject(entry) ? entry.file : "");
+        if (!file || !entries.has(file)) {
+            notices.push("An assistant in the manifest points at a file that isn't in the package, or at an unsafe path, so it was left out.");
+            return;
+        }
+        if (agentFiles.indexOf(file) >= 0) {
+            notices.push("Two assistants in the manifest use the same file " + file + ", so Agentprise read it once.");
+            return;
+        }
+        agentFiles.push(file);
+    });
+    if (agentFiles.length === 0 && !Array.isArray(listed) && entries.has("declarativeAgent_0.json")) {
+        agentFiles.push("declarativeAgent_0.json");
+    }
+    const rootSkills = Array.isArray(source.agentSkills) ? source.agentSkills : [];
+    const connectors = Array.isArray(source.agentConnectors) ? source.agentConnectors : [];
+    if (agentFiles.length === 0 && rootSkills.length === 0 && connectors.length === 0) {
+        return { error: "This ZIP has no assistant, skill, or connector that Agentprise can read, so it isn't a Copilot app package." };
+    }
+    teamsReservedNames(manifest, agentFiles).forEach(function (name) { state.used.add(name); });
+
+    // ### Read each assistant, its actions, and its skills ###
+    const agents = [];
+    const skillFolderList = [];
+    agentFiles.forEach(function (file) {
+        const declarative = parseJsonObject(fromBytes(entries.get(file)));
+        if (!declarative) {
+            notices.push("The assistant file " + file + " is not valid JSON, so it was left out.");
+            state.keep.add(file);
+            return;
+        }
+        const raw = teamsAgentRaw(entries, manifest, declarative, notices);
+        const files = [];
+        raw.capabilities = readCopilotActions(entries, declarative.actions, state, files);
+        raw.toolFiles = files;
+        raw.skillFolders = [];
+        (Array.isArray(declarative.agent_skills) ? declarative.agent_skills : []).forEach(function (entry) {
+            const folder = packageSkillFolder(entries, entry, notices);
+            if (folder && raw.skillFolders.indexOf(folder) < 0) {
+                raw.skillFolders.push(folder);
+                if (skillFolderList.indexOf(folder) < 0) {
+                    skillFolderList.push(folder);
+                }
+            }
+        });
+        if (typeof raw.instructions === "string" && ("\n" + raw.instructions).indexOf("\n## " + TOOLS_HEADING + "\n") >= 0) {
+            notices.push("The instructions of " + packageLabel(raw.name, "an assistant") + " already list its tools under \"" + TOOLS_HEADING + "\", from an earlier download. Agentprise writes that list again in every download, so delete the old one from the instructions.");
+        }
+        agents.push(raw);
+    });
+    rootSkills.forEach(function (entry) {
+        const folder = packageSkillFolder(entries, entry, notices);
+        if (folder && skillFolderList.indexOf(folder) < 0) {
+            skillFolderList.push(folder);
         }
     });
-    if (skipped.length > 0) {
-        notices.push("Left out " + countOf(skipped.length, "file", "files") + " this app can't use: " + listNames(skipped) + ".");
+    const connectorCount = readAgentConnectors(entries, connectors, state);
+
+    // ### Read the skill folders ###
+    const read = readItemFolders(entries, skillFolderList);
+    notices.push.apply(notices, read.notices);
+    const skillNameOf = {};
+    skillFolderList.forEach(function (folder, index) {
+        const item = read.items[index];
+        item.kind = "skill";
+        skillNameOf[folder] = toSkillName(item.skillName || item.name || "");
+    });
+    entries.forEach(function (bytes, name) {
+        if (skillFolderList.some(function (folder) { return name.indexOf(folder) === 0; })) {
+            state.used.add(name);
+        }
+    });
+
+    // ### Sort the remaining files ###
+    // Root files of accepted types are attached files, as the Copilot app
+    // writes them; everything else is kept for the backup, unless it is a
+    // program or looks like it holds a key.
+    const attachments = [];
+    const kept = [];
+    const withKeys = [];
+    if (state.keepManifest && manifest) {
+        state.keep.add("manifest.json");
     }
-    notices.push("Copilot app packages don't include a welcome message, so that field is empty.");
-    const result = normalizeAgent(raw);
-    return { agent: result.agent, notices: notices.concat(result.notices) };
+    entries.forEach(function (bytes, name) {
+        if (state.used.has(name) && !state.keep.has(name)) {
+            return;
+        }
+        if (!state.keep.has(name) && agents.length > 0 && name.indexOf("/") < 0 && !/\.(json|ya?ml)$/i.test(name) && fileKind(name)) {
+            attachments.push({ name: originalTextName(name), bytes: bytes });
+            return;
+        }
+        const textual = fileKind(name) === "text" || /\.(json|ya?ml)$/i.test(name) || !/\.[^\/.]+$/.test(name);
+        if (textual && CREDENTIAL_TEXT_PATTERN.test(fromBytes(bytes))) {
+            withKeys.push(name);
+            return;
+        }
+        kept.push({ path: PACKAGE_KEPT_FOLDER + name, note: PACKAGE_KEPT_NOTE, bytes: bytes, name: name });
+    });
+    if (withKeys.length > 0) {
+        notices.push("Left out " + countOf(withKeys.length, "file", "files") + " that look like they hold a password, key, or token: " + listNames(withKeys) + ". Agentprise never keeps those.");
+    }
+    const unlistedSkills = skillFolders(entries, "").filter(function (folder) {
+        return folder && !skillFolderList.some(function (listedFolder) { return folder.indexOf(listedFolder) === 0; });
+    });
+    if (unlistedSkills.length > 0) {
+        notices.push("The manifest doesn't list " + countOf(unlistedSkills.length, "skill folder", "skill folders") + " (" + listNames(unlistedSkills) + "), so Copilot doesn't use " + (unlistedSkills.length === 1 ? "it" : "them") + ", and Agentprise didn't open " + (unlistedSkills.length === 1 ? "it" : "them") + " as a skill.");
+    }
+    // Programs are refused by normalizeProject, which reports them itself.
+    const keptNames = kept.filter(function (entry) { return !isProgramFile(entry.path, entry.bytes); }).map(function (entry) { return entry.name; });
+    if (keptNames.length > 0) {
+        notices.push("Agentprise keeps " + countOf(keptNames.length, "file", "files") + " it can't use in the backup only: " + listNames(keptNames) + ".");
+    }
+
+    // ### Build the project ###
+    if (agents.length > 1) {
+        notices.push("This package holds " + agents.length + " assistants. Agentprise downloads each one as its own Copilot app package, so only " + packageLabel(agents[0].name, "the first") + " keeps the package's app id.");
+        agents.slice(1).forEach(function (raw) { raw.copilot.appId = ""; });
+        if (attachments.length > 0) {
+            notices.push("The package doesn't say which assistant uses its attached files, so each assistant got a copy. Remove them where they aren't needed.");
+        }
+    }
+    const items = agents.map(function (raw) {
+        raw.files = attachments.slice();
+        const normalized = normalizeAgent(raw);
+        notices.push.apply(notices, normalized.notices);
+        const agent = normalized.agent;
+        return Object.assign({}, agent, {
+            kind: "agent",
+            capabilities: raw.capabilities,
+            uses: raw.skillFolders.map(function (folder) { return skillNameOf[folder]; }).filter(Boolean),
+            files: agent.files.map(function (file) { return { path: BUNDLE_FILES_FOLDER + file.name, bytes: file.bytes }; }).concat(raw.toolFiles)
+        });
+    }).concat(read.items);
+    if (connectorCount > 0) {
+        notices.push("Added " + countOf(connectorCount, "connector", "connectors") + " to Tool connections, for the whole project. A download includes a connector only when a tool uses it, and the backup always keeps " + (connectorCount === 1 ? "it" : "them") + ".");
+    }
+    if (agents.length > 0) {
+        notices.push("Copilot app packages don't include a welcome message, so that field is empty.");
+    }
+    // One assistant names the project, as every other single-item file does.
+    const first = agents[0];
+    const appName = readPath(source, ["name", "full"]) || readPath(source, ["name", "short"]);
+    const appDescription = readPath(source, ["description", "full"]) || readPath(source, ["description", "short"]);
+    const single = agents.length === 1 || !appName;
+    const creator = teamsCreator(manifest);
+    const raw = {
+        name: first && single ? first.name : appName,
+        description: first && single ? first.description : appDescription,
+        creator: { name: creator.name, url: creator.website, privacy: creator.privacy, terms: creator.terms },
+        copyright: read.copyright,
+        // A package names no license; skills keep their own, as from any skill ZIP.
+        license: first ? DEFAULT_LICENSE : read.license,
+        servers: Object.assign({}, read.servers, state.servers),
+        items: items,
+        unrecognized: kept
+    };
+    if (!first && read.license === UNKNOWN_LICENSE) {
+        notices.push("The file doesn't say which license it uses. Check with its author before you share it.");
+    }
+    const result = normalizeProject(raw);
+    return { project: result.project, notices: notices.concat(result.notices) };
 }
 
 // ### Format: copy-ready text (ChatGPT and Gemini Notebook) ###
@@ -6715,6 +7232,11 @@ function detectFormat(fileName, bytes) {
         });
         if (plugin) {
             return "plugin";
+        }
+        // A root manifest.json with skill folders is a Microsoft package that lists
+        // skills; the importer reads the manifest and falls back to skills.
+        if (names.indexOf("manifest.json") >= 0 && names.indexOf("SKILL.md") < 0) {
+            return "teamsZip";
         }
         if (names.some(function (name) { return pathLeaf(name) === "SKILL.md"; })) {
             return "skillZip";

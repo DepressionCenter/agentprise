@@ -251,7 +251,10 @@ or the home button at the top to get back to that page first. Agentprise opens:
 - Any file it made itself: the backup, the skill `.zip`, the `.agent` file, or
   the app package `.zip`.
 - A `.agent` file exported from SharePoint.
-- An app package `.zip` exported from the Microsoft 365 Copilot app.
+- An app package `.zip` exported from the Microsoft 365 Copilot app, or
+  another Microsoft 365 app package, such as a Copilot Cowork plugin. Its
+  assistants, their actions, its skills, and its connectors all open in the
+  project.
 - Any Agent Skill `.zip` or `SKILL.md` file, from Gemini, Claude, or elsewhere.
   When a `.zip` holds several skills, each one becomes its own skill in the
   project.
@@ -274,7 +277,13 @@ A few things are worth knowing about files made elsewhere:
 - Some plugins carry parts Agentprise does not understand, such as hooks,
   commands, or agents folders. The app keeps them with the project and puts
   them back only in the backup. It never reads or runs them.
-- Programs are never kept, whatever the file calls them.
+- A Microsoft 365 app package can hold parts Agentprise can't use, such as a
+  local plugin. A message names each one, and the backup keeps its file in a
+  folder called `microsoft-package`. The
+  [formats page](formats.md#opening-a-file-you-already-have) lists what opens
+  and what doesn't.
+- Programs are never kept, whatever the file calls them. Neither is a file or
+  server address that looks like it holds a password, key, or token.
 - If a skill or plugin does not say which license it uses, the license shows
   as "Not stated", and a note asks you to check with its author before you
   share it. The app never puts its own license on someone else's work.

@@ -248,7 +248,9 @@ If a download holds a `SETUP.md` file, follow its steps too.
 Agentprise opens any of its own downloads, plus files made elsewhere:
 
 - A `.agent` file exported from SharePoint.
-- A `.zip` exported from the Microsoft 365 Copilot app.
+- A `.zip` exported from the Microsoft 365 Copilot app, or another Microsoft
+  365 app package with assistants, skills, or connectors, such as a Copilot
+  Cowork plugin.
 - Any Agent Skill `.zip` or `SKILL.md` file. A `.zip` with several skills
   inside opens with each one as its own skill.
 - A plugin `.zip` in the Agent Plugins format, a Claude plugin, or a Codex
@@ -265,6 +267,31 @@ When you open a skill `.zip` or a plugin that Agentprise made, the app takes
 out the **Tools available in this setup** section and the "Persona:" start of
 the description, because it writes those again for each download. The plain
 skill has no record of what was added, so it opens with that text in place.
+
+A Microsoft 365 app package opens like this:
+
+- Each assistant in it becomes an assistant in the project. Its actions become
+  tools, as long as the action calls a tool server on the web or uses an API
+  description inside the package. Download the Copilot app package again and
+  the actions come back the same.
+- Skills the package lists become skills. When an assistant lists a skill, it
+  uses that skill in the project too.
+- Connectors become tool servers for the whole project, under **More
+  settings**, then **Tool connections**. A download includes a server only
+  when a tool uses it. The backup always keeps them.
+- A package with more than one assistant opens with all of them, and each one
+  downloads as its own Copilot app package.
+- Sign-ins keep their kind, such as OAuth, but not their registration, which
+  belongs to the organization the package came from. Your admin registers the
+  sign-in again where you install it.
+- Anything else, such as a local plugin or a skill folder the package doesn't
+  list, is kept in the backup only, in a folder called `microsoft-package`. A
+  message lists each part that was left out and why.
+- A file that looks like it holds a password, key, or token is left out, and
+  so is a server address with a key in it.
+- When an assistant came from an Agentprise download, its instructions still
+  end with the old **Tools available in this setup** list. A message reminds
+  you to delete it, because the next download writes the list again.
 
 Plugins sometimes carry hooks, commands, agents folders, or other files
 Agentprise does not understand. The app keeps them with the project and writes
@@ -290,7 +317,7 @@ a real account. Read it before changing any converter in `index.html`.
 | Plugin (Agent Plugins 1.0 folder with the project record) | `.plugin.zip` | Yes, as a project | Yes | No: instructions are composed for ChatGPT | ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw |
 | Agent Plugins folder, Claude plugin, or Codex plugin made elsewhere | `.zip` | Yes | As the backup or either plugin | Skills and servers; everything else is kept as unrecognized files | Bringing a plugin into a project |
 | Microsoft `.agent` | `.agent` | Yes | Yes | All but attached files | SharePoint libraries and Teams chats |
-| Teams app package | `.zip` | Yes | Yes | No (see below) | The Microsoft 365 Copilot app |
+| Teams app package, or another Microsoft 365 app package | `.zip` | Yes, as a project with its assistants, actions, skills, and connectors | Yes, one assistant per package | No (see below) | The Microsoft 365 Copilot app and Copilot Cowork |
 | Copy-ready text | none, or `.md` | No | Copy buttons and a `.md` download | Not applicable | ChatGPT projects and Gemini Notebook |
 
 The Gemini skill and the Claude skill share one folder layout, but each is
@@ -787,6 +814,51 @@ The package stays on declarative agent v1.8. Version 1.9 adds `agent_skills`,
 which would let Copilot load skills as folders instead of inlined text, but on
 2026-10-10 it was a Frontier preview with no reference page.
 
+#### Opening a Microsoft 365 app package
+
+`readTeamsArchive` reads a package into a project. `detectFormat` sends it
+there when the ZIP has a root `manifest.json` and no root `SKILL.md` or plugin
+layout. When the manifest names no assistant, skill, or connector, the
+importer falls back to `readSkillArchive` if the ZIP holds skill folders, so a
+web app's `manifest.json` beside skills still opens as skills. Every path the
+manifest names goes through `packagePath`: an optional `./` start is allowed,
+and a path that `cleanArchivePath` would change, refuse, or that is missing
+from the ZIP is left out with a notice. The ZIP reader already refuses two
+entries with the same name.
+
+| Package part | Becomes | Limits |
+|---|---|---|
+| `copilotAgents.declarativeAgents[].file` | One assistant each, read by `teamsAgentRaw` | A file named twice is read once. Without a list, `declarativeAgent_0.json` is read. Only the first assistant keeps the manifest `id` as its app id; the others get a new one on download, with a notice |
+| Root files of accepted types | Attached files of every assistant | With two or more assistants, each gets a copy and a notice |
+| `actions[]` with an `OpenApi` runtime | A tool (`action.<namespace>`) with an `openapi` provider under `*`; the description is copied to the assistant's files at its package path | The description must be inside the package. A web address is never fetched |
+| `actions[]` with a `RemoteMCPServer` runtime | A tool with an `mcp` provider, and a project server named after the `namespace` | The address goes through `cleanServerUrl`; one with a key or token is dropped, and the server is marked for the installer to supply |
+| `run_for_functions`, or `functions[].name` when it is `["*"]` | The provider's `operations` or `tools`, and the server's `tools` | |
+| Runtime `auth.type` | `None`, `OAuthPluginVault`, `ApiKeyPluginVault`, and `DynamicClientRegistration` (kept as `oauth`) | Any other type leaves the runtime out, so a sign-in is never written back as none. `reference_id` is not kept |
+| `agent_skills[].folder` and root `agentSkills[].folder` | Skill items, read by `readItemFolders`; an assistant's own list becomes its `uses` | A folder named by both is read once. A folder without `SKILL.md` is left out |
+| Root `agentConnectors[]` with `toolSource.remoteMcpServer` | A project server named after the connector `id`, with `displayName` as its label | No `authorization` means `oauth`, since Microsoft registers a client itself. A repeated `id` is read once. Other tool sources are left out, and the manifest is kept |
+
+A plugin manifest with a runtime the app can't read, an assistant file that
+isn't JSON, a connector's tool description file, a skill folder the manifest
+doesn't list, and every other file the importer did not use are kept as
+unrecognized files under `microsoft-package/` with the note "From a Microsoft
+365 app package." The folder keeps a kept `SKILL.md` or `plugin.json` from
+being read as part of the backup when it opens again. Before a text file is
+kept, `CREDENTIAL_TEXT_PATTERN` looks for a key, token, or password in a query
+string, a JSON value, or a bearer header; a match leaves the file out, and the
+notice names only the file. Programs are refused by `normalizeProject`, as for
+every import.
+
+A package that Agentprise wrote opens with the same three actions, and the
+next Copilot app package writes the same plugin manifests, API description,
+action list, and web search sites. The instructions still hold the old
+**Tools available in this setup** section, because a package has no record
+of what the app added, and the app says so instead of guessing. The inlined
+skill text stays in the instructions for the same reason.
+
+`teamsZipImport`, the format reader on `formats.teamsZip.import`, still reads
+only the first assistant, without actions or skills. The app itself opens
+files through `importProject`.
+
 ### The whole-project plugins
 
 Both plugins put each item in `skills/<skill-name>/` as an item folder whose
@@ -913,6 +985,10 @@ real account, unless the line names a tenant test.
 | The upgrade is started by a person, never automatically, and needs edit permission on the `.agent` file, the ability to share agents, and permission to edit pages (Microsoft names the owner, creator, or site owner as best suited); after it, the original `.agent` file can no longer be edited, sharing does not carry over except org-wide sharing, usage history does not transfer, and an agent in a Teams chat or channel must be removed and added again by its sharing link | [Upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents), checked 2026-10-21 |
 | Microsoft's upgrade paths by role: a site Q&A agent moves to Copilot in SharePoint, a repeatable site task becomes a skill, a named Q&A or retrieval agent moves to Agent Builder, and a Copilot Studio custom engine agent publishes to the Copilot app | [Upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents), checked 2026-10-21 |
 | Files uploaded to Copilot Agent Builder become embedded content the agent reads (knowledge); no import of a `.agent` file or any other definition file into Agent Builder is documented | [Add knowledge sources in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge), checked 2026-10-21 |
+| A Copilot Cowork plugin is a Microsoft 365 app package: `manifest.json`, `color.png`, `outline.png`, and `skills/<name>/SKILL.md` folders, with optional `tools/` files; the manifest lists skills in root `agentSkills` and tool servers in root `agentConnectors`, and a package may hold skills only, connectors only, or both | [Build plugins for Copilot Cowork](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development), checked 2026-10-21 |
+| A root `agentSkills` entry is `{folder}` only, a path of at most 256 characters to a folder with `SKILL.md`; a manifest lists at most 20 | [root.agentSkills](https://learn.microsoft.com/microsoft-365/extensibility/schema/root-agent-skills) and [Build plugins for Copilot Cowork](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development), checked 2026-10-21 |
+| A root `agentConnectors` entry has `id` (at most 64 characters), `displayName`, `description`, and in manifests 1.28 to 1.30 a `toolSource.remoteMcpServer` with `mcpServerUrl`, `mcpToolDescription.file` (required in 1.28), and `authorization` with `type` `None`, `OAuthPluginVault`, `ApiKeyPluginVault`, or `DynamicClientRegistration` and a `referenceId` for every type but `None`; the preview manifest adds `plugin` and `localMcpServer` sources and the `AzureKeyVault` type | [root.agentConnectors](https://learn.microsoft.com/microsoft-365/extensibility/schema/root-agent-connectors), checked 2026-10-21 |
+| In Cowork, a connector with no `authorization` gets an OAuth client registered for it, which Copilot Chat does not support; API key sign-in is not available in Cowork yet | [Build plugins for Copilot Cowork](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development), checked 2026-10-21 |
 
 #### ChatGPT and OpenAI
 
@@ -959,6 +1035,15 @@ real account, unless the line names a tenant test.
   app's 2026-10-10 export shape, and a check that every backup listed in
   `library/catalog.json` opens without notices, survives a backup round trip,
   and matches its catalog line.
+- `tests/microsoft-package.test.mjs` opens this app's Copilot app package
+  with three actions and checks that the next download writes the same
+  plugin manifests, API description, action list, and web search sites. It
+  also opens synthetic packages from `tests/microsoft-package-fixture.mjs`:
+  an assistant with actions, skills only, connectors only, a mix, two
+  assistants, and a hostile package with unsafe paths, repeated entries, an
+  unknown sign-in, and keys in addresses and files. The synthetic packages
+  follow Microsoft's documentation and were not checked by Microsoft's
+  package validator. `npm test` on 2026-10-21 ran 268 tests, and all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
   tool of each provider kind, to every download and compares each result with
@@ -1017,6 +1102,10 @@ documentation settled some of them. The rest need a real account.
 - Upload a Copilot app package with an action to a tenant, once with an
   OpenAPI action and once with a tool server, and confirm Copilot lists and
   calls them.
+- Open a real Copilot Cowork plugin, and a package with `agent_skills` made by
+  Microsoft 365 Agents Toolkit, and confirm the skills and connectors arrive.
+  The importer was tested only with packages built from Microsoft's
+  documentation.
 - Load a `.agent` file written by Agentprise, with `_license` and `_agentprise`,
   in a SharePoint library and in a Teams chat. The tenant test recorded above
   used a hand-edited file, not this app's output.

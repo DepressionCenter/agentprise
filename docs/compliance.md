@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/compliance.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-21
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
          the controls in place, the evidence behind them, and the known gaps.
 Notes: See README file for documentation and full license information.
@@ -151,6 +151,22 @@ listed under known gaps.
   `serversFromMcp` in `index.html`, and `tests/project.test.mjs` (Claude,
   Codex, and Agent Plugins imports; "unrecognized files keep safe paths and
   never hold programs").
+- Microsoft 365 app packages are read the same way. Each path the manifest
+  names for an assistant, action, API description, skill folder, or connector
+  file must be inside the package and survive `cleanArchivePath` unchanged,
+  or that part is left out with a notice. An API description on the web is
+  never fetched. A sign-in type the app can't write back leaves the action or
+  connector out instead of turning its sign-in off, and registration ids are
+  not kept. Server addresses with a key or token are dropped, and a file kept
+  for the backup is left out when `CREDENTIAL_TEXT_PATTERN` finds a key,
+  token, or password in it. Notices name parts and files, never the matched
+  text. Kept files sit under `microsoft-package/` in the backup and appear in
+  no other download. Evidence: `readTeamsArchive`, `packagePath`,
+  `authFromCopilot`, and `packageServerAddress` in `index.html`, and
+  `tests/microsoft-package.test.mjs` ("unsafe references, repeated paths, an
+  unknown sign-in, and web-only descriptions are left out with a notice
+  each" and "a key or token in an address or a kept file is never kept or
+  shown"). `npm test` on 2026-10-21 ran 268 tests, and all passed.
 - Programs are refused everywhere a file can arrive: attached files, files in
   a skill folder, and unrecognized files. A file with a program signature, a
   program extension, or a program extension hidden before its last extension
