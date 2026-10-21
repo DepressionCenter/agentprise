@@ -2,7 +2,7 @@
 // tests/tools.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-11
+// Last Modified: 2026-10-21
 // Summary: Tests for the tools stage: exports checked against the pinned vendor
 //          schemas, golden export files for every provider kind on every
 //          target, composed instructions, the conversion report, the setup
@@ -692,7 +692,14 @@ describe("tool-enabled exports round trip", () => {
     assert.deepEqual([agent.kind, agent.id, agent.name, agent.description, agent.instructions, agent.uses], ["agent", IDS.agent, "Golden Scout", project.items[0].description, project.items[0].instructions, ["record-finder"]]);
     assert.deepEqual([skill.kind, skill.id, skill.body, skill.description], ["skill", IDS.skill, project.items[1].body, project.items[1].description]);
     assert.deepEqual(skill.capabilities, JSON.parse(JSON.stringify(project.items[1].capabilities)));
-    assert.deepEqual(Object.keys(back.project.servers).sort(), Object.keys(project.servers).sort());
+    // MCP files omit the skill's labels, sign-in kinds, and tool lists, so
+    // their different definitions remain separate from the skill's own servers.
+    assert.deepEqual(Object.keys(back.project.servers).sort(), ["local", "pinned", "pinned-2", "remote", "remote-2"]);
+    for (const [name, server] of Object.entries(project.servers)) {
+      assert.deepEqual(back.project.servers[name], server, "skill server settings survive unchanged");
+    }
+    assert.equal(back.project.servers["pinned-2"].url, project.servers.pinned.url);
+    assert.equal(back.project.servers["remote-2"].url, project.servers.remote.url);
   });
 
   test("a skill ZIP export re-imports without repeating the tools section", async () => {

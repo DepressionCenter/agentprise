@@ -127,6 +127,9 @@ listed under known gaps.
   license opens with the license "Not stated" and a notice, its `LICENSE.txt`
   says the license was not stated, and a license file the author brought is
   kept. Evidence: `UNKNOWN_LICENSE` and `readItemFolders` in `index.html`.
+  Assistants imported from Microsoft packages also use "Not stated", because
+  their format cannot declare a license. Evidence: `readTeamsArchive` and
+  the license round-trip test in `tests/microsoft-package.test.mjs`.
 
 ### Security controls
 
@@ -159,10 +162,15 @@ listed under known gaps.
   connector out instead of turning its sign-in off. Registration ids are not
   kept: they are dropped from tools and servers and replaced with a
   placeholder in kept files. Server addresses with a key or token are
-  dropped. Any text file that would become a skill file, an API description,
+  dropped. Assistant files are checked before their text is imported. A match
+  excludes the assistant and its file from the project and backup. Any text
+  file that would become a skill file, an API description,
   an attached file, or a kept file is left out when `CREDENTIAL_TEXT_PATTERN`
   or `CREDENTIAL_LINE_PATTERN` finds a key, token, or password in it, in a
-  query string, a JSON value, a bearer header, or a YAML or settings line. Notices name parts and files, never
+  query string, a JSON value, a bearer header, a YAML or settings line, or a
+  private key header. Unknown types, including `.env`, `.toml`, and `.pem`,
+  are scanned as text unless the first 8 KiB contains a zero byte. Known
+  binary types are not scanned. Notices name parts and files, never
   the matched text. Kept files sit under `microsoft-package/` in the backup
   and appear in no other download. This is a pattern check, so a key in an
   unusual shape can still get through, and a person should still read a
@@ -174,8 +182,16 @@ listed under known gaps.
   with a notice each", "a key or token in an address or a kept file is never
   kept or shown", and "a key in a skill file, an API description, or an
   attached file leaves that file out", and "a key set on a YAML or settings
-  line leaves the file out, and a reference to a key does not"). `npm test`
-  on 2026-10-21 ran 273 tests, and all passed.
+  line leaves the file out, and a reference to a key does not", "a credential
+  in an assistant file leaves the assistant out of the project and backup",
+  and "unknown text types and private keys are scanned while binary files
+  are preserved"). `npm test` on 2026-10-21 ran 279 tests, and all passed.
+- A plugin or Microsoft package cannot replace a skill's server settings
+  merely by using the same name. Different definitions get separate names;
+  assistant tool references follow the renamed package server. Evidence:
+  `combineServers` in `index.html`, the three plugin collision tests in
+  `tests/project.test.mjs`, and the package server collision test in
+  `tests/microsoft-package.test.mjs`.
 - Programs are refused everywhere a file can arrive: attached files, files in
   a skill folder, and unrecognized files. A file with a program signature, a
   program extension, or a program extension hidden before its last extension

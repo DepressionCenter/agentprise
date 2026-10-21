@@ -835,6 +835,7 @@ describe("copy text and detection", () => {
     const expected = agentFields(original);
     expected.welcome = "";
     expected.copyright = "";
+    expected.license = "Not stated";
     expected.copilot = { ...expected.copilot, appId: teams.appId };
     expected.sharepointLinks = [original.sharepointItems[1].url].concat(original.sharepointLinks);
     expected.sharepointItems = [{ by: "id", site_id: original.sharepointItems[0].site_id, web_id: original.sharepointItems[0].web_id, list_id: original.sharepointItems[0].list_id, unique_id: original.sharepointItems[0].unique_id }];

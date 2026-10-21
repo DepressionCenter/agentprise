@@ -289,6 +289,10 @@ A Microsoft 365 app package opens like this:
   message lists each part that was left out and why.
 - A file that looks like it holds a password, key, or token is left out, and
   so is a server address with a key in it.
+- An assistant whose file appears to contain a key is left out. Remove the
+  key from the source file and open the package again.
+- Assistants open with the license "Not stated", because the package has no
+  place to declare one. This also applies to packages made by Agentprise.
 - When an assistant came from an Agentprise download, its instructions still
   end with the old **Tools available in this setup** list. A message reminds
   you to delete it, because the next download writes the list again.
@@ -299,6 +303,10 @@ them back only into the backup. It never reads or runs them, and it never
 keeps a program. A skill or plugin that names no license opens with the
 license "Not stated" and a note, so you can check with its author before you
 share it.
+
+A skill keeps its own tool server settings when a plugin has a server with
+the same name. If the settings differ, the plugin's server gets a numbered
+name, and both are kept.
 
 ## For maintainers
 
@@ -868,6 +876,17 @@ value with `replace-with-your-auth-registration-id`, so no tenant's
 registration id reaches the backup. Programs are refused by
 `normalizeProject`, as for every import.
 
+Assistant files are checked before parsing too. A match leaves the assistant
+out, and its file is excluded from the backup. `holdsCredential` also checks
+unknown file types, such as `.env`, `.toml`, and `.pem`, as text unless the
+first 8 KiB contains a zero byte. Known binary types are not scanned. Private
+key headers, including `BEGIN PRIVATE KEY` and `BEGIN RSA PRIVATE KEY`, count
+as matches. This heuristic does not detect every credential or encoding.
+
+A package with an assistant opens with the project license `Not stated` and
+a notice. A Microsoft package cannot declare the assistant's license, even
+when Agentprise made it. Each imported skill keeps its own declared license.
+
 A package that Agentprise wrote opens with the same three actions, and the
 next Copilot app package writes the same plugin manifests, API description,
 action list, and web search sites. The instructions still hold the old
@@ -924,6 +943,14 @@ caveman/
 Because `plugin.json` carries the Agentprise extension, the Plugin opens
 again as a project. It writes no `.codex-plugin/plugin.json`: ChatGPT, Codex,
 and VS Code read the root `plugin.json` (see the vendor facts below).
+
+For plugins without the Agentprise project extension, `combineServers`
+combines skill and plugin server settings after normalization. Identical
+settings share a name. Different settings keep the skill's name and give
+the plugin server a free numbered name, reserving existing names first.
+Differences in labels, sign-in kinds, or tool lists count too, even when
+the address is the same. The Microsoft package reader uses the same helper
+and updates its assistants' tool references to the assigned names.
 
 ### Copy-ready text
 
@@ -1063,9 +1090,13 @@ real account, unless the line names a tenant test.
   assistants, and a hostile package with unsafe paths, repeated entries, an
   unknown sign-in, and keys in addresses and files. Other tests cover keys on
   YAML and settings lines, a connector that names a root `plugin.json`, and a
-  skill server and an action server with the same name. The synthetic
+  skill server and an action server with the same name. Further tests cover
+  credentials in assistant files, unknown text types, private keys, binary
+  file preservation, and unstated assistant licenses through backup round
+  trips. `tests/project.test.mjs` covers colliding server names in all three
+  plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 273 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 279 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

@@ -115,6 +115,24 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("an assistant's license stays unstated, including after a backup round trip", async () => {
+    const golden = engine.project.normalize(goldenRaw()).project;
+    const exported = await engine.exports.teamsPackage(golden, golden.items[0], teamsIcons());
+    const ownEntries = [...await engine.zip.read(exported.bytes)].map(([name, bytes]) => ({ name, bytes }));
+    for (const entries of [agentOnlyEntries(), mixedEntries(), ownEntries]) {
+      const { project, notices } = await openPackage(entries);
+      assert.equal(project.license, "Not stated");
+      assert.ok(notices.includes("The file doesn't say which license it uses. Check with its author before you share it."));
+      const { backup, project: again } = await backupRoundTrip(project);
+      assert.equal(again.license, "Not stated");
+      const license = backup.entries.find((entry) => entry.name.split("/").length === 2 && entry.name.endsWith("/LICENSE.txt"));
+      assert.ok(decode(license.bytes).includes("not stated"));
+      for (const skill of project.items.filter((item) => item.kind === "skill")) {
+        assert.equal(skill.license, "MIT", "a skill keeps its declared license");
+      }
+    }
+  });
+
   test("an assistant: actions become tools, a local plugin stays in the backup, a file is attached", async () => {
     const { project, notices } = await openPackage(agentOnlyEntries());
     assert.equal(project.items.length, 1);
@@ -255,6 +273,47 @@ describe("Microsoft 365 app packages made elsewhere", () => {
 });
 
 describe("unsafe and broken packages", () => {
+  test("a credential in an assistant file leaves the assistant out of the project and backup", async () => {
+    for (const field of ["instructions", "description"]) {
+      const entries = multiAgentEntries();
+      const manifest = JSON.parse(decode(entries.find((entry) => entry.name === "manifest.json").bytes));
+      const path = manifest.copilotAgents.declarativeAgents[0].file;
+      const entry = entries.find((entry) => entry.name === path);
+      const agent = JSON.parse(decode(entry.bytes));
+      agent[field] = "Authorization: Bearer " + SECRET;
+      entry.bytes = encode(JSON.stringify(agent));
+      const { project, notices } = await openPackage(entries);
+      assert.deepEqual(project.items.map((item) => item.name), ["Second Helper"]);
+      assert.equal(everythingShown(project, notices).includes(SECRET), false);
+      assert.ok(notices.some((notice) => notice.includes("The assistant file " + path) && notice.includes("Remove the key")));
+      assert.ok(notices.some((notice) => notice.startsWith("Left out 1 file that looks like it holds")));
+      assert.equal(unrecognizedPaths(project).includes("microsoft-package/" + path), false);
+      const { backup } = await backupRoundTrip(project);
+      assert.equal(backup.entries.some((file) => decode(file.bytes).includes(SECRET)), false);
+    }
+  });
+
+  test("unknown text types and private keys are scanned while binary files are preserved", async () => {
+    const entries = skillOnlyEntries();
+    const binary = new Uint8Array([0, 1, 2, 3, 255]);
+    entries.push(
+      { name: "config/.env", bytes: encode("EXAMPLE_API_KEY=" + SECRET + "\n") },
+      { name: "settings.toml", bytes: encode('password = "' + SECRET + '"\n') },
+      { name: "keys/private.pem", bytes: encode("-----BEGIN PRIVATE KEY-----\n" + SECRET + "\n-----END PRIVATE KEY-----\n") },
+      { name: "skills/meeting-notes/keys/rsa.pem", bytes: encode("-----BEGIN RSA PRIVATE KEY-----\n" + SECRET + "\n-----END RSA PRIVATE KEY-----\n") },
+      { name: "data.unknown", bytes: binary },
+      { name: "config/reference.toml", bytes: encode('api_key = "${EXAMPLE_API_KEY}"\n') },
+    );
+    const { project, notices } = await openPackage(entries);
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.ok(notices.some((notice) => notice.startsWith("Left out 4 files that look")));
+    assert.deepEqual(project.unrecognized.find((entry) => entry.path === "microsoft-package/data.unknown").bytes, binary);
+    assert.ok(unrecognizedPaths(project).includes("microsoft-package/config/reference.toml"));
+    const { backup, project: again } = await backupRoundTrip(project);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+    assert.deepEqual(again.unrecognized.find((entry) => entry.path === "microsoft-package/data.unknown").bytes, binary);
+  });
+
   test("unsafe references, repeated paths, an unknown sign-in, and web-only descriptions are left out with a notice each", async () => {
     const { project, notices } = await openPackage(hostileEntries());
     assert.deepEqual(project.items.map((i) => i.name), ["Careful Helper"]);

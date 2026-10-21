@@ -6067,7 +6067,7 @@ function readPluginArchive(entries) {
             creator: creator,
             copyright: read.copyright,
             license: license,
-            servers: Object.assign({}, read.servers, servers),
+            servers: combineServers(read.servers, servers, notices).servers,
             items: read.items,
             unrecognized: unrecognized,
             pluginExtras: {
@@ -6715,7 +6715,7 @@ const COPILOT_AUTH_KINDS = Object.freeze({ None: "none", OAuthPluginVault: "oaut
 
 // Text that looks like a key, token, or password in a file the import would
 // otherwise keep for the backup.
-const CREDENTIAL_TEXT_PATTERN = /[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]{4,}"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}/i;
+const CREDENTIAL_TEXT_PATTERN = /[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]{4,}"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
 
 // A YAML or settings line that sets a key, such as "client_secret: abc123" or
 // "export OPENAI_API_KEY=abc123". The value is the second group.
@@ -6747,9 +6747,14 @@ function packagePath(value) {
     return path && path === plain ? path : "";
 }
 
-/** A text file whose content looks like it holds a key, token, or password. */
+/**
+ * Whether a file looks like it holds a credential, including a private key.
+ * Unknown file types are scanned as text unless a zero byte in the first
+ * 8 KiB suggests binary content. Known binary types are not scanned.
+ */
 function holdsCredential(name, bytes) {
-    const textual = fileKind(name) === "text" || /\.(json|ya?ml)$/i.test(name) || !/\.[^\/.]+$/.test(name);
+    const kind = fileKind(name);
+    const textual = kind === "text" || (!kind && bytes.subarray(0, 8192).indexOf(0) < 0);
     if (!textual) {
         return false;
     }
@@ -6836,6 +6841,31 @@ function addPackageServer(servers, key, server) {
     }
     servers[name] = server;
     return name;
+}
+
+/**
+ * Combines server maps without changing either input. Own servers
+ * keep their names; different added servers with those names get numbered names.
+ * @param {object} own servers declared by the skills
+ * @param {object} added servers declared by the package or plugin
+ * @param {string[]} notices receives validation notices
+ * @returns {{servers: object, names: object}} combined servers and added-name mapping
+ */
+function combineServers(own, added, notices) {
+    const servers = normalizeServers(own, notices);
+    const incoming = normalizeServers(added, notices);
+    const names = Object.create(null);
+    // Reserve existing names before assigning suffixes to collisions.
+    Object.keys(incoming).forEach(function (name) {
+        if (!Object.prototype.hasOwnProperty.call(servers, name)) {
+            servers[name] = incoming[name];
+        }
+    });
+    Object.keys(incoming).forEach(function (name) {
+        const same = JSON.stringify(servers[name]) === JSON.stringify(incoming[name]);
+        names[name] = same ? name : addPackageServer(servers, name, incoming[name]);
+    });
+    return { servers: servers, names: names };
 }
 
 /** The functions a runtime runs: its own list, or the manifest's when it runs all. */
@@ -7097,6 +7127,11 @@ function readTeamsArchive(entries) {
     const agents = [];
     const skillFolderList = [];
     agentFiles.forEach(function (file) {
+        if (holdsCredential(file, entries.get(file))) {
+            leaveOutForKey(state, file);
+            notices.push("The assistant file " + file + " looks like it holds a password, key, or token, so the assistant was left out. Remove the key from the file and open the package again.");
+            return;
+        }
         const declarative = parseJsonObject(fromBytes(entries.get(file)));
         if (!declarative) {
             notices.push("The assistant file " + file + " is not valid JSON, so it was left out.");
@@ -7160,12 +7195,9 @@ function readTeamsArchive(entries) {
     // A skill keeps the server names in its own file. A package server whose
     // name a skill already uses for another server gets a numbered name, and
     // the assistants' tools are pointed at it.
-    const servers = Object.assign({}, read.servers);
-    const serverNames = Object.create(null);
-    Object.keys(state.servers).forEach(function (name) {
-        const same = servers[name] && JSON.stringify(servers[name]) === JSON.stringify(state.servers[name]);
-        serverNames[name] = same ? name : addPackageServer(servers, name, state.servers[name]);
-    });
+    const combined = combineServers(read.servers, state.servers, notices);
+    const servers = combined.servers;
+    const serverNames = combined.names;
     const renamedProviders = new Set();
     agents.forEach(function (raw) {
         raw.capabilities.forEach(function (capability) {
@@ -7204,7 +7236,7 @@ function readTeamsArchive(entries) {
         kept.push({ path: PACKAGE_KEPT_FOLDER + name, note: PACKAGE_KEPT_NOTE, bytes: withoutRegistrationIds(name, bytes), name: name });
     });
     if (state.withKeys.length > 0) {
-        notices.push("Left out " + countOf(state.withKeys.length, "file", "files") + " that look like they hold a password, key, or token: " + listNames(state.withKeys) + ". Agentprise never keeps those.");
+        notices.push("Left out " + countOf(state.withKeys.length, "file", "files") + (state.withKeys.length === 1 ? " that looks like it holds" : " that look like they hold") + " a password, key, or token: " + listNames(state.withKeys) + ". Remove the credentials from the source files and open the package again.");
     }
     const unlistedSkills = skillFolders(entries, "").filter(function (folder) {
         return folder && !skillFolderList.some(function (listedFolder) { return folder.indexOf(listedFolder) === 0; });
@@ -7256,12 +7288,12 @@ function readTeamsArchive(entries) {
         creator: { name: creator.name, url: creator.website, privacy: creator.privacy, terms: creator.terms },
         copyright: read.copyright,
         // A package names no license; skills keep their own, as from any skill ZIP.
-        license: first ? DEFAULT_LICENSE : read.license,
+        license: first ? UNKNOWN_LICENSE : read.license,
         servers: servers,
         items: items,
         unrecognized: kept
     };
-    if (!first && read.license === UNKNOWN_LICENSE) {
+    if (raw.license === UNKNOWN_LICENSE) {
         notices.push("The file doesn't say which license it uses. Check with its author before you share it.");
     }
     const result = normalizeProject(raw);

@@ -287,6 +287,8 @@ A few things are worth knowing about files made elsewhere:
 - If a skill or plugin does not say which license it uses, the license shows
   as "Not stated", and a note asks you to check with its author before you
   share it. The app never puts its own license on someone else's work.
+  Assistants from Microsoft app packages also show "Not stated", since those
+  packages have no place for a license, including packages made by Agentprise.
 - Backups made by the first version of Agentprise open as a plain skill.
 - Gemini Gems and ChatGPT custom GPTs have no file of their own. To bring one
   over before it retires, see

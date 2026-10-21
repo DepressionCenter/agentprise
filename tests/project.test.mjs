@@ -2,7 +2,7 @@
 // tests/project.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-11
+// Last Modified: 2026-10-21
 // Summary: Tests for the version 2 project model inside index.html: the backup
 //          round trip, normalization of hostile input, the Agent Plugins
 //          manifests, duplicate and merge, the stored record and payloads, and
@@ -568,6 +568,39 @@ describe("stored record and payloads", () => {
 });
 
 describe("imports of plugins and skills made elsewhere", () => {
+  for (const flavor of ["agent-plugins", "claude", "codex"]) {
+    test(flavor + " plugin preserves skill servers and renames conflicting plugin servers", async () => {
+      const own = { transport: "http", url: "https://skill.example.org/mcp" };
+      const source = engine.project.normalize({
+        name: "Example", servers: { remote: own, shared: own },
+        items: [{ kind: "skill", name: "Lookup", description: "Looks up records.", body: "Look up records.",
+          capabilities: [{ id: "lookup", providers: { "*": [{ kind: "mcp", server: "remote" }, { kind: "mcp", server: "shared" }] } }] }],
+      }).project;
+      const skill = await engine.exports.skillZip(source, source.items[0], "claude");
+      const manifestPath = flavor === "agent-plugins" ? "plugin.json" : "." + flavor + "-plugin/plugin.json";
+      const mcpPath = flavor === "agent-plugins" ? "mcp.json" : ".mcp.json";
+      const bytes = engine.zip.write([
+        { name: manifestPath, bytes: encode(JSON.stringify({ name: "example", license: "MIT", ...(flavor === "agent-plugins" ? { $schema: PLUGIN_SCHEMA } : {}) })) },
+        { name: mcpPath, bytes: encode(JSON.stringify({ mcpServers: {
+          remote: { type: "http", url: "https://plugin.example.org/mcp" },
+          "remote-2": { type: "http", url: "https://second.example.org/mcp" },
+          shared: { type: "http", url: own.url },
+        } })) },
+        ...skill.entries.map((entry) => ({ name: "skills/" + entry.name, bytes: entry.bytes })),
+      ]);
+      const { project, error } = await engine.imports.any("example.zip", bytes);
+      assert.equal(error, undefined);
+      assert.equal(project.servers.remote.url, own.url);
+      assert.equal(project.servers["remote-2"].url, "https://second.example.org/mcp");
+      assert.equal(project.servers["remote-3"].url, "https://plugin.example.org/mcp");
+      assert.equal(Object.keys(project.servers).length, 4, "identical server definitions are shared");
+      assert.deepEqual(project.items[0].capabilities[0].providers["*"].map((provider) => provider.server), ["remote", "shared"]);
+      const again = await reopen(await engine.exports.backup(project));
+      assert.deepEqual(again.project.servers, project.servers);
+      assert.deepEqual(again.project.items[0].capabilities, project.items[0].capabilities);
+    });
+  }
+
   const skillMd = "---\nname: lookup\ndescription: Looks things up.\n---\n\nSearch first.\n";
 
   test("a Claude plugin: servers from .mcp.json, skills as items, hooks kept with a notice", async () => {
