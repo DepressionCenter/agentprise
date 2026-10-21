@@ -176,7 +176,8 @@ listed under known gaps.
   query string, a JSON value, a bearer header, a YAML or settings line, or a
   private key header. Unknown types, including `.env`, `.toml`, and `.pem`,
   are scanned as text unless the first 8 KiB contains a zero byte. Known
-  binary types are not scanned. Notices name parts and files, never
+  binary types are skipped only when their bytes pass the existing format
+  check; mislabeled text files are scanned. Notices name parts and files, never
   the matched text. Kept files sit under `microsoft-package/` in the backup
   and appear in no other download. This is a pattern check, so a key in an
   unusual shape can still get through, and a person should still read a
@@ -195,7 +196,13 @@ listed under known gaps.
   deeper ones are rejected with instructions", "credentials in root
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
-  file"). `npm test` on 2026-10-21 ran 283 tests, and all passed.
+  file", and "plaintext with a binary suffix is checked before attachments
+  or backup-only files are retained"). `npm test` on 2026-10-21 ran 287 tests,
+  and all passed.
+- An unlisted nested skill stays in the backup only, even when its parent
+  is listed. A listed descendant opens as a separate item. Files from a
+  rejected skill cannot be imported as files of its parent. Evidence: the
+  nested-skill tests in `tests/microsoft-package.test.mjs`.
 - A plugin or Microsoft package cannot replace a skill's server settings
   merely by using the same name. Different definitions get separate names;
   assistant tool references follow the renamed package server. The same rule

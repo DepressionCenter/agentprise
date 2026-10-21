@@ -115,6 +115,53 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("action namespace separators and normalized collisions never drop a distinct action", async () => {
+    const namespaces = ["foo-bar", "foobar", "foo_bar", "foo-bar", "foo!bar", "x".repeat(61), "x".repeat(62)];
+    const entries = [
+      { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "a", file: "declarativeAgent_0.json" }] } }))) },
+      { name: "declarativeAgent_0.json", bytes: encode(JSON.stringify(declarativeAgent("Actions", { actions: namespaces.map((_, index) => ({ id: "action" + index, file: "plugin" + index + ".json" })) }))) },
+      ...namespaces.map((namespace, index) => ({ name: "plugin" + index + ".json", bytes: encode(JSON.stringify(serverPlugin(namespace, "https://example.org/mcp/" + index))) })),
+    ];
+    const { project } = await openPackage(entries);
+    const capabilities = project.items[0].capabilities;
+    assert.equal(capabilities.length, namespaces.length);
+    assert.equal(new Set(capabilities.map((capability) => capability.id)).size, namespaces.length);
+    assert.deepEqual(capabilities.slice(0, 3).map((capability) => capability.id), ["action.foo-bar", "action.foobar", "action.foo_bar"]);
+    assert.deepEqual(capabilities.map((capability) => project.servers[capability.providers["*"][0].server].url), namespaces.map((_, index) => "https://example.org/mcp/" + index));
+    const output = await engine.exports.teamsPackage(project, project.items[0], teamsIcons());
+    const files = await engine.zip.read(output.bytes);
+    assert.equal(JSON.parse(decode(files.get("declarativeAgent_0.json"))).actions.length, namespaces.length);
+    const { project: again } = await backupRoundTrip(project);
+    assert.deepEqual(again.items[0].capabilities, capabilities);
+  });
+
+  test("unlisted nested skills stay backup-only while explicitly listed descendants import separately", async () => {
+    for (const listed of [[], ["skills/parent/private"], ["skills/parent/private/deeper"]]) {
+      const folders = ["skills/parent", ...listed];
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentSkills: folders.map((folder) => ({ folder })) }))) },
+        { name: "skills/parent/SKILL.md", bytes: skillMd("parent", "Parent skill.") },
+        { name: "skills/parent/references/guide.md", bytes: encode("Parent reference.") },
+        { name: "skills/parent/private/SKILL.md", bytes: skillMd("private", "Nested skill.") },
+        { name: "skills/parent/private/notes.md", bytes: encode("Nested reference.") },
+        { name: "skills/parent/private/deeper/SKILL.md", bytes: skillMd("deeper", "Deeper skill.") },
+      ];
+      const { project, notices } = await openPackage(entries);
+      assert.equal(project.items.length, folders.length);
+      assert.deepEqual(project.items[0].files.map((file) => file.path), ["references/guide.md"]);
+      const omitted = ["skills/parent/private", "skills/parent/private/deeper"].filter((folder) => !listed.includes(folder));
+      for (const folder of omitted) {
+        assert.ok(unrecognizedPaths(project).includes("microsoft-package/" + folder + "/SKILL.md"));
+        assert.ok(notices.some((notice) => notice.includes("manifest doesn't list") && notice.includes(folder)));
+      }
+      const skill = await engine.exports.skillZip(project, project.items[0], "claude");
+      assert.equal(skill.entries.some((entry) => entry.name.includes("/private/")), false);
+      const { project: again } = await backupRoundTrip(project);
+      assert.deepEqual(unrecognizedPaths(again), unrecognizedPaths(project));
+      assert.deepEqual(again.items.map((item) => item.skillName), project.items.map((item) => item.skillName));
+    }
+  });
+
   test("listed skills with conflicting server names keep their own endpoints and tool references", async () => {
     const entries = [];
     for (const [name, url] of [["first", "https://first.example.org/mcp"], ["second", "https://second.example.org/mcp"]]) {
@@ -334,6 +381,38 @@ describe("Microsoft 365 app packages made elsewhere", () => {
 });
 
 describe("unsafe and broken packages", () => {
+  test("a rejected nested skill cannot add its remaining files to a listed parent", async () => {
+    const entries = [
+      { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentSkills: [{ folder: "skills/parent" }, { folder: "skills/parent/child" }] }))) },
+      { name: "skills/parent/SKILL.md", bytes: skillMd("parent", "Parent skill.") },
+      { name: "skills/parent/child/SKILL.md", bytes: encode("Authorization: Bearer " + SECRET) },
+      { name: "skills/parent/child/notes.md", bytes: encode("Only for the excluded skill.") },
+    ];
+    const { project, notices } = await openPackage(entries);
+    assert.deepEqual(project.items.map((item) => item.skillName), ["parent"]);
+    assert.deepEqual(project.items[0].files, []);
+    assert.deepEqual(project.unrecognized, []);
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+  });
+
+  test("plaintext with a binary suffix is checked before attachments or backup-only files are retained", async () => {
+    const entries = agentOnlyEntries();
+    const manifestEntry = entries.find((entry) => entry.name === "manifest.json");
+    const manifest = JSON.parse(decode(manifestEntry.bytes));
+    manifest.agentSkills = [{ folder: "skills/helper" }];
+    manifestEntry.bytes = encode(JSON.stringify(manifest));
+    entries.push({ name: "skills/helper/SKILL.md", bytes: skillMd("helper", "Helps.") });
+    for (const name of ["leak.pdf", "config/leak.doc", "skills/helper/leak.docx", "skills/helper/leak.pdf", "skills/helper/leak.one"]) {
+      entries.push({ name, bytes: encode("password=" + SECRET + "\n") });
+    }
+    const { project, notices } = await openPackage(entries);
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.ok(notices.some((notice) => notice.startsWith("Left out 5 files that look")));
+    assert.ok(project.items[0].files.some((file) => file.path === "references/guide.pdf"), "a genuine PDF is retained");
+    const { backup } = await backupRoundTrip(project);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+  });
+
   test("credentials in root manifest fields block the package without a skill fallback", async () => {
     const changes = [
       (manifest) => { manifest.developer.websiteUrl = "https://example.org/?token=" + SECRET; },

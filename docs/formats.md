@@ -870,6 +870,16 @@ provider-spec limits. A deeper description leaves that runtime out with a
 notice asking the author to move the file and update its reference. The
 importer does not create a tool with no usable provider for that runtime.
 
+Action capability ids keep namespace separators such as hyphens and
+underscores. A repeated namespace, or one that becomes identical after
+cleaning or truncation, gets a numbered id so neither action is lost.
+
+Each skill file belongs to its nearest enclosing skill folder. A nested
+skill that the manifest does not list is kept for the backup only and gets
+a notice, even when its parent is listed. An explicitly listed descendant
+opens separately. Files from a skill rejected for credentials cannot become
+files of a listed parent.
+
 A plugin manifest with a runtime the app can't read, an assistant file that
 isn't JSON, a connector's tool description file, a skill folder the manifest
 doesn't list, and every other file the importer did not use are kept as
@@ -899,7 +909,10 @@ Assistant and action description files are checked as JSON text before
 parsing, regardless of their filename extension. A match leaves that part
 out, and its file is excluded from the backup. `holdsCredential` also checks
 unknown file types, such as `.env`, `.toml`, and `.pem`, as text unless the
-first 8 KiB contains a zero byte. Known binary types are not scanned. Private
+first 8 KiB contains a zero byte. Known binary types are skipped only when
+their bytes pass the existing format check. Mislabeled text, such as a
+password stored in a fake PDF, is scanned before it can become a skill file
+or a backup-only file. Private
 key headers, including `BEGIN PRIVATE KEY` and `BEGIN RSA PRIVATE KEY`, count
 as matches. This heuristic does not detect every credential or encoding.
 
@@ -1118,10 +1131,12 @@ real account, unless the line names a tenant test.
   Root-manifest tests cover publisher URLs, descriptions, connector addresses,
   and rejection without a skill fallback through either detection route.
   Action and assistant metadata tests include misleading binary extensions.
+  Other cases check disguised text attachments, unique action ids, and
+  listed, unlisted, or rejected nested skills.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 283 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 287 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

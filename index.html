@@ -6749,11 +6749,12 @@ function packagePath(value) {
 /**
  * Whether a file looks like it holds a credential, including a private key.
  * Unknown file types are scanned as text unless a zero byte in the first
- * 8 KiB suggests binary content. Known binary types are not scanned.
+ * 8 KiB suggests binary content. Known binary types are skipped only when
+ * their bytes match that format; mislabeled content is scanned.
  */
 function holdsCredential(name, bytes) {
     const kind = fileKind(name);
-    const textual = kind === "text" || (!kind && bytes.subarray(0, 8192).indexOf(0) < 0);
+    const textual = kind === "text" || (kind ? !fileContentMatches(kind, bytes) : bytes.subarray(0, 8192).indexOf(0) < 0);
     if (!textual) {
         return false;
     }
@@ -7035,9 +7036,15 @@ function readCopilotActions(entries, actions, state, files) {
                 files.push(own);
             }
         });
-        const namespace = typeof manifest.namespace === "string" ? manifest.namespace.replace(/[^A-Za-z0-9]/g, "").slice(0, 60) : "";
+        const namespace = typeof manifest.namespace === "string" ? manifest.namespace.replace(/[^A-Za-z0-9._:-]/g, "").slice(0, 60) : "";
+        const baseId = "action." + (namespace || "tools" + (index + 1));
+        let capabilityId = baseId;
+        for (let n = 2; state.actionIds.has(capabilityId); n++) {
+            capabilityId = baseId + "-" + n;
+        }
+        state.actionIds.add(capabilityId);
         const capability = {
-            id: "action." + (namespace || "tools" + (index + 1)),
+            id: capabilityId,
             label: actionLabel(manifest),
             description: typeof manifest.description_for_model === "string" ? manifest.description_for_model : manifest.description_for_human,
             providers: { "*": providers }
@@ -7130,7 +7137,7 @@ function readTeamsArchive(entries) {
     }
     const source = manifest || {};
     const notices = [];
-    const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), withKeys: [], notices: notices, keepManifest: false };
+    const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), actionIds: new Set(), withKeys: [], notices: notices, keepManifest: false };
 
     // ### Find the declarative agents ###
     const listed = readPath(source, ["copilotAgents", "declarativeAgents"]);
@@ -7203,6 +7210,7 @@ function readTeamsArchive(entries) {
     // A skill whose SKILL.md looks like it holds a key is left out whole; any
     // other file that does is left out of its skill.
     const skillEntries = new Map();
+    const allSkillFolders = skillFolders(entries, "").sort(function (a, b) { return b.length - a.length; });
     const readFolders = skillFolderList.filter(function (folder) {
         if (holdsCredential("SKILL.md", entries.get(folder + "SKILL.md"))) {
             notices.push("The skill in " + folder + " has a SKILL.md that looks like it holds a password, key, or token, so it was left out.");
@@ -7211,7 +7219,9 @@ function readTeamsArchive(entries) {
         return true;
     });
     entries.forEach(function (bytes, name) {
-        if (!skillFolderList.some(function (folder) { return name.indexOf(folder) === 0; })) {
+        // The nearest skill root owns the file, even when an ancestor is listed.
+        const owner = allSkillFolders.find(function (folder) { return name.indexOf(folder) === 0; });
+        if (skillFolderList.indexOf(owner) < 0) {
             return;
         }
         if (holdsCredential(name, bytes)) {
@@ -7219,7 +7229,9 @@ function readTeamsArchive(entries) {
             return;
         }
         state.used.add(name);
-        skillEntries.set(name, bytes);
+        if (readFolders.indexOf(owner) >= 0) {
+            skillEntries.set(name, bytes);
+        }
     });
     const read = readItemFolders(skillEntries, readFolders);
     notices.push.apply(notices, read.notices);
@@ -7259,8 +7271,8 @@ function readTeamsArchive(entries) {
     if (state.withKeys.length > 0) {
         notices.push("Left out " + countOf(state.withKeys.length, "file", "files") + (state.withKeys.length === 1 ? " that looks like it holds" : " that look like they hold") + " a password, key, or token: " + listNames(state.withKeys) + ". Remove the credentials from the source files and open the package again.");
     }
-    const unlistedSkills = skillFolders(entries, "").filter(function (folder) {
-        return folder && !skillFolderList.some(function (listedFolder) { return folder.indexOf(listedFolder) === 0; });
+    const unlistedSkills = allSkillFolders.filter(function (folder) {
+        return folder && skillFolderList.indexOf(folder) < 0;
     });
     if (unlistedSkills.length > 0) {
         notices.push("The manifest doesn't list " + countOf(unlistedSkills.length, "skill folder", "skill folders") + " (" + listNames(unlistedSkills) + "), so Copilot doesn't use " + (unlistedSkills.length === 1 ? "it" : "them") + ", and Agentprise didn't open " + (unlistedSkills.length === 1 ? "it" : "them") + " as a skill.");
