@@ -307,6 +307,8 @@ share it.
 A skill keeps its own tool server settings when a plugin has a server with
 the same name. If the settings differ, the plugin's server gets a numbered
 name, and both are kept.
+When two imported skills use the same server name for different settings,
+the second server gets a numbered name and that skill's tools use it.
 
 ## For maintainers
 
@@ -854,6 +856,16 @@ server names, and a server from an action or connector whose name a skill
 already uses for a different server gets a numbered name, such as
 `remote-2`. The assistant's tools are pointed at the numbered name, so each
 tool still connects to its own address.
+`readItemFolders` first applies that rule between skills too: a later skill's
+different server gets a numbered name and its providers are updated before
+the package servers are combined. This also applies to plugin and skill ZIP
+imports.
+
+An OpenAPI description may be at most four folders below the package root
+(five path components, including the filename), matching item-file and
+provider-spec limits. A deeper description leaves that runtime out with a
+notice asking the author to move the file and update its reference. The
+importer does not create a tool with no usable provider for that runtime.
 
 A plugin manifest with a runtime the app can't read, an assistant file that
 isn't JSON, a connector's tool description file, a skill folder the manifest
@@ -1093,10 +1105,12 @@ real account, unless the line names a tenant test.
   skill server and an action server with the same name. Further tests cover
   credentials in assistant files, unknown text types, private keys, binary
   file preservation, and unstated assistant licenses through backup round
-  trips. `tests/project.test.mjs` covers colliding server names in all three
+  trips, colliding servers between skills in package, plugin, and skill ZIP
+  imports, and API descriptions at five, six, and eight path components.
+  `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 279 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 281 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

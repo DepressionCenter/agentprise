@@ -5790,7 +5790,7 @@ function skillFolders(entries, prefix) {
  */
 function readItemFolders(entries, folders) {
     const owned = [];
-    const servers = {};
+    let servers = {};
     const items = [];
     const notices = [];
     let creator = null;
@@ -5804,11 +5804,10 @@ function readItemFolders(entries, folders) {
         items.push(result.raw);
         owned.push(result.ours);
         if (result.servers) {
-            Object.keys(result.servers).forEach(function (name) {
-                if (!Object.prototype.hasOwnProperty.call(servers, name)) {
-                    servers[name] = result.servers[name];
-                }
-            });
+            const combined = combineServers(servers, result.servers, notices);
+            servers = combined.servers;
+            result.raw.capabilities = normalizeCapabilities(result.raw.capabilities, notices);
+            remapItemServers([result.raw], combined.names);
         }
         if (!creator && result.creator.name) {
             creator = result.creator;
@@ -6868,6 +6867,29 @@ function combineServers(own, added, notices) {
     return { servers: servers, names: names };
 }
 
+/**
+ * Updates normalized MCP providers in place after their servers are renamed.
+ * Each provider is changed once, even when several items share it.
+ * @param {Array<object>} items items whose capabilities have been normalized
+ * @param {object} names mapping from original to assigned server names
+ * @returns {void}
+ */
+function remapItemServers(items, names) {
+    const renamed = new Set();
+    items.forEach(function (item) {
+        item.capabilities.forEach(function (capability) {
+            Object.keys(capability.providers).forEach(function (key) {
+                capability.providers[key].forEach(function (provider) {
+                    if (provider.kind === "mcp" && names[provider.server] && !renamed.has(provider)) {
+                        renamed.add(provider);
+                        provider.server = names[provider.server];
+                    }
+                });
+            });
+        });
+    });
+}
+
 /** The functions a runtime runs: its own list, or the manifest's when it runs all. */
 function runtimeFunctions(manifest, runtime) {
     const own = Array.isArray(runtime.run_for_functions) ? runtime.run_for_functions.filter(function (name) { return typeof name === "string"; }) : [];
@@ -6909,6 +6931,10 @@ function actionProvider(entries, manifest, runtime, subject, state, files) {
         const path = packagePath(address);
         if (!path || !entries.has(path)) {
             state.notices.push(subject + " names an API description that isn't in the package, so it was left out.");
+            return null;
+        }
+        if (cleanArchivePath(path, { depth: LIMITS.itemPathDepth, hidden: false }) !== path) {
+            state.notices.push(subject + " uses an API description nested too deeply, so that part was left out. Move the description to at most " + (LIMITS.itemPathDepth - 1) + " folders below the package root, update its reference, and open the package again.");
             return null;
         }
         if (holdsCredential(path, entries.get(path))) {
@@ -7197,20 +7223,7 @@ function readTeamsArchive(entries) {
     // the assistants' tools are pointed at it.
     const combined = combineServers(read.servers, state.servers, notices);
     const servers = combined.servers;
-    const serverNames = combined.names;
-    const renamedProviders = new Set();
-    agents.forEach(function (raw) {
-        raw.capabilities.forEach(function (capability) {
-            Object.keys(capability.providers).forEach(function (key) {
-                capability.providers[key].forEach(function (provider) {
-                    if (provider.kind === "mcp" && serverNames[provider.server] && !renamedProviders.has(provider)) {
-                        renamedProviders.add(provider);
-                        provider.server = serverNames[provider.server];
-                    }
-                });
-            });
-        });
-    });
+    remapItemServers(agents, combined.names);
 
     // ### Sort the remaining files ###
     // Root files of accepted types are attached files, as the Copilot app

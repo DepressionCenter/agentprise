@@ -115,6 +115,67 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("listed skills with conflicting server names keep their own endpoints and tool references", async () => {
+    const entries = [];
+    for (const [name, url] of [["first", "https://first.example.org/mcp"], ["second", "https://second.example.org/mcp"]]) {
+      entries.push(
+        { name: "skills/" + name + "/SKILL.md", bytes: skillMd(name, "Looks up records.") },
+        { name: "skills/" + name + "/agentprise.json", bytes: encode(JSON.stringify({
+          kind: "skill", servers: { remote: { transport: "http", url } },
+          capabilities: [{ id: "lookup", providers: {
+            "*": [{ kind: "mcp", server: "remote" }],
+            claude: [{ kind: "mcp", server: "remote" }],
+          } }],
+        })) },
+      );
+    }
+    const manifests = [
+      { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentSkills: [{ folder: "skills/first" }, { folder: "skills/second" }] }))) },
+      { name: "plugin.json", bytes: encode(JSON.stringify({ name: "example", license: "MIT" })) },
+      null,
+    ];
+    for (const manifest of manifests) {
+      const { project } = await openPackage(manifest ? [manifest, ...entries] : entries);
+      assert.deepEqual(Object.keys(project.servers), ["remote", "remote-2"]);
+      assert.equal(project.servers.remote.url, "https://first.example.org/mcp");
+      assert.equal(project.servers["remote-2"].url, "https://second.example.org/mcp");
+      for (const target of ["*", "claude"]) {
+        assert.deepEqual(project.items.map((item) => item.capabilities[0].providers[target][0].server), ["remote", "remote-2"]);
+      }
+      const { project: again } = await backupRoundTrip(project);
+      assert.deepEqual(again.servers, project.servers);
+      assert.deepEqual(again.items.map((item) => item.capabilities), project.items.map((item) => item.capabilities));
+    }
+  });
+
+  test("API descriptions at the item path limit import; deeper ones are rejected with instructions", async () => {
+    for (const depth of [5, 6, 8]) {
+      const entries = agentOnlyEntries();
+      const path = Array.from({ length: depth - 1 }, (_, index) => "folder" + index).join("/") + "/records.yaml";
+      const description = entries.find((entry) => entry.name === "agents/apis/records.yaml");
+      description.name = path;
+      const plugin = entries.find((entry) => entry.name === "agents/plugins/records.json");
+      const json = JSON.parse(decode(plugin.bytes));
+      json.runtimes[0].spec.url = path;
+      plugin.bytes = encode(JSON.stringify(json));
+      const { project, notices } = await openPackage(entries);
+      const agent = project.items[0];
+      const action = agent.capabilities.find((capability) => capability.id === "action.records");
+      if (depth === 5) {
+        assert.equal(action.providers["*"][0].spec, path);
+        assert.ok(agent.files.some((file) => file.path === path));
+        const output = await engine.exports.teamsPackage(project, agent, teamsIcons());
+        assert.ok((await engine.zip.read(output.bytes)).has("plugin-records.json"));
+      } else {
+        assert.equal(action, undefined, "no tool with an empty provider list is retained");
+        assert.equal(agent.files.some((file) => file.path === path), false);
+        assert.ok(notices.some((notice) => notice.includes("nested too deeply") && notice.includes("at most 4 folders") && notice.includes("update its reference")));
+        assert.ok(unrecognizedPaths(project).includes("microsoft-package/agents/plugins/records.json"));
+      }
+      assert.ok(agent.capabilities.some((capability) => capability.id === "action.lookup"), "other actions still import");
+    }
+  });
+
   test("an assistant's license stays unstated, including after a backup round trip", async () => {
     const golden = engine.project.normalize(goldenRaw()).project;
     const exported = await engine.exports.teamsPackage(golden, golden.items[0], teamsIcons());

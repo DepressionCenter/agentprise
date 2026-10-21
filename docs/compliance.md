@@ -157,7 +157,10 @@ listed under known gaps.
 - Microsoft 365 app packages are read the same way. Each path the manifest
   names for an assistant, action, API description, skill folder, or connector
   file must be inside the package and survive `cleanArchivePath` unchanged,
-  or that part is left out with a notice. An API description on the web is
+  or that part is left out with a notice. An OpenAPI description must also fit
+  the item-file limit of five path components; a deeper path is rejected
+  before creating its provider, with instructions to move the description
+  and update its reference. An API description on the web is
   never fetched. A sign-in type the app can't write back leaves the action or
   connector out instead of turning its sign-in off. Registration ids are not
   kept: they are dropped from tools and servers and replaced with a
@@ -185,13 +188,18 @@ listed under known gaps.
   line leaves the file out, and a reference to a key does not", "a credential
   in an assistant file leaves the assistant out of the project and backup",
   and "unknown text types and private keys are scanned while binary files
-  are preserved"). `npm test` on 2026-10-21 ran 279 tests, and all passed.
+  are preserved", and "API descriptions at the item path limit import;
+  deeper ones are rejected with instructions"). `npm test` on 2026-10-21 ran
+  281 tests, and all passed.
 - A plugin or Microsoft package cannot replace a skill's server settings
   merely by using the same name. Different definitions get separate names;
-  assistant tool references follow the renamed package server. Evidence:
+  assistant tool references follow the renamed package server. The same rule
+  applies between imported skills: each skill's tools use its own server.
+  Evidence:
   `combineServers` in `index.html`, the three plugin collision tests in
   `tests/project.test.mjs`, and the package server collision test in
-  `tests/microsoft-package.test.mjs`.
+  `tests/microsoft-package.test.mjs`, including "listed skills with
+  conflicting server names keep their own endpoints and tool references".
 - Programs are refused everywhere a file can arrive: attached files, files in
   a skill folder, and unrecognized files. A file with a program signature, a
   program extension, or a program extension hidden before its last extension
