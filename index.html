@@ -3,7 +3,7 @@ This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-21
 Summary: The whole Agentprise web app in one file. Lets a person describe an AI
          assistant once, then download it as an Agent Skill bundle (Gemini and
          Claude), a Microsoft 365 Copilot .agent file, a Teams app package, or
@@ -1178,6 +1178,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <span class="destination-text">
                                             <span class="destination-name">Teams Chat</span>
                                             <span class="destination-file">.agent file</span>
+                                            <span class="destination-note">Works until the end of March 2027, when Microsoft retires .agent files. Help says what to use instead.</span>
                                             <span class="destination-note" id="note-msAgent" hidden></span>
                                         </span>
                                         <button type="button" class="download-button" data-format="msAgent"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the .agent file for Teams Chat</span></button>
@@ -1371,7 +1372,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <p>It depends on where people will use the assistant.</p>
                     <ul>
                         <li><strong>Copilot / Teams Apps</strong> gives you an app package (.zip) for the Agents list in the Microsoft 365 Copilot app and in Teams.</li>
-                        <li><strong>Teams Chat</strong> gives you a .agent file for a Teams group chat, channel, or meeting. You put the file in a SharePoint library first.</li>
+                        <li><strong>Teams Chat</strong> gives you a .agent file for a Teams group chat, channel, or meeting. You put the file in a SharePoint library first. Microsoft retires this file type after March 2027; see "How long will the Teams Chat file keep working?" below.</li>
                         <li><strong>Gemini</strong> and <strong>Claude</strong> each get a skill (.zip) made for that product.</li>
                         <li><strong>ChatGPT</strong> gets project instructions to paste into a ChatGPT project.</li>
                         <li><strong>Claude plugin</strong> and <strong>Plugin</strong> hold the whole project, with its skills and tools. The Plugin works in ChatGPT, Codex, GitHub Copilot, Cursor, and OpenClaw.</li>
@@ -1397,6 +1398,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <p>Open it from Your projects on the Workspace page, or drop the file you downloaded before on that page, make your changes, and download it again. For an app package, upload the new file in place of the old one. It keeps the same id, so Copilot treats it as an update.</p>
                     <h2>Why does my assistant not answer in a Teams chat?</h2>
                     <p>App packages do not work in group chats, channels, or meeting chats. Use the Teams Chat download instead: put the .agent file in a SharePoint library, choose Copy link for Teams, paste the link in the chat, and choose Add to this chat.</p>
+                    <h2>How long will the Teams Chat file keep working?</h2>
+                    <p>Until the end of March 2027. After that, Microsoft retires .agent files and they stop answering, in SharePoint, in Teams chats, and in the Copilot app. What to use instead depends on the job. The Copilot / Teams Apps download is not affected, so the Agents list keeps working. For a Teams chat, Microsoft gives the file's owner an Upgrade to Microsoft 365 agent button in SharePoint from mid-November 2026, or you can create the agent again in Copilot Agent Builder by pasting your text. Agentprise keeps opening .agent files after the date, so nothing you wrote is lost.</p>
+                    <h2>Can I upload the .agent file to Copilot Agent Builder?</h2>
+                    <p>No. A file you upload there becomes reading material for a new agent. It does not set up the agent, and you can't edit the result as if it had. To build the same assistant in Agent Builder, create a new agent there and paste the name, description, instructions, and example questions from Agentprise, then choose its sources again in the builder.</p>
                     <h2>Why does Teams ask me to approve the answer?</h2>
                     <p>In a group chat, Teams shows the person who asked a preview whenever the answer used something the others may not be able to see, such as that person's own chats, mail, or meetings. Turn off Teams messages, email, and meetings under Copilot settings and answers post straight to the chat.</p>
                     <h2>What does the check for sensitive data look for?</h2>
@@ -1425,6 +1430,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             </tbody>
                         </table>
                     </div>
+                    <p>The .agent file works until the end of March 2027, when Microsoft retires that file type.</p>
                     <h2>Full Documentation</h2>
                     <p>The full documentation for Agentprise is available at: <a href="https://github.com/DepressionCenter/agentprise/tree/main/docs" target="_blank" rel="noopener">github.com/DepressionCenter/agentprise<span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
                 </div>
@@ -4495,8 +4501,8 @@ function msAgentExport(agent) {
 }
 
 /**
- * SharePoint-made files (no _agentprise key, no switch) open with web search
- * on and other switches off.
+ * A file that lists no capability, such as one SharePoint made, opens with
+ * every switch off and a notice, so the agent matches the file.
  * @param {string} text
  * @returns {{agent: object, notices: string[]}|{error: string}}
  */
@@ -4537,10 +4543,10 @@ function msAgentImport(text) {
     };
     const switchesListed = readCopilotCapabilities(definition.capabilities, raw, notices);
     const extra = isPlainObject(parsed._agentprise) ? parsed._agentprise : null;
-    // SharePoint made it. Teams honors WebSearch in a .agent file and people
-    // expect it, so it opens on.
+    // The file grants no switch, so none turns on. The notice keeps the
+    // change visible to people used to these files searching the web.
     if (!extra && switchesListed === 0) {
-        raw.copilot.webSearch = true;
+        notices.push("This file doesn't turn on web search, so it starts off. To turn it on, open More settings and look under Microsoft Copilot settings.");
     }
     if (extra) {
         const copilot = isPlainObject(extra.copilot) ? extra.copilot : {};
@@ -6869,7 +6875,7 @@ const DETAILS_FIELDS = { name: "d-name", description: "d-description", instructi
 const PRODUCT_HINTS = {
     gemini: "A skill to upload to Gemini, with any files it uses.",
     claude: "A skill to upload to Claude, with any files it uses.",
-    msAgent: "One file to put in SharePoint or OneDrive and add to a Teams chat.",
+    msAgent: "One file to put in SharePoint or OneDrive and add to a Teams chat. It works until the end of March 2027, when Microsoft retires .agent files; the Help page says what to use instead.",
     teamsZip: "When you change the assistant later, download this again from the same project. Copilot then updates the app you shared instead of adding a new one.",
     chatgpt: "There is no file to upload. Paste the text into the instructions of a ChatGPT project. To include skills and tools, use the Plugin download instead.",
     claudePlugin: "The whole project as one Claude plugin, with every assistant and skill and the tool servers Claude can connect to.",

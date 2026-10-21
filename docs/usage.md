@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/usage.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-21
 Summary: How to use Agentprise, job by job: keep your projects, create an
          assistant, add skills, check its tools, open a file you have, start
          from the Library, download it for each product or as a plugin, read
@@ -339,7 +339,7 @@ for the product people will use:
 | Product | Button | What you get |
 |---|---|---|
 | The Agents list in the Microsoft 365 Copilot app or in Teams | **Copilot / Teams Apps** | An app package (`.zip`) |
-| A Teams group chat, channel, or meeting | **Teams Chat** | One `.agent` file |
+| A Teams group chat, channel, or meeting | **Teams Chat** | One `.agent` file (Microsoft retires this file type after March 2027) |
 | Gemini | **Gemini** | A skill (`.zip`) |
 | Claude | **Claude** | A skill (`.zip`) |
 | A ChatGPT project | **ChatGPT**, then **Copy** | Project instructions to paste |

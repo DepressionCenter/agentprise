@@ -2,7 +2,7 @@
 // tests/formats.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-11
+// Last Modified: 2026-10-21
 // Summary: Tests for the format converters inside index.html: the Agent Skill
 //          ZIP and plain skill written from a project item, SKILL.md imports,
 //          the Microsoft .agent file, the Teams app package, copy-ready text,
@@ -139,7 +139,9 @@ describe("Microsoft .agent", () => {
     const { agent, notices } = engine.formats.msAgent.import(text);
     assert.deepEqual(agent.sharepointLinks, []);
     assert.deepEqual(agent.sharepointItems, [{ by: "id", ...file }, { by: "url", ...site }]);
-    assert.deepEqual(notices, []);
+    // The file grants no switch, so the only notice is the web-search one.
+    assert.equal(notices.length, 1);
+    assert.ok(notices[0].includes("doesn't turn on web search"));
     const doc = JSON.parse(engine.formats.msAgent.export(agent).text);
     const sharepoint = doc.customCopilotConfig.gptDefinition.capabilities.find((c) => c.name === "OneDriveAndSharePoint");
     assert.deepEqual(sharepoint, { name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [file], items_by_url: [site] });
@@ -205,7 +207,7 @@ describe("Microsoft .agent", () => {
     assert.deepEqual(entry, { name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [], items_by_url: [] });
   });
 
-  test("a SharePoint-made file that lists no switch opens with web search on and personal sources off", () => {
+  test("a SharePoint-made file that lists no switch opens with every switch off and a notice", () => {
     const text = JSON.stringify({
       schemaVersion: "0.2.0",
       customCopilotConfig: {
@@ -220,17 +222,18 @@ describe("Microsoft .agent", () => {
         icon: "https://res.public.onecdn.static.microsoft/files/sp-client/example.svg",
       },
     });
-    const { agent } = engine.formats.msAgent.import(text);
-    assert.equal(agent.copilot.webSearch, true);
+    const { agent, notices } = engine.formats.msAgent.import(text);
+    assert.equal(agent.copilot.webSearch, false);
     assert.equal(agent.copilot.sharepoint, false);
     assert.equal(agent.copilot.teamsMessages, false);
     assert.equal(agent.copilot.meetings, false);
     assert.equal(agent.copilot.codeInterpreter, false);
     assert.equal(agent.copilot.preferMyFiles, true);
     assert.equal(agent.copilot.responseMode, "Auto");
-    // Writing it back lists WebSearch, so the file keeps the web in a Teams chat.
+    assert.ok(notices.some((n) => n.includes("doesn't turn on web search")));
+    // Writing it back lists only what the file granted, so nothing widens.
     const doc = JSON.parse(engine.formats.msAgent.export(agent).text);
-    assert.deepEqual(doc.customCopilotConfig.gptDefinition.capabilities.map((c) => c.name), ["WebSearch", "OneDriveAndSharePoint"]);
+    assert.deepEqual(doc.customCopilotConfig.gptDefinition.capabilities.map((c) => c.name), ["OneDriveAndSharePoint"]);
     assert.deepEqual(doc.customCopilotConfig.gptDefinition.behavior_overrides, { special_instructions: { discourage_model_knowledge: true } });
   });
 

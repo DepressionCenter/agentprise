@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/faq.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-21
 Summary: The questions people ask about Agentprise, with the same answers the
          Help page inside the app gives, plus questions about tools, plugins,
          and what changes in each download.
@@ -175,6 +175,29 @@ Teams Chat download instead: put the `.agent` file in a SharePoint library,
 choose Copy link for Teams, paste the link in the chat, and choose Add to this
 chat.
 
+### How long will the Teams Chat file keep working?
+
+Until the end of March 2027. After that, Microsoft retires `.agent` files and
+they stop answering, in SharePoint, in Teams chats, and in the Copilot app.
+Only the file type is going away, not your assistant, and the Copilot / Teams
+Apps download is not affected. From mid-November 2026, Microsoft gives the
+file's owner an Upgrade to Microsoft 365 agent button in SharePoint.
+[When Microsoft retires this file](how-to/add-an-assistant-to-a-teams-chat.md#when-microsoft-retires-this-file)
+in the Teams chat guide explains the choices, and
+[Microsoft's upgrade page](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents)
+has the dates. Agentprise keeps opening `.agent` files after that date, so
+nothing you wrote is lost.
+
+### Can I upload the .agent file to Copilot Agent Builder?
+
+No. A file you upload there becomes reading material for a new agent, the same
+as a Word document would. It does not set up the agent, and you cannot edit
+the result as if it had. To build the same assistant in Agent Builder, create
+a new agent there and paste the name, description, instructions, and example
+questions from Agentprise, then choose its sources again in the builder. The
+[Teams chat guide](how-to/add-an-assistant-to-a-teams-chat.md#do-not-upload-the-file-to-copilot-agent-builder)
+has the steps.
+
 ### Why does Teams ask me to approve the answer?
 
 In a group chat, Teams shows the person who asked a preview whenever the answer
@@ -234,7 +257,9 @@ or start the included server as the README describes.
 The backup opens only in Agentprise. Keep it to change the project later. The
 Plugin download also works in Codex, GitHub Copilot, Cursor, OpenClaw, and
 other tools that read Agent Plugins. The plain skill works in Claude Code,
-Codex, Kimi Code CLI, OpenClaw, and other tools that read Agent Skills.
+Codex, Kimi Code CLI, OpenClaw, and other tools that read Agent Skills. The
+`.agent` file works until the end of March 2027, when Microsoft retires that
+file type.
 
 ### Conclusion
 

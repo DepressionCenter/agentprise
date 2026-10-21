@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/make-an-assistant-for-copilot.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-21
 Summary: Step-by-step guide with screenshots: make a new assistant in Agentprise
          and add it to the Agents list in Microsoft 365 Copilot or Teams.
 Notes: See README file for documentation and full license information.
@@ -157,7 +157,12 @@ You now have an assistant in the Agents list, a package you can share, and a
 copy you can edit. The same description can go to other products too. See
 the guides for [Teams chats](add-an-assistant-to-a-teams-chat.md),
 [Gemini and Claude](move-an-assistant-to-gemini-or-claude.md), and
-[ChatGPT](copy-an-assistant-into-chatgpt.md).
+[ChatGPT](copy-an-assistant-into-chatgpt.md). One note on the Teams Chat
+download: it is a `.agent` file, a file type Microsoft retires after March
+2027, and uploading it to Copilot Agent Builder only adds it as reading
+material. [When Microsoft retires this file](add-an-assistant-to-a-teams-chat.md#when-microsoft-retires-this-file)
+in the Teams chat guide says what to use instead, including how to build the
+assistant in Agent Builder by pasting your text.
 
 ### Additional resources
 

@@ -3,9 +3,10 @@ This file is part of Agentprise
 docs/how-to/add-an-assistant-to-a-teams-chat.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-21
 Summary: Step-by-step guide with screenshots: download the .agent file and add
-         an assistant to a Teams group chat, channel, or meeting chat.
+         an assistant to a Teams group chat, channel, or meeting chat. Also
+         covers what to do when Microsoft retires .agent files after March 2027.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -27,6 +28,11 @@ stored in a SharePoint library. This guide downloads that file and adds it to
 a chat. It takes about five minutes once the assistant is written. You need a
 Microsoft 365 account with Copilot and a SharePoint library the people in the
 chat can reach.
+
+One date to know before you start: Microsoft retires `.agent` files after
+March 2027, and a file already in a chat keeps answering until then.
+[When Microsoft retires this file](#when-microsoft-retires-this-file), below,
+says what changes and what to use instead.
 
 ### Step 1: Have your assistant open in Agentprise
 
@@ -83,12 +89,66 @@ or drop the `.agent` file on the drop area there. Make your changes, and
 download it again. Upload the new file to SharePoint in place of
 the old one, and the chat picks up the change.
 
+### When Microsoft retires this file
+
+Microsoft is retiring the `.agent` file type. Two dates matter, both from
+[Microsoft's upgrade page](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents)
+(checked 2026-10-21):
+
+1. **Mid-November 2026.** SharePoint and OneDrive stop saving new agents as
+   `.agent` files and create them in Copilot Agent Builder instead. An
+   **Upgrade to Microsoft 365 agent** button appears on existing files.
+2. **End of March 2027.** Existing `.agent` files stop answering, in
+   SharePoint, in Teams chats, and in the Copilot app.
+
+Only the file type is going away, not your assistant. Where to move it depends
+on what it does:
+
+| What your assistant does | Where to move it |
+|---|---|
+| Answers questions about one SharePoint site | Copilot in SharePoint, which needs no agent file |
+| Repeats one task on a site, such as summarizing new items | A skill. Microsoft plans a convert-agent-file-to-skill skill in Copilot in SharePoint for this, and the SKILL.md download in Agentprise writes one today |
+| Is a named assistant that answers people's questions | Copilot Agent Builder. See the next section for how to move your text there |
+| Works in the Agents list in Teams or the Copilot app | The Copilot / Teams Apps download, which is a different file type and is not affected |
+
+Before you choose, know what Microsoft's upgrade button does and does not do.
+Only the file's owner can run it, and nothing upgrades on its own. After the
+upgrade, the original `.agent` file can no longer be edited. Sharing does not
+move to the upgraded agent unless the agent was shared with the whole
+organization, so you share it again yourself. Usage history does not move
+either. A chat that used the old file stops getting answers from it, so paste
+the upgraded agent's sharing link into the chat to add it again.
+
+Keep the `.agent` file and a backup from Agentprise until the replacement
+works in the chat. Agentprise keeps opening `.agent` files after March 2027,
+so you can always get your text back out of one. What Agentprise cannot do is
+move anything that lives in Microsoft's systems: who owns the agent, who it is
+shared with, where it is installed, and its history stay where they are.
+
+### Do not upload the file to Copilot Agent Builder
+
+A file you upload to Copilot Agent Builder becomes reading material for a new
+agent, the same as a Word document would. It does not set up the agent's name,
+instructions, or settings, and you cannot edit the result as if it had. If an
+agent built this way answers strangely, this is usually why.
+
+To build the same assistant in Agent Builder:
+
+1. In Agentprise, open the assistant and choose **Inspect**, then the
+   **Teams Chat** tab, to see everything you wrote in one place.
+2. In Agent Builder, create a new agent.
+3. Paste the name, description, instructions, and example questions into the
+   matching boxes.
+4. Choose the web sites, SharePoint sources, and capabilities again in the
+   builder. They do not paste.
+
 ### Conclusion
 
 Your assistant now answers in a Teams chat, and the one `.agent` file in
-SharePoint is all it takes to keep it there. If you also want it in the
-Agents list, download the app package as well. The
-[formats page](../formats.md) explains the difference between the two files.
+SharePoint is all it takes to keep it there until Microsoft retires the file
+type after March 2027. If you also want it in the Agents list, download the
+app package as well. The [formats page](../formats.md) explains the
+difference between the two files.
 
 ### Additional resources
 
@@ -97,6 +157,8 @@ Agents list, download the app package as well. The
 - [Open an assistant you have and move it to Gemini or Claude](move-an-assistant-to-gemini-or-claude.md)
 - [Formats: which download goes where](../formats.md)
 - [Frequently asked questions](../faq.md)
+- [Microsoft: upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents)
+- [Microsoft: knowledge sources in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge)
 
 [Back to project README](../../README.md)
 

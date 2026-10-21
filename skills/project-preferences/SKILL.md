@@ -8,7 +8,7 @@ This file is part of Agentprise
 skills/project-preferences/SKILL.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-21
 Summary: Project-specific preferences for Agentprise: the single-file build, the
          project backup format, workspace storage, the download cards, and how
          to test.
@@ -137,7 +137,10 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   (`UNKNOWN_LICENSE`) and a notice. Never relabel it with the default license.
 - The Microsoft `.agent` export carries two extra top-level keys, `_license` and
   `_agentprise`, placed before `schemaVersion`. Copilot app package files carry no extra
-  keys because their schemas reject them.
+  keys because their schemas reject them. Microsoft retires `.agent` files
+  after March 2027; the export stays until then and the importer keeps reading
+  the format after, so people can recover what a file holds. The dated facts
+  are in [docs/formats.md](../../docs/formats.md).
 - The Copilot app package loses the welcome message and the copyright line, and keeps
   only the schema's keys for each SharePoint item. The `.agent` file loses
   attached files. Every other field survives, including "prefer my files",

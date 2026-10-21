@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/formats.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-21
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
          need: field mappings, tools, conversion reports, vendor facts with
@@ -33,7 +33,7 @@ maintainers", holds the technical details behind each file.
 | You want to use it in | Choose | You get |
 |---|---|---|
 | The Agents list in the Microsoft 365 Copilot app or in Teams | Copilot / Teams Apps | An app package (`.zip`) |
-| A Teams group chat, channel, or meeting | Teams Chat | One `.agent` file |
+| A Teams group chat, channel, or meeting | Teams Chat | One `.agent` file (Microsoft retires this file type after March 2027) |
 | Gemini | Gemini | A skill (`.zip`) |
 | Claude | Claude | A skill (`.zip`) |
 | A ChatGPT project | ChatGPT, Copy | Project instructions to paste |
@@ -191,7 +191,13 @@ allow.
 **Teams Chat.** Upload the `.agent` file to a SharePoint document library. Open
 the file's menu, choose Copy link for Teams, paste the link in a Teams chat, and
 choose Add to this chat. People in the chat need a Copilot license and permission
-to any files you linked.
+to any files you linked. Microsoft retires `.agent` files after March 2027, and
+files already in use keep answering until then.
+[When Microsoft retires this file](how-to/add-an-assistant-to-a-teams-chat.md#when-microsoft-retires-this-file)
+says what to use instead. Agentprise keeps opening `.agent` files after that
+date, so you can always recover what a file holds. Do not upload the file to
+Copilot Agent Builder: files uploaded there become reading material for a new
+agent, not its settings.
 
 **Skill (.zip).** In Gemini, open Settings, then Skills, then Upload, and pick
 the `.zip` file. Gemini skills work with personal Google accounts for now, not
@@ -611,6 +617,22 @@ When Agentprise opens a `.agent` file made in SharePoint, the key is absent, so 
 creator fields stay blank and nothing the file ever had is lost. The importer
 never requires the key.
 
+Microsoft is retiring the format. From mid-November 2026, SharePoint and
+OneDrive stop saving new agents as `.agent` files and offer the owner an
+"Upgrade to Microsoft 365 agent" button. Existing files keep answering until
+the end of March 2027 and then stop responding. After an upgrade the original
+file can no longer be edited, sharing and usage history do not transfer, and a
+Teams chat needs the upgraded agent added again by its sharing link. Each form
+of the agent has its own editing route: the legacy file is edited in the
+SharePoint agent builder (or by opening it in Agentprise and downloading it
+again), an upgraded agent is edited in Copilot Agent Builder, and an agent in
+the Copilot app is updated by uploading a new app package. Uploading a `.agent`
+file into Agent Builder is not an editing or import route: files uploaded there
+become embedded knowledge for a new agent and never set it up. Agentprise keeps
+reading and writing the format past the retirement date, so what a file holds
+can always be recovered and moved. The dated sources are under Verified vendor
+facts.
+
 The instructions are the composed text for `msAgent`. A `websearch` route adds
 its sites to `WebSearch.sites` the same way as in the app package (see below).
 Whether a Teams chat honors `WebSearch.sites` in a `.agent` file is open test
@@ -648,12 +670,14 @@ meetings go out exactly as the declarative agent schema spells them, and a
 limit, reads as no limit.
 
 Copilot honors a switch only when its capability is in the list, so a list
-without `WebSearch` means web search is off, and the importer reads it that way
-for any file that lists a switch or carries the `_agentprise` key. The SharePoint
-builder lists only `OneDriveAndSharePoint`, so that entry never counts as a
-switch: a file with no `_agentprise` key and no other capability was made there.
-It opens with web search on and the other switches off, which is what people
-expect once the file reaches a Teams chat. The SharePoint switch itself follows
+without `WebSearch` means web search is off, and the importer reads every file
+that way. The SharePoint builder lists only `OneDriveAndSharePoint`, so that
+entry never counts as a switch: a file with no `_agentprise` key and no other
+capability was made there. It opens with every switch off, so the assistant
+matches the file, and a notice says web search starts off and where to turn it
+on. The importer never turns on a source the file did not grant. Earlier
+versions of Agentprise opened such a file with web search on; files saved by
+them list `WebSearch` and still open with it on. The SharePoint switch itself follows
 the entry: both lists present and empty means off (the builder's shape for an
 agent with no sources), no lists at all means on with no limit, and lists with
 entries mean on with those limits. When the entries are pasted links, the
@@ -883,6 +907,10 @@ real account, unless the line names a tenant test.
 | A `.agent` file with an extra top-level key loads and runs in Teams | Loaded in a real tenant on 2026-10-09 |
 | In a Teams group chat, an answer that used the web, or only sources everyone in the chat can see, posts to everyone; an answer that used sources not everyone can see is shown first to the person who asked, with Approve and Reject | [How to use Microsoft Copilot in Teams group chats](https://support.microsoft.com/office/how-to-use-microsoft-365-copilot-in-teams-group-chats-2c613de4-cd26-4ae3-9e4b-6905d745d991), checked 2026-10-10 |
 | A `.agent` file written by Agentprise that listed `WebSearch`, `TeamsMessages`, and `Meetings` answered from the web in a Teams group chat and asked the person who asked to approve each answer; a SharePoint-made file with no switches answered without approval and without the web | Tenant tests on 2026-10-10 |
+| `.agent` files stop responding after the end of March 2027; from mid-November 2026, SharePoint and OneDrive create agents in Copilot Agent Builder instead of saving `.agent` files, an "Upgrade to Microsoft 365 agent" button appears in the SharePoint builder, and a `convert-agent-file-to-skill` skill arrives in Copilot in SharePoint; the retirement also applies to Government Cloud | [Upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents), checked 2026-10-21 |
+| The upgrade is started by the agent's owner, never automatically; after it, the original `.agent` file can no longer be edited, sharing does not carry over except org-wide sharing, usage history does not transfer, and an agent in a Teams chat or channel must be removed and added again by its sharing link | [Upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents), checked 2026-10-21 |
+| Microsoft's upgrade paths by role: a site Q&A agent moves to Copilot in SharePoint, a repeatable site task becomes a skill, a named Q&A or retrieval agent moves to Agent Builder, and a Copilot Studio custom engine agent publishes to the Copilot app | [Upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents), checked 2026-10-21 |
+| Files uploaded to Copilot Agent Builder become embedded content the agent reads (knowledge); no import of a `.agent` file or any other definition file into Agent Builder is documented | [Add knowledge sources in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge), checked 2026-10-21 |
 
 #### ChatGPT and OpenAI
 
@@ -1015,6 +1043,14 @@ documentation settled some of them. The rest need a real account.
   mode, in a Teams chat, and confirm each limit is honored.
 - Load a `.agent` file with a bare `OneDriveAndSharePoint` entry (switch on, no
   limit) in a Teams chat and confirm it reads every file the person can see.
+- After mid-November 2026, run Microsoft's "Upgrade to Microsoft 365 agent" on
+  a `.agent` file written by Agentprise and record what the upgrade keeps. The
+  upgrade steps in the Teams chat guide come from Microsoft's page, not from a
+  run.
+- Create an agent in Copilot Agent Builder by pasting the name, description,
+  instructions, and example questions from Agentprise, and confirm the agent
+  behaves like the `.agent` file did. Also confirm that uploading the `.agent`
+  file itself only adds it as reading material.
 
 ### Conclusion
 
