@@ -115,6 +115,58 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("safe root files refused as attachments remain in the backup", async () => {
+    const entries = agentOnlyEntries();
+    const rejected = [
+      { name: "truncated.pdf", bytes: encode("Truncated document content.") },
+      { name: "empty.txt", bytes: new Uint8Array() },
+      { name: "NOTES.txt", bytes: encode("Second spelling of notes.") },
+      { name: "overflow.txt", bytes: encode("Beyond the attachment count.") },
+    ];
+    entries.push({ name: "notes.txt", bytes: encode("First spelling of notes.") });
+    entries.push(...rejected.slice(0, 3));
+    entries.push(...Array.from({ length: 18 }, (_, index) => ({ name: "attachment" + index + ".txt", bytes: encode("Attachment.") })));
+    entries.push(rejected[3]);
+    const { project, notices } = await openPackage(entries);
+    assert.equal(project.items[0].files.filter((file) => file.path.startsWith("references/")).length, 20);
+    for (const entry of rejected) {
+      assert.ok(notices.some((notice) => notice.includes(entry.name) && notice.includes("could not be attached")));
+      assert.deepEqual(project.unrecognized.find((file) => file.path === "microsoft-package/" + entry.name).bytes, entry.bytes);
+    }
+    const { project: again } = await backupRoundTrip(project);
+    for (const entry of rejected) {
+      assert.deepEqual(again.unrecognized.find((file) => file.path === "microsoft-package/" + entry.name).bytes, entry.bytes);
+    }
+  });
+
+  test("items beyond the project limit keep their source files through backups", async () => {
+    for (const agentCount of [0, 1, 21]) {
+      const skillCount = agentCount > 20 ? 0 : 21 - agentCount;
+      const agents = Array.from({ length: agentCount }, (_, index) => ({ id: "assistant" + index, file: "agents/assistant" + index + ".json" }));
+      const skills = Array.from({ length: skillCount }, (_, index) => ({ folder: "skills/skill" + index }));
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: agents }, agentSkills: skills }))) },
+        ...agents.map((agent, index) => ({ name: agent.file, bytes: encode(JSON.stringify(declarativeAgent("Assistant " + index))) })),
+        ...skills.flatMap((skill, index) => [
+          { name: skill.folder + "/SKILL.md", bytes: skillMd("skill" + index, "A listed skill.") },
+          { name: skill.folder + "/notes.md", bytes: encode("Source notes.") },
+        ]),
+      ];
+      const { project, notices } = await openPackage(entries);
+      assert.equal(project.items.length, 20);
+      assert.ok(notices.some((notice) => notice.includes("Only the first 20 assistants and skills were opened")));
+      const omittedPaths = agentCount > 20 ? [agents[20].file] : [skills.at(-1).folder + "/SKILL.md", skills.at(-1).folder + "/notes.md"];
+      omittedPaths.push("manifest.json");
+      const { project: again } = await backupRoundTrip(project);
+      for (const path of omittedPaths) {
+        const original = entries.find((entry) => entry.name === path).bytes;
+        assert.deepEqual(project.unrecognized.find((entry) => entry.path === "microsoft-package/" + path).bytes, original);
+        assert.deepEqual(again.unrecognized.find((entry) => entry.path === "microsoft-package/" + path).bytes, original);
+      }
+      assert.equal(again.items.length, 20, "kept sources are not imported as extra items");
+    }
+  });
+
   test("a root skill cannot override a Microsoft manifest or become an assistant attachment", async () => {
     for (const entries of [agentOnlyEntries(), connectorOnlyEntries()]) {
       const baseline = await openPackage(entries);

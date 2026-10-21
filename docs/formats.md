@@ -845,6 +845,17 @@ and a path that `cleanArchivePath` would change, refuse, or that is missing
 from the ZIP is left out with a notice. The ZIP reader already refuses two
 entries with the same name.
 
+The project opens at most 20 assistants and skills. Assistants fill those
+places first. Extra items stay as source files in the backup, along with
+the source manifest and assistant descriptions needed to find them. A notice
+asks you to split the package to open the remaining items. Credential and
+executable-file checks still apply to retained files.
+
+Root files that cannot be attached because of their contents, name, or the
+20-file attachment limit stay in the backup when they pass those checks.
+Each refused attachment gets a notice. Empty files and files with invalid
+document contents are preserved for you to inspect.
+
 | Package part | Becomes | Limits |
 |---|---|---|
 | `copilotAgents.declarativeAgents[].file` | One assistant each, read by `teamsAgentRaw` | A file named twice is read once. Without a list, `declarativeAgent_0.json` is read. Only the first assistant keeps the manifest `id` as its app id; the others get a new one on download, with a notice |
@@ -1142,11 +1153,12 @@ real account, unless the line names a tenant test.
   Other cases check disguised text attachments, unique action ids, and
   listed, unlisted, or rejected nested skills.
   Root-skill precedence and retained paths at their depth and length limits
-  are checked through backup round trips too.
+  are checked through backup round trips too. Further cases check refused
+  root attachments and packages with more than 20 assistants and skills.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 289 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 291 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

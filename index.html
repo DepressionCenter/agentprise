@@ -7171,6 +7171,8 @@ function readTeamsArchive(entries) {
 
     // ### Read each assistant, its actions, and its skills ###
     const agents = [];
+    const importedAgentFiles = [];
+    let overflowItems = 0;
     const skillFolderList = [];
     agentFiles.forEach(function (file) {
         if (holdsCredential("manifest.json", entries.get(file))) {
@@ -7182,6 +7184,12 @@ function readTeamsArchive(entries) {
         if (!declarative) {
             notices.push("The assistant file " + file + " is not valid JSON, so it was left out.");
             state.keep.add(file);
+            return;
+        }
+        if (agents.length >= LIMITS.items) {
+            state.keep.add(file);
+            state.keepManifest = true;
+            overflowItems += 1;
             return;
         }
         const raw = teamsAgentRaw(entries, manifest, declarative, notices);
@@ -7202,6 +7210,7 @@ function readTeamsArchive(entries) {
             notices.push("The instructions of " + packageLabel(raw.name, "an assistant") + " already list its tools under \"" + TOOLS_HEADING + "\", from an earlier download. Agentprise writes that list again in every download, so delete the old one from the instructions.");
         }
         agents.push(raw);
+        importedAgentFiles.push(file);
     });
     rootSkills.forEach(function (entry) {
         const folder = packageSkillFolder(entries, entry, notices);
@@ -7216,17 +7225,25 @@ function readTeamsArchive(entries) {
     // other file that does is left out of its skill.
     const skillEntries = new Map();
     const allSkillFolders = skillFolders(entries, "").sort(function (a, b) { return b.length - a.length; });
-    const readFolders = skillFolderList.filter(function (folder) {
+    const readableFolders = skillFolderList.filter(function (folder) {
         if (holdsCredential("SKILL.md", entries.get(folder + "SKILL.md"))) {
             notices.push("The skill in " + folder + " has a SKILL.md that looks like it holds a password, key, or token, so it was left out.");
             return false;
         }
         return true;
     });
+    const readFolders = readableFolders.slice(0, LIMITS.items - agents.length);
+    const overflowFolders = readableFolders.slice(readFolders.length);
+    overflowItems += overflowFolders.length;
+    if (overflowItems > 0) {
+        state.keepManifest = true;
+        importedAgentFiles.forEach(function (file) { state.keep.add(file); });
+        notices.push("Only the first " + LIMITS.items + " assistants and skills were opened. Extra items' source files are kept in the backup. Split the package into smaller packages to open them.");
+    }
     entries.forEach(function (bytes, name) {
         // The nearest skill root owns the file, even when an ancestor is listed.
         const owner = allSkillFolders.find(function (folder) { return name.indexOf(folder) === 0; });
-        if (skillFolderList.indexOf(owner) < 0) {
+        if (skillFolderList.indexOf(owner) < 0 || overflowFolders.indexOf(owner) >= 0) {
             return;
         }
         if (holdsCredential(name, bytes)) {
@@ -7255,6 +7272,7 @@ function readTeamsArchive(entries) {
     // writes them; everything else is kept for the backup, unless it is a
     // program or looks like it holds a key.
     const attachments = [];
+    const attachmentNames = Object.create(null);
     const kept = [];
     if (state.keepManifest && manifest) {
         state.keep.add("manifest.json");
@@ -7271,8 +7289,16 @@ function readTeamsArchive(entries) {
             return;
         }
         if (!state.keep.has(name) && agents.length > 0 && name.indexOf("/") < 0 && !/\.(json|ya?ml)$/i.test(name) && fileKind(name)) {
-            attachments.push({ name: originalTextName(name), bytes: bytes });
-            return;
+            const attached = attachments.length < LIMITS.files
+                ? cleanAttachedFile({ name: originalTextName(name), bytes: bytes }, attachmentNames)
+                : { problem: "only " + LIMITS.files + " attached files fit" };
+            if (attached.file) {
+                attachments.push(attached.file);
+                return;
+            }
+            if (!isProgramFile(name, bytes)) {
+                notices.push("The file " + name + " could not be attached because " + attached.problem + ". Check the source file before using it.");
+            }
         }
         kept.push({ path: PACKAGE_KEPT_FOLDER + name, note: PACKAGE_KEPT_NOTE, bytes: withoutRegistrationIds(name, bytes), name: name });
     });

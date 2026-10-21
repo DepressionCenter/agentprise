@@ -197,7 +197,7 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-21 ran 289 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-21 ran 291 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -208,6 +208,12 @@ listed under known gaps.
   allowance without counting the fixed backup prefix; traversal and excess
   depth or length remain refused. The same test file covers both rules and
   their backup round trips.
+- Root files refused as attachments and items beyond the 20-item limit
+  retain their source files in the backup, subject to the credential and
+  executable-file checks. Notices explain what was not opened. The source
+  manifest and assistant descriptions are also retained when items exceed
+  the limit. Evidence: the refused-attachment and item-limit tests in
+  `tests/microsoft-package.test.mjs`, including backup round trips.
 - A plugin or Microsoft package cannot replace a skill's server settings
   merely by using the same name. Different definitions get separate names;
   assistant tool references follow the renamed package server. The same rule
