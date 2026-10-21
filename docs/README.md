@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/README.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-21
 Summary: Index of the Agentprise documentation: one linked line per page, with
          who each page is for.
 Notes: See README file for documentation and full license information.
@@ -60,6 +60,7 @@ every Agentprise screen you will see along the way.
   open a file you already have and download it as a skill.
 - [Put an assistant in a Teams group chat](how-to/add-an-assistant-to-a-teams-chat.md):
   download the `.agent` file, put it in SharePoint, and add it to the chat.
+  Also covers what to do when Microsoft retires `.agent` files after March 2027.
 - [Copy an assistant into a ChatGPT project or Gemini Notebook](how-to/copy-an-assistant-into-chatgpt.md):
   find the text to copy and see where each piece goes.
 - [Move a Gem or a custom GPT into Agentprise](how-to/move-a-gem-or-gpt.md):
