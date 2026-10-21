@@ -197,7 +197,7 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-21 ran 293 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-21 ran 295 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -219,6 +219,13 @@ listed under known gaps.
   the path. The icon and connector-path tests in
   `tests/microsoft-package.test.mjs` check backup round trips and reject
   traversal, absolute paths, remote URLs, missing entries, and invalid types.
+- Actions beyond an assistant's 20-tool limit keep their source descriptions
+  and local API descriptions in the backup. Credential matches remain
+  excluded. The action-limit test covers remote tools, API descriptions,
+  actions shared between assistants, and credential exclusion through backups.
+  The manifest classification test confirms that unrelated web manifests
+  follow the skill importer; Microsoft manifests still receive the package
+  credential check. Both tests are in `tests/microsoft-package.test.mjs`.
 - A plugin or Microsoft package cannot replace a skill's server settings
   merely by using the same name. Different definitions get separate names;
   assistant tool references follow the renamed package server. The same rule

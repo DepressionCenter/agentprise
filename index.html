@@ -6983,6 +6983,7 @@ function actionLabel(manifest) {
 function readCopilotActions(entries, actions, state, files) {
     const capabilities = [];
     const seenHere = Object.create(null);
+    let overflow = 0;
     (Array.isArray(actions) ? actions : []).forEach(function (action, index) {
         const subject = "The action \"" + packageLabel(isPlainObject(action) ? action.id : "", "number " + (index + 1)) + "\"";
         const file = isPlainObject(action) ? packagePath(action.file) : "";
@@ -6995,6 +6996,19 @@ function readCopilotActions(entries, actions, state, files) {
             return;
         }
         seenHere[file] = true;
+        if (capabilities.length >= LIMITS.capabilities) {
+            state.keep.add(file);
+            state.keepManifest = true;
+            overflow += 1;
+            const source = parseJsonObject(fromBytes(entries.get(file)));
+            (source && Array.isArray(source.runtimes) ? source.runtimes : []).forEach(function (runtime) {
+                const path = isPlainObject(runtime) && runtime.type === "OpenApi" ? packagePath(readPath(runtime, ["spec", "url"])) : "";
+                if (path && entries.has(path)) {
+                    state.keep.add(path);
+                }
+            });
+            return;
+        }
         // Another assistant in the package already read this file: share its tool and server.
         if (state.actionFiles.has(file)) {
             const shared = state.actionFiles.get(file);
@@ -7057,6 +7071,10 @@ function readCopilotActions(entries, actions, state, files) {
         state.actionFiles.set(file, { capability: capability, files: ownFiles.map(function (own) { return own.path; }) });
         capabilities.push(capability);
     });
+    state.actionOverflowCount += overflow;
+    if (overflow > 0) {
+        state.notices.push("Only the first " + LIMITS.capabilities + " actions were opened for this assistant. Extra actions' source files are kept in the backup. Split the actions across assistants to open them.");
+    }
     return capabilities;
 }
 
@@ -7136,16 +7154,19 @@ function isMicrosoftManifest(entries) {
  * @returns {{project: object, notices: string[]}|{error: string, blocked?: boolean}}
  */
 function readTeamsArchive(entries) {
-    if (entries.has("manifest.json") && holdsCredential("manifest.json", entries.get("manifest.json"))) {
-        return { error: "The manifest.json file looks like it holds a password, key, or token, so this package was not opened. Remove the credentials from that file and open the package again.", blocked: true };
-    }
     const manifest = entries.has("manifest.json") ? parseJsonObject(fromBytes(entries.get("manifest.json"))) : null;
     if (entries.has("manifest.json") && !manifest) {
         return { error: "The manifest.json file inside this ZIP is not valid JSON, so it can't be opened as a Copilot app package." };
     }
+    if (!isMicrosoftManifest(entries) && !entries.has("declarativeAgent_0.json")) {
+        return { error: "This ZIP has no assistant, skill, or connector that Agentprise can read, so it isn't a Copilot app package." };
+    }
+    if (entries.has("manifest.json") && holdsCredential("manifest.json", entries.get("manifest.json"))) {
+        return { error: "The manifest.json file looks like it holds a password, key, or token, so this package was not opened. Remove the credentials from that file and open the package again.", blocked: true };
+    }
     const source = manifest || {};
     const notices = [];
-    const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), actionIds: new Set(), withKeys: [], notices: notices, keepManifest: false };
+    const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), actionIds: new Set(), actionOverflowCount: 0, withKeys: [], notices: notices, keepManifest: false };
 
     // ### Find the declarative agents ###
     const listed = readPath(source, ["copilotAgents", "declarativeAgents"]);
@@ -7197,7 +7218,11 @@ function readTeamsArchive(entries) {
         }
         const raw = teamsAgentRaw(entries, manifest, declarative, notices);
         const files = [];
+        const actionOverflowBefore = state.actionOverflowCount;
         raw.capabilities = readCopilotActions(entries, declarative.actions, state, files);
+        if (state.actionOverflowCount > actionOverflowBefore) {
+            state.keep.add(file);
+        }
         raw.toolFiles = files;
         raw.skillFolders = [];
         (Array.isArray(declarative.agent_skills) ? declarative.agent_skills : []).forEach(function (entry) {

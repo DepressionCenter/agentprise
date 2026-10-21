@@ -28,7 +28,7 @@ import assert from "node:assert/strict";
 import { loadEngine } from "./load-engine.mjs";
 import { goldenRaw, teamsIcons } from "./tools-fixture.mjs";
 import {
-  APP_ID, SECRET, appManifest, declarativeAgent, skillMd, serverPlugin, agentOnlyEntries, skillOnlyEntries, connectorOnlyEntries, mixedEntries, multiAgentEntries, hostileEntries,
+  APP_ID, SECRET, appManifest, declarativeAgent, skillMd, serverPlugin, openApiPlugin, agentOnlyEntries, skillOnlyEntries, connectorOnlyEntries, mixedEntries, multiAgentEntries, hostileEntries,
 } from "./microsoft-package-fixture.mjs";
 
 const engine = loadEngine();
@@ -115,6 +115,41 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("actions beyond the tool limit retain their source files without retaining credentials", async () => {
+    for (const kind of ["remote", "openapi", "shared", "credential"]) {
+      const actions = Array.from({ length: 21 }, (_, index) => ({ id: "action" + index, file: "actions/action" + index + ".json" }));
+      const extra = actions.at(-1);
+      const agents = [{ id: "helper", file: "agents/helper.json" }];
+      if (kind === "shared") agents.unshift({ id: "first", file: "agents/first.json" });
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: agents } }))) },
+        ...agents.map((agent) => ({ name: agent.file, bytes: encode(JSON.stringify(declarativeAgent(agent.id, { actions: agent.id === "first" ? [extra] : actions }))) })),
+        ...actions.map((action) => ({ name: action.file, bytes: encode(JSON.stringify(serverPlugin(action.id, "https://example.org/" + action.id))) })),
+      ];
+      const retained = ["manifest.json", "agents/helper.json", extra.file];
+      if (kind === "openapi") {
+        entries.find((entry) => entry.name === extra.file).bytes = encode(JSON.stringify(openApiPlugin(extra.id, "apis/extra.yaml")));
+        entries.push({ name: "apis/extra.yaml", bytes: encode("openapi: 3.0.0\npaths: {}\n") });
+        retained.push("apis/extra.yaml");
+      } else if (kind === "credential") {
+        entries.find((entry) => entry.name === extra.file).bytes = encode(JSON.stringify({ ...serverPlugin(extra.id, "https://example.org/mcp"), description_for_model: "Authorization: Bearer " + SECRET }));
+        retained.pop();
+      }
+      const { project, notices } = await openPackage(entries);
+      assert.equal(project.items.at(-1).capabilities.length, 20);
+      assert.ok(notices.some((notice) => notice.includes("Only the first 20 actions were opened")));
+      const { project: again, backup } = await backupRoundTrip(project);
+      for (const path of retained) {
+        const original = entries.find((entry) => entry.name === path).bytes;
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + path).bytes, original);
+        }
+      }
+      assert.equal(everythingShown(project, notices).includes(SECRET), false);
+      assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+    }
+  });
+
   test("icons not consumed by an assistant survive backups", async () => {
     for (const entries of [skillOnlyEntries(), connectorOnlyEntries(), agentOnlyEntries()]) {
       const { project } = await openPackage(entries);
@@ -733,6 +768,18 @@ describe("unsafe and broken packages", () => {
     assert.equal(skills.error, undefined);
     assert.equal(skills.format, "skillZip");
     assert.deepEqual(skills.project.items.map((i) => i.skillName), ["helper"]);
+  });
+
+  test("credential-like fields in unrelated web manifests do not block skill archives", async () => {
+    const entries = [
+      { name: "manifest.json", bytes: encode(JSON.stringify({ short_name: "Example", start_url: "/?token=EXAMPLE_WEB_TOKEN" })) },
+      { name: "helper/SKILL.md", bytes: skillMd("helper", "Helps.") },
+    ];
+    const { project, format } = await openPackage(entries);
+    assert.equal(format, "skillZip");
+    assert.deepEqual(project.items.map((item) => item.skillName), ["helper"]);
+    const { project: again } = await backupRoundTrip(project);
+    assert.deepEqual(again.items.map((item) => item.skillName), ["helper"]);
   });
 
   test("a ZIP with two entries of the same name is refused before any part is read", async () => {
