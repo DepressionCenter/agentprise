@@ -607,6 +607,29 @@ borders.
   check is a short pattern list, not a review of the text, and a clean result
   does not mean the text holds no personal information.
 
+### Optional Microsoft export checks
+
+The native-skill and Microsoft plugin exports run entirely in the browser.
+They add no runtime dependency or network call. Tests in
+`tests/microsoft-exports.test.mjs` check pinned schemas, resource bytes, paths,
+counts, sizes, source restrictions, and exclusions. The new profiles omit
+scripts and unsupported tool routes. OAuth sign-in uses a placeholder
+registration id, never a credential. A plugin cannot silently widen a named
+tool list or discard an assistant's active source limits.
+
+The optional choices open a review page before download. Installation and
+actual skill invocation in Microsoft remain unverified. A tenant test must
+use synthetic data; see [Formats](formats.md#optional-microsoft-exports).
+These checks are not an assessment of a tenant's privacy or compliance.
+
+On 2026-10-22, the Windows suite passed all 352 tests. In an isolated Chromium
+browser, both new Inspect tabs had zero axe 4.10.3 WCAG A/AA findings. Keyboard
+activation opened the optional choices and the review page. Both download
+buttons produced the expected ZIP layout. Screenshots at 320 CSS pixels and
+200 percent CSS zoom showed readable controls without horizontal page overflow.
+No page errors occurred. These checks do not replace desktop browser zoom or
+a screen reader pass; both still need a person to check them.
+
 ### Conclusion
 
 The controls above are in place and the checks listed were run on the dates

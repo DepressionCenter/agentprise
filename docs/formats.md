@@ -42,13 +42,22 @@ maintainers", holds the technical details behind each file.
 | Claude (claude.ai, Cowork, or Claude Code), with every assistant, skill, and tool in the project | Claude plugin | One plugin (`.claude-plugin.zip`) |
 | ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw, or another tool that reads Agent Plugins, with every assistant, skill, and tool in the project | Plugin | One plugin (`.plugin.zip`) |
 | Nowhere yet, or you want to edit it later | Download Backup | The whole project as one `.agentprise.zip` |
+| A Copilot assistant in an organization with native skills enabled | More Microsoft downloads, then Copilot with skills | An app package with separate skill folders (`.zip`) |
+| Copilot Cowork in Microsoft 365 | More Microsoft downloads, then Microsoft 365 plugin | The whole project as optional skills and supported tool connections (`.microsoft-plugin.zip`) |
 
-The first seven downloads are for one assistant or skill: the one named at the
+The first seven standard downloads are for one assistant or skill: the one named at the
 top of the Download card. The two plugins sit under **For the whole project**,
 because each one holds every assistant and skill in the project, with the
 tools they use. The backup is the complete copy of the whole project, with
 every assistant, skill, and file in it. Drop it on the Workspace page any time
 to change the project or download it for another product.
+
+**More Microsoft downloads** is optional. Choose **Review** to see what changes
+and what needs setup before downloading. **Copilot with skills** includes the
+selected assistant and its selected skills. **Microsoft 365 plugin** includes
+the whole project, turning assistants into optional skills for Copilot Cowork.
+Keep using **Copilot / Teams Apps** if your organization has not enabled native
+skills. Neither new download runs a tool or contacts Microsoft from Agentprise.
 
 The backup is meant for Agentprise, so use a skill or plugin download when you
 want to upload to a product. The plain skill drops the welcome message, the
@@ -72,7 +81,7 @@ The ChatGPT download is one box of project instructions to paste. Gemini
 Notebook gets the name, description, instructions, and example questions,
 which is everything it can take.
 
-The two plugins keep each assistant and skill as a skill folder, the tool
+The Claude and generic Plugin downloads keep each assistant and skill as a skill folder, the tool
 servers the product can reach, a `README.md`, a `LICENSE.txt`, and a
 `SETUP.md` when something needs setting up. Agentprise can open either
 plugin again. The Plugin download brings back the whole project, and the
@@ -336,8 +345,9 @@ a real account. Read it before changing any converter in `index.html`.
 The Gemini skill and the Claude skill share one folder layout, but each is
 composed for its own product, so their instructions and reports can differ.
 The Gemini skill also leaves out Office and OneNote files. The backup holds
-the whole project, and so do the two plugins. Every other download holds one
-item. In the app, the Teams app package is labeled "Copilot / Teams Apps" and
+the whole project, and so do the plugin downloads. The native Copilot package
+also includes the selected assistant's skills. Other downloads hold one
+item. In the app, the baseline Teams app package is labeled "Copilot / Teams Apps" and
 the `.agent` file is labeled "Teams Chat".
 
 Every one-item download is named after the item, such as `Caveman.zip`,
@@ -1086,7 +1096,116 @@ skill text stays in the instructions for the same reason.
 only the first assistant, without actions or skills. The app itself opens
 files through `importProject`.
 
-### The whole-project plugins
+### Optional Microsoft exports
+
+These exports are built locally by `planMicrosoftPackage` and
+`writeMicrosoftPackage` in `index.html`. They use the existing project model,
+Copilot tool choices, and **Products it works in** settings. No validator,
+command-line tool, sign-in, or network request is part of the browser export.
+
+#### Copilot with skills
+
+The selected assistant stays an assistant. Its `uses` list selects the skills
+written to `skills/<skill-name>/SKILL.md`, with their descriptions and resource
+files. Its own instructions stay separate from skill steps. A selected skill
+gets a short wrapper assistant that refers to that skill.
+
+This profile uses app manifest 1.28, declarative agent v1.9 with `agent_skills`,
+and API-plugin v2.4 for actions. The usual **Copilot / Teams Apps** download
+still uses v1.8 and adds skill steps to the assistant's instructions.
+Both profiles keep the assistant's app id so later packages can update it.
+
+The native profile blocks more than eight skills, more than 350 skill files,
+and skill text of 20,000 characters or more after tool notes are added.
+Relative resource paths have at most three components. The complete ZIP must
+fit within 10 MB. It blocks attached assistant knowledge files; move them into
+a skill or use the usual download. API descriptions registered as actions are
+not counted as attached knowledge.
+
+#### Microsoft 365 plugin
+
+This profile uses app manifest 1.29 with root `agentSkills` and, when needed,
+`agentConnectors`. It includes eligible project items as skills, with an
+assistant's description prefixed by `Persona:`. It has no declarative-agent
+file. The project id identifies the plugin across exports. The selected item's
+picture supplies the package icons.
+
+Remote connectors must use HTTPS Streamable HTTP and either no authentication
+or OAuth. OAuth exports contain a registration placeholder that an admin must
+replace. Local servers, SSE servers, API-key servers, OpenAPI action providers,
+and scoped web-search providers are left out with notices. A connector with a
+restricted tool list is also left out: dynamic discovery would broaden that
+list, and the project has no complete tool-description schema to export.
+Manifest 1.29 permits URL-only connectors, so no tool-description file is
+invented. This is a contract-specific version choice; baseline exports stay
+on manifest 1.28.
+
+Each plugin has at most 20 skills. Each skill has at most 20 companion files,
+including its license. Each companion is at most 5 MB, and their total is at
+most 10 MB. The complete package is also
+capped at 10 MB. Unsafe, duplicate, and overlong paths block the download.
+An assistant's active source restrictions block this profile because a plugin
+cannot enforce them. Use an assistant package to preserve those restrictions.
+
+#### Exclusions and setup
+
+Both new downloads exclude script files and script tool routes. Agentprise
+does not verify sandbox runtimes or dependencies. Other unsupported resource
+types are excluded with a notice. Files kept in a skill retain their names and
+bytes. The original project and its backup keep excluded files.
+
+Items marked as not for Copilot are excluded. An export with no eligible
+skills is blocked. Setup instructions appear on Inspect as **Setup steps (not
+in the package)**. They are not added to the Microsoft ZIP. Download a backup
+before changing the project; these packages are not lossless backups.
+
+#### Evidence and tenant checks
+
+Checked on 2026-10-22: the new Windows tests exercise both package layouts,
+references, resource bytes, source limits, tool exclusions, count and size
+limits, hostile paths, and the pinned schemas. Microsoft 365 Agents Toolkit CLI
+1.1.18 also passed `atk validate --manifest-file` for the native assistant and
+plugin fixtures, including a remote connector. The native agent includes its
+v1.9 `$schema` address because the Toolkit needs it to find the schema.
+These manifest checks do not establish Microsoft upload acceptance or actual
+skill invocation. `atk validate --package-file` required account sign-in and
+was canceled; signed-in package validation and tenant installation remain open.
+
+The alternative Claude-plugin conversion was also checked with CLI 1.1.18.
+Unpack the **Claude plugin** download, then run this command against its inner
+folder. Replace the example links with your publisher links:
+
+```sh
+npx --yes --package @microsoft/m365agentstoolkit-cli@1.1.18 atk import openplugin --path ./skill-check --output ./converted --privacy-url https://example.org/privacy --terms-url https://example.org/terms --telemetry false
+cd converted
+npx --yes --package @microsoft/m365agentstoolkit-cli@1.1.18 atk package --manifest-file appPackage/manifest.json --output-package-file build/plugin.zip --output-folder build --telemetry false
+```
+
+The synthetic fixture imported and packaged successfully. The CLI warned that
+the `.claude-plugin` location is deprecated, but accepted it. Its generated
+manifest used `devPreview`, with root `agentSkills`; the referenced skill and
+resource files were included. This is a developer conversion route, not a
+requirement for Agentprise's browser downloads. It was not installed in a tenant.
+
+Microsoft documents native assistant skills as a Frontier preview, unavailable
+with Information Barriers or public-store submission. Scripts cannot use the
+network or install dependencies. The native-skills overview gives a 350-file
+limit; the Toolkit guide says 400. Agentprise uses 350 until a tenant test
+resolves the difference. Sources checked on 2026-10-22:
+[native skill restrictions](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-skills),
+[Toolkit skill setup](https://learn.microsoft.com/microsoft-365/copilot/extensibility/build-declarative-agents-add-custom-skills),
+and [Microsoft plugin package format](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development).
+
+For a tenant test, use only a synthetic assistant and a skill with a reference
+file containing a made-up marker. Record the date, cloud, destination, upload
+route, and versions. Check installation, a request that triggers the skill,
+retrieval of the marker, save and reopen, an update to the same assistant,
+source restrictions, and access by another test user. Test a plugin separately
+from an assistant package, including any registered tool connection. Mark
+unavailable checks as skipped. Enabling skills in a tenant alone does not prove
+that these packages install or work there.
+
+### The Claude and generic whole-project plugins
 
 Both plugins put each item in `skills/<skill-name>/` as an item folder whose
 `SKILL.md` holds the composed text for the plugin's product, with
@@ -1418,6 +1537,9 @@ or importer changes.
 
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
 - [Connect the tools in a download](how-to/connect-tools.md)
+- [Native Copilot skill restrictions](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-skills)
+- [Toolkit skill setup](https://learn.microsoft.com/microsoft-365/copilot/extensibility/build-declarative-agents-add-custom-skills)
+- [Microsoft plugin package format](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development)
 - [Move a Gem or a custom GPT into Agentprise](how-to/move-a-gem-or-gpt.md)
 - [Add your assistant to the Library](how-to/add-to-library.md)
 - [Agent Skills specification](https://agentskills.io/specification)

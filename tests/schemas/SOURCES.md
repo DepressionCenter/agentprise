@@ -3,7 +3,7 @@ This file is part of Agentprise
 tests/schemas/SOURCES.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-10
-Last Modified: 2026-10-10
+Last Modified: 2026-10-22
 Summary: Where each pinned JSON Schema in this folder came from, when it was
          downloaded, and its SHA-256 hash.
 Notes: See README file for documentation and full license information.
@@ -29,7 +29,8 @@ and are kept here only so the tests can read them.
 
 ## Files
 
-All files were downloaded on 2026-10-10 with `curl -sL`, byte for byte.
+Files are stored byte for byte. The original files used `curl -sL`; the
+2026-10-22 additions used PowerShell `Invoke-WebRequest`.
 
 | File | Source URL | Downloaded | SHA-256 |
 |---|---|---|---|
@@ -38,6 +39,8 @@ All files were downloaded on 2026-10-10 with `curl -sL`, byte for byte.
 | `copilot/declarative-agent-v1.8.schema.json` | <https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.8/schema.json> | 2026-10-10 | `57b0f6784fbff614f249597ed7720775adff88a75f60989f93539d3221a97035` |
 | `copilot/plugin-v2.4.schema.json` | <https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json> | 2026-10-10 | `ea3016aa4917e1b714454a6a7be9444f8aa7a1923cba0a42343a6fd234a0eb00` |
 | `teams/manifest-v1.28.schema.json` | <https://developer.microsoft.com/json-schemas/teams/v1.28/MicrosoftTeams.schema.json> | 2026-10-10 | `cce967bb1c77641634ce30353f2a699c44cf245e695d2c7a34bb8be771877c3d` |
+| `copilot/declarative-agent-v1.9.schema.json` | <https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.9/schema.json> | 2026-10-22 | `102abde77894ed0d30c5e097a1b17181a16527865fdcd2f824e2578799abd3a5` |
+| `teams/manifest-v1.29.schema.json` | <https://developer.microsoft.com/json-schemas/teams/v1.29/MicrosoftTeams.schema.json> | 2026-10-22 | `53e860fd650fd03fe587379d92af6c91374e791f041ce3f26c92d5e74aeafa0b` |
 
 ## Updating a schema
 
