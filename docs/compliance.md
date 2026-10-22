@@ -622,7 +622,8 @@ actual skill invocation in Microsoft remain unverified. A tenant test must
 use synthetic data; see [Formats](formats.md#optional-microsoft-exports).
 These checks are not an assessment of a tenant's privacy or compliance.
 
-On 2026-10-22, the Windows suite passed all 352 tests. In an isolated Chromium
+On 2026-10-22, the Windows suite passed all 354 tests, including imported license
+preservation and conflicting license names. In an isolated Chromium
 browser, both new Inspect tabs had zero axe 4.10.3 WCAG A/AA findings. Keyboard
 activation opened the optional choices and the review page. Both download
 buttons produced the expected ZIP layout. Screenshots at 320 CSS pixels and

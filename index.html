@@ -6422,7 +6422,17 @@ const MICROSOFT_RESOURCE_EXTENSION = /\.(json|xml|ya?ml|ini|config|utf8|docx?|do
  * @returns {Array<{name: string, bytes: Uint8Array}>} Files relative to the package.
  */
 function microsoftSkillEntries(project, item, plan, plugin, report) {
-    const allowed = item.files.filter(function (file) {
+    const resources = item.files.map(function (file) {
+        let path = file.path;
+        if (LICENSE_FILE_PATTERN.test(path) && path.indexOf(".") < 0) { path += ".txt"; }
+        if (path.toLowerCase() === "license.txt") { path = "LICENSE.txt"; }
+        if (path !== file.path) {
+            report.push(reportEntry(item.name + ": " + file.path, "transformed", "Saved as " + path + " so the Microsoft package keeps the original license text in a supported file type. The backup keeps the original name."));
+            return { path: path, bytes: file.bytes };
+        }
+        return file;
+    });
+    const allowed = resources.filter(function (file) {
         if (MICROSOFT_SCRIPT_EXTENSION.test(file.path) || !MICROSOFT_RESOURCE_EXTENSION.test(file.path)) {
             report.push(reportEntry(item.name + ": " + file.path, "unsupported", "This file is excluded from the Microsoft skill. Script runtimes and dependencies are not verified, and only supported resource types are included. Keep the backup to preserve the original file."));
             return false;
@@ -6430,6 +6440,15 @@ function microsoftSkillEntries(project, item, plan, plugin, report) {
         return true;
     });
     const copy = Object.assign({}, item, { files: allowed });
+    // Skill metadata refers to LICENSE.txt even when imported terms use another name.
+    // Copy those terms byte for byte instead of generating a notice about that path.
+    const terms = allowed.find(function (file) { return /^LICEN[CS]E\.(txt|md)$/i.test(file.path); })
+        || allowed.find(function (file) { return /^COPYING\.(txt|md)$/i.test(file.path); })
+        || allowed.find(function (file) { return LICENSE_FILE_PATTERN.test(file.path); });
+    if (terms && !itemFileBytes(copy, "LICENSE.txt")) {
+        copy.files.push({ path: "LICENSE.txt", bytes: terms.bytes });
+        report.push(reportEntry(item.name + ": License", "transformed", "The original text from " + terms.path + " is also included as LICENSE.txt so the skill's license link can be opened."));
+    }
     const entries = itemFolderEntries(project, copy, { standardOnly: true, body: plan.text, description: plan.description });
     const seen = new Set();
     const prefix = "skills/" + item.skillName + "/";

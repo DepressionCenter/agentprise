@@ -1151,8 +1151,12 @@ cannot enforce them. Use an assistant package to preserve those restrictions.
 
 Both new downloads exclude script files and script tool routes. Agentprise
 does not verify sandbox runtimes or dependencies. Other unsupported resource
-types are excluded with a notice. Files kept in a skill retain their names and
-bytes. The original project and its backup keep excluded files.
+types are excluded with a notice. Resource files keep their names and bytes.
+Extensionless license files, such as `LICENSE`, `COPYING`, and `NOTICE`, receive
+a `.txt` extension with a notice. When needed, the original license bytes are
+also copied to `LICENSE.txt` so the skill's license link works. A conflicting
+filename blocks the download instead of overwriting either file. The original
+project and its backup keep the original names and excluded files.
 
 Items marked as not for Copilot are excluded. An export with no eligible
 skills is blocked. Setup instructions appear on Inspect as **Setup steps (not

@@ -89,6 +89,42 @@ describe("Microsoft native exports", () => {
     assert.match(agent.instructions, /## Skill: Record Finder/);
   });
 
+  test("imported extensionless license terms survive both Microsoft downloads", async () => {
+    for (const path of ["LICENSE", "LICENCE", "COPYING", "NOTICE", "LICENSE.md", "license", "license.txt"]) {
+      const terms = encode("Synthetic terms for " + path + ": retain this notice.\n");
+      const source = engine.zip.write([
+        { name: "sample/SKILL.md", bytes: encode("---\nname: sample\ndescription: Reads a fictional marker.\n---\nRead the sample marker.\n") },
+        { name: "sample/" + path, bytes: terms },
+      ]);
+      const imported = await engine.imports.any("sample.zip", source);
+      assert.ok(!imported.error, imported.error);
+      const project = imported.project;
+      const before = structuredClone(project);
+      for (const profile of ["copilotSkills", "microsoftPlugin"]) {
+        const result = await write(project, profile);
+        const entries = await engine.zip.read(result.bytes);
+        assert.deepEqual(entries.get("skills/sample/LICENSE.txt"), terms);
+        const renamed = path.includes(".") ? path : path + ".txt";
+        const preservedPath = renamed.toLowerCase() === "license.txt" ? "LICENSE.txt" : renamed;
+        assert.deepEqual(entries.get("skills/sample/" + preservedPath), terms);
+        assert.ok(!result.report.some((entry) => entry.status === "unsupported" && entry.component === project.items[0].name + ": " + path));
+      }
+      assert.deepEqual(project.items[0].files, before.items[0].files);
+      assert.equal(project.items[0].license, before.items[0].license);
+    }
+  });
+
+  test("license name collisions block export without overwriting either notice", async () => {
+    const project = build(simpleRaw());
+    project.items[1].files.push({ path: "LICENSE", bytes: encode("First terms.\n") }, { path: "LICENSE.txt", bytes: encode("Other terms.\n") });
+    const before = structuredClone(project);
+    for (const profile of ["copilotSkills", "microsoftPlugin"]) {
+      blocks(project, /repeated/, profile);
+      await assert.rejects(write(project, profile));
+    }
+    assert.deepEqual(project, before);
+  });
+
   test("a skill-only plugin has root skill references and no assistant definition", async () => {
     const raw = simpleRaw();
     raw.items.shift();
