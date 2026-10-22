@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/formats.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-21
+Last Modified: 2026-10-22
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
          need: field mappings, tools, conversion reports, vendor facts with
@@ -1033,8 +1033,8 @@ The root manifest is checked before any of its values are used. A match
 blocks the package, including attempts to open its contents as a skill ZIP
 instead. This covers publisher links and project descriptions as well as
 connector addresses. The error asks the author to remove the credentials.
-Assistant and action description files are checked as JSON text before
-parsing, regardless of their filename extension. A match leaves that part
+Assistant and action description files are checked before their values are
+imported, regardless of their filename extension. A match leaves that part
 out, and its file is excluded from the backup. `holdsCredential` also checks
 unknown file types, such as `.env`, `.toml`, and `.pem`, even when they contain
 zero bytes. It decodes UTF-16 files with a byte-order mark and removes zero
@@ -1046,8 +1046,12 @@ or a backup-only file. Private
 key headers, including `BEGIN PRIVATE KEY` and `BEGIN RSA PRIVATE KEY`, count
 as matches. This heuristic does not detect every credential or encoding.
 URL user names and passwords also count as matches, as do `auth` query
-parameters. Query names are decoded before checking. JSON objects are checked
-with escapes decoded as well as in their original text form.
+parameters. Query names are decoded before checking. Valid JSON is scanned
+as parsed keys and values, including nested objects, arrays, and escaped
+field names. Names such as `X-API-Key` and `database_password` use the same
+credential-name rules as settings files. Complete variable references remain
+allowed; literal values and references with fallbacks remain excluded.
+Malformed JSON receives the text scan.
 
 A package with an assistant opens with the project license `Not stated` and
 a notice. A Microsoft package cannot declare the assistant's license, even
@@ -1281,7 +1285,7 @@ real account, unless the line names a tenant test.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 324 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-22 ran 325 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

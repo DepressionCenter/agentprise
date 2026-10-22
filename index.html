@@ -3,7 +3,7 @@ This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-21
+Last Modified: 2026-10-22
 Summary: The whole Agentprise web app in one file. Lets a person describe an AI
          assistant once, then download it as an Agent Skill bundle (Gemini and
          Claude), a Microsoft 365 Copilot .agent file, a Teams app package, or
@@ -6735,7 +6735,9 @@ const CREDENTIAL_HEADER_PATTERN = /\b(?:proxy-)?authorization["']?[ \t]*[:=][ \t
 
 // A YAML or settings line that sets a key, such as "client_secret: abc123" or
 // "export OPENAI_API_KEY=abc123". The value is the second group.
-const CREDENTIAL_LINE_PATTERN = /^[ \t]*(?:-[ \t]+|export[ \t]+)?["']?(?:[a-z0-9]+[_-])*(api[_-]?key|apikey|client[_-]?secret|password|passwd|access[_-]?token|refresh[_-]?token|bearer[_-]?token|private[_-]?key|secret|token)["']?[ \t]*[:=][ \t]*([^\r\n]+)/gim;
+const CREDENTIAL_FIELD_NAME = "(?:[a-z0-9]+[_-])*(api[_-]?key|apikey|client[_-]?secret|password|passwd|access[_-]?token|refresh[_-]?token|bearer[_-]?token|private[_-]?key|secret|token)";
+const CREDENTIAL_FIELD_PATTERN = new RegExp("^" + CREDENTIAL_FIELD_NAME + "$", "i");
+const CREDENTIAL_LINE_PATTERN = new RegExp("^[ \\t]*(?:-[ \\t]+|export[ \\t]+)?[\"']?" + CREDENTIAL_FIELD_NAME + "[\"']?[ \\t]*[:=][ \\t]*([^\\r\\n]+)", "gim");
 
 // Values on such a line that name a key kept somewhere else, such as
 // "${API_KEY}" or "{{ secrets.token }}", or that say nothing, such as "true".
@@ -6826,21 +6828,34 @@ function holdsCredential(name, bytes) {
     const encoding = packageTextEncoding(bytes);
     const text = new TextDecoder(encoding).decode(bytes);
     const scanned = text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "\n");
-    const json = parseJsonObject(scanned);
-    if (textHoldsCredential(scanned) || Boolean(json && textHoldsCredential(JSON.stringify(json)))) {
-        return true;
+    let json;
+    try {
+        json = JSON.parse(scanned);
+    } catch (error) {
+        // Non-JSON files and malformed JSON still receive the text scan.
+        return textHoldsCredential(scanned);
     }
-    const values = json ? Object.values(json) : [];
+    const values = [{ key: "", value: json }];
     while (values.length > 0) {
-        const value = values.pop();
-        if (typeof value === "string" && textHoldsCredential(value)) {
+        const entry = values.pop();
+        const value = entry.value;
+        if (textHoldsCredential(entry.key) || (CREDENTIAL_FIELD_PATTERN.test(entry.key) && credentialValueIsLiteral(value))) {
+            return true;
+        }
+        if (typeof value === "string" && (textHoldsCredential(value) || CREDENTIAL_HEADER_PATTERN.test(entry.key + ": " + value))) {
             return true;
         }
         if (value && typeof value === "object") {
-            Object.values(value).forEach(function (entry) { values.push(entry); });
+            Object.entries(value).forEach(function (pair) { values.push({ key: pair[0], value: pair[1] }); });
         }
     }
     return false;
+}
+
+/** Whether a credential field contains a literal value instead of an allowed reference. */
+function credentialValueIsLiteral(value) {
+    const text = typeof value === "string" || typeof value === "number" ? String(value).trim() : "";
+    return text.length >= 4 && !CREDENTIAL_REFERENCE_VALUE.test(text);
 }
 
 /** True when text matches a credential pattern rather than a reference to a key. */
@@ -6859,7 +6874,7 @@ function textHoldsCredential(text) {
     }
     return Array.from(text.matchAll(CREDENTIAL_LINE_PATTERN)).some(function (match) {
         const value = match[2].replace(/[ \t]+#.*$/, "").trim().replace(/^(["'])(.*)\1$/, "$2");
-        return value.length >= 4 && !CREDENTIAL_REFERENCE_VALUE.test(value);
+        return credentialValueIsLiteral(value);
     });
 }
 

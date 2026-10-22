@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/compliance.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-21
+Last Modified: 2026-10-22
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
          the controls in place, the evidence behind them, and the known gaps.
 Notes: See README file for documentation and full license information.
@@ -199,7 +199,7 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-21 ran 324 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-22 ran 325 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -251,6 +251,10 @@ listed under known gaps.
   `auth` and encoded query names. JSON escapes cannot hide those URLs.
   Tests cover manifest rejection through all three detection routes and
   credential exclusion from retained text and backup files.
+  Parsed JSON keys retain their value context, so namespaced fields such as
+  `X-API-Key` and `database_password` are checked regardless of text layout.
+  Tests cover nested objects, arrays, escaped keys, numeric passwords,
+  reference fallbacks, and allowed complete references through backups.
   Basic and Bearer authorization headers, including proxy headers and JSON
   values, are excluded before files become attachments, skill files, or
   backup-only files. Regression tests check imported and exported bytes.

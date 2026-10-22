@@ -2,7 +2,7 @@
 // tests/microsoft-package.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-21
-// Last Modified: 2026-10-21
+// Last Modified: 2026-10-22
 // Summary: Opens Microsoft 365 app packages through the importer the app uses
 //          for dropped files: this app's own package with three actions, and
 //          synthetic packages with an assistant, skills only, connectors only,
@@ -1116,6 +1116,34 @@ describe("Microsoft 365 app packages made elsewhere", () => {
 });
 
 describe("unsafe and broken packages", () => {
+  test("JSON credential scans preserve key context across namespaces, arrays, and escapes", async () => {
+    const keys = ["X-API-Key", "database_password", "SERVICE_CLIENT_SECRET", "cloud-access-token", "api_key", "password"];
+    const secrets = [SECRET, 123456, "${MISSING:-" + SECRET + "}", "${TOKEN}" + SECRET];
+    const references = ["${API_KEY}", "$API_KEY", "{{ secrets.token }}", "<EXAMPLE_API_KEY>", false, null, "false"];
+    const entries = skillOnlyEntries();
+    let index = 0;
+    for (const key of keys) {
+      for (const value of secrets) {
+        for (const wrap of [(pair) => ({ headers: pair }), (pair) => [{ settings: pair }]]) {
+          const text = JSON.stringify(wrap({ [key]: value })).replace(/password/g, "pass\\u0077ord");
+          entries.push({ name: "config/unsafe" + index++ + ".json", bytes: encode(text) });
+        }
+      }
+    }
+    const safeFiles = keys.map((key, number) => ({ name: "config/safe" + number + ".json", bytes: encode(JSON.stringify(references.map((value) => ({ [key]: value })))) }));
+    entries.push(...safeFiles);
+    const { project, notices } = await openPackage(entries);
+    const { project: again, backup } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.equal(result.unrecognized.some((entry) => entry.path.includes("/unsafe")), false);
+      for (const safe of safeFiles) {
+        assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + safe.name).bytes, safe.bytes);
+      }
+    }
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.equal(backup.entries.some((entry) => entry.name.includes("/unsafe")), false);
+  });
+
   test("authorization headers never reach attachments, skill files, or backups", async () => {
     const token = "dXNlcjpwYXNz";
     const values = ["Authorization: Basic " + token, '"Authorization": "Basic ' + token + '"', "proxy-authorization: basic " + token, "AUTHORIZATION=Basic " + token, "Authorization: Bearer short"];
