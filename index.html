@@ -6793,17 +6793,18 @@ function packageRelativePath(manifestFile, value) {
 
 /**
  * Whether a file looks like it holds a credential, including a private key.
- * Unknown file types are scanned as text unless a zero byte in the first
- * 8 KiB suggests binary content. Known binary types are skipped only when
- * their bytes match that format; mislabeled content is scanned.
+ * Unknown file types are scanned even when they contain NUL bytes. Known
+ * binary types are skipped only when their bytes match that format.
  */
 function holdsCredential(name, bytes) {
     const kind = fileKind(name);
-    const textual = kind === "text" || (kind ? !fileContentMatches(kind, bytes) : bytes.subarray(0, 8192).indexOf(0) < 0);
+    const textual = !kind || kind === "text" || !fileContentMatches(kind, bytes);
     if (!textual) {
         return false;
     }
-    return textHoldsCredential(fromBytes(bytes));
+    const encoding = bytes[0] === 0xff && bytes[1] === 0xfe ? "utf-16le" : bytes[0] === 0xfe && bytes[1] === 0xff ? "utf-16be" : "utf-8";
+    const text = new TextDecoder(encoding).decode(bytes);
+    return textHoldsCredential(text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "\n"));
 }
 
 /** True when text matches a credential pattern rather than a reference to a key. */
@@ -6898,6 +6899,7 @@ function addPackageServer(servers, key, server) {
 /**
  * Combines server maps without changing either input. Own servers
  * keep their names; different added servers with those names get numbered names.
+ * An identical definition can reuse an earlier numbered server.
  * @param {object} own servers declared by the skills
  * @param {object} added servers declared by the package or plugin
  * @param {string[]} notices receives validation notices
@@ -6914,8 +6916,9 @@ function combineServers(own, added, notices) {
         }
     });
     Object.keys(incoming).forEach(function (name) {
-        const same = JSON.stringify(servers[name]) === JSON.stringify(incoming[name]);
-        names[name] = same ? name : addPackageServer(servers, name, incoming[name]);
+        const definition = JSON.stringify(incoming[name]);
+        const existing = JSON.stringify(servers[name]) === definition ? name : Object.keys(servers).find(function (other) { return JSON.stringify(servers[other]) === definition; });
+        names[name] = existing || addPackageServer(servers, name, incoming[name]);
     });
     return { servers: servers, names: names };
 }
@@ -7141,7 +7144,7 @@ function readCopilotActions(entries, actions, state, files, sourceFile) {
             providers: { "*": providers }
         };
         state.actionFiles.set(file, { capability: capability, files: ownFiles.map(function (own) { return own.path; }) });
-        capabilities.push(capability);
+        capabilities.push(JSON.parse(JSON.stringify(capability)));
     });
     if (overflow > 0) {
         state.notices.push("Only the first " + LIMITS.capabilities + " actions of an assistant were opened. Agentprise keeps the files of the other actions in the backup only. To use them, move some actions to another assistant in the package and open it again.");
@@ -7293,10 +7296,34 @@ function readTeamsArchive(entries) {
         const raw = teamsAgentRaw(entries, manifest, declarative, notices);
         const files = [];
         raw.capabilities = readCopilotActions(entries, declarative.actions, state, files, file);
-        raw.toolFiles = files;
+        const overflowFiles = cleanSkillFiles(files, []).overflow;
+        const overflowPaths = new Set(overflowFiles.map(function (entry) { return entry.path; }));
+        raw.toolFiles = files.filter(function (entry) { return !overflowPaths.has(entry.path); });
+        if (overflowFiles.length > 0) {
+            const affected = new Set(raw.capabilities.filter(function (capability) {
+                return capability.providers["*"].some(function (provider) { return provider.kind === "openapi" && overflowPaths.has(provider.spec); });
+            }).map(function (capability) { return capability.id; }));
+            state.actionFiles.forEach(function (action, actionFile) {
+                if (action && affected.has(action.capability.id)) {
+                    state.keep.add(actionFile);
+                    action.files.forEach(function (path) { state.keep.add(path); });
+                }
+            });
+            state.keep.add(file);
+            state.keepManifest = true;
+            raw.capabilities = raw.capabilities.filter(function (capability) {
+                capability.providers["*"] = capability.providers["*"].filter(function (provider) { return provider.kind !== "openapi" || !overflowPaths.has(provider.spec); });
+                return capability.providers["*"].length > 0;
+            });
+            notices.push("An assistant can hold at most " + LIMITS.skillFiles + " API description files. Agentprise keeps the extra descriptions and their action sources in the backup only. To use them, move some actions to another assistant and open the package again.");
+        }
         raw.skillFolders = [];
         (Array.isArray(declarative.agent_skills) ? declarative.agent_skills : []).forEach(function (entry) {
             const folder = packageSkillFolder(entries, entry, notices);
+            if (!folder) {
+                state.keep.add(file);
+                state.keepManifest = true;
+            }
             if (folder && raw.skillFolders.indexOf(folder) < 0) {
                 raw.skillFolders.push(folder);
                 if (skillFolderList.indexOf(folder) < 0) {
@@ -7325,6 +7352,9 @@ function readTeamsArchive(entries) {
     });
     rootSkills.forEach(function (entry) {
         const folder = packageSkillFolder(entries, entry, notices);
+        if (!folder) {
+            state.keepManifest = true;
+        }
         if (folder && skillFolderList.indexOf(folder) < 0) {
             skillFolderList.push(folder);
         }
@@ -7339,6 +7369,12 @@ function readTeamsArchive(entries) {
     const readableFolders = skillFolderList.filter(function (folder) {
         if (holdsCredential("SKILL.md", entries.get(folder + "SKILL.md"))) {
             notices.push("The skill in " + folder + " has a SKILL.md that looks like it holds a password, key, or token, so it was left out.");
+            state.keepManifest = true;
+            agents.forEach(function (agent, index) {
+                if (agent.skillFolders.indexOf(folder) >= 0) {
+                    state.keep.add(importedAgentFiles[index]);
+                }
+            });
             return false;
         }
         return true;
@@ -7361,8 +7397,8 @@ function readTeamsArchive(entries) {
             leaveOutForKey(state, name);
             return;
         }
-        state.used.add(name);
         if (readFolders.indexOf(owner) >= 0) {
+            state.used.add(name);
             skillEntries.set(name, bytes);
         }
     });

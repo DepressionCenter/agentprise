@@ -924,8 +924,9 @@ already uses for a different server gets a numbered name, such as
 tool still connects to its own address.
 `readItemFolders` first applies that rule between skills too: a later skill's
 different server gets a numbered name and its providers are updated before
-the package servers are combined. This also applies to plugin and skill ZIP
-imports.
+the package servers are combined. If a later skill uses those same settings,
+it reuses the existing numbered server. This also applies to plugin and skill
+ZIP imports.
 
 An OpenAPI description may be at most four folders below the package root
 (five path components, including the filename), matching item-file and
@@ -942,6 +943,15 @@ skill that the manifest does not list is kept for the backup only and gets
 a notice, even when its parent is listed. An explicitly listed descendant
 opens separately. Files from a skill rejected for credentials cannot become
 files of a listed parent.
+Safe companion files from that rejected skill remain in the backup.
+Rejected skill references also retain the source manifest and any assistant
+description that names them, so the author can repair the package.
+
+An assistant can import at most 50 API description files across its actions.
+Extra descriptions and their action sources remain in the backup, along with
+the assistant description and manifest. Providers that need those extra files
+are left out; each action keeps its other usable providers. Another assistant
+that shares an action applies its own file limit.
 
 A plugin manifest with a runtime the app can't read, an assistant file that
 isn't JSON, a connector's tool description file, a skill folder the manifest
@@ -957,7 +967,7 @@ key, token, or password in a query string, a JSON value, or a bearer header
 (`CREDENTIAL_LINE_PATTERN`). A line whose value names a key kept elsewhere,
 such as `${CLIENT_SECRET}`, or says only `true` or `false`, is not a match
 (`CREDENTIAL_REFERENCE_VALUE`). A match leaves the file out, and the notice names
-only the file. A skill whose `SKILL.md` matches is left out whole, and an
+only the file. A skill whose `SKILL.md` matches is not imported as a skill, and an
 action whose API description matches is left out. In a kept JSON or YAML
 file, `withoutRegistrationIds` replaces each `reference_id` and `referenceId`
 value with `replace-with-your-auth-registration-id`, so no tenant's
@@ -983,8 +993,10 @@ connector addresses. The error asks the author to remove the credentials.
 Assistant and action description files are checked as JSON text before
 parsing, regardless of their filename extension. A match leaves that part
 out, and its file is excluded from the backup. `holdsCredential` also checks
-unknown file types, such as `.env`, `.toml`, and `.pem`, as text unless the
-first 8 KiB contains a zero byte. Known binary types are skipped only when
+unknown file types, such as `.env`, `.toml`, and `.pem`, even when they contain
+zero bytes. It decodes UTF-16 files with a byte-order mark and removes zero
+bytes from decoded text before scanning. Other control bytes and invalid
+characters separate text segments. Known binary types are skipped only when
 their bytes pass the existing format check. Mislabeled text, such as a
 password stored in a fake PDF, is scanned before it can become a skill file
 or a backup-only file. Private
@@ -1223,7 +1235,7 @@ real account, unless the line names a tenant test.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 304 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 309 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

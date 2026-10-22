@@ -175,8 +175,10 @@ listed under known gaps.
   or `CREDENTIAL_LINE_PATTERN` finds a key, token, or password in it, in a
   query string, a JSON value, a bearer header, a YAML or settings line, or a
   private key header. Unknown types, including `.env`, `.toml`, and `.pem`,
-  are scanned as text unless the first 8 KiB contains a zero byte. Known
-  binary types are skipped only when their bytes pass the existing format
+  are scanned even when they contain zero bytes. UTF-16 byte-order marks
+  select the decoder; zero characters are removed and other control or
+  invalid characters separate text segments before scanning. Known binary
+  types are skipped only when their bytes pass the existing format
   check; mislabeled text files are scanned. Notices name parts and files, never
   the matched text. Kept files sit under `microsoft-package/` in the backup
   and appear in no other download. This is a pattern check, so a key in an
@@ -197,12 +199,15 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-21 ran 304 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-21 ran 309 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
   rejected skill cannot be imported as files of its parent. Evidence: the
   nested-skill tests in `tests/microsoft-package.test.mjs`.
+  Safe companion files from a rejected skill remain in the backup. Rejected
+  skill references retain the manifest and affected assistant descriptions.
+  Tests cover unsafe paths, missing folders, invalid types, and backup bytes.
   A root skill cannot override a Microsoft manifest or become an assistant
   attachment. Retained package paths keep their original depth and length
   allowance without counting the fixed backup prefix; traversal and excess
@@ -240,6 +245,8 @@ listed under known gaps.
   literal fallbacks, substitutions, or appended values are not exempt from
   the credential check. Tests confirm that matching values never reach
   projects, notices, or backups, while plain variable references survive.
+  Additional tests reject credentials in unknown files containing NUL bytes
+  and UTF-16 text with or without a byte-order mark, while safe bytes survive.
 - Actions whose servers exceed the project limit retain their source files,
   assistant descriptions, and manifest. An action keeps any remaining usable
   provider; one with none is excluded. Missing or unsafe action paths retain
@@ -254,10 +261,17 @@ listed under known gaps.
   and local descriptions with the action and assistant sources. Rejected
   assistant references retain the package manifest. Tests cover boundaries,
   shared actions, credential exclusion, and backup round trips.
+- API descriptions beyond an assistant's 50-file limit retain their bytes,
+  action sources, assistant description, and manifest in the backup. Tools
+  retain only providers with imported files. Tests cover both sides of the
+  limit and a shared action used by an assistant with room for all its files.
 - A plugin or Microsoft package cannot replace a skill's server settings
   merely by using the same name. Different definitions get separate names;
   assistant tool references follow the renamed package server. The same rule
   applies between imported skills: each skill's tools use its own server.
+  Identical definitions reuse an existing numbered server. Tests import
+  eleven skills through Microsoft, plugin, and skill ZIP routes and confirm
+  that their two server definitions remain usable after a backup round trip.
   Evidence:
   `combineServers` in `index.html`, the three plugin collision tests in
   `tests/project.test.mjs`, and the package server collision test in
