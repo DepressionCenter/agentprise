@@ -201,7 +201,7 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-22 ran 330 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-22 ran 332 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -270,6 +270,8 @@ listed under known gaps.
   Binary-signature tests cover fake PDF files, invalid-byte gaps, and NUL
   obfuscation. XML tests cover elements, attributes, namespaces, CDATA,
   character references, and allowed empty or external-reference values.
+  YAML flow-mapping tests cover nested and quoted fields, numeric values,
+  multiline values, and complete external references through backups.
 - Actions whose servers exceed the project limit retain their source files,
   assistant descriptions, and manifest. An action keeps any remaining usable
   provider; one with none is excluded. Missing or unsafe action paths retain
@@ -298,6 +300,10 @@ listed under known gaps.
   their action, API, assistant, and manifest sources. Function lists above
   the 50-name limit also retain those sources. Tests cover omitted and
   wildcard lists, both sides of the limit, shared actions, and backup bytes.
+  An explicit MCP tool list that normalizes to empty cannot become dynamic
+  discovery. Copilot export also rejects selections with no supported names.
+  Tests cover long names, invalid types, fallback prevention, and export
+  selections that retain only their supported names.
 - Inline API descriptions become uniquely named files beside their action
   manifest and take precedence over URL references. Tests cover collisions,
   shared actions, credential exclusion, backups, and Copilot exports.

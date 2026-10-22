@@ -4823,6 +4823,11 @@ function planExport(project, item, exportId, options) {
                 }
                 let action = null;
                 if (exportId === "teamsZip") {
+                    const tools = provider.tools.length > 0 ? provider.tools : server.tools;
+                    if (tools.length > 0 && !tools.some(function (tool) { return COPILOT_FUNCTION_PATTERN.test(tool); })) {
+                        leave("none of its named tools has a supported Copilot function name. Rename the tools before downloading this action.");
+                        return;
+                    }
                     action = copilotAction(actions, actionKeys, "mcp:" + provider.server, server.label);
                     if (!action) {
                         leave("Copilot takes at most " + COPILOT_ACTION_LIMIT + " actions.");
@@ -4830,7 +4835,6 @@ function planExport(project, item, exportId, options) {
                     }
                     action.server = provider.server;
                     action.descriptions.push(capability.description || capability.label);
-                    const tools = provider.tools.length > 0 ? provider.tools : server.tools;
                     tools.forEach(function (tool) {
                         if (COPILOT_FUNCTION_PATTERN.test(tool) && action.functions.indexOf(tool) < 0) {
                             action.functions.push(tool);
@@ -6738,6 +6742,7 @@ const CREDENTIAL_HEADER_PATTERN = /\b(?:proxy-)?authorization["']?[ \t]*[:=][ \t
 const CREDENTIAL_FIELD_NAME = "(?:[a-z0-9]+[_-])*(api[_-]?key|apikey|client[_-]?secret|password|passwd|access[_-]?token|refresh[_-]?token|bearer[_-]?token|private[_-]?key|secret|token)";
 const CREDENTIAL_FIELD_PATTERN = new RegExp("^" + CREDENTIAL_FIELD_NAME + "$", "i");
 const CREDENTIAL_LINE_PATTERN = new RegExp("^[ \\t]*(?:-[ \\t]+|export[ \\t]+)?[\"']?" + CREDENTIAL_FIELD_NAME + "[\"']?[ \\t]*[:=][ \\t]*([^\\r\\n]+)", "gim");
+const CREDENTIAL_FLOW_PATTERN = new RegExp(String.raw`[{,]\s*["']?` + CREDENTIAL_FIELD_NAME + String.raw`["']?\s*:\s*("(?:\\.|[^"\\])*"|'(?:''|[^'])*'|[^,}\]]*)`, "gi");
 
 // Values on such a line that name a key kept somewhere else, such as
 // "${API_KEY}" or "{{ secrets.token }}", or that say nothing, such as "true".
@@ -6921,6 +6926,23 @@ function textHoldsCredential(text) {
     if (CREDENTIAL_TEXT_PATTERN.test(text) || CREDENTIAL_HEADER_PATTERN.test(text) || xmlHoldsCredential(text)) {
         return true;
     }
+    for (const match of text.matchAll(CREDENTIAL_FLOW_PATTERN)) {
+        let value = match[2].trim();
+        if (value.charAt(0) === '"') {
+            try {
+                value = JSON.parse(value);
+            } catch (error) {
+                // Unsupported YAML escapes remain literal values for the check.
+            }
+        } else if (value.charAt(0) === "'" && value.endsWith("'")) {
+            value = value.slice(1, -1).replace(/''/g, "'");
+        } else {
+            value = value.replace(/[ \t]+#.*$/gm, "").trim();
+        }
+        if (credentialValueIsLiteral(value)) {
+            return true;
+        }
+    }
     for (const match of text.matchAll(/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>\\]+/gi)) {
         try {
             if (urlHasCredential(new URL(match[0]))) {
@@ -7084,9 +7106,12 @@ function remapItemServers(items, names) {
 
 /** The functions a runtime runs: its own list, or the manifest's when it runs all. */
 function runtimeFunctions(manifest, runtime) {
-    const own = Array.isArray(runtime.run_for_functions) ? runtime.run_for_functions.filter(function (name) { return typeof name === "string"; }) : [];
-    if (own.length > 0 && own.indexOf("*") < 0) {
-        return own;
+    const own = runtime.run_for_functions;
+    if (own !== undefined && !Array.isArray(own)) {
+        return [];
+    }
+    if (Array.isArray(own) && own.length > 0 && own.indexOf("*") < 0) {
+        return own.filter(function (name) { return typeof name === "string"; });
     }
     const listed = Array.isArray(manifest.functions) ? manifest.functions : [];
     return listed.map(function (entry) { return isPlainObject(entry) ? entry.name : ""; }).filter(function (name) { return typeof name === "string" && name; });
@@ -7179,6 +7204,14 @@ function actionProvider(entries, manifest, runtime, subject, state, files, manif
             state.keep.add(path);
         }
         state.notices.push(subject + " uses a fixed tool list that Agentprise can't write back. Its source files stay in the backup only. Use dynamic tool discovery in the action file if you want to import this runtime.");
+        return null;
+    }
+    const selected = runtime.run_for_functions;
+    const declared = manifest.functions;
+    const explicit = listedFunctions.length > 0 || (selected !== undefined && (!Array.isArray(selected) || (selected.length > 0 && selected.indexOf("*") < 0))) || (declared !== undefined && (!Array.isArray(declared) || declared.length > 0));
+    if (explicit && functions.length === 0) {
+        state.keep.add(manifestFile);
+        state.notices.push(subject + " names specific tools, but none of those names can be imported. Its source files stay in the backup only. Correct the function names and open the package again.");
         return null;
     }
     const address = packageServerAddress(spec.url, subject, state.notices);

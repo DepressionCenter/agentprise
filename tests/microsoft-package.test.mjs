@@ -115,6 +115,41 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("rejected MCP function names never become unrestricted discovery", async () => {
+    for (const names of [["a".repeat(101)], ["invalid name"], [123], [""]]) {
+      for (const scope of ["runtime", "manifest"]) {
+        const plugin = serverPlugin("records", "https://example.org/mcp");
+        if (scope === "runtime") {
+          plugin.runtimes[0].run_for_functions = names;
+          plugin.functions = [{ name: "differentTool" }];
+        } else plugin.functions = names.map((name) => ({ name }));
+        const entries = [
+          { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "helper", file: "agents/helper.json" }] } }))) },
+          { name: "agents/helper.json", bytes: encode(JSON.stringify(declarativeAgent("Helper", { actions: [{ id: "records", file: "plugins/records.json" }] }))) },
+          { name: "plugins/records.json", bytes: encode(JSON.stringify(plugin)) },
+        ];
+        const { project, notices } = await openPackage(entries);
+        assert.deepEqual(project.items[0].capabilities, []);
+        assert.deepEqual(project.servers, {});
+        assert.ok(notices.some((notice) => notice.includes("names specific tools")));
+        const { project: again } = await backupRoundTrip(project);
+        for (const source of entries) {
+          for (const result of [project, again]) {
+            assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + source.name).bytes, source.bytes);
+          }
+        }
+      }
+    }
+    for (const names of [["records.search"], ["records.search", "records_search"]]) {
+      const project = engine.project.normalize({ name: "Restricted tools", servers: { records: { transport: "http", url: "https://example.org/mcp", tools: names } }, items: [{ kind: "agent", name: "Helper", capabilities: [{ id: "records", providers: { "*": [{ kind: "mcp", server: "records", tools: names }] } }] }] }).project;
+      const output = await engine.exports.teamsPackage(project, project.items[0], teamsIcons());
+      const entries = await engine.zip.read(output.bytes);
+      const actions = [...entries].filter(([name]) => name.startsWith("plugin-")).map(([, bytes]) => JSON.parse(decode(bytes)));
+      assert.equal(actions.length, names.length === 1 ? 0 : 1);
+      for (const action of actions) assert.deepEqual(action.runtimes[0].run_for_functions, ["records_search"]);
+    }
+  });
+
   test("duplicate connector IDs retain all definitions in the source manifest", async () => {
     const connectors = ["first", "second"].map((name) => ({ id: "records", toolSource: { remoteMcpServer: { mcpServerUrl: "https://" + name + ".example.org/mcp" } } }));
     const source = { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentConnectors: connectors }))) };
@@ -1129,6 +1164,22 @@ describe("Microsoft 365 app packages made elsewhere", () => {
 });
 
 describe("unsafe and broken packages", () => {
+  test("YAML flow mappings cannot hide credential assignments", async () => {
+    const unsafe = ["database: {password: " + SECRET + "}", "services: [{name: db, database_password: '" + SECRET + "'}]", 'headers: {"X-API-Key": "' + SECRET + '"}', "config: {other: x, password:\n  " + SECRET + "}", "config: {password: $PASSWORD\n  " + SECRET + "}", "config: {password: 0}"];
+    const safe = ["database: {password: '${PASSWORD}'}", 'headers: {"X-API-Key": "${API_KEY}"}', "database: {password: $PASSWORD}", "database: {password: ''}"];
+    const entries = skillOnlyEntries();
+    unsafe.forEach((text, index) => entries.push({ name: "config/unsafe" + index + ".yaml", bytes: encode(text) }));
+    safe.forEach((text, index) => entries.push({ name: "config/safe" + index + ".yaml", bytes: encode(text) }));
+    const { project, notices } = await openPackage(entries);
+    const { project: again, backup } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.equal(result.unrecognized.some((entry) => entry.path.includes("/unsafe")), false);
+      assert.equal(result.unrecognized.filter((entry) => entry.path.includes("/safe")).length, safe.length);
+    }
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.equal(backup.entries.some((entry) => entry.name.includes("/unsafe")), false);
+  });
+
   test("binary signatures cannot bypass credential checks", async () => {
     const entries = mixedEntries();
     const payloads = [encode("%PDF-1.7\npassword: " + SECRET), new Uint8Array([...encode("%PDF-1.7\npassword:"), 0xff, ...encode(" " + SECRET)]), encode("%PDF-1.7\n" + ("password: " + SECRET).split("").join("\u0000"))];

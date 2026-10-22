@@ -914,6 +914,9 @@ in the backup with the assistant and manifest sources. An OpenAPI runtime
 without explicit operation names stays in the backup only. Agentprise does
 not infer operations from the API description. Add names to `functions` or
 `run_for_functions` in the action file to import that runtime.
+An MCP runtime with an explicit tool list that becomes empty is also kept
+only in the backup. It never becomes unrestricted tool discovery. Copilot
+export applies the same rule when none of a tool's names can be written.
 
 Root files that cannot be attached because of their contents, name, or the
 20-file attachment limit stay in the backup when they pass those checks.
@@ -1060,6 +1063,9 @@ allowed; literal values and references with fallbacks remain excluded.
 Literal passwords and numeric values have no minimum length. Empty values
 remain allowed, but a quoted space is a literal value.
 Malformed JSON receives the text scan.
+YAML flow mappings, such as `database: {password: ...}`, also receive field
+checks. Quoted names, nested mappings, numeric values, and multiline values
+are covered. Empty values and complete external references remain allowed.
 XML-style credential elements and attributes are checked too, including
 namespace prefixes and `name` or `key` fields paired with a `value` attribute.
 Standard character references are decoded for that check; external entities
@@ -1297,7 +1303,7 @@ real account, unless the line names a tenant test.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-22 ran 330 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-22 ran 332 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
