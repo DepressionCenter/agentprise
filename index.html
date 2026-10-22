@@ -2978,7 +2978,7 @@ function itemPaths(item) {
  * Copies an untrusted project: caps and cleans items, makes skill names unique,
  * checks links, and keeps unreadable files for the backup.
  * @param {*} input from storage, a file, or the library
- * @returns {{project: object, notices: string[], unrecognizedOverflow: number}} count of backup-only files omitted by the capacity limit
+ * @returns {{project: object, notices: string[], unrecognizedOverflow: number, unrecognizedConflicts: number}} counts of backup-only files omitted by capacity or name conflicts
  */
 function normalizeProject(input) {
     const notices = [];
@@ -3115,7 +3115,7 @@ function normalizeProject(input) {
     if (!project.description && project.items.length > 0) {
         project.description = project.items[0].description.slice(0, LIMITS.description);
     }
-    return { project: project, notices: notices, unrecognizedOverflow: dropped.over };
+    return { project: project, notices: notices, unrecognizedOverflow: dropped.over, unrecognizedConflicts: dropped.repeated };
 }
 
 /** A program by its first bytes, its type, or a hidden program extension. */
@@ -7254,6 +7254,39 @@ function isMicrosoftManifest(entries) {
 }
 
 /**
+ * Removes providers whose API files failed validation and retains their repair sources.
+ * @param {object} agent raw assistant; capabilities and toolFiles are updated in place
+ * @param {Array<{path: string}>} accepted files that survive the current validation stage
+ * @param {object} state package sources; keep and keepManifest are updated
+ * @param {string} sourceFile assistant description path
+ * @returns {number} count of rejected API files
+ */
+function retainRejectedApiSources(agent, accepted, state, sourceFile) {
+    const paths = new Set(accepted.map(function (file) { return file.path; }));
+    const rejected = new Set(agent.toolFiles.filter(function (file) { return !paths.has(file.path); }).map(function (file) { return file.path; }));
+    if (rejected.size === 0) {
+        return 0;
+    }
+    const affected = new Set(agent.capabilities.filter(function (capability) {
+        return capability.providers["*"].some(function (provider) { return provider.kind === "openapi" && rejected.has(provider.spec); });
+    }).map(function (capability) { return capability.id; }));
+    state.actionFiles.forEach(function (action, actionFile) {
+        if (action && affected.has(action.capability.id)) {
+            state.keep.add(actionFile);
+            action.files.forEach(function (path) { state.keep.add(path); });
+        }
+    });
+    state.keep.add(sourceFile);
+    state.keepManifest = true;
+    agent.capabilities = agent.capabilities.filter(function (capability) {
+        capability.providers["*"] = capability.providers["*"].filter(function (provider) { return provider.kind !== "openapi" || !rejected.has(provider.spec); });
+        return capability.providers["*"].length > 0;
+    });
+    agent.toolFiles = agent.toolFiles.filter(function (file) { return !rejected.has(file.path); });
+    return rejected.size;
+}
+
+/**
  * A Microsoft 365 app package as a project: each declarative agent is an
  * assistant with its actions as tools and its skills; skills the app lists
  * are skills; connectors are tool servers. Files the app can't use, and
@@ -7312,6 +7345,7 @@ function readTeamsArchive(entries) {
     const skillFolderList = [];
     agentFiles.forEach(function (file) {
         if (holdsCredential(file, entries.get(file))) {
+            state.keepManifest = true;
             leaveOutForKey(state, file);
             notices.push("The assistant file " + file + " looks like it holds a password, key, or token, so the assistant was left out. Remove the key from the file and open the package again.");
             return;
@@ -7320,6 +7354,7 @@ function readTeamsArchive(entries) {
         if (!declarative) {
             notices.push("The assistant file " + file + " is not valid JSON, so it was left out.");
             state.keep.add(file);
+            state.keepManifest = true;
             return;
         }
         if (agents.length >= LIMITS.items) {
@@ -7331,26 +7366,14 @@ function readTeamsArchive(entries) {
         const raw = teamsAgentRaw(entries, manifest, declarative, notices);
         const files = [];
         raw.capabilities = readCopilotActions(entries, declarative.actions, state, files, file);
-        const overflowFiles = cleanSkillFiles(files, []).overflow;
-        const overflowPaths = new Set(overflowFiles.map(function (entry) { return entry.path; }));
-        raw.toolFiles = files.filter(function (entry) { return !overflowPaths.has(entry.path); });
-        if (overflowFiles.length > 0) {
-            const affected = new Set(raw.capabilities.filter(function (capability) {
-                return capability.providers["*"].some(function (provider) { return provider.kind === "openapi" && overflowPaths.has(provider.spec); });
-            }).map(function (capability) { return capability.id; }));
-            state.actionFiles.forEach(function (action, actionFile) {
-                if (action && affected.has(action.capability.id)) {
-                    state.keep.add(actionFile);
-                    action.files.forEach(function (path) { state.keep.add(path); });
-                }
-            });
-            state.keep.add(file);
-            state.keepManifest = true;
-            raw.capabilities = raw.capabilities.filter(function (capability) {
-                capability.providers["*"] = capability.providers["*"].filter(function (provider) { return provider.kind !== "openapi" || !overflowPaths.has(provider.spec); });
-                return capability.providers["*"].length > 0;
-            });
+        const checkedFiles = cleanSkillFiles(files, []);
+        raw.toolFiles = files;
+        const rejectedCount = retainRejectedApiSources(raw, checkedFiles.files, state, file);
+        if (checkedFiles.overflow.length > 0) {
             notices.push("An assistant can hold at most " + LIMITS.skillFiles + " API description files. Agentprise keeps the extra descriptions and their action sources in the backup only. To use them, move some actions to another assistant and open the package again.");
+        }
+        if (rejectedCount > checkedFiles.overflow.length) {
+            notices.push("Some API description files have contents or names this app can't use. Agentprise keeps their action and assistant sources in the backup. Check the descriptions and open the package again.");
         }
         raw.skillFolders = [];
         (Array.isArray(declarative.agent_skills) ? declarative.agent_skills : []).forEach(function (entry) {
@@ -7514,10 +7537,6 @@ function readTeamsArchive(entries) {
     // program or looks like it holds a key.
     const attachments = [];
     const attachmentNames = Object.create(null);
-    const kept = [];
-    if (state.keepManifest && manifest) {
-        state.keep.add("manifest.json");
-    }
     if (entries.has("SKILL.md")) {
         state.keep.add("SKILL.md");
     }
@@ -7525,21 +7544,45 @@ function readTeamsArchive(entries) {
         if (state.used.has(name) && !state.keep.has(name)) {
             return;
         }
-        if (holdsCredential(name, bytes)) {
-            leaveOutForKey(state, name);
-            return;
-        }
         if (!state.keep.has(name) && agents.length > 0 && name.indexOf("/") < 0 && !/\.(json|ya?ml)$/i.test(name) && fileKind(name)) {
-            const attached = attachments.length < LIMITS.files
+            if (holdsCredential(name, bytes)) {
+                leaveOutForKey(state, name);
+                return;
+            }
+            let attached = attachments.length < LIMITS.files
                 ? cleanAttachedFile({ name: originalTextName(name), bytes: bytes }, attachmentNames)
                 : { problem: "only " + LIMITS.files + " attached files fit" };
+            if (attached.file && agents.some(function (agent) { return agent.toolFiles.some(function (file) { return file.path.toLowerCase() === (BUNDLE_FILES_FOLDER + attached.file.name).toLowerCase(); }); })) {
+                attached = { problem: "an API description already uses that attachment name" };
+            }
             if (attached.file) {
                 attachments.push(attached.file);
+                state.used.add(name);
                 return;
             }
             if (!isProgramFile(name, bytes)) {
                 notices.push("Agentprise couldn't attach " + name + " because " + attached.problem + ", so it keeps the file in the backup only. Check the file in the package if the assistant needs it.");
             }
+        }
+    });
+    agents.forEach(function (agent, index) {
+        const files = attachments.map(function (file) { return { path: BUNDLE_FILES_FOLDER + file.name, bytes: file.bytes }; }).concat(agent.toolFiles);
+        const checked = normalizeItem(Object.assign({}, agent, { kind: "agent", files: files }), []).item.files;
+        if (retainRejectedApiSources(agent, checked, state, importedAgentFiles[index]) > 0) {
+            notices.push("Some API descriptions could not fit among the assistant's attachments. Agentprise keeps their source files in the backup. Move the descriptions outside references/ or remove other attachments, then open the package again.");
+        }
+    });
+    if (state.keepManifest && manifest) {
+        state.keep.add("manifest.json");
+    }
+    const kept = [];
+    entries.forEach(function (bytes, name) {
+        if (state.used.has(name) && !state.keep.has(name)) {
+            return;
+        }
+        if (holdsCredential(name, bytes)) {
+            leaveOutForKey(state, name);
+            return;
         }
         kept.push({ path: PACKAGE_KEPT_FOLDER + name, note: PACKAGE_KEPT_NOTE, bytes: withoutRegistrationIds(name, bytes), name: name });
     });
@@ -7608,6 +7651,9 @@ function readTeamsArchive(entries) {
     const result = normalizeProject(raw);
     if (result.unrecognizedOverflow > 0) {
         return { error: "Agentprise didn't open this package, because more than " + LIMITS.unrecognized + " files would need to stay in the backup only. Split the package into smaller packages and open each one.", blocked: true };
+    }
+    if (result.unrecognizedConflicts > 0) {
+        return { error: "Agentprise didn't open this package, because some files would have the same backup name. Rename the files so their names differ by more than capitalization, update their references, and open the package again.", blocked: true };
     }
     // Skill names are final only once normalizeProject numbers repeated ones,
     // so each assistant's skills are matched by folder after it runs.

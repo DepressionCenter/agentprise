@@ -115,6 +115,104 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("rejected API files retain action, assistant, and package sources", async () => {
+    const variants = [
+      { name: "api.yaml", bytes: encode("") },
+      { name: "api.yaml", bytes: new Uint8Array([0, 1, 2, 3]) },
+      { name: "api.dat", bytes: encode("openapi: 3.0.0\npaths: {}\n") },
+      { name: "api.exe", bytes: new Uint8Array([0x4d, 0x5a, 0x90, 0]) },
+    ];
+    for (const variant of variants) {
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "helper", file: "agents/helper.json" }] } }))) },
+        { name: "agents/helper.json", bytes: encode(JSON.stringify(declarativeAgent("Helper", { actions: [{ id: "records", file: "plugins/records.json" }] }))) },
+        { name: "plugins/records.json", bytes: encode(JSON.stringify(openApiPlugin("records", variant.name))) },
+        { name: "plugins/" + variant.name, bytes: variant.bytes },
+      ];
+      const { project, notices } = await openPackage(entries);
+      assert.deepEqual(project.items[0].capabilities, []);
+      assert.deepEqual(project.items[0].files, []);
+      assert.ok(notices.some((notice) => notice.includes("Some API description files")));
+      const { project: again, backup } = await backupRoundTrip(project);
+      for (const source of entries.filter((entry) => !entry.name.endsWith(".exe"))) {
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + source.name).bytes, source.bytes);
+        }
+      }
+      assert.equal(backup.entries.some((entry) => entry.name.endsWith(".exe")), false);
+    }
+  });
+
+  test("API files in the attachment folder retain sources when attachments are full", async () => {
+    for (const count of [19, 20]) {
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "helper", file: "agents/helper.json" }] } }))) },
+        { name: "agents/helper.json", bytes: encode(JSON.stringify(declarativeAgent("Helper", { actions: [{ id: "records", file: "plugins/records.json" }] }))) },
+        { name: "plugins/records.json", bytes: encode(JSON.stringify(openApiPlugin("records", "../references/api.yaml"))) },
+        { name: "references/api.yaml", bytes: encode("openapi: 3.0.0\npaths: {}\n") },
+        ...Array.from({ length: count }, (_, index) => ({ name: "notes" + index + ".txt", bytes: encode("Notes " + index) })),
+      ];
+      const { project } = await openPackage(entries);
+      assert.equal(project.items[0].capabilities.length, count === 19 ? 1 : 0);
+      assert.equal(project.items[0].files.length, 20);
+      const { project: again } = await backupRoundTrip(project);
+      for (const source of count === 20 ? entries.slice(0, 4) : []) {
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + source.name).bytes, source.bytes);
+        }
+      }
+    }
+  });
+
+  test("case-conflicting API source paths reject the package instead of losing backup bytes", async () => {
+    const plugin = openApiPlugin("records", "Api.yaml");
+    plugin.runtimes.push({ ...plugin.runtimes[0], spec: { url: "api.yaml" } });
+    const entries = [
+      { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "helper", file: "agents/helper.json" }] } }))) },
+      { name: "agents/helper.json", bytes: encode(JSON.stringify(declarativeAgent("Helper", { actions: [{ id: "records", file: "plugins/records.json" }] }))) },
+      { name: "plugins/records.json", bytes: encode(JSON.stringify(plugin)) },
+      { name: "plugins/Api.yaml", bytes: encode("openapi: 3.0.0\ninfo: First\n") },
+      { name: "plugins/api.yaml", bytes: encode("openapi: 3.0.0\ninfo: Second\n") },
+    ];
+    const result = await engine.imports.any("package.zip", engine.zip.write(entries));
+    assert.equal(result.project, undefined);
+    assert.equal(result.blocked, true);
+    assert.ok(result.error.includes("same backup name") && result.error.includes("update their references"));
+  });
+
+  test("root attachments cannot replace API descriptions with the same stored path", async () => {
+    const entries = [
+      { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "helper", file: "agents/helper.json" }] } }))) },
+      { name: "agents/helper.json", bytes: encode(JSON.stringify(declarativeAgent("Helper", { actions: [{ id: "records", file: "plugins/records.json" }] }))) },
+      { name: "plugins/records.json", bytes: encode(JSON.stringify(openApiPlugin("records", "../references/api.txt"))) },
+      { name: "references/api.txt", bytes: encode("openapi: 3.0.0\npaths: {}\n") },
+      { name: "api.txt", bytes: encode("Unrelated root attachment.") },
+    ];
+    const { project } = await openPackage(entries);
+    const { project: again } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.deepEqual(result.items[0].files.find((file) => file.path === "references/api.txt").bytes, entries[3].bytes);
+      assert.deepEqual(result.unrecognized.find((file) => file.path === "microsoft-package/api.txt").bytes, entries[4].bytes);
+    }
+  });
+
+  test("malformed assistant files retain the package manifest for repair", async () => {
+    for (const text of ["{ broken", "[]", "null", ""]) {
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "helper", file: "agents/helper.json" }] } }))) },
+        { name: "agents/helper.json", bytes: encode(text) },
+      ];
+      const { project } = await openPackage(entries);
+      assert.deepEqual(project.items, []);
+      const { project: again } = await backupRoundTrip(project);
+      for (const source of entries) {
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + source.name).bytes, source.bytes);
+        }
+      }
+    }
+  });
+
   test("OpenAPI runtimes without explicit operations retain repairable sources", async () => {
     for (const runFor of [undefined, [], ["*"]]) {
       const plugin = openApiPlugin("records", "records.yaml");

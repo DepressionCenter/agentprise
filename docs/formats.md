@@ -894,11 +894,15 @@ assigned before the limit applies, so a dropped server's name cannot be
 reassigned to a different address during the merge.
 A rejected assistant reference retains the manifest while valid package
 parts still open.
+Malformed assistant JSON also retains the manifest and original assistant
+file. An assistant rejected for credentials retains only its safe manifest.
 
 A backup holds at most 50 files that the app cannot use. If a Microsoft
 package would exceed that limit, Agentprise refuses the whole package and
 asks you to split it. This count includes unsupported files inside skills.
 It prevents a partially preserved project from replacing the source package.
+Files whose names conflict in the backup also block the package. Rename them
+so they differ beyond capitalization, and update their references.
 
 Each action opens at most six usable runtimes. Extra runtime definitions
 and their local API descriptions stay in the backup with the action,
@@ -915,6 +919,8 @@ Root files that cannot be attached because of their contents, name, or the
 20-file attachment limit stay in the backup when they pass those checks.
 Each refused attachment gets a notice. Empty files and files with invalid
 document contents are preserved for you to inspect.
+An API description takes precedence over a root attachment with the same
+stored path; the root attachment stays in the backup.
 
 Only the color icon actually loaded by an assistant counts as imported.
 Other icons stay in the backup, including both icons in a package with
@@ -968,6 +974,10 @@ Extra descriptions and their action sources remain in the backup, along with
 the assistant description and manifest. Providers that need those extra files
 are left out; each action keeps its other usable providers. Another assistant
 that shares an action applies its own file limit.
+Rejected API contents or names retain the same sources. Descriptions directly
+under `references/` also share the 20-file attachment limit. If they do not
+fit, their providers are removed and their sources stay in the backup.
+Credential and program exclusions still apply to all retained files.
 
 A plugin manifest with a runtime the app can't read, an assistant file that
 isn't JSON, a connector's tool description file, a skill folder the manifest
@@ -1257,7 +1267,7 @@ real account, unless the line names a tenant test.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 315 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 320 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

@@ -199,7 +199,7 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-21 ran 315 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-21 ran 320 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -272,6 +272,12 @@ listed under known gaps.
   action sources, assistant description, and manifest in the backup. Tools
   retain only providers with imported files. Tests cover both sides of the
   limit and a shared action used by an assistant with room for all its files.
+  The same retention applies to invalid or unsupported file contents and
+  attachment-limit failures. Tests cover empty, binary, unknown, and program
+  files; programs remain excluded. A root attachment cannot replace an API
+  description at the same stored path. Conflicting backup names block the
+  package instead of dropping a source file. Malformed assistant files retain
+  their package manifest. Regression tests check these sources through backups.
 - OpenAPI runtimes without explicit operation names stay in the backup with
   their action, API, assistant, and manifest sources. Function lists above
   the 50-name limit also retain those sources. Tests cover omitted and
