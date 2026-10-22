@@ -115,6 +115,106 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("inline API descriptions become distinct files and take precedence over URLs", async () => {
+    const descriptions = ["openapi: 3.0.0\npaths:\n  /records:\n    get:\n      operationId: searchRecords\n", JSON.stringify({ openapi: "3.0.0", paths: { "/records": { get: { responses: { "200": { description: "OK" } }, operationId: "searchRecords" } } } })];
+    for (const api of descriptions) {
+      for (const url of [undefined, "https://example.org/ignored.yaml", "ignored.yaml"]) {
+        const plugin = openApiPlugin("records", "unused.yaml");
+        plugin.runtimes[0].spec = { api_description: api };
+        if (url !== undefined) plugin.runtimes[0].spec.url = url;
+        plugin.runtimes.push({ ...plugin.runtimes[0], spec: { api_description: api.replace("/records", "/other") } });
+        const entries = [
+          { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "first", file: "agents/first.json" }, { id: "second", file: "agents/second.json" }] } }))) },
+          ...["first", "second"].map((name) => ({ name: "agents/" + name + ".json", bytes: encode(JSON.stringify(declarativeAgent(name, { actions: [{ id: "records", file: "plugins/records.json" }] }))) })),
+          { name: "plugins/records.json", bytes: encode(JSON.stringify(plugin)) },
+          { name: "plugins/INLINE-DESCRIPTION-1.yaml", bytes: encode("Unrelated file.") },
+        ];
+        const { project } = await openPackage(entries);
+        const { project: again } = await backupRoundTrip(project);
+        for (const result of [project, again]) {
+          for (const item of result.items) {
+            assert.deepEqual(item.capabilities[0].providers["*"].map((provider) => provider.spec), ["plugins/inline-description-2.yaml", "plugins/inline-description-3.yaml"]);
+            assert.equal(decode(item.files[0].bytes), api);
+            assert.equal(decode(item.files[1].bytes), api.replace("/records", "/other"));
+          }
+        }
+        const exported = await engine.exports.teamsPackage(project, project.items[0], teamsIcons());
+        const reopened = await engine.imports.any(exported.fileName, exported.bytes);
+        assert.equal(reopened.project.items[0].capabilities.flatMap((capability) => capability.providers["*"]).length, 2);
+      }
+    }
+    const entries = agentOnlyEntries();
+    const action = entries.find((entry) => entry.name.endsWith(".json") && decode(entry.bytes).includes('"OpenApi"'));
+    const plugin = JSON.parse(decode(action.bytes));
+    plugin.runtimes[0].spec = { api_description: "client_secret: " + SECRET };
+    action.bytes = encode(JSON.stringify(plugin));
+    const { project, notices } = await openPackage(entries);
+    const { backup } = await backupRoundTrip(project);
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+  });
+
+  test("static MCP action descriptions retain linked sources without switching discovery", async () => {
+    for (const description of [{ tools: [{ name: "searchRecords", inputSchema: { type: "object" } }] }, { file: "tools.json" }]) {
+      const plugin = serverPlugin("records", "https://example.org/mcp");
+      plugin.runtimes[0].spec.mcp_tool_description = description;
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "helper", file: "agents/helper.json" }] } }))) },
+        { name: "agents/helper.json", bytes: encode(JSON.stringify(declarativeAgent("Helper", { actions: [{ id: "records", file: "plugins/records.json" }] }))) },
+        { name: "plugins/records.json", bytes: encode(JSON.stringify(plugin)) },
+      ];
+      if (description.file) entries.push({ name: "plugins/tools.json", bytes: encode('{"tools":[{"name":"searchRecords"}]}') });
+      const { project, notices } = await openPackage(entries);
+      assert.deepEqual(project.items[0].capabilities, []);
+      assert.deepEqual(project.servers, {});
+      assert.ok(notices.some((notice) => notice.includes("fixed tool list")));
+      const { project: again } = await backupRoundTrip(project);
+      for (const source of entries) {
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + source.name).bytes, source.bytes);
+        }
+      }
+    }
+  });
+
+  test("valid connector tool lists retain the manifest relationship", async () => {
+    const entries = [
+      { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentConnectors: [{ id: "records", toolSource: { remoteMcpServer: { mcpServerUrl: "https://example.org/mcp", mcpToolDescription: { file: "tools/records.json" } } } }] }))) },
+      { name: "tools/records.json", bytes: encode('{"tools":[{"name":"searchRecords"}]}') },
+    ];
+    const { project } = await openPackage(entries);
+    const { project: again } = await backupRoundTrip(project);
+    for (const source of entries) {
+      for (const result of [project, again]) {
+        assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + source.name).bytes, source.bytes);
+      }
+    }
+  });
+
+  test("UTF-16 registration IDs are scrubbed without changing the text encoding", async () => {
+    for (const littleEndian of [true, false]) {
+      for (const bom of [true, false]) {
+        for (const suffix of ["json", "yaml"]) {
+          const text = suffix === "json" ? '{"referenceId":"example-tenant-registration","title":"Caf\u00e9"}' : 'reference_id: "example-tenant-registration"\ntitle: "Caf\u00e9"\n';
+          const bytes = new Uint8Array(text.length * 2 + (bom ? 2 : 0));
+          const view = new DataView(bytes.buffer);
+          if (bom) view.setUint16(0, 0xfeff, littleEndian);
+          for (let index = 0; index < text.length; index++) view.setUint16((bom ? 2 : 0) + index * 2, text.charCodeAt(index), littleEndian);
+          const entries = skillOnlyEntries();
+          entries.push({ name: "config/settings." + suffix, bytes });
+          const { project } = await openPackage(entries);
+          const { project: again } = await backupRoundTrip(project);
+          for (const result of [project, again]) {
+            const kept = result.unrecognized.find((entry) => entry.path === "microsoft-package/config/settings." + suffix).bytes;
+            const restored = new TextDecoder(littleEndian ? "utf-16le" : "utf-16be").decode(kept);
+            assert.equal(restored, text.replace("example-tenant-registration", "replace-with-your-auth-registration-id"));
+            assert.deepEqual(kept.slice(0, 2), bytes.slice(0, 2));
+          }
+        }
+      }
+    }
+  });
+
   test("rejected API files retain action, assistant, and package sources", async () => {
     const variants = [
       { name: "api.yaml", bytes: encode("") },

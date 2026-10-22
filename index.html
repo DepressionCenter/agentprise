@@ -4861,7 +4861,7 @@ function planExport(project, item, exportId, options) {
                     const specBytes = itemFileBytes(link.owner, provider.spec);
                     const specText = specBytes ? fromBytes(specBytes) : "";
                     const operations = provider.operations.filter(function (operation) {
-                        return COPILOT_FUNCTION_PATTERN.test(operation) && new RegExp("operationId[\"']?\\s*:\\s*[\"']?" + operation + "[\"']?\\s*(,|$)", "m").test(specText);
+                        return COPILOT_FUNCTION_PATTERN.test(operation) && new RegExp("operationId[\"']?\\s*:\\s*[\"']?" + operation + "[\"']?\\s*(,|}|$)", "m").test(specText);
                     });
                     if (!specBytes || operations.length === 0) {
                         leave(specBytes ? "its API description has none of the operations it names." : "its API description is missing.");
@@ -6801,6 +6801,17 @@ function packageRelativePath(manifestFile, value) {
     return packagePath(parts.join("/"));
 }
 
+/** Text encoding for package scans and rewrites, including common BOM-less UTF-16 text. */
+function packageTextEncoding(bytes) {
+    if ((bytes[0] === 0xff && bytes[1] === 0xfe) || (bytes.length >= 4 && bytes[0] > 0 && bytes[1] === 0 && bytes[2] > 0 && bytes[3] === 0)) {
+        return "utf-16le";
+    }
+    if ((bytes[0] === 0xfe && bytes[1] === 0xff) || (bytes.length >= 4 && bytes[0] === 0 && bytes[1] > 0 && bytes[2] === 0 && bytes[3] > 0)) {
+        return "utf-16be";
+    }
+    return "utf-8";
+}
+
 /**
  * Whether a file looks like it holds a credential, including a private key.
  * Unknown file types are scanned even when they contain NUL bytes. Known
@@ -6812,11 +6823,24 @@ function holdsCredential(name, bytes) {
     if (!textual) {
         return false;
     }
-    const encoding = bytes[0] === 0xff && bytes[1] === 0xfe ? "utf-16le" : bytes[0] === 0xfe && bytes[1] === 0xff ? "utf-16be" : "utf-8";
+    const encoding = packageTextEncoding(bytes);
     const text = new TextDecoder(encoding).decode(bytes);
     const scanned = text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "\n");
     const json = parseJsonObject(scanned);
-    return textHoldsCredential(scanned) || Boolean(json && textHoldsCredential(JSON.stringify(json)));
+    if (textHoldsCredential(scanned) || Boolean(json && textHoldsCredential(JSON.stringify(json)))) {
+        return true;
+    }
+    const values = json ? Object.values(json) : [];
+    while (values.length > 0) {
+        const value = values.pop();
+        if (typeof value === "string" && textHoldsCredential(value)) {
+            return true;
+        }
+        if (value && typeof value === "object") {
+            Object.values(value).forEach(function (entry) { values.push(entry); });
+        }
+    }
+    return false;
 }
 
 /** True when text matches a credential pattern rather than a reference to a key. */
@@ -6848,12 +6872,30 @@ function withoutRegistrationIds(name, bytes) {
     if (!/\.(json|ya?ml)$/i.test(name)) {
         return bytes;
     }
-    const text = fromBytes(bytes);
+    const encoding = packageTextEncoding(bytes);
+    const text = new TextDecoder(encoding).decode(bytes);
     const pattern = /(["']?(?:reference_id|referenceId)["']?\s*:\s*["']?)([^"'\s,}\]]+)/g;
     const cleaned = text.replace(pattern, function (match, start, value) {
         return value === COPILOT_AUTH_PLACEHOLDER ? match : start + COPILOT_AUTH_PLACEHOLDER;
     });
-    return cleaned === text ? bytes : toBytes(cleaned);
+    if (cleaned === text) {
+        return bytes;
+    }
+    if (encoding === "utf-8") {
+        const rewritten = toBytes(cleaned);
+        return bytesStartWith(bytes, [0xef, 0xbb, 0xbf]) ? new Uint8Array([0xef, 0xbb, 0xbf, ...rewritten]) : rewritten;
+    }
+    const hasBom = (bytes[0] === 0xff && bytes[1] === 0xfe) || (bytes[0] === 0xfe && bytes[1] === 0xff);
+    const rewritten = new Uint8Array(cleaned.length * 2 + (hasBom ? 2 : 0));
+    const view = new DataView(rewritten.buffer);
+    const littleEndian = encoding === "utf-16le";
+    if (hasBom) {
+        view.setUint16(0, 0xfeff, littleEndian);
+    }
+    for (let index = 0; index < cleaned.length; index++) {
+        view.setUint16((hasBom ? 2 : 0) + index * 2, cleaned.charCodeAt(index), littleEndian);
+    }
+    return rewritten;
 }
 
 /** Records a file left out for holding a key, once. */
@@ -7007,12 +7049,28 @@ function actionProvider(entries, manifest, runtime, subject, state, files, manif
         state.notices.push(subject + " has function names that exceed this app's limits. Agentprise keeps its complete source files in the backup. Check the names, split lists longer than " + LIMITS.providerList + " across actions, and open the package again.");
     }
     if (runtime.type === "OpenApi") {
-        const address = typeof spec.url === "string" ? spec.url : "";
-        if (/^[a-z][a-z0-9+.-]*:/i.test(address)) {
-            state.notices.push(subject + " reads its API description from the web, and Agentprise never downloads files, so it was left out.");
-            return null;
+        let path = "";
+        if (Object.prototype.hasOwnProperty.call(spec, "api_description")) {
+            if (typeof spec.api_description !== "string" || !spec.api_description) {
+                state.notices.push(subject + " has an empty or invalid inline API description. Fix api_description in the action file and open the package again.");
+                return null;
+            }
+            const taken = new Set(Array.from(entries.keys()).map(function (name) { return name.toLowerCase(); }));
+            for (let index = 1; !path; index++) {
+                const candidate = manifestFile.split("/").slice(0, -1).concat(["inline-description-" + index + ".yaml"]).join("/");
+                if (!taken.has(candidate.toLowerCase())) {
+                    path = candidate;
+                }
+            }
+            entries.set(path, toBytes(spec.api_description));
+        } else {
+            const address = typeof spec.url === "string" ? spec.url : "";
+            if (/^[a-z][a-z0-9+.-]*:/i.test(address)) {
+                state.notices.push(subject + " reads its API description from the web, and Agentprise never downloads files, so it was left out.");
+                return null;
+            }
+            path = packageRelativePath(manifestFile, address);
         }
-        const path = packageRelativePath(manifestFile, address);
         if (!path || !entries.has(path)) {
             state.notices.push(subject + " names an API description that isn't in the package, so it was left out.");
             return null;
@@ -7039,6 +7097,16 @@ function actionProvider(entries, manifest, runtime, subject, state, files, manif
             files.push({ path: path, bytes: entries.get(path) });
         }
         return { kind: "openapi", spec: path, operations: functions, auth: auth };
+    }
+    if (Object.prototype.hasOwnProperty.call(spec, "mcp_tool_description")) {
+        state.keep.add(manifestFile);
+        const description = spec.mcp_tool_description;
+        const path = isPlainObject(description) ? packageRelativePath(manifestFile, description.file) : "";
+        if (path && entries.has(path)) {
+            state.keep.add(path);
+        }
+        state.notices.push(subject + " uses a fixed tool list that Agentprise can't write back. Its source files stay in the backup only. Use dynamic tool discovery in the action file if you want to import this runtime.");
+        return null;
     }
     const address = packageServerAddress(spec.url, subject, state.notices);
     const label = actionLabel(manifest);
@@ -7226,6 +7294,7 @@ function readAgentConnectors(entries, list, state) {
         const descriptionPath = packagePath(description);
         if (descriptionPath && entries.has(descriptionPath)) {
             state.keep.add(descriptionPath);
+            state.keepManifest = true;
         } else if (remote.mcpToolDescription !== undefined) {
             state.notices.push(subject + " names a tool list file that isn't in the package or has an unsafe path. Agentprise added the server and keeps the manifest in the backup. To keep the tool list, fix the path in the package and open it again.");
             state.keepManifest = true;
@@ -7295,6 +7364,7 @@ function retainRejectedApiSources(agent, accepted, state, sourceFile) {
  * @returns {{project: object, notices: string[]}|{error: string, blocked?: boolean}}
  */
 function readTeamsArchive(entries) {
+    entries = new Map(entries);
     const manifest = entries.has("manifest.json") ? parseJsonObject(fromBytes(entries.get("manifest.json"))) : null;
     if (entries.has("manifest.json") && !manifest) {
         return { error: "The manifest.json file inside this ZIP is not valid JSON, so it can't be opened as a Copilot app package." };

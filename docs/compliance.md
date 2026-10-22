@@ -199,7 +199,7 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-21 ran 320 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-21 ran 324 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -282,6 +282,15 @@ listed under known gaps.
   their action, API, assistant, and manifest sources. Function lists above
   the 50-name limit also retain those sources. Tests cover omitted and
   wildcard lists, both sides of the limit, shared actions, and backup bytes.
+- Inline API descriptions become uniquely named files beside their action
+  manifest and take precedence over URL references. Tests cover collisions,
+  shared actions, credential exclusion, backups, and Copilot exports.
+  Static MCP action descriptions retain their linked sources instead of
+  becoming dynamic tools. Valid connector tool lists retain the manifest
+  relationship. Both forms have backup round-trip tests.
+- Registration IDs in retained UTF-16 JSON and YAML are replaced while
+  preserving encoding and byte-order marks. Tests cover both byte orders,
+  files with and without marks, non-ASCII text, and backup round trips.
 - A plugin or Microsoft package cannot replace a skill's server settings
   merely by using the same name. Different definitions get separate names;
   assistant tool references follow the renamed package server. The same rule

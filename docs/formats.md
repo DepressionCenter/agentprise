@@ -932,8 +932,8 @@ reference, and the source manifest stays in the backup.
 |---|---|---|
 | `copilotAgents.declarativeAgents[].file` | One assistant each, read by `teamsAgentRaw` | A file named twice is read once. Without a list, `declarativeAgent_0.json` is read. Only the first assistant keeps the manifest `id` as its app id; the others get a new one on download, with a notice |
 | Root files of accepted types | Attached files of every assistant | With two or more assistants, each gets a copy and a notice |
-| `actions[]` with an `OpenApi` runtime | A tool (`action.<namespace>`) with an `openapi` provider under `*`; the description is copied to the assistant's files at its package path | The description must be inside the package. A web address is never fetched |
-| `actions[]` with a `RemoteMCPServer` runtime | A tool with an `mcp` provider, and a project server named after the `namespace` | A credential match in the action file excludes the action. Otherwise, the address goes through `cleanServerUrl`; an unsafe address is cleared for the installer to supply |
+| `actions[]` with an `OpenApi` runtime | A tool (`action.<namespace>`) with an `openapi` provider under `*`; the description is copied to the assistant's files at its package path | A local file or inline `api_description` is required. A web address is never fetched |
+| `actions[]` with a `RemoteMCPServer` runtime | A tool with an `mcp` provider, and a project server named after the `namespace` | A credential match excludes the action. A static `mcp_tool_description` keeps the runtime in the backup only. Otherwise, `cleanServerUrl` checks its address |
 | `run_for_functions`, or `functions[].name` when it is `["*"]` | The provider's `operations` or `tools`, and the server's `tools` | At most 50 valid names. Refused names retain the source files. An OpenAPI runtime without explicit names stays in the backup only |
 | Runtime `auth.type` | `None`, `OAuthPluginVault`, `ApiKeyPluginVault`, and `DynamicClientRegistration` (kept as `oauth`) | Any other type leaves the runtime out, so a sign-in is never written back as none. `reference_id` is not kept |
 | `agent_skills[].folder` and root `agentSkills[].folder` | Skill items, read by `readItemFolders`; an assistant's own list becomes its `uses`, matched by folder after `normalizeProject` numbers repeated skill names | A folder named by both is read once. A folder without `SKILL.md` is left out |
@@ -949,6 +949,18 @@ different server gets a numbered name and its providers are updated before
 the package servers are combined. If a later skill uses those same settings,
 it reuses the existing numbered server. This also applies to plugin and skill
 ZIP imports.
+
+An inline `spec.api_description` takes precedence over `spec.url`. The importer
+writes it to a unique `inline-description-N.yaml` file beside its action
+manifest. Existing paths, including names that differ only by capitalization,
+are reserved. Shared actions reuse the generated files. The usual credential,
+file-content, path, and count checks still apply.
+
+A runtime with `spec.mcp_tool_description` stays in the backup only, together
+with its action and assistant sources. A referenced local tool-list file is
+kept with them. This avoids changing a fixed tool list into dynamic discovery.
+For root connectors, a valid `mcpToolDescription.file` retains both the file
+and the package manifest; the server still opens in Tool connections.
 
 An OpenAPI description may be at most four folders below the package root
 (five path components, including the filename), matching item-file and
@@ -999,6 +1011,8 @@ file, `withoutRegistrationIds` replaces each `reference_id` and `referenceId`
 value with `replace-with-your-auth-registration-id`, so no tenant's
 registration id reaches the backup. Programs are refused by
 `normalizeProject`, as for every import.
+Registration-ID rewrites preserve UTF-8 or UTF-16 encoding and any byte-order
+mark. UTF-16 detection also handles common files without that mark.
 Basic and Bearer authorization headers, including proxy headers, are checked
 by `CREDENTIAL_HEADER_PATTERN`. A matching header excludes the file before
 it can become an attachment, skill file, or backup-only file.
@@ -1267,7 +1281,7 @@ real account, unless the line names a tenant test.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 320 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 324 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
