@@ -292,7 +292,7 @@ A Microsoft 365 app package opens like this:
 - An assistant whose file appears to contain a key is left out. Remove the
   key from the source file and open the package again.
 - If the package's `manifest.json` appears to contain a key, the whole
-  package is refused. Remove the credentials and open the package again.
+  package is refused. Remove the key and open the package again.
   A key in an action's description file leaves that action out too.
 - Assistants open with the license "Not stated", because the package has no
   place to declare one. This also applies to packages made by Agentprise.

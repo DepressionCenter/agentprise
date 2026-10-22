@@ -137,7 +137,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
       }
       const { project, notices } = await openPackage(entries);
       assert.equal(project.items.at(-1).capabilities.length, 20);
-      assert.ok(notices.some((notice) => notice.includes("Only the first 20 actions were opened")));
+      assert.ok(notices.some((notice) => notice.includes("Only the first 20 actions of an assistant were opened")));
       const { project: again, backup } = await backupRoundTrip(project);
       for (const path of retained) {
         const original = entries.find((entry) => entry.name === path).bytes;
@@ -175,7 +175,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
       const entries = [{ name: "manifest.json", bytes: encode(JSON.stringify(manifest)) }];
       const { project, notices } = await openPackage(entries);
       assert.equal(project.servers.example.url, "https://example.org/mcp");
-      assert.ok(notices.some((notice) => notice.includes("tool description with an unsafe, empty, or missing file path")));
+      assert.ok(notices.some((notice) => notice.includes("names a tool list file that isn't in the package or has an unsafe path")));
       const { project: again } = await backupRoundTrip(project);
       for (const result of [project, again]) {
         assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/manifest.json").bytes, entries[0].bytes);
@@ -198,7 +198,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     const { project, notices } = await openPackage(entries);
     assert.equal(project.items[0].files.filter((file) => file.path.startsWith("references/")).length, 20);
     for (const entry of rejected) {
-      assert.ok(notices.some((notice) => notice.includes(entry.name) && notice.includes("could not be attached")));
+      assert.ok(notices.some((notice) => notice.includes(entry.name) && notice.includes("Agentprise couldn't attach")));
       assert.deepEqual(project.unrecognized.find((file) => file.path === "microsoft-package/" + entry.name).bytes, entry.bytes);
     }
     const { project: again } = await backupRoundTrip(project);
@@ -380,7 +380,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
       } else {
         assert.equal(action, undefined, "no tool with an empty provider list is retained");
         assert.equal(agent.files.some((file) => file.path === path), false);
-        assert.ok(notices.some((notice) => notice.includes("nested too deeply") && notice.includes("at most 4 folders") && notice.includes("update its reference")));
+        assert.ok(notices.some((notice) => notice.includes("more than 4 folders deep") && notice.includes("at most 4 folders deep") && notice.includes("update its path")));
         assert.ok(unrecognizedPaths(project).includes("microsoft-package/agents/plugins/records.json"));
       }
       assert.ok(agent.capabilities.some((capability) => capability.id === "action.lookup"), "other actions still import");
@@ -604,7 +604,7 @@ describe("unsafe and broken packages", () => {
         const result = await engine.imports.any("unsafe.zip", bytes);
         assert.equal(result.project, undefined, "nothing can be stored or exported");
         assert.equal(result.blocked, true);
-        assert.ok(result.error.includes("manifest.json") && result.error.includes("Remove the credentials"));
+        assert.ok(result.error.includes("manifest.json") && result.error.includes("Remove the key from manifest.json"));
         assert.equal(JSON.stringify(result).includes(SECRET), false);
       }
     }
@@ -626,7 +626,7 @@ describe("unsafe and broken packages", () => {
       const { project, notices } = await openPackage(entries);
       assert.ok(project.items.every((item) => item.capabilities.length === 0));
       assert.equal(everythingShown(project, notices).includes(SECRET), false);
-      assert.ok(notices.some((notice) => notice.includes("description file") && notice.includes("Remove the credentials")));
+      assert.ok(notices.some((notice) => notice.includes("description file") && notice.includes("Remove the key from")));
       const { backup } = await backupRoundTrip(project);
       assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
     }

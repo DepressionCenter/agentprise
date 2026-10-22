@@ -6940,7 +6940,7 @@ function actionProvider(entries, manifest, runtime, subject, state, files) {
             return null;
         }
         if (cleanArchivePath(path, { depth: LIMITS.itemPathDepth, hidden: false }) !== path) {
-            state.notices.push(subject + " uses an API description nested too deeply, so that part was left out. Move the description to at most " + (LIMITS.itemPathDepth - 1) + " folders below the package root, update its reference, and open the package again.");
+            state.notices.push(subject + " has an API description more than " + (LIMITS.itemPathDepth - 1) + " folders deep, so Agentprise left it out. Move the description to at most " + (LIMITS.itemPathDepth - 1) + " folders deep, such as apis/records/records.yaml, update its path in the action file, and open the package again.");
             return null;
         }
         if (holdsCredential(path, entries.get(path))) {
@@ -7024,9 +7024,9 @@ function readCopilotActions(entries, actions, state, files) {
         }
         state.actionFiles.set(file, null);
         state.used.add(file);
-        if (holdsCredential("manifest.json", entries.get(file))) {
+        if (holdsCredential(file, entries.get(file))) {
             leaveOutForKey(state, file);
-            state.notices.push(subject + " has a description file that looks like it holds a password, key, or token, so it was left out. Remove the credentials from that file and open the package again.");
+            state.notices.push(subject + " has a description file that looks like it holds a password, key, or token, so Agentprise left the action out. Remove the key from " + file + " and open the package again.");
             return;
         }
         const manifest = parseJsonObject(fromBytes(entries.get(file)));
@@ -7073,7 +7073,7 @@ function readCopilotActions(entries, actions, state, files) {
     });
     state.actionOverflowCount += overflow;
     if (overflow > 0) {
-        state.notices.push("Only the first " + LIMITS.capabilities + " actions were opened for this assistant. Extra actions' source files are kept in the backup. Split the actions across assistants to open them.");
+        state.notices.push("Only the first " + LIMITS.capabilities + " actions of an assistant were opened. Agentprise keeps the files of the other actions in the backup only. To use them, move some actions to another assistant in the package and open it again.");
     }
     return capabilities;
 }
@@ -7118,7 +7118,7 @@ function readAgentConnectors(entries, list, state) {
         if (descriptionPath && entries.has(descriptionPath)) {
             state.keep.add(descriptionPath);
         } else if (remote.mcpToolDescription !== undefined) {
-            state.notices.push(subject + " has a tool description with an unsafe, empty, or missing file path. The server was opened, and the manifest is kept in the backup. Correct the path and include the description file before using the package.");
+            state.notices.push(subject + " names a tool list file that isn't in the package or has an unsafe path. Agentprise added the server and keeps the manifest in the backup. To keep the tool list, fix the path in the package and open it again.");
             state.keepManifest = true;
         }
         const address = packageServerAddress(remote.mcpServerUrl, subject, state.notices);
@@ -7162,7 +7162,7 @@ function readTeamsArchive(entries) {
         return { error: "This ZIP has no assistant, skill, or connector that Agentprise can read, so it isn't a Copilot app package." };
     }
     if (entries.has("manifest.json") && holdsCredential("manifest.json", entries.get("manifest.json"))) {
-        return { error: "The manifest.json file looks like it holds a password, key, or token, so this package was not opened. Remove the credentials from that file and open the package again.", blocked: true };
+        return { error: "Agentprise didn't open this package, because its manifest.json looks like it holds a password, key, or token. Remove the key from manifest.json and open the package again.", blocked: true };
     }
     const source = manifest || {};
     const notices = [];
@@ -7199,7 +7199,7 @@ function readTeamsArchive(entries) {
     let overflowItems = 0;
     const skillFolderList = [];
     agentFiles.forEach(function (file) {
-        if (holdsCredential("manifest.json", entries.get(file))) {
+        if (holdsCredential(file, entries.get(file))) {
             leaveOutForKey(state, file);
             notices.push("The assistant file " + file + " looks like it holds a password, key, or token, so the assistant was left out. Remove the key from the file and open the package again.");
             return;
@@ -7279,7 +7279,7 @@ function readTeamsArchive(entries) {
     if (overflowItems > 0) {
         state.keepManifest = true;
         importedAgentFiles.forEach(function (file) { state.keep.add(file); });
-        notices.push("Only the first " + LIMITS.items + " assistants and skills were opened. Extra items' source files are kept in the backup. Split the package into smaller packages to open them.");
+        notices.push("Only the first " + LIMITS.items + " assistants and skills were opened. Agentprise keeps the files of the others in the backup only. To use them, split the package into smaller packages and open each one.");
     }
     entries.forEach(function (bytes, name) {
         // The nearest skill root owns the file, even when an ancestor is listed.
@@ -7338,13 +7338,13 @@ function readTeamsArchive(entries) {
                 return;
             }
             if (!isProgramFile(name, bytes)) {
-                notices.push("The file " + name + " could not be attached because " + attached.problem + ". Check the source file before using it.");
+                notices.push("Agentprise couldn't attach " + name + " because " + attached.problem + ", so it keeps the file in the backup only. Check the file in the package if the assistant needs it.");
             }
         }
         kept.push({ path: PACKAGE_KEPT_FOLDER + name, note: PACKAGE_KEPT_NOTE, bytes: withoutRegistrationIds(name, bytes), name: name });
     });
     if (state.withKeys.length > 0) {
-        notices.push("Left out " + countOf(state.withKeys.length, "file", "files") + (state.withKeys.length === 1 ? " that looks like it holds" : " that look like they hold") + " a password, key, or token: " + listNames(state.withKeys) + ". Remove the credentials from the source files and open the package again.");
+        notices.push("Left out " + countOf(state.withKeys.length, "file", "files") + (state.withKeys.length === 1 ? " that looks like it holds" : " that look like they hold") + " a password, key, or token: " + listNames(state.withKeys) + ". Remove the " + (state.withKeys.length === 1 ? "key from that file" : "keys from those files") + " and open the package again.");
     }
     const unlistedSkills = allSkillFolders.filter(function (folder) {
         return skillFolderList.indexOf(folder) < 0;

@@ -284,8 +284,9 @@ A few things are worth knowing about files made elsewhere:
   and what doesn't.
 - Programs are never kept, whatever the file calls them. Neither is a file or
   server address that looks like it holds a password, key, or token.
-  A Microsoft package is refused whole when its `manifest.json` appears to
-  hold credentials. Remove them from the source file and open the package again.
+  Agentprise doesn't open a Microsoft package at all when its
+  `manifest.json` looks like it holds one. Remove the key from that file and
+  open the package again.
 - If a skill or plugin does not say which license it uses, the license shows
   as "Not stated", and a note asks you to check with its author before you
   share it. The app never puts its own license on someone else's work.
