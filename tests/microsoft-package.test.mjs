@@ -1116,6 +1116,31 @@ describe("Microsoft 365 app packages made elsewhere", () => {
 });
 
 describe("unsafe and broken packages", () => {
+  test("short credential values are excluded from JSON, YAML, settings, and backups", async () => {
+    const entries = skillOnlyEntries();
+    const values = ["a", "ab", "abc", "0", 0, 7, 12, 123, " "];
+    for (const [index, value] of values.entries()) {
+      entries.push({ name: "config/unsafe" + index + ".json", bytes: encode(JSON.stringify({ password: value })) });
+      entries.push({ name: "config/unsafe" + index + ".yaml", bytes: encode("password: '" + value + "'\n") });
+      entries.push({ name: "config/unsafe" + index + ".env", bytes: encode('PASSWORD="' + value + '"\n') });
+    }
+    const safe = [
+      { name: "config/empty.json", bytes: encode('{"password":""}') },
+      { name: "config/reference.yaml", bytes: encode("password: '${PASSWORD}'\n") },
+      { name: "config/reference.env", bytes: encode("PASSWORD=$PASSWORD\n") },
+    ];
+    entries.push(...safe);
+    const { project } = await openPackage(entries);
+    const { project: again, backup } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.equal(result.unrecognized.some((entry) => entry.path.includes("/unsafe")), false);
+      for (const source of safe) {
+        assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + source.name).bytes, source.bytes);
+      }
+    }
+    assert.equal(backup.entries.some((entry) => entry.name.includes("/unsafe")), false);
+  });
+
   test("JSON credential scans preserve key context across namespaces, arrays, and escapes", async () => {
     const keys = ["X-API-Key", "database_password", "SERVICE_CLIENT_SECRET", "cloud-access-token", "api_key", "password"];
     const secrets = [SECRET, 123456, "${MISSING:-" + SECRET + "}", "${TOKEN}" + SECRET];

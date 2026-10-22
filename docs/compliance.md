@@ -199,7 +199,7 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-22 ran 325 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-22 ran 326 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -255,6 +255,10 @@ listed under known gaps.
   `X-API-Key` and `database_password` are checked regardless of text layout.
   Tests cover nested objects, arrays, escaped keys, numeric passwords,
   reference fallbacks, and allowed complete references through backups.
+  Credential literals have no minimum length. Tests exclude one-, two-, and
+  three-character passwords, numeric values including zero, and quoted spaces
+  from JSON, YAML, settings, and backups while preserving empty values and
+  complete external references.
   Basic and Bearer authorization headers, including proxy headers and JSON
   values, are excluded before files become attachments, skill files, or
   backup-only files. Regression tests check imported and exported bytes.

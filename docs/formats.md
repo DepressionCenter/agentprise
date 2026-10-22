@@ -1051,6 +1051,8 @@ as parsed keys and values, including nested objects, arrays, and escaped
 field names. Names such as `X-API-Key` and `database_password` use the same
 credential-name rules as settings files. Complete variable references remain
 allowed; literal values and references with fallbacks remain excluded.
+Literal passwords and numeric values have no minimum length. Empty values
+remain allowed, but a quoted space is a literal value.
 Malformed JSON receives the text scan.
 
 A package with an assistant opens with the project license `Not stated` and
@@ -1285,7 +1287,7 @@ real account, unless the line names a tenant test.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-22 ran 325 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-22 ran 326 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

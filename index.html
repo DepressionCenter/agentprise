@@ -6729,7 +6729,7 @@ const COPILOT_AUTH_KINDS = Object.freeze({ None: "none", OAuthPluginVault: "oaut
 
 // Text that looks like a key, token, or password in a file the import would
 // otherwise keep for the backup.
-const CREDENTIAL_TEXT_PATTERN = /[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]{4,}"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
+const CREDENTIAL_TEXT_PATTERN = /[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]+"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
 
 const CREDENTIAL_HEADER_PATTERN = /\b(?:proxy-)?authorization["']?[ \t]*[:=][ \t]*["']?(?:basic|bearer)[ \t]+[A-Za-z0-9._~+\/=-]+/i;
 
@@ -6854,8 +6854,8 @@ function holdsCredential(name, bytes) {
 
 /** Whether a credential field contains a literal value instead of an allowed reference. */
 function credentialValueIsLiteral(value) {
-    const text = typeof value === "string" || typeof value === "number" ? String(value).trim() : "";
-    return text.length >= 4 && !CREDENTIAL_REFERENCE_VALUE.test(text);
+    const text = typeof value === "string" || typeof value === "number" ? String(value) : "";
+    return text.length > 0 && !CREDENTIAL_REFERENCE_VALUE.test(text);
 }
 
 /** True when text matches a credential pattern rather than a reference to a key. */
