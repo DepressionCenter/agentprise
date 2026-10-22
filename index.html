@@ -6731,6 +6731,8 @@ const COPILOT_AUTH_KINDS = Object.freeze({ None: "none", OAuthPluginVault: "oaut
 // otherwise keep for the backup.
 const CREDENTIAL_TEXT_PATTERN = /[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]{4,}"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
 
+const CREDENTIAL_HEADER_PATTERN = /\b(?:proxy-)?authorization["']?[ \t]*[:=][ \t]*["']?(?:basic|bearer)[ \t]+[A-Za-z0-9._~+\/=-]+/i;
+
 // A YAML or settings line that sets a key, such as "client_secret: abc123" or
 // "export OPENAI_API_KEY=abc123". The value is the second group.
 const CREDENTIAL_LINE_PATTERN = /^[ \t]*(?:-[ \t]+|export[ \t]+)?["']?(?:[a-z0-9]+[_-])*(api[_-]?key|apikey|client[_-]?secret|password|passwd|access[_-]?token|refresh[_-]?token|bearer[_-]?token|private[_-]?key|secret|token)["']?[ \t]*[:=][ \t]*([^\r\n]+)/gim;
@@ -6819,7 +6821,7 @@ function holdsCredential(name, bytes) {
 
 /** True when text matches a credential pattern rather than a reference to a key. */
 function textHoldsCredential(text) {
-    if (CREDENTIAL_TEXT_PATTERN.test(text)) {
+    if (CREDENTIAL_TEXT_PATTERN.test(text) || CREDENTIAL_HEADER_PATTERN.test(text)) {
         return true;
     }
     for (const match of text.matchAll(/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>\\]+/gi)) {
@@ -6997,7 +6999,13 @@ function actionProvider(entries, manifest, runtime, subject, state, files, manif
         return null;
     }
     const spec = isPlainObject(runtime.spec) ? runtime.spec : {};
-    const functions = runtimeFunctions(manifest, runtime);
+    const listedFunctions = runtimeFunctions(manifest, runtime);
+    const functions = asNameList(listedFunctions, TOOL_NAME_PATTERN, LIMITS.providerList);
+    const partialFunctions = functions.length < listedFunctions.length;
+    if (partialFunctions) {
+        state.keep.add(manifestFile);
+        state.notices.push(subject + " has function names that exceed this app's limits. Agentprise keeps its complete source files in the backup. Check the names, split lists longer than " + LIMITS.providerList + " across actions, and open the package again.");
+    }
     if (runtime.type === "OpenApi") {
         const address = typeof spec.url === "string" ? spec.url : "";
         if (/^[a-z][a-z0-9+.-]*:/i.test(address)) {
@@ -7017,6 +7025,14 @@ function actionProvider(entries, manifest, runtime, subject, state, files, manif
             leaveOutForKey(state, path);
             state.notices.push(subject + " has an API description that looks like it holds a password, key, or token, so it was left out.");
             return null;
+        }
+        if (functions.length === 0) {
+            state.keep.add(path);
+            state.notices.push(subject + " doesn't list API operations that Agentprise can use. Agentprise keeps the action and API description in the backup only. Add operation names to functions or run_for_functions in the action file and open the package again.");
+            return null;
+        }
+        if (partialFunctions) {
+            state.keep.add(path);
         }
         state.used.add(path);
         if (!files.some(function (file) { return file.path === path; })) {
@@ -7137,7 +7153,7 @@ function readCopilotActions(entries, actions, state, files, sourceFile) {
         if (overflowRuntimes > 0) {
             state.notices.push(subject + " has more than " + LIMITS.providersPerTarget + " ways to connect. Agentprise keeps the extra definitions and their files in the backup only. To use them, split this action into separate actions and open the package again.");
         }
-        if (providers.length < runtimes.length) {
+        if (providers.length < runtimes.length || state.keep.has(file)) {
             keepSource();
             state.keep.add(file);
         }

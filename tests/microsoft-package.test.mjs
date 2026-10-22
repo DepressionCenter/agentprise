@@ -115,6 +115,59 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("OpenAPI runtimes without explicit operations retain repairable sources", async () => {
+    for (const runFor of [undefined, [], ["*"]]) {
+      const plugin = openApiPlugin("records", "records.yaml");
+      delete plugin.functions;
+      if (runFor === undefined) delete plugin.runtimes[0].run_for_functions;
+      else plugin.runtimes[0].run_for_functions = runFor;
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "helper", file: "agents/helper.json" }] } }))) },
+        { name: "agents/helper.json", bytes: encode(JSON.stringify(declarativeAgent("Helper", { actions: [{ id: "records", file: "plugins/records.json" }] }))) },
+        { name: "plugins/records.json", bytes: encode(JSON.stringify(plugin)) },
+        { name: "plugins/records.yaml", bytes: encode("openapi: 3.0.0\npaths:\n  /records:\n    get:\n      operationId: searchRecords\n") },
+      ];
+      const { project, notices } = await openPackage(entries);
+      assert.deepEqual(project.items[0].capabilities, []);
+      assert.ok(notices.some((notice) => notice.includes("doesn't list API operations")));
+      const { project: again } = await backupRoundTrip(project);
+      for (const source of entries) {
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + source.name).bytes, source.bytes);
+        }
+      }
+    }
+  });
+
+  test("function lists beyond the provider limit retain complete action sources", async () => {
+    for (const count of [49, 50, 51]) {
+      for (const kind of ["openapi", "mcp"]) {
+        const functions = Array.from({ length: count }, (_, index) => "operation" + index);
+        const plugin = kind === "openapi" ? openApiPlugin("records", "records.yaml", functions) : serverPlugin("records", "https://example.org/mcp");
+        plugin.functions = functions.map((name) => ({ name }));
+        plugin.runtimes[0].run_for_functions = ["*"];
+        const entries = [
+          { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "first", file: "agents/first.json" }, { id: "second", file: "agents/second.json" }] } }))) },
+          ...["first", "second"].map((name) => ({ name: "agents/" + name + ".json", bytes: encode(JSON.stringify(declarativeAgent(name, { actions: [{ id: "records", file: "plugins/records.json" }] }))) })),
+          { name: "plugins/records.json", bytes: encode(JSON.stringify(plugin)) },
+        ];
+        if (kind === "openapi") entries.push({ name: "plugins/records.yaml", bytes: encode("openapi: 3.0.0\npaths:\n" + functions.map((name) => "  /" + name + ":\n    get:\n      operationId: " + name).join("\n") + "\n") });
+        const { project, notices } = await openPackage(entries);
+        assert.equal(notices.some((notice) => notice.includes("function names that exceed")), count > 50);
+        for (const item of project.items) {
+          const provider = item.capabilities[0].providers["*"][0];
+          assert.deepEqual(provider.operations || provider.tools, functions.slice(0, 50));
+        }
+        const { project: again } = await backupRoundTrip(project);
+        for (const source of count > 50 ? entries : []) {
+          for (const result of [project, again]) {
+            assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + source.name).bytes, source.bytes);
+          }
+        }
+      }
+    }
+  });
+
   test("skills beyond the server limit retain sources without reusing lost server names", async () => {
     for (const count of [10, 11, 12]) {
       const folders = Array.from({ length: count }, (_, index) => "skills/skill" + index);
@@ -865,6 +918,26 @@ describe("Microsoft 365 app packages made elsewhere", () => {
 });
 
 describe("unsafe and broken packages", () => {
+  test("authorization headers never reach attachments, skill files, or backups", async () => {
+    const token = "dXNlcjpwYXNz";
+    const values = ["Authorization: Basic " + token, '"Authorization": "Basic ' + token + '"', "proxy-authorization: basic " + token, "AUTHORIZATION=Basic " + token, "Authorization: Bearer short"];
+    const entries = mixedEntries();
+    values.forEach((text, index) => {
+      for (const folder of ["", "notes/", "skills/meeting-notes/"]) {
+        entries.push({ name: folder + "header" + index + ".txt", bytes: encode(text) });
+      }
+    });
+    const { project, notices } = await openPackage(entries);
+    const { project: again, backup } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.equal(everythingShown(result, []).includes(token), false);
+      assert.equal(result.items.some((item) => item.files.some((file) => file.path.includes("header"))), false);
+      assert.equal(result.unrecognized.some((file) => file.path.includes("header")), false);
+    }
+    assert.equal(everythingShown(project, notices).includes(token), false);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(token)), false);
+  });
+
   test("NUL bytes and UTF-16 do not exempt unknown files from credential checks", async () => {
     const text = "EXAMPLE_API_KEY=" + SECRET + "\n";
     const variants = [new Uint8Array([0, ...encode(text)]), encode(text.split("").join("\u0000")), new Uint8Array([0xff, 0, ...encode(text)])];

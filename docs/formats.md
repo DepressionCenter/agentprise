@@ -904,6 +904,13 @@ Each action opens at most six usable runtimes. Extra runtime definitions
 and their local API descriptions stay in the backup with the action,
 assistant, and manifest sources. Credential and program checks still apply.
 
+Each provider keeps at most 50 valid function names. When names are refused
+or exceed that limit, the complete action and local API descriptions stay
+in the backup with the assistant and manifest sources. An OpenAPI runtime
+without explicit operation names stays in the backup only. Agentprise does
+not infer operations from the API description. Add names to `functions` or
+`run_for_functions` in the action file to import that runtime.
+
 Root files that cannot be attached because of their contents, name, or the
 20-file attachment limit stay in the backup when they pass those checks.
 Each refused attachment gets a notice. Empty files and files with invalid
@@ -921,7 +928,7 @@ reference, and the source manifest stays in the backup.
 | Root files of accepted types | Attached files of every assistant | With two or more assistants, each gets a copy and a notice |
 | `actions[]` with an `OpenApi` runtime | A tool (`action.<namespace>`) with an `openapi` provider under `*`; the description is copied to the assistant's files at its package path | The description must be inside the package. A web address is never fetched |
 | `actions[]` with a `RemoteMCPServer` runtime | A tool with an `mcp` provider, and a project server named after the `namespace` | A credential match in the action file excludes the action. Otherwise, the address goes through `cleanServerUrl`; an unsafe address is cleared for the installer to supply |
-| `run_for_functions`, or `functions[].name` when it is `["*"]` | The provider's `operations` or `tools`, and the server's `tools` | |
+| `run_for_functions`, or `functions[].name` when it is `["*"]` | The provider's `operations` or `tools`, and the server's `tools` | At most 50 valid names. Refused names retain the source files. An OpenAPI runtime without explicit names stays in the backup only |
 | Runtime `auth.type` | `None`, `OAuthPluginVault`, `ApiKeyPluginVault`, and `DynamicClientRegistration` (kept as `oauth`) | Any other type leaves the runtime out, so a sign-in is never written back as none. `reference_id` is not kept |
 | `agent_skills[].folder` and root `agentSkills[].folder` | Skill items, read by `readItemFolders`; an assistant's own list becomes its `uses`, matched by folder after `normalizeProject` numbers repeated skill names | A folder named by both is read once. A folder without `SKILL.md` is left out |
 | Root `agentConnectors[]` with `toolSource.remoteMcpServer` | A project server named after the connector `id`, with `displayName` as its label | No `authorization` means `oauth`, since Microsoft registers a client itself. A repeated `id` is read once. Other tool sources are left out, and the manifest is kept |
@@ -982,6 +989,9 @@ file, `withoutRegistrationIds` replaces each `reference_id` and `referenceId`
 value with `replace-with-your-auth-registration-id`, so no tenant's
 registration id reaches the backup. Programs are refused by
 `normalizeProject`, as for every import.
+Basic and Bearer authorization headers, including proxy headers, are checked
+by `CREDENTIAL_HEADER_PATTERN`. A matching header excludes the file before
+it can become an attachment, skill file, or backup-only file.
 
 A credential reference must occupy the whole settings value. Plain variable
 references such as `${CLIENT_SECRET}` and `{{ secrets.token }}` are allowed.
@@ -1247,7 +1257,7 @@ real account, unless the line names a tenant test.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 312 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 315 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

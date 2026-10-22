@@ -199,7 +199,7 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-21 ran 312 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-21 ran 315 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -251,6 +251,9 @@ listed under known gaps.
   `auth` and encoded query names. JSON escapes cannot hide those URLs.
   Tests cover manifest rejection through all three detection routes and
   credential exclusion from retained text and backup files.
+  Basic and Bearer authorization headers, including proxy headers and JSON
+  values, are excluded before files become attachments, skill files, or
+  backup-only files. Regression tests check imported and exported bytes.
 - Actions whose servers exceed the project limit retain their source files,
   assistant descriptions, and manifest. An action keeps any remaining usable
   provider; one with none is excluded. Missing or unsafe action paths retain
@@ -269,6 +272,10 @@ listed under known gaps.
   action sources, assistant description, and manifest in the backup. Tools
   retain only providers with imported files. Tests cover both sides of the
   limit and a shared action used by an assistant with room for all its files.
+- OpenAPI runtimes without explicit operation names stay in the backup with
+  their action, API, assistant, and manifest sources. Function lists above
+  the 50-name limit also retain those sources. Tests cover omitted and
+  wildcard lists, both sides of the limit, shared actions, and backup bytes.
 - A plugin or Microsoft package cannot replace a skill's server settings
   merely by using the same name. Different definitions get separate names;
   assistant tool references follow the renamed package server. The same rule
