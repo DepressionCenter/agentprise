@@ -115,6 +115,19 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("duplicate connector IDs retain all definitions in the source manifest", async () => {
+    const connectors = ["first", "second"].map((name) => ({ id: "records", toolSource: { remoteMcpServer: { mcpServerUrl: "https://" + name + ".example.org/mcp" } } }));
+    const source = { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentConnectors: connectors }))) };
+    const { project, notices } = await openPackage([source]);
+    assert.equal(project.servers.records.url, "https://first.example.org/mcp");
+    assert.equal(Object.keys(project.servers).length, 1);
+    assert.ok(notices.some((notice) => notice.includes("same id as another connector")));
+    const { project: again } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/manifest.json").bytes, source.bytes);
+    }
+  });
+
   test("inline API descriptions become distinct files and take precedence over URLs", async () => {
     const descriptions = ["openapi: 3.0.0\npaths:\n  /records:\n    get:\n      operationId: searchRecords\n", JSON.stringify({ openapi: "3.0.0", paths: { "/records": { get: { responses: { "200": { description: "OK" } }, operationId: "searchRecords" } } } })];
     for (const api of descriptions) {
@@ -232,7 +245,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
       const { project, notices } = await openPackage(entries);
       assert.deepEqual(project.items[0].capabilities, []);
       assert.deepEqual(project.items[0].files, []);
-      assert.ok(notices.some((notice) => notice.includes("Some API description files")));
+      assert.ok(notices.some((notice) => notice.includes(variant.name.endsWith(".exe") ? "program file" : "Some API description files")));
       const { project: again, backup } = await backupRoundTrip(project);
       for (const source of entries.filter((entry) => !entry.name.endsWith(".exe"))) {
         for (const result of [project, again]) {
@@ -1116,6 +1129,26 @@ describe("Microsoft 365 app packages made elsewhere", () => {
 });
 
 describe("unsafe and broken packages", () => {
+  test("malformed encodings and control bytes cannot hide credential assignments", async () => {
+    const entries = skillOnlyEntries();
+    const variants = [
+      new Uint8Array([...encode("password:"), 0xff, ...encode(" " + SECRET)]),
+      encode("password:\ufffd " + SECRET),
+      encode("password:\u0001 " + SECRET),
+      encode("prefix\u001epassword=" + SECRET),
+      new Uint8Array([0xff, 0xfe, 0x70]),
+    ];
+    variants.forEach((bytes, index) => entries.push({ name: "config/unsafe" + index + ".yaml", bytes }));
+    const { project, notices } = await openPackage(entries);
+    assert.ok(notices.some((notice) => notice.includes("couldn't check the text")));
+    const { project: again, backup } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.equal(result.unrecognized.some((entry) => entry.path.includes("/unsafe")), false);
+    }
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.equal(backup.entries.some((entry) => entry.name.includes("/unsafe")), false);
+  });
+
   test("short credential values are excluded from JSON, YAML, settings, and backups", async () => {
     const entries = skillOnlyEntries();
     const values = ["a", "ab", "abc", "0", 0, 7, 12, 123, " "];
@@ -1203,7 +1236,7 @@ describe("unsafe and broken packages", () => {
     }
     const entries = skillOnlyEntries();
     variants.forEach((bytes, index) => entries.push({ name: "config/settings" + index + ".env", bytes }));
-    const safe = { name: "config/data.dat", bytes: new Uint8Array([0, 1, 2, 0xff]) };
+    const safe = { name: "config/data.dat", bytes: new Uint8Array([0, 1, 2]) };
     entries.push(safe);
     const { project, notices } = await openPackage(entries);
     const { project: again, backup } = await backupRoundTrip(project);
@@ -1418,7 +1451,7 @@ describe("unsafe and broken packages", () => {
     }
   });
 
-  test("unknown text types and private keys are scanned while binary files are preserved", async () => {
+  test("unknown types require readable text while verified binary formats are preserved", async () => {
     const entries = skillOnlyEntries();
     const binary = new Uint8Array([0, 1, 2, 3, 255]);
     entries.push(
@@ -1427,16 +1460,20 @@ describe("unsafe and broken packages", () => {
       { name: "keys/private.pem", bytes: encode("-----BEGIN PRIVATE KEY-----\n" + SECRET + "\n-----END PRIVATE KEY-----\n") },
       { name: "skills/meeting-notes/keys/rsa.pem", bytes: encode("-----BEGIN RSA PRIVATE KEY-----\n" + SECRET + "\n-----END RSA PRIVATE KEY-----\n") },
       { name: "data.unknown", bytes: binary },
+      { name: "data.png", bytes: teamsIcons().color },
       { name: "config/reference.toml", bytes: encode('api_key = "${EXAMPLE_API_KEY}"\n') },
     );
     const { project, notices } = await openPackage(entries);
     assert.equal(everythingShown(project, notices).includes(SECRET), false);
     assert.ok(notices.some((notice) => notice.startsWith("Left out 4 files that look")));
-    assert.deepEqual(project.unrecognized.find((entry) => entry.path === "microsoft-package/data.unknown").bytes, binary);
+    assert.equal(project.unrecognized.some((entry) => entry.path === "microsoft-package/data.unknown"), false);
+    assert.deepEqual(project.unrecognized.find((entry) => entry.path === "microsoft-package/data.png").bytes, teamsIcons().color);
+    assert.ok(notices.some((notice) => notice.includes("couldn't check the text in data.unknown")));
     assert.ok(unrecognizedPaths(project).includes("microsoft-package/config/reference.toml"));
     const { backup, project: again } = await backupRoundTrip(project);
     assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
-    assert.deepEqual(again.unrecognized.find((entry) => entry.path === "microsoft-package/data.unknown").bytes, binary);
+    assert.equal(again.unrecognized.some((entry) => entry.path === "microsoft-package/data.unknown"), false);
+    assert.deepEqual(again.unrecognized.find((entry) => entry.path === "microsoft-package/data.png").bytes, teamsIcons().color);
   });
 
   test("unsafe references, repeated paths, an unknown sign-in, and web-only descriptions are left out with a notice each", async () => {

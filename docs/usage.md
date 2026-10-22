@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/usage.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-21
+Last Modified: 2026-10-22
 Summary: How to use Agentprise, job by job: keep your projects, create an
          assistant, add skills, check its tools, open a file you have, start
          from the Library, download it for each product or as a plugin, read
@@ -294,6 +294,9 @@ A few things are worth knowing about files made elsewhere:
   `manifest.json`, a filename, or a folder name looks like it holds one.
   Remove the key from the file or name, update references to that name,
   and open the package again.
+- If text cannot be checked, that file is left out. Save it as valid UTF-8
+  or UTF-16 text and open the package again. Unknown binary formats are also
+  excluded when they cannot be checked; supported binary files remain usable.
 - If a skill or plugin does not say which license it uses, the license shows
   as "Not stated", and a note asks you to check with its author before you
   share it. The app never puts its own license on someone else's work.

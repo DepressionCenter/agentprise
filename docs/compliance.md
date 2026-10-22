@@ -176,9 +176,10 @@ listed under known gaps.
   query string, a JSON value, a bearer header, a YAML or settings line, or a
   private key header. Unknown types, including `.env`, `.toml`, and `.pem`,
   are scanned even when they contain zero bytes. UTF-16 byte-order marks
-  select the decoder; zero characters are removed and other control or
-  invalid characters separate text segments before scanning. Known binary
-  types are skipped only when their bytes pass the existing format
+  select the decoder; zero characters are removed, while other control
+  characters are tested both as separators and with those characters removed.
+  Invalid encodings and replacement characters cause exclusion. Known binary
+  types, including complete PNG images, are skipped only when their bytes pass the existing format
   check; mislabeled text files are scanned. Notices name parts and files, never
   the matched text. Kept files sit under `microsoft-package/` in the backup
   and appear in no other download. This is a pattern check, so a key in an
@@ -193,13 +194,13 @@ listed under known gaps.
   attached file leaves that file out", and "a key set on a YAML or settings
   line leaves the file out, and a reference to a key does not", "a credential
   in an assistant file leaves the assistant out of the project and backup",
-  and "unknown text types and private keys are scanned while binary files
-  are preserved", and "API descriptions at the item path limit import;
+  and "unknown types require readable text while verified binary formats are
+  preserved", and "API descriptions at the item path limit import;
   deeper ones are rejected with instructions", "credentials in root
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-22 ran 326 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-22 ran 328 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -224,6 +225,9 @@ listed under known gaps.
   the path. The icon and connector-path tests in
   `tests/microsoft-package.test.mjs` check backup round trips and reject
   traversal, absolute paths, remote URLs, missing entries, and invalid types.
+  Duplicate connector IDs retain their source manifest while importing only
+  the first definition. A regression test verifies both original definitions
+  remain available after a backup round trip.
 - Actions beyond an assistant's 20-tool limit keep their source descriptions
   and local API descriptions in the backup. Credential matches remain
   excluded. The action-limit test covers remote tools, API descriptions,
@@ -299,6 +303,9 @@ listed under known gaps.
 - Registration IDs in retained UTF-16 JSON and YAML are replaced while
   preserving encoding and byte-order marks. Tests cover both byte orders,
   files with and without marks, non-ASCII text, and backup round trips.
+  Fatal text decoding rejects malformed UTF-8 or UTF-16 before import.
+  Replacement characters also cause exclusion. Tests cover interrupted
+  credential assignments, control bytes, and supported binary preservation.
 - A plugin or Microsoft package cannot replace a skill's server settings
   merely by using the same name. Different definitions get separate names;
   assistant tool references follow the renamed package server. The same rule

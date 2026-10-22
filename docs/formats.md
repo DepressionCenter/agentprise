@@ -961,6 +961,8 @@ with its action and assistant sources. A referenced local tool-list file is
 kept with them. This avoids changing a fixed tool list into dynamic discovery.
 For root connectors, a valid `mcpToolDescription.file` retains both the file
 and the package manifest; the server still opens in Tool connections.
+Duplicate connector IDs also retain the manifest, including definitions that
+were skipped. The first connector with each ID supplies the imported server.
 
 An OpenAPI description may be at most four folders below the package root
 (five path components, including the filename), matching item-file and
@@ -1038,9 +1040,12 @@ imported, regardless of their filename extension. A match leaves that part
 out, and its file is excluded from the backup. `holdsCredential` also checks
 unknown file types, such as `.env`, `.toml`, and `.pem`, even when they contain
 zero bytes. It decodes UTF-16 files with a byte-order mark and removes zero
-bytes from decoded text before scanning. Other control bytes and invalid
-characters separate text segments. Known binary types are skipped only when
-their bytes pass the existing format check. Mislabeled text, such as a
+bytes from decoded text before scanning. Other control bytes are checked both
+as separators and with those bytes removed, so neither form can hide a field.
+Files with invalid text encoding or replacement characters are excluded with
+a repair notice. An unreadable root manifest blocks the package. Known binary
+types, including complete PNG images, bypass decoding only when their bytes
+pass the existing format check. Mislabeled text, such as a
 password stored in a fake PDF, is scanned before it can become a skill file
 or a backup-only file. Private
 key headers, including `BEGIN PRIVATE KEY` and `BEGIN RSA PRIVATE KEY`, count
@@ -1287,7 +1292,7 @@ real account, unless the line names a tenant test.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-22 ran 326 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-22 ran 328 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

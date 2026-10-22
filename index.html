@@ -6814,20 +6814,37 @@ function packageTextEncoding(bytes) {
     return "utf-8";
 }
 
-/**
- * Whether a file looks like it holds a credential, including a private key.
- * Unknown file types are scanned even when they contain NUL bytes. Known
- * binary types are skipped only when their bytes match that format.
- */
-function holdsCredential(name, bytes) {
+/** Returns scan text, null for a verified binary format, or undefined for unreadable text. */
+function packageScanText(name, bytes) {
+    if (/\.png$/i.test(name) && pngIsComplete(bytes)) {
+        return null;
+    }
     const kind = fileKind(name);
     const textual = !kind || kind === "text" || !fileContentMatches(kind, bytes);
     if (!textual) {
-        return false;
+        return null;
     }
-    const encoding = packageTextEncoding(bytes);
-    const text = new TextDecoder(encoding).decode(bytes);
-    const scanned = text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "\n");
+    try {
+        const text = new TextDecoder(packageTextEncoding(bytes), { fatal: true }).decode(bytes);
+        return text.indexOf("\ufffd") < 0 ? text : undefined;
+    } catch (error) {
+        return undefined;
+    }
+}
+
+/** Rejects unreadable text or credential matches; verified binary formats bypass the text scan. */
+function holdsCredential(name, bytes) {
+    const text = packageScanText(name, bytes);
+    if (typeof text !== "string") {
+        return text === undefined;
+    }
+    const split = text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "\n");
+    const joined = text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "");
+    return structuredTextHoldsCredential(split) || (joined !== split && structuredTextHoldsCredential(joined));
+}
+
+/** Checks decoded JSON key/value pairs or plain text without depending on its layout. */
+function structuredTextHoldsCredential(scanned) {
     let json;
     try {
         json = JSON.parse(scanned);
@@ -7289,6 +7306,7 @@ function readAgentConnectors(entries, list, state) {
             return;
         }
         if (seen[id]) {
+            state.keepManifest = true;
             state.notices.push(subject + " has the same id as another connector, so Agentprise read it once.");
             return;
         }
@@ -7390,11 +7408,30 @@ function readTeamsArchive(entries) {
     if (Array.from(entries.keys()).some(function (name) { return name.split(/[\\/]/).some(textHoldsCredential); })) {
         return { error: "Agentprise didn't open this package, because a file or folder name looks like it holds a password, key, or token. Remove the key from the name and any references to it, then open the package again.", blocked: true };
     }
+    const unreadable = [];
+    const programs = [];
+    entries.forEach(function (bytes, name) {
+        if (isProgramFile(name, bytes)) {
+            programs.push(name);
+        } else if (packageScanText(name, bytes) === undefined) {
+            unreadable.push(name);
+        }
+    });
+    if (unreadable.indexOf("manifest.json") >= 0) {
+        return { error: "Agentprise couldn't check the text in manifest.json. Save it as valid UTF-8 or UTF-16 text and open the package again.", blocked: true };
+    }
+    unreadable.concat(programs).forEach(function (name) { entries.delete(name); });
     if (entries.has("manifest.json") && holdsCredential("manifest.json", entries.get("manifest.json"))) {
         return { error: "Agentprise didn't open this package, because its manifest.json looks like it holds a password, key, or token. Remove the key from manifest.json and open the package again.", blocked: true };
     }
     const source = manifest || {};
     const notices = [];
+    if (programs.length > 0) {
+        notices.push("Left out " + countOf(programs.length, "program file", "program files") + ". Agentprise never keeps or runs programs.");
+    }
+    if (unreadable.length > 0) {
+        notices.push("Agentprise couldn't check the text in " + listNames(unreadable) + ", so those files were left out. Save text files as valid UTF-8 or UTF-16. For binary files, use the correct file type, then open the package again.");
+    }
     const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), actionIds: new Set(), withKeys: [], notices: notices, keepManifest: false };
 
     // ### Find the declarative agents ###
