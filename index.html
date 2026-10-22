@@ -2609,11 +2609,12 @@ function cleanArchivePath(value, options) {
  * backup only; programs are refused.
  * @param {*} list [{path, bytes}], untrusted
  * @param {string[]} notices one line per refusal
- * @returns {{files: Array<{path: string, bytes: Uint8Array}>, leftovers: Array<{path: string, bytes: Uint8Array}>}}
+ * @returns {{files: Array<{path: string, bytes: Uint8Array}>, leftovers: Array<{path: string, bytes: Uint8Array}>, overflow: Array<object>}} overflow holds the original entries beyond the file-count limit
  */
 function cleanSkillFiles(list, notices) {
     const files = [];
     const leftovers = [];
+    const overflow = [];
     const refused = [];
     const seen = Object.create(null);
     (Array.isArray(list) ? list : []).forEach(function (entry) {
@@ -2649,6 +2650,7 @@ function cleanSkillFiles(list, notices) {
         }
         if (files.length >= LIMITS.skillFiles) {
             refused.push({ name: path, problem: "only " + LIMITS.skillFiles + " files fit in one skill" });
+            overflow.push(entry);
             return;
         }
         files.push({ path: path, bytes: copyBytes(entry.bytes) });
@@ -2657,7 +2659,7 @@ function cleanSkillFiles(list, notices) {
         const reasons = refused.map(function (entry) { return entry.name.slice(0, 60) + " (" + entry.problem + ")"; });
         notices.push("Left out " + countOf(refused.length, "file", "files") + " from a skill: " + listNames(reasons) + ".");
     }
-    return { files: files, leftovers: leftovers };
+    return { files: files, leftovers: leftovers, overflow: overflow };
 }
 
 /** Cleans an untrusted list of short names such as tool ids. */
@@ -5755,7 +5757,7 @@ function readItemFolder(entries, folder, nested) {
             return;
         }
         // A foreign skill's picture is kept under a non-reserved name.
-        files.push({ path: path === "icon.png" ? "assets/icon.png" : path, bytes: bytes });
+        files.push({ path: path === "icon.png" ? "assets/icon.png" : path, bytes: bytes, sourcePath: name });
     });
     raw.files = files;
     const creator = isPlainObject(side.creator) ? {
@@ -6763,7 +6765,11 @@ function holdsCredential(name, bytes) {
     if (!textual) {
         return false;
     }
-    const text = fromBytes(bytes);
+    return textHoldsCredential(fromBytes(bytes));
+}
+
+/** True when text matches a credential pattern rather than a reference to a key. */
+function textHoldsCredential(text) {
     if (CREDENTIAL_TEXT_PATTERN.test(text)) {
         return true;
     }
@@ -7083,10 +7089,10 @@ function readCopilotActions(entries, actions, state, files) {
  * servers are read; the manifest is kept for the backup when one isn't.
  * @param {*} list the manifest's agentConnectors, untrusted
  * @param {object} state {servers, used, keep, notices}
- * @returns {number} how many were read
+ * @returns {string[]} assigned server names, so the caller can check which survive project limits
  */
 function readAgentConnectors(entries, list, state) {
-    let read = 0;
+    const read = [];
     const seen = Object.create(null);
     (Array.isArray(list) ? list : []).forEach(function (connector, index) {
         const id = isPlainObject(connector) && typeof connector.id === "string" ? connector.id : "";
@@ -7123,8 +7129,7 @@ function readAgentConnectors(entries, list, state) {
         }
         const address = packageServerAddress(remote.mcpServerUrl, subject, state.notices);
         const label = typeof connector.displayName === "string" && connector.displayName.trim() ? connector.displayName : id;
-        addPackageServer(state.servers, id, { label: label, transport: "http", url: address.url, userSupplied: address.userSupplied, auth: auth, tools: [] });
-        read += 1;
+        read.push(addPackageServer(state.servers, id, { label: label, transport: "http", url: address.url, userSupplied: address.userSupplied, auth: auth, tools: [] }));
     });
     return read;
 }
@@ -7160,6 +7165,9 @@ function readTeamsArchive(entries) {
     }
     if (!isMicrosoftManifest(entries) && !entries.has("declarativeAgent_0.json")) {
         return { error: "This ZIP has no assistant, skill, or connector that Agentprise can read, so it isn't a Copilot app package." };
+    }
+    if (Array.from(entries.keys()).some(function (name) { return name.split(/[\\/]/).some(textHoldsCredential); })) {
+        return { error: "Agentprise didn't open this package, because a file or folder name looks like it holds a password, key, or token. Remove the key from the name and any references to it, then open the package again.", blocked: true };
     }
     if (entries.has("manifest.json") && holdsCredential("manifest.json", entries.get("manifest.json"))) {
         return { error: "Agentprise didn't open this package, because its manifest.json looks like it holds a password, key, or token. Remove the key from manifest.json and open the package again.", blocked: true };
@@ -7259,7 +7267,7 @@ function readTeamsArchive(entries) {
             skillFolderList.push(folder);
         }
     });
-    const connectorCount = readAgentConnectors(entries, connectors, state);
+    const connectorNames = readAgentConnectors(entries, connectors, state);
 
     // ### Read the skill folders ###
     // A skill whose SKILL.md looks like it holds a key is left out whole; any
@@ -7298,14 +7306,30 @@ function readTeamsArchive(entries) {
     });
     const read = readItemFolders(skillEntries, readFolders);
     notices.push.apply(notices, read.notices);
-    read.items.forEach(function (item) { item.kind = "skill"; });
+    let overflowSkillFiles = 0;
+    read.items.forEach(function (item) {
+        item.kind = "skill";
+        const overflow = cleanSkillFiles(item.files, []).overflow;
+        overflow.forEach(function (file) { state.keep.add(file.sourcePath); });
+        overflowSkillFiles += overflow.length;
+    });
+    if (overflowSkillFiles > 0) {
+        notices.push("A skill can hold at most " + LIMITS.skillFiles + " files. Agentprise keeps the extra files in the backup only. To use them, split the skill into smaller skills and open the package again.");
+    }
 
     // ### Combine the servers ###
     // A skill keeps the server names in its own file. A package server whose
     // name a skill already uses for another server gets a numbered name, and
     // the assistants' tools are pointed at it.
     const combined = combineServers(read.servers, state.servers, notices);
-    const servers = combined.servers;
+    const servers = normalizeServers(combined.servers, notices);
+    const connectorCount = connectorNames.filter(function (name) {
+        return Object.prototype.hasOwnProperty.call(combined.names, name) && Object.prototype.hasOwnProperty.call(servers, combined.names[name]);
+    }).length;
+    if (connectorCount < connectorNames.length) {
+        state.keepManifest = true;
+        notices.push("The project can hold at most " + LIMITS.servers + " tool servers, so Agentprise kept some connectors in the backup only. To use those connectors, split the package into smaller projects and open each one.");
+    }
     remapItemServers(agents, combined.names);
 
     // ### Sort the remaining files ###

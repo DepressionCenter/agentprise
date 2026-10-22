@@ -115,6 +115,67 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("connectors beyond the combined server limit retain the source manifest", async () => {
+    for (const [skillCount, actionCount, connectorTotal] of [[0, 0, 11], [0, 10, 1], [10, 0, 1], [5, 4, 2], [9, 0, 1]]) {
+      const actions = Array.from({ length: actionCount }, (_, index) => ({ id: "action" + index, file: "actions/action" + index + ".json" }));
+      const connectors = Array.from({ length: connectorTotal }, (_, index) => ({ id: "connector" + index, toolSource: { remoteMcpServer: { mcpServerUrl: "https://connector.example.org/" + index } } }));
+      const servers = Object.fromEntries(Array.from({ length: skillCount }, (_, index) => ["skill" + index, { transport: "http", url: "https://skill.example.org/" + index }]));
+      const manifest = appManifest({
+        copilotAgents: { declarativeAgents: [{ id: "helper", file: "agents/helper.json" }] },
+        agentSkills: [{ folder: "skills/helper" }], agentConnectors: connectors,
+      });
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(manifest)) },
+        { name: "agents/helper.json", bytes: encode(JSON.stringify(declarativeAgent("Helper", { actions }))) },
+        { name: "skills/helper/SKILL.md", bytes: skillMd("helper", "Helps.") },
+        { name: "skills/helper/agentprise.json", bytes: encode(JSON.stringify({ kind: "skill", servers })) },
+        ...actions.map((action) => ({ name: action.file, bytes: encode(JSON.stringify(serverPlugin(action.id, "https://action.example.org/" + action.id))) })),
+      ];
+      const { project, notices } = await openPackage(entries);
+      const retained = Math.min(connectorTotal, 10 - skillCount - actionCount);
+      assert.equal(Object.keys(project.servers).length, 10);
+      assert.equal(Object.keys(project.servers).filter((name) => name.startsWith("connector")).length, retained);
+      assert.equal(notices.some((notice) => notice.startsWith("Added " + retained + " connector")), retained > 0);
+      const { project: again } = await backupRoundTrip(project);
+      assert.deepEqual(again.servers, project.servers);
+      if (retained < connectorTotal) {
+        assert.ok(notices.some((notice) => notice.includes("kept some connectors in the backup only")));
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/manifest.json").bytes, entries[0].bytes);
+        }
+      } else {
+        assert.equal(project.unrecognized.some((entry) => entry.path === "microsoft-package/manifest.json"), false);
+      }
+    }
+  });
+
+  test("listed skill files beyond the file limit survive under their original package paths", async () => {
+    for (const count of [49, 50, 51]) {
+      const folder = "tools/original-folder/";
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentSkills: [{ folder }] }))) },
+        { name: folder + "SKILL.md", bytes: skillMd("different-name", "Uses reference files.") },
+        ...Array.from({ length: count }, (_, index) => ({ name: folder + "references/file" + index + ".txt", bytes: encode("Reference " + index) })),
+        { name: folder + "extra notes.txt", bytes: encode("Extra reference notes.") },
+        { name: folder + "secret.txt", bytes: encode("password=" + SECRET) },
+        { name: folder + "program.exe", bytes: new Uint8Array([0x4d, 0x5a, 0x90, 0x00]) },
+      ];
+      const { project, notices } = await openPackage(entries);
+      assert.equal(project.items[0].files.length, 50);
+      const overflow = entries.slice(2, 2 + count + 1).slice(50);
+      assert.equal(notices.some((notice) => notice.includes("keeps the extra files in the backup only")), overflow.length > 0);
+      const { project: again, backup } = await backupRoundTrip(project);
+      assert.deepEqual(again.items[0].files, project.items[0].files);
+      for (const original of overflow) {
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + original.name).bytes, original.bytes);
+        }
+      }
+      assert.equal(everythingShown(project, notices).includes(SECRET), false);
+      assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET) || entry.name.endsWith("program.exe")), false);
+    }
+  });
+
   test("actions beyond the tool limit retain their source files without retaining credentials", async () => {
     for (const kind of ["remote", "openapi", "shared", "credential"]) {
       const actions = Array.from({ length: 21 }, (_, index) => ({ id: "action" + index, file: "actions/action" + index + ".json" }));
@@ -545,6 +606,32 @@ describe("Microsoft 365 app packages made elsewhere", () => {
 });
 
 describe("unsafe and broken packages", () => {
+  test("credential-bearing filenames and folders block packages without exposing the path", async () => {
+    const paths = ["Bearer " + SECRET + ".txt", "skills/helper/Bearer " + SECRET + ".md", "config/Bearer " + SECRET + "/data.bin", "config/password=" + SECRET + ".txt", "Bearer " + SECRET + ".png"];
+    for (const path of paths) {
+      for (const route of ["teamsZip", "plugin", "skillZip"]) {
+        const entries = [
+          { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentSkills: [{ folder: "skills/helper" }] }))) },
+          { name: "skills/helper/SKILL.md", bytes: skillMd("helper", "Helps.") },
+          { name: path, bytes: path.endsWith(".png") ? teamsIcons().color : encode("Harmless contents.") },
+        ];
+        if (route === "plugin") entries.push({ name: "plugin.json", bytes: encode("{}") });
+        if (route === "skillZip") entries.push({ name: "SKILL.md", bytes: skillMd("root", "Unlisted root.") });
+        const bytes = engine.zip.write(entries);
+        assert.equal(engine.detectFormat("package.zip", bytes), route);
+        const result = await engine.imports.any("package.zip", bytes);
+        assert.equal(result.blocked, true);
+        assert.equal(result.project, undefined);
+        assert.ok(result.error.includes("file or folder name") && result.error.includes("Remove the key"));
+        assert.equal(JSON.stringify(result).includes(SECRET), false);
+      }
+    }
+    const entries = skillOnlyEntries();
+    entries.push({ name: "skills/meeting-notes/Bearer guide.txt", bytes: encode("Public documentation.") });
+    const { project } = await openPackage(entries);
+    assert.ok(project.items.some((item) => item.files.some((file) => file.path === "Bearer guide.txt")));
+  });
+
   test("a rejected nested skill cannot add its remaining files to a listed parent", async () => {
     const entries = [
       { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentSkills: [{ folder: "skills/parent" }, { folder: "skills/parent/child" }] }))) },

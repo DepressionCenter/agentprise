@@ -197,7 +197,7 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-21 ran 295 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-21 ran 298 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -226,6 +226,16 @@ listed under known gaps.
   The manifest classification test confirms that unrelated web manifests
   follow the skill importer; Microsoft manifests still receive the package
   credential check. Both tests are in `tests/microsoft-package.test.mjs`.
+- A credential match in a package filename or folder blocks the package
+  without displaying the name. Tests cover text and binary files through
+  the package, plugin, and skill ZIP detection routes, and confirm that
+  error messages do not expose the synthetic key.
+- Connectors beyond the combined 10-server limit retain their source
+  manifest, and files beyond a listed skill's 50-file limit retain their
+  original package paths in the backup. Success notices count only imported
+  connectors. Boundary and backup tests in `tests/microsoft-package.test.mjs`
+  cover these rules, including credential and program exclusion for extra
+  skill files.
 - A plugin or Microsoft package cannot replace a skill's server settings
   merely by using the same name. Different definitions get separate names;
   assistant tool references follow the renamed package server. The same rule

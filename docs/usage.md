@@ -282,11 +282,16 @@ A few things are worth knowing about files made elsewhere:
   folder called `microsoft-package`. The
   [formats page](formats.md#opening-a-file-you-already-have) lists what opens
   and what doesn't.
+- A project holds up to 10 tool servers, and a skill holds up to 50 files.
+  If a Microsoft package exceeds those limits, a message says what opened.
+  The backup keeps extra connector definitions and safe extra skill files.
+  Split the package into smaller projects or skills to use them.
 - Programs are never kept, whatever the file calls them. Neither is a file or
   server address that looks like it holds a password, key, or token.
   Agentprise doesn't open a Microsoft package at all when its
-  `manifest.json` looks like it holds one. Remove the key from that file and
-  open the package again.
+  `manifest.json`, a filename, or a folder name looks like it holds one.
+  Remove the key from the file or name, update references to that name,
+  and open the package again.
 - If a skill or plugin does not say which license it uses, the license shows
   as "Not stated", and a note asks you to check with its author before you
   share it. The app never puts its own license on someone else's work.

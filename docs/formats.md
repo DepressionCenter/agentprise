@@ -850,6 +850,11 @@ web manifest follows the skill importer even if it has a field that looks
 like a credential. A manifest listing Microsoft assistants, skills, or
 connectors still blocks the package when that check finds a match.
 
+Every file and folder name in a Microsoft package is checked for the same
+credential patterns before any part opens. A match blocks the whole package,
+including attempts to open it as a plugin or skill ZIP. The error asks you
+to remove the key from the name and its references without showing the name.
+
 The project opens at most 20 assistants and skills. Assistants fill those
 places first. Extra items stay as source files in the backup, along with
 the source manifest and assistant descriptions needed to find them. A notice
@@ -860,6 +865,16 @@ Each assistant opens at most 20 actions. Extra actions keep their source
 descriptions and local API descriptions in the backup, along with the
 assistant description and source manifest. A notice asks you to split those
 actions across assistants. Files with credential matches remain excluded.
+
+A listed skill opens at most 50 accepted files. Extra files keep their
+original package paths under `microsoft-package/` in the backup. Credential
+and program checks still apply. The notice asks you to split the skill to
+use the extra files.
+
+The project holds at most 10 tool servers across skills, actions, and
+connectors. When a connector does not fit after those servers are combined,
+the source manifest stays in the backup. The success notice counts only
+connectors that opened. A separate notice explains how to open the rest.
 
 Root files that cannot be attached because of their contents, name, or the
 20-file attachment limit stay in the backup when they pass those checks.
@@ -1172,11 +1187,14 @@ real account, unless the line names a tenant test.
   are checked through backup round trips too. Further cases check refused
   root attachments, packages with more than 20 assistants and skills,
   unused icons, invalid connector description paths, action-count limits,
-  and unrelated web manifests with credential-like fields.
+  and unrelated web manifests with credential-like fields. Further cases
+  check credential-bearing filenames and folders through each detection
+  route, connectors beyond the combined server limit, and skill files beyond
+  the file-count limit. Overflow sources are checked through backup round trips.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 295 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 298 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
