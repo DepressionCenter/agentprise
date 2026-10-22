@@ -115,6 +115,78 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("API descriptions resolve relative to the action manifest and cannot escape the package", async () => {
+    const cases = [
+      ["api.yaml", "agents/tools/api.yaml"], ["./api.yaml", "agents/tools/api.yaml"],
+      ["../api.yaml", "agents/api.yaml"], ["../../api.yaml", "api.yaml"],
+      ["api%20description.yaml", "agents/tools/api description.yaml"],
+      ...["../../../api.yaml", "%2e%2e/%2e%2e/%2e%2e/api.yaml", "/api.yaml", "//example.org/api.yaml", "https://example.org/api.yaml", "..\\api.yaml", "api.yaml#part", "api.yaml?version=1", "%ZZ"].map((path) => [path, null]),
+    ];
+    for (const [reference, resolved] of cases) {
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "helper", file: "agents/helper.json" }] } }))) },
+        { name: "agents/helper.json", bytes: encode(JSON.stringify(declarativeAgent("Helper", { actions: [{ id: "api", file: "agents/tools/plugin.json" }] }))) },
+        { name: "agents/tools/plugin.json", bytes: encode(JSON.stringify(openApiPlugin("api", reference))) },
+        { name: "api.yaml", bytes: encode("openapi: 3.0.0\ninfo: {title: Root}\npaths: {}\n") },
+      ];
+      if (resolved && resolved !== "api.yaml") entries.push({ name: resolved, bytes: encode("openapi: 3.0.0\ninfo: {title: Nested}\npaths: {}\n") });
+      const { project } = await openPackage(entries);
+      const { project: again } = await backupRoundTrip(project);
+      for (const result of [project, again]) {
+        if (resolved) {
+          assert.equal(result.items[0].capabilities[0].providers["*"][0].spec, resolved);
+          assert.deepEqual(result.items[0].files.find((file) => file.path === resolved).bytes, entries.find((entry) => entry.name === resolved).bytes);
+        } else {
+          assert.deepEqual(result.items[0].capabilities, []);
+          assert.ok(result.unrecognized.some((entry) => entry.path === "microsoft-package/agents/tools/plugin.json"));
+        }
+      }
+    }
+  });
+
+  test("runtimes beyond the provider limit keep their definitions and local descriptions", async () => {
+    for (const count of [6, 7, 8]) {
+      const plugin = openApiPlugin("api", "api0.yaml");
+      plugin.runtimes = Array.from({ length: count }, (_, index) => ({ ...plugin.runtimes[0], spec: { url: "api" + index + ".yaml" } }));
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "first", file: "agents/first.json" }, { id: "second", file: "agents/second.json" }] } }))) },
+        ...["first", "second"].map((name) => ({ name: "agents/" + name + ".json", bytes: encode(JSON.stringify(declarativeAgent(name, { actions: [{ id: "api", file: "plugins/plugin.json" }] }))) })),
+        { name: "plugins/plugin.json", bytes: encode(JSON.stringify(plugin)) },
+        ...Array.from({ length: count }, (_, index) => ({ name: "plugins/api" + index + ".yaml", bytes: encode(index === 7 ? "password: " + SECRET : "openapi: 3.0.0\npaths: {}\n") })),
+      ];
+      const { project, notices } = await openPackage(entries);
+      assert.ok(project.items.every((item) => item.capabilities[0].providers["*"].length === 6 && item.files.length === 6));
+      assert.equal(notices.some((notice) => notice.includes("more than 6 ways to connect")), count > 6);
+      const { project: again, backup } = await backupRoundTrip(project);
+      const paths = ["manifest.json", "agents/first.json", "agents/second.json", "plugins/plugin.json", "plugins/api6.yaml"];
+      for (const path of count > 6 ? paths : []) {
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + path).bytes, entries.find((entry) => entry.name === path).bytes);
+        }
+      }
+      assert.equal(everythingShown(project, notices).includes(SECRET), false);
+      assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+    }
+  });
+
+  test("a rejected assistant reference retains the manifest while valid components open", async () => {
+    for (const file of ["missing.json", "../outside.json", "/absolute.json", "https://example.org/agent.json", "", null, 42]) {
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({
+          copilotAgents: { declarativeAgents: [{ id: "missing", file }] }, agentSkills: [{ folder: "skills/helper" }],
+        }))) },
+        { name: "skills/helper/SKILL.md", bytes: skillMd("helper", "Helps.") },
+      ];
+      const { project, notices } = await openPackage(entries);
+      assert.deepEqual(project.items.map((item) => item.skillName), ["helper"]);
+      assert.ok(notices.some((notice) => notice.startsWith("An assistant in the manifest points at a file")));
+      const { project: again } = await backupRoundTrip(project);
+      for (const result of [project, again]) {
+        assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/manifest.json").bytes, entries[0].bytes);
+      }
+    }
+  });
+
   test("actions dropped by server limits keep their sources without empty providers", async () => {
     for (const [skillCount, actionCount, hybrid] of [[10, 1, false], [9, 2, false], [0, 11, false], [10, 1, true]]) {
       const actions = Array.from({ length: actionCount }, (_, index) => ({ id: "action" + index, file: "actions/action" + index + ".json" }));
@@ -132,7 +204,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
       if (hybrid) {
         const source = entries.find((entry) => entry.name === actions[0].file);
         const action = JSON.parse(decode(source.bytes));
-        action.runtimes.push(openApiPlugin("skill0", "apis/records.yaml").runtimes[0]);
+        action.runtimes.push(openApiPlugin("skill0", "../apis/records.yaml").runtimes[0]);
         source.bytes = encode(JSON.stringify(action));
         entries.push({ name: "apis/records.yaml", bytes: encode("openapi: 3.0.0\npaths: {}\n") });
       }
@@ -243,12 +315,12 @@ describe("Microsoft 365 app packages made elsewhere", () => {
       const entries = [
         { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: agents } }))) },
         ...agents.map((agent) => ({ name: agent.file, bytes: encode(JSON.stringify(declarativeAgent(agent.id, { actions: agent.id === "first" ? [extra] : actions }))) })),
-        ...actions.map((action) => ({ name: action.file, bytes: encode(JSON.stringify(action === extra ? serverPlugin(action.id, "https://example.org/mcp") : openApiPlugin(action.id, "apis/shared.yaml"))) })),
+        ...actions.map((action) => ({ name: action.file, bytes: encode(JSON.stringify(action === extra ? serverPlugin(action.id, "https://example.org/mcp") : openApiPlugin(action.id, "../apis/shared.yaml"))) })),
         { name: "apis/shared.yaml", bytes: encode("openapi: 3.0.0\npaths: {}\n") },
       ];
       const retained = ["manifest.json", "agents/helper.json", extra.file];
       if (kind === "openapi") {
-        entries.find((entry) => entry.name === extra.file).bytes = encode(JSON.stringify(openApiPlugin(extra.id, "apis/extra.yaml")));
+        entries.find((entry) => entry.name === extra.file).bytes = encode(JSON.stringify(openApiPlugin(extra.id, "../apis/extra.yaml")));
         entries.push({ name: "apis/extra.yaml", bytes: encode("openapi: 3.0.0\npaths: {}\n") });
         retained.push("apis/extra.yaml");
       } else if (kind === "credential") {
@@ -487,7 +559,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
       description.name = path;
       const plugin = entries.find((entry) => entry.name === "agents/plugins/records.json");
       const json = JSON.parse(decode(plugin.bytes));
-      json.runtimes[0].spec.url = path;
+      json.runtimes[0].spec.url = "../../" + path;
       plugin.bytes = encode(JSON.stringify(json));
       const { project, notices } = await openPackage(entries);
       const agent = project.items[0];

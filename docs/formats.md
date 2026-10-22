@@ -845,6 +845,15 @@ and a path that `cleanArchivePath` would change, refuse, or that is missing
 from the ZIP is left out with a notice. The ZIP reader already refuses two
 entries with the same name.
 
+An API description's relative URL is resolved from the action manifest's
+folder, following [Microsoft's URL reference rules](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-manifest-2.4#relative-references-in-urls),
+checked 2026-10-21. For example, `agents/plugin.json` can name `api.yaml`
+beside it, or `../apis/records.yaml` elsewhere inside the package.
+`packageRelativePath` resolves the reference before `packagePath` validates
+the result. References cannot leave the package, use a remote address, or
+include a query or fragment. Percent-encoded characters are decoded before
+validation. A root file never overrides a file beside the action manifest.
+
 Classification happens before the package credential check. An unrelated
 web manifest follows the skill importer even if it has a field that looks
 like a credential. A manifest listing Microsoft assistants, skills, or
@@ -879,6 +888,12 @@ Actions whose servers do not fit also retain their action, assistant, and
 manifest sources. Their remaining usable providers still open; an action
 with no usable provider stays in the backup only. A missing or rejected
 action reference also retains the assistant and manifest for repair.
+A rejected assistant reference retains the manifest while valid package
+parts still open.
+
+Each action opens at most six usable runtimes. Extra runtime definitions
+and their local API descriptions stay in the backup with the action,
+assistant, and manifest sources. Credential and program checks still apply.
 
 Root files that cannot be attached because of their contents, name, or the
 20-file attachment limit stay in the backup when they pass those checks.
@@ -1203,10 +1218,12 @@ real account, unless the line names a tenant test.
   the file-count limit. Overflow sources are checked through backup round trips.
   Other cases check fallback secrets, rejected action paths, and action
   servers beyond the combined limit, including shared and mixed-provider actions.
+  Relative API paths are checked against root-file collisions and path
+  escapes. Other cases check runtime limits and rejected assistant references.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 301 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 304 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

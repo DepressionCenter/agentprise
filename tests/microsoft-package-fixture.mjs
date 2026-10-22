@@ -111,7 +111,7 @@ export function agentOnlyEntries() {
         { id: "desktop", file: "agents/plugins/desktop.json" },
       ],
     })) },
-    { name: "agents/plugins/records.json", bytes: json(openApiPlugin("records", "agents/apis/records.yaml", ["searchRecords", "getRecord"])) },
+    { name: "agents/plugins/records.json", bytes: json(openApiPlugin("records", "../apis/records.yaml", ["searchRecords", "getRecord"])) },
     { name: "agents/apis/records.yaml", bytes: encode(OPENAPI_TEXT) },
     { name: "agents/plugins/lookup.json", bytes: json(serverPlugin("lookup", "https://mcp.example.org/mcp", { type: "OAuthPluginVault", reference_id: "tenant-registration-1" })) },
     { name: "agents/plugins/desktop.json", bytes: json({ schema_version: "v2.4", name_for_human: "Desktop", namespace: "desktop", description_for_human: "A local plugin.", runtimes: [{ type: "LocalPlugin", auth: { type: "None" }, spec: { local_endpoint: "Microsoft.Office.Addin" } }] }) },

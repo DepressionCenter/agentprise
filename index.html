@@ -6754,6 +6754,44 @@ function packagePath(value) {
 }
 
 /**
+ * Resolves a local URL against its manifest without allowing an escape from the package.
+ * @param {string} manifestFile a validated package path
+ * @param {*} value an untrusted relative URL; remote URLs and fragments are refused
+ * @returns {string} a validated package path, or an empty string
+ */
+function packageRelativePath(manifestFile, value) {
+    if (!packagePath(manifestFile) || typeof value !== "string" || !value || value.length > LIMITS.itemPath) {
+        return "";
+    }
+    let relative;
+    try {
+        relative = decodeURIComponent(value);
+    } catch (error) {
+        return "";
+    }
+    if (/^[a-z][a-z0-9+.-]*:/i.test(relative) || /^[\\/]/.test(relative) || /[\\?#]/.test(relative)) {
+        return "";
+    }
+    const parts = manifestFile.split("/").slice(0, -1);
+    for (const part of relative.split("/")) {
+        if (part === ".") {
+            continue;
+        }
+        if (part === "..") {
+            if (parts.length === 0) {
+                return "";
+            }
+            parts.pop();
+        } else if (part) {
+            parts.push(part);
+        } else {
+            return "";
+        }
+    }
+    return packagePath(parts.join("/"));
+}
+
+/**
  * Whether a file looks like it holds a credential, including a private key.
  * Unknown file types are scanned as text unless a zero byte in the first
  * 8 KiB suggests binary content. Known binary types are skipped only when
@@ -6924,9 +6962,10 @@ function runtimeFunctions(manifest, runtime) {
  * @param {string} subject for notices
  * @param {object} state {servers, used, notices}
  * @param {Array<{path: string, bytes: Uint8Array}>} files the assistant's files, added to
+ * @param {string} manifestFile the action manifest's validated package path
  * @returns {object|null}
  */
-function actionProvider(entries, manifest, runtime, subject, state, files) {
+function actionProvider(entries, manifest, runtime, subject, state, files, manifestFile) {
     if (runtime.type !== "OpenApi" && runtime.type !== "RemoteMCPServer") {
         state.notices.push(subject + " runs in a way this app can't use" + (typeof runtime.type === "string" ? " (" + packageLabel(runtime.type, "") + ")" : "") + ", so that part was left out.");
         return null;
@@ -6943,7 +6982,7 @@ function actionProvider(entries, manifest, runtime, subject, state, files) {
             state.notices.push(subject + " reads its API description from the web, and Agentprise never downloads files, so it was left out.");
             return null;
         }
-        const path = packagePath(address);
+        const path = packageRelativePath(manifestFile, address);
         if (!path || !entries.has(path)) {
             state.notices.push(subject + " names an API description that isn't in the package, so it was left out.");
             return null;
@@ -7017,7 +7056,7 @@ function readCopilotActions(entries, actions, state, files, sourceFile) {
             overflow += 1;
             const source = parseJsonObject(fromBytes(entries.get(file)));
             (source && Array.isArray(source.runtimes) ? source.runtimes : []).forEach(function (runtime) {
-                const path = isPlainObject(runtime) && runtime.type === "OpenApi" ? packagePath(readPath(runtime, ["spec", "url"])) : "";
+                const path = isPlainObject(runtime) && runtime.type === "OpenApi" ? packageRelativePath(file, readPath(runtime, ["spec", "url"])) : "";
                 if (path && entries.has(path)) {
                     state.keep.add(path);
                 }
@@ -7058,12 +7097,24 @@ function readCopilotActions(entries, actions, state, files, sourceFile) {
         }
         const providers = [];
         const ownFiles = [];
+        let overflowRuntimes = 0;
         runtimes.forEach(function (runtime) {
-            const provider = actionProvider(entries, manifest, runtime, subject, state, ownFiles);
+            if (providers.length >= LIMITS.providersPerTarget) {
+                overflowRuntimes += 1;
+                const path = runtime.type === "OpenApi" ? packageRelativePath(file, readPath(runtime, ["spec", "url"])) : "";
+                if (path && entries.has(path)) {
+                    state.keep.add(path);
+                }
+                return;
+            }
+            const provider = actionProvider(entries, manifest, runtime, subject, state, ownFiles, file);
             if (provider) {
                 providers.push(provider);
             }
         });
+        if (overflowRuntimes > 0) {
+            state.notices.push(subject + " has more than " + LIMITS.providersPerTarget + " ways to connect. Agentprise keeps the extra definitions and their files in the backup only. To use them, split this action into separate actions and open the package again.");
+        }
         if (providers.length < runtimes.length) {
             keepSource();
             state.keep.add(file);
@@ -7197,6 +7248,7 @@ function readTeamsArchive(entries) {
         const file = packagePath(isPlainObject(entry) ? entry.file : "");
         if (!file || !entries.has(file)) {
             notices.push("An assistant in the manifest points at a file that isn't in the package, or at an unsafe path, so it was left out.");
+            state.keepManifest = true;
             return;
         }
         if (agentFiles.indexOf(file) >= 0) {
