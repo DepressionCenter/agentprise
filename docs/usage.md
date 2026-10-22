@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/usage.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-21
+Last Modified: 2026-10-22
 Summary: How to use Agentprise, job by job: keep your projects, create an
          assistant, add skills, check its tools, open a file you have, start
          from the Library, download it for each product or as a plugin, read
@@ -251,7 +251,10 @@ or the home button at the top to get back to that page first. Agentprise opens:
 - Any file it made itself: the backup, the skill `.zip`, the `.agent` file, or
   the app package `.zip`.
 - A `.agent` file exported from SharePoint.
-- An app package `.zip` exported from the Microsoft 365 Copilot app.
+- An app package `.zip` exported from the Microsoft 365 Copilot app, or
+  another Microsoft 365 app package, such as a Copilot Cowork plugin. Its
+  assistants, their actions, its skills, and its connectors all open in the
+  project.
 - Any Agent Skill `.zip` or `SKILL.md` file, from Gemini, Claude, or elsewhere.
   When a `.zip` holds several skills, each one becomes its own skill in the
   project.
@@ -274,10 +277,31 @@ A few things are worth knowing about files made elsewhere:
 - Some plugins carry parts Agentprise does not understand, such as hooks,
   commands, or agents folders. The app keeps them with the project and puts
   them back only in the backup. It never reads or runs them.
-- Programs are never kept, whatever the file calls them.
+- A Microsoft 365 app package can hold parts Agentprise can't use, such as a
+  local plugin. A message names each one, and the backup keeps its file in a
+  folder called `microsoft-package`. The
+  [formats page](formats.md#opening-a-file-you-already-have) lists what opens
+  and what doesn't.
+- A project holds up to 10 tool servers, and a skill holds up to 50 files.
+  If a Microsoft package exceeds those limits, a message says what opened.
+  The backup keeps extra connector definitions and safe extra skill files.
+  A backup can keep at most 50 files that the app cannot use. If a Microsoft
+  package needs more, Agentprise asks you to split it before opening it.
+  Split the package into smaller projects or skills to use them.
+- Programs are never kept, whatever the file calls them. Neither is a file or
+  server address that looks like it holds a password, key, or token.
+  Agentprise doesn't open a Microsoft package at all when its
+  `manifest.json`, a filename, or a folder name looks like it holds one.
+  Remove the key from the file or name, update references to that name,
+  and open the package again.
+- If text cannot be checked, that file is left out. Save it as valid UTF-8
+  or UTF-16 text and open the package again. Unknown binary formats are also
+  excluded when they cannot be checked; supported binary files remain usable.
 - If a skill or plugin does not say which license it uses, the license shows
   as "Not stated", and a note asks you to check with its author before you
   share it. The app never puts its own license on someone else's work.
+  Assistants from Microsoft app packages also show "Not stated", since those
+  packages have no place for a license, including packages made by Agentprise.
 - Backups made by the first version of Agentprise open as a plain skill.
 - Gemini Gems and ChatGPT custom GPTs have no file of their own. To bring one
   over before it retires, see

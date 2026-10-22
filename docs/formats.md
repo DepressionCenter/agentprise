@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/formats.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-21
+Last Modified: 2026-10-22
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
          need: field mappings, tools, conversion reports, vendor facts with
@@ -248,7 +248,9 @@ If a download holds a `SETUP.md` file, follow its steps too.
 Agentprise opens any of its own downloads, plus files made elsewhere:
 
 - A `.agent` file exported from SharePoint.
-- A `.zip` exported from the Microsoft 365 Copilot app.
+- A `.zip` exported from the Microsoft 365 Copilot app, or another Microsoft
+  365 app package with assistants, skills, or connectors, such as a Copilot
+  Cowork plugin.
 - Any Agent Skill `.zip` or `SKILL.md` file. A `.zip` with several skills
   inside opens with each one as its own skill.
 - A plugin `.zip` in the Agent Plugins format, a Claude plugin, or a Codex
@@ -266,12 +268,50 @@ out the **Tools available in this setup** section and the "Persona:" start of
 the description, because it writes those again for each download. The plain
 skill has no record of what was added, so it opens with that text in place.
 
+A Microsoft 365 app package opens like this:
+
+- Each assistant in it becomes an assistant in the project. Its actions become
+  tools, as long as the action calls a tool server on the web or uses an API
+  description inside the package. Download the Copilot app package again and
+  the actions come back the same.
+- Skills the package lists become skills. When an assistant lists a skill, it
+  uses that skill in the project too.
+- Connectors become tool servers for the whole project, under **More
+  settings**, then **Tool connections**. A download includes a server only
+  when a tool uses it. The backup always keeps them.
+- A package with more than one assistant opens with all of them, and each one
+  downloads as its own Copilot app package.
+- Sign-ins keep their kind, such as OAuth, but not their registration, which
+  belongs to the organization the package came from. Your admin registers the
+  sign-in again where you install it.
+- Anything else, such as a local plugin or a skill folder the package doesn't
+  list, is kept in the backup only, in a folder called `microsoft-package`. A
+  message lists each part that was left out and why.
+- A file that looks like it holds a password, key, or token is left out, and
+  so is a server address with a key in it.
+- An assistant whose file appears to contain a key is left out. Remove the
+  key from the source file and open the package again.
+- If the package's `manifest.json` appears to contain a key, the whole
+  package is refused. Remove the key and open the package again.
+  A key in an action's description file leaves that action out too.
+- Assistants open with the license "Not stated", because the package has no
+  place to declare one. This also applies to packages made by Agentprise.
+- When an assistant came from an Agentprise download, its instructions still
+  end with the old **Tools available in this setup** list. A message reminds
+  you to delete it, because the next download writes the list again.
+
 Plugins sometimes carry hooks, commands, agents folders, or other files
 Agentprise does not understand. The app keeps them with the project and writes
 them back only into the backup. It never reads or runs them, and it never
 keeps a program. A skill or plugin that names no license opens with the
 license "Not stated" and a note, so you can check with its author before you
 share it.
+
+A skill keeps its own tool server settings when a plugin has a server with
+the same name. If the settings differ, the plugin's server gets a numbered
+name, and both are kept.
+When two imported skills use the same server name for different settings,
+the second server gets a numbered name and that skill's tools use it.
 
 ## For maintainers
 
@@ -290,7 +330,7 @@ a real account. Read it before changing any converter in `index.html`.
 | Plugin (Agent Plugins 1.0 folder with the project record) | `.plugin.zip` | Yes, as a project | Yes | No: instructions are composed for ChatGPT | ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw |
 | Agent Plugins folder, Claude plugin, or Codex plugin made elsewhere | `.zip` | Yes | As the backup or either plugin | Skills and servers; everything else is kept as unrecognized files | Bringing a plugin into a project |
 | Microsoft `.agent` | `.agent` | Yes | Yes | All but attached files | SharePoint libraries and Teams chats |
-| Teams app package | `.zip` | Yes | Yes | No (see below) | The Microsoft 365 Copilot app |
+| Teams app package, or another Microsoft 365 app package | `.zip` | Yes, as a project with its assistants, actions, skills, and connectors | Yes, one assistant per package | No (see below) | The Microsoft 365 Copilot app and Copilot Cowork |
 | Copy-ready text | none, or `.md` | No | Copy buttons and a `.md` download | Not applicable | ChatGPT projects and Gemini Notebook |
 
 The Gemini skill and the Claude skill share one folder layout, but each is
@@ -787,6 +827,265 @@ The package stays on declarative agent v1.8. Version 1.9 adds `agent_skills`,
 which would let Copilot load skills as folders instead of inlined text, but on
 2026-10-10 it was a Frontier preview with no reference page.
 
+#### Opening a Microsoft 365 app package
+
+`readTeamsArchive` reads a package into a project. `detectFormat` sends it
+there when the ZIP has a root `manifest.json` and no root `SKILL.md` or plugin
+layout. A root `plugin.json` alone would send it to the plugin importer, so
+`importProject` first checks `isMicrosoftManifest`: a root `manifest.json`
+that lists assistants, skills, or connectors opens as a package even when a
+connector names `plugin.json` as its tool description. A root `SKILL.md`
+cannot override that manifest either: the unlisted root skill stays in the
+backup only and never becomes an assistant attachment. When the manifest
+names no assistant, skill, or connector, the
+importer falls back to `readSkillArchive` if the ZIP holds skill folders, so a
+web app's `manifest.json` beside skills still opens as skills. Every path the
+manifest names goes through `packagePath`: an optional `./` start is allowed,
+and a path that `cleanArchivePath` would change, refuse, or that is missing
+from the ZIP is left out with a notice. The ZIP reader already refuses two
+entries with the same name.
+
+An API description's relative URL is resolved from the action manifest's
+folder, following [Microsoft's URL reference rules](https://learn.microsoft.com/microsoft-365/copilot/extensibility/plugin-manifest-2.4#relative-references-in-urls),
+checked 2026-10-21. For example, `agents/plugin.json` can name `api.yaml`
+beside it, or `../apis/records.yaml` elsewhere inside the package.
+`packageRelativePath` resolves the reference before `packagePath` validates
+the result. References cannot leave the package, use a remote address, or
+include a query or fragment. Percent-encoded characters are decoded before
+validation. A root file never overrides a file beside the action manifest.
+
+Classification happens before the package credential check. An unrelated
+web manifest follows the skill importer even if it has a field that looks
+like a credential. A manifest listing Microsoft assistants, skills, or
+connectors still blocks the package when that check finds a match.
+
+Every file and folder name in a Microsoft package is checked for the same
+credential patterns before any part opens. A match blocks the whole package,
+including attempts to open it as a plugin or skill ZIP. The error asks you
+to remove the key from the name and its references without showing the name.
+
+The project opens at most 20 assistants and skills. Assistants fill those
+places first. Extra items stay as source files in the backup, along with
+the source manifest and assistant descriptions needed to find them. A notice
+asks you to split the package to open the remaining items. Credential and
+executable-file checks still apply to retained files.
+
+Each assistant opens at most 20 actions. Extra actions keep their source
+descriptions and local API descriptions in the backup, along with the
+assistant description and source manifest. A notice asks you to split those
+actions across assistants. Files with credential matches remain excluded.
+
+A listed skill opens at most 50 accepted files. Extra files keep their
+original package paths under `microsoft-package/` in the backup. Credential
+and program checks still apply. The notice asks you to split the skill to
+use the extra files.
+
+The project holds at most 10 tool servers across skills, actions, and
+connectors. When a connector does not fit after those servers are combined,
+the source manifest stays in the backup. The success notice counts only
+connectors that opened. A separate notice explains how to open the rest.
+Actions whose servers do not fit also retain their action, assistant, and
+manifest sources. Their remaining usable providers still open; an action
+with no usable provider stays in the backup only. A missing or rejected
+action reference also retains the assistant and manifest for repair.
+Skills whose tools need a missing server retain their source files and the
+manifest, plus any assistant description that names them. Server names are
+assigned before the limit applies, so a dropped server's name cannot be
+reassigned to a different address during the merge.
+A rejected assistant reference retains the manifest while valid package
+parts still open.
+Malformed assistant JSON also retains the manifest and original assistant
+file. An assistant rejected for credentials retains only its safe manifest.
+
+A backup holds at most 50 files that the app cannot use. If a Microsoft
+package would exceed that limit, Agentprise refuses the whole package and
+asks you to split it. This count includes unsupported files inside skills.
+It prevents a partially preserved project from replacing the source package.
+Files whose names conflict in the backup also block the package. Rename them
+so they differ beyond capitalization, and update their references.
+
+Each action opens at most six usable runtimes. Extra runtime definitions
+and their local API descriptions stay in the backup with the action,
+assistant, and manifest sources. Credential and program checks still apply.
+
+Each provider keeps at most 50 valid function names. When names are refused
+or exceed that limit, the complete action and local API descriptions stay
+in the backup with the assistant and manifest sources. An OpenAPI runtime
+without explicit operation names stays in the backup only. Agentprise does
+not infer operations from the API description. Add names to `functions` or
+`run_for_functions` in the action file to import that runtime.
+An MCP runtime with an explicit tool list that becomes empty is also kept
+only in the backup. It never becomes unrestricted tool discovery. Copilot
+export applies the same rule when none of a tool's names can be written.
+
+Root files that cannot be attached because of their contents, name, or the
+20-file attachment limit stay in the backup when they pass those checks.
+Each refused attachment gets a notice. Empty files and files with invalid
+document contents are preserved for you to inspect.
+An API description takes precedence over a root attachment with the same
+stored path; the root attachment stays in the backup.
+
+Only the color icon actually loaded by an assistant counts as imported.
+Other icons stay in the backup, including both icons in a package with
+only skills or connectors. A connector with an unsafe or missing tool
+description path still opens as a server. A notice asks you to fix the
+reference, and the source manifest stays in the backup.
+
+| Package part | Becomes | Limits |
+|---|---|---|
+| `copilotAgents.declarativeAgents[].file` | One assistant each, read by `teamsAgentRaw` | A file named twice is read once. Without a list, `declarativeAgent_0.json` is read. Only the first assistant keeps the manifest `id` as its app id; the others get a new one on download, with a notice |
+| Root files of accepted types | Attached files of every assistant | With two or more assistants, each gets a copy and a notice |
+| `actions[]` with an `OpenApi` runtime | A tool (`action.<namespace>`) with an `openapi` provider under `*`; the description is copied to the assistant's files at its package path | A local file or inline `api_description` is required. A web address is never fetched |
+| `actions[]` with a `RemoteMCPServer` runtime | A tool with an `mcp` provider, and a project server named after the `namespace` | A credential match excludes the action. A static `mcp_tool_description` keeps the runtime in the backup only. Otherwise, `cleanServerUrl` checks its address |
+| `run_for_functions`, or `functions[].name` when it is `["*"]` | The provider's `operations` or `tools`, and the server's `tools` | At most 50 valid names. Refused names retain the source files. An OpenAPI runtime without explicit names stays in the backup only |
+| Runtime `auth.type` | `None`, `OAuthPluginVault`, `ApiKeyPluginVault`, and `DynamicClientRegistration` (kept as `oauth`) | Any other type leaves the runtime out, so a sign-in is never written back as none. `reference_id` is not kept |
+| `agent_skills[].folder` and root `agentSkills[].folder` | Skill items, read by `readItemFolders`; an assistant's own list becomes its `uses`, matched by folder after `normalizeProject` numbers repeated skill names | A folder named by both is read once. A folder without `SKILL.md` is left out |
+| Root `agentConnectors[]` with `toolSource.remoteMcpServer` | A project server named after the connector `id`, with `displayName` as its label | No `authorization` means `oauth`, since Microsoft registers a client itself. A repeated `id` is read once. Other tool sources are left out, and the manifest is kept |
+
+A skill's `agentprise.json` can name its own servers. A skill keeps its
+server names, and a server from an action or connector whose name a skill
+already uses for a different server gets a numbered name, such as
+`remote-2`. The assistant's tools are pointed at the numbered name, so each
+tool still connects to its own address.
+`readItemFolders` first applies that rule between skills too: a later skill's
+different server gets a numbered name and its providers are updated before
+the package servers are combined. If a later skill uses those same settings,
+it reuses the existing numbered server. This also applies to plugin and skill
+ZIP imports.
+
+An inline `spec.api_description` takes precedence over `spec.url`. The importer
+writes it to a unique `inline-description-N.yaml` file beside its action
+manifest. Existing paths, including names that differ only by capitalization,
+are reserved. Shared actions reuse the generated files. The usual credential,
+file-content, path, and count checks still apply.
+
+A runtime with `spec.mcp_tool_description` stays in the backup only, together
+with its action and assistant sources. A referenced local tool-list file is
+kept with them. This avoids changing a fixed tool list into dynamic discovery.
+For root connectors, a valid `mcpToolDescription.file` retains both the file
+and the package manifest; the server still opens in Tool connections.
+Duplicate connector IDs also retain the manifest, including definitions that
+were skipped. The first connector with each ID supplies the imported server.
+
+An OpenAPI description may be at most four folders below the package root
+(five path components, including the filename), matching item-file and
+provider-spec limits. A deeper description leaves that runtime out with a
+notice asking the author to move the file and update its reference. The
+importer does not create a tool with no usable provider for that runtime.
+
+Action capability ids keep namespace separators such as hyphens and
+underscores. A repeated namespace, or one that becomes identical after
+cleaning or truncation, gets a numbered id so neither action is lost.
+
+Each skill file belongs to its nearest enclosing skill folder. A nested
+skill that the manifest does not list is kept for the backup only and gets
+a notice, even when its parent is listed. An explicitly listed descendant
+opens separately. Files from a skill rejected for credentials cannot become
+files of a listed parent.
+Safe companion files from that rejected skill remain in the backup.
+Rejected skill references also retain the source manifest and any assistant
+description that names them, so the author can repair the package.
+
+An assistant can import at most 50 API description files across its actions.
+Extra descriptions and their action sources remain in the backup, along with
+the assistant description and manifest. Providers that need those extra files
+are left out; each action keeps its other usable providers. Another assistant
+that shares an action applies its own file limit.
+Rejected API contents or names retain the same sources. Descriptions directly
+under `references/` also share the 20-file attachment limit. If they do not
+fit, their providers are removed and their sources stay in the backup.
+Credential and program exclusions still apply to all retained files.
+
+A plugin manifest with a runtime the app can't read, an assistant file that
+isn't JSON, a connector's tool description file, a skill folder the manifest
+doesn't list, and every other file the importer did not use are kept as
+unrecognized files under `microsoft-package/` with the note "From a Microsoft
+365 app package." The folder keeps a kept `SKILL.md` or `plugin.json` from
+being read as part of the backup when it opens again. Every text file the
+importer would keep, whether as a skill file, an API description, an attached
+file, or a kept file, first goes through `holdsCredential`, which looks for a
+key, token, or password in a query string, a JSON value, or a bearer header
+(`CREDENTIAL_TEXT_PATTERN`), and on a YAML or settings line such as
+`client_secret: abc123` or `export EXAMPLE_API_KEY=abc123`
+(`CREDENTIAL_LINE_PATTERN`). A line whose value names a key kept elsewhere,
+such as `${CLIENT_SECRET}`, or says only `true` or `false`, is not a match
+(`CREDENTIAL_REFERENCE_VALUE`). A match leaves the file out, and the notice names
+only the file. A skill whose `SKILL.md` matches is not imported as a skill, and an
+action whose API description matches is left out. In a kept JSON or YAML
+file, `withoutRegistrationIds` replaces each `reference_id` and `referenceId`
+value with `replace-with-your-auth-registration-id`, so no tenant's
+registration id reaches the backup. Programs are refused by
+`normalizeProject`, as for every import.
+Registration-ID rewrites preserve UTF-8 or UTF-16 encoding and any byte-order
+mark. UTF-16 detection also handles common files without that mark.
+Basic and Bearer authorization headers, including proxy headers, are checked
+by `CREDENTIAL_HEADER_PATTERN`. A matching header excludes the file before
+it can become an attachment, skill file, or backup-only file.
+
+A credential reference must occupy the whole settings value. Plain variable
+references such as `${CLIENT_SECRET}` and `{{ secrets.token }}` are allowed.
+Fallbacks, substitutions, and literal text added to a reference are checked
+as credential values. For example, `${CLIENT_SECRET:-EXAMPLE_SECRET}` is
+not treated as a reference to a key stored elsewhere.
+
+For retained package files, the `microsoft-package/` prefix does not count
+toward the original path's limit of eight components and 200 characters.
+Normalization checks the original path, then adds the fixed prefix back.
+This preserves the longest supported paths through backup round trips,
+while still refusing traversal and paths beyond those limits.
+
+The root manifest is checked before any of its values are used. A match
+blocks the package, including attempts to open its contents as a skill ZIP
+instead. This covers publisher links and project descriptions as well as
+connector addresses. The error asks the author to remove the credentials.
+Assistant and action description files are checked before their values are
+imported, regardless of their filename extension. A match leaves that part
+out, and its file is excluded from the backup. `holdsCredential` also checks
+unknown file types, such as `.env`, `.toml`, and `.pem`, even when they contain
+zero bytes. It decodes UTF-16 files with a byte-order mark and removes zero
+bytes from decoded text before scanning. Other control bytes are checked both
+as separators and with those bytes removed, so neither form can hide a field.
+Files with invalid text encoding or replacement characters are excluded with
+a repair notice. An unreadable root manifest blocks the package. Known binary
+types, including complete PNG images, receive a scan of their readable bytes.
+A format signature does not exempt those bytes from credential checks.
+This does not inspect compressed document contents. Mislabeled text, such as a
+password stored in a fake PDF, is scanned before it can become a skill file
+or a backup-only file. Private
+key headers, including `BEGIN PRIVATE KEY` and `BEGIN RSA PRIVATE KEY`, count
+as matches. This heuristic does not detect every credential or encoding.
+URL user names and passwords also count as matches, as do `auth` query
+parameters. Query names are decoded before checking. Valid JSON is scanned
+as parsed keys and values, including nested objects, arrays, and escaped
+field names. Names such as `X-API-Key` and `database_password` use the same
+credential-name rules as settings files. Complete variable references remain
+allowed; literal values and references with fallbacks remain excluded.
+Literal passwords and numeric values have no minimum length. Empty values
+remain allowed, but a quoted space is a literal value.
+Malformed JSON receives the text scan.
+YAML flow mappings, such as `database: {password: ...}`, also receive field
+checks. Quoted names, nested mappings, numeric values, and multiline values
+are covered. Empty values and complete external references remain allowed.
+XML-style credential elements and attributes are checked too, including
+namespace prefixes and `name` or `key` fields paired with a `value` attribute.
+Standard character references are decoded for that check; external entities
+are never loaded. Empty fields and complete external references remain allowed.
+
+A package with an assistant opens with the project license `Not stated` and
+a notice. A Microsoft package cannot declare the assistant's license, even
+when Agentprise made it. Each imported skill keeps its own declared license.
+
+A package that Agentprise wrote opens with the same three actions, and the
+next Copilot app package writes the same plugin manifests, API description,
+action list, and web search sites. The instructions still hold the old
+**Tools available in this setup** section, because a package has no record
+of what the app added, and the app says so instead of guessing. The inlined
+skill text stays in the instructions for the same reason.
+
+`teamsZipImport`, the format reader on `formats.teamsZip.import`, still reads
+only the first assistant, without actions or skills. The app itself opens
+files through `importProject`.
+
 ### The whole-project plugins
 
 Both plugins put each item in `skills/<skill-name>/` as an item folder whose
@@ -832,6 +1131,14 @@ caveman/
 Because `plugin.json` carries the Agentprise extension, the Plugin opens
 again as a project. It writes no `.codex-plugin/plugin.json`: ChatGPT, Codex,
 and VS Code read the root `plugin.json` (see the vendor facts below).
+
+For plugins without the Agentprise project extension, `combineServers`
+combines skill and plugin server settings after normalization. Identical
+settings share a name. Different settings keep the skill's name and give
+the plugin server a free numbered name, reserving existing names first.
+Differences in labels, sign-in kinds, or tool lists count too, even when
+the address is the same. The Microsoft package reader uses the same helper
+and updates its assistants' tool references to the assigned names.
 
 ### Copy-ready text
 
@@ -913,6 +1220,10 @@ real account, unless the line names a tenant test.
 | The upgrade is started by a person, never automatically, and needs edit permission on the `.agent` file, the ability to share agents, and permission to edit pages (Microsoft names the owner, creator, or site owner as best suited); after it, the original `.agent` file can no longer be edited, sharing does not carry over except org-wide sharing, usage history does not transfer, and an agent in a Teams chat or channel must be removed and added again by its sharing link | [Upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents), checked 2026-10-21 |
 | Microsoft's upgrade paths by role: a site Q&A agent moves to Copilot in SharePoint, a repeatable site task becomes a skill, a named Q&A or retrieval agent moves to Agent Builder, and a Copilot Studio custom engine agent publishes to the Copilot app | [Upgrade SharePoint agents](https://learn.microsoft.com/sharepoint/upgrade-sharepoint-agents), checked 2026-10-21 |
 | Files uploaded to Copilot Agent Builder become embedded content the agent reads (knowledge); no import of a `.agent` file or any other definition file into Agent Builder is documented | [Add knowledge sources in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge), checked 2026-10-21 |
+| A Copilot Cowork plugin is a Microsoft 365 app package: `manifest.json`, `color.png`, `outline.png`, and `skills/<name>/SKILL.md` folders, with optional `tools/` files; the manifest lists skills in root `agentSkills` and tool servers in root `agentConnectors`, and a package may hold skills only, connectors only, or both | [Build plugins for Copilot Cowork](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development), checked 2026-10-21 |
+| A root `agentSkills` entry is `{folder}` only, a path of at most 256 characters to a folder with `SKILL.md`; a manifest lists at most 20 | [root.agentSkills](https://learn.microsoft.com/microsoft-365/extensibility/schema/root-agent-skills) and [Build plugins for Copilot Cowork](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development), checked 2026-10-21 |
+| A root `agentConnectors` entry has `id` (at most 64 characters), `displayName`, `description`, and in manifests 1.28 to 1.30 a `toolSource.remoteMcpServer` with `mcpServerUrl`, `mcpToolDescription.file` (required in 1.28), and `authorization` with `type` `None`, `OAuthPluginVault`, `ApiKeyPluginVault`, or `DynamicClientRegistration` and a `referenceId` for every type but `None`; the preview manifest adds `plugin` and `localMcpServer` sources and the `AzureKeyVault` type | [root.agentConnectors](https://learn.microsoft.com/microsoft-365/extensibility/schema/root-agent-connectors), checked 2026-10-21 |
+| In Cowork, a connector with no `authorization` gets an OAuth client registered for it, which Copilot Chat does not support; API key sign-in is not available in Cowork yet | [Build plugins for Copilot Cowork](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development), checked 2026-10-21 |
 
 #### ChatGPT and OpenAI
 
@@ -959,6 +1270,41 @@ real account, unless the line names a tenant test.
   app's 2026-10-10 export shape, and a check that every backup listed in
   `library/catalog.json` opens without notices, survives a backup round trip,
   and matches its catalog line.
+- `tests/microsoft-package.test.mjs` opens this app's Copilot app package
+  with three actions and checks that the next download writes the same
+  plugin manifests, API description, action list, and web search sites. It
+  also opens synthetic packages from `tests/microsoft-package-fixture.mjs`:
+  an assistant with actions, skills only, connectors only, a mix, two
+  assistants, and a hostile package with unsafe paths, repeated entries, an
+  unknown sign-in, and keys in addresses and files. Other tests cover keys on
+  YAML and settings lines, a connector that names a root `plugin.json`, and a
+  skill server and an action server with the same name. Further tests cover
+  credentials in assistant files, unknown text types, private keys, binary
+  file preservation, and unstated assistant licenses through backup round
+  trips, colliding servers between skills in package, plugin, and skill ZIP
+  imports, and API descriptions at five, six, and eight path components.
+  Root-manifest tests cover publisher URLs, descriptions, connector addresses,
+  and rejection without a skill fallback through all three detection routes.
+  Action and assistant metadata tests include misleading binary extensions.
+  Other cases check disguised text attachments, unique action ids, and
+  listed, unlisted, or rejected nested skills.
+  Root-skill precedence and retained paths at their depth and length limits
+  are checked through backup round trips too. Further cases check refused
+  root attachments, packages with more than 20 assistants and skills,
+  unused icons, invalid connector description paths, action-count limits,
+  and unrelated web manifests with credential-like fields. Further cases
+  check credential-bearing filenames and folders through each detection
+  route, connectors beyond the combined server limit, and skill files beyond
+  the file-count limit. Overflow sources are checked through backup round trips.
+  Other cases check fallback secrets, rejected action paths, and action
+  servers beyond the combined limit, including shared and mixed-provider actions.
+  Relative API paths are checked against root-file collisions and path
+  escapes. Other cases check runtime limits and rejected assistant references.
+  `tests/project.test.mjs` covers colliding server names in all three
+  plugin layouts, identical definitions, and existing numbered names. The synthetic
+  packages follow Microsoft's documentation and were not checked by
+  Microsoft's package validator. `npm test` on 2026-10-22 ran 332 tests, and
+  all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
   tool of each provider kind, to every download and compares each result with
@@ -1017,6 +1363,10 @@ documentation settled some of them. The rest need a real account.
 - Upload a Copilot app package with an action to a tenant, once with an
   OpenAPI action and once with a tool server, and confirm Copilot lists and
   calls them.
+- Open a real Copilot Cowork plugin, and a package with `agent_skills` made by
+  Microsoft 365 Agents Toolkit, and confirm the skills and connectors arrive.
+  The importer was tested only with packages built from Microsoft's
+  documentation.
 - Load a `.agent` file written by Agentprise, with `_license` and `_agentprise`,
   in a SharePoint library and in a Teams chat. The tenant test recorded above
   used a hand-edited file, not this app's output.

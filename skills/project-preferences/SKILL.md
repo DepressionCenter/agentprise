@@ -133,6 +133,12 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   agents, and unknown files are kept as unrecognized; server `headers`, `env`,
   and `cwd` are dropped; local server commands are stored as text; programs
   are refused. A version 1 bundle opens as a plain skill.
+- A Microsoft 365 app package opens through `readTeamsArchive` as a whole
+  project: every declarative agent is an assistant, actions become tools,
+  `agent_skills` and root `agentSkills` become skills, and root
+  `agentConnectors` become project servers. Paths the manifest names must
+  pass `packagePath`. Parts it can't read are kept under `microsoft-package/`
+  for the backup only, and registration ids are never kept.
 - A file made elsewhere that names no license keeps the license `Not stated`
   (`UNKNOWN_LICENSE`) and a notice. Never relabel it with the default license.
 - The Microsoft `.agent` export carries two extra top-level keys, `_license` and

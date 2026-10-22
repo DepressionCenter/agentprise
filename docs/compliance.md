@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/compliance.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-10-22
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
          the controls in place, the evidence behind them, and the known gaps.
 Notes: See README file for documentation and full license information.
@@ -127,6 +127,9 @@ listed under known gaps.
   license opens with the license "Not stated" and a notice, its `LICENSE.txt`
   says the license was not stated, and a license file the author brought is
   kept. Evidence: `UNKNOWN_LICENSE` and `readItemFolders` in `index.html`.
+  Assistants imported from Microsoft packages also use "Not stated", because
+  their format cannot declare a license. Evidence: `readTeamsArchive` and
+  the license round-trip test in `tests/microsoft-package.test.mjs`.
 
 ### Security controls
 
@@ -151,6 +154,187 @@ listed under known gaps.
   `serversFromMcp` in `index.html`, and `tests/project.test.mjs` (Claude,
   Codex, and Agent Plugins imports; "unrecognized files keep safe paths and
   never hold programs").
+- Microsoft 365 app packages are read the same way. Each path the manifest
+  names for an assistant, action, API description, skill folder, or connector
+  file must be inside the package and survive `cleanArchivePath` unchanged,
+  or that part is left out with a notice. An OpenAPI description must also fit
+  the item-file limit of five path components; a deeper path is rejected
+  before creating its provider, with instructions to move the description
+  and update its reference. An API description on the web is
+  never fetched. A sign-in type the app can't write back leaves the action or
+  connector out instead of turning its sign-in off. Registration ids are not
+  kept: they are dropped from tools and servers and replaced with a
+  placeholder in kept files. Server addresses with a key or token are
+  dropped. The root manifest is scanned before any field is imported; a match
+  blocks the whole package, with no fallback to a skill import. Assistant
+  and action description files are checked as text before parsing, even with
+  a misleading binary extension. A match excludes that part and its source
+  file from the project and backup. Any text
+  file that would become a skill file, an API description,
+  an attached file, or a kept file is left out when `CREDENTIAL_TEXT_PATTERN`
+  or `CREDENTIAL_LINE_PATTERN` finds a key, token, or password in it, in a
+  query string, a JSON value, a bearer header, a YAML or settings line, or a
+  private key header. Unknown types, including `.env`, `.toml`, and `.pem`,
+  are scanned even when they contain zero bytes. UTF-16 byte-order marks
+  select the decoder; zero characters are removed, while other control
+  characters are tested both as separators and with those characters removed.
+  Invalid encodings and replacement characters cause exclusion for text.
+  Recognized binary types, including complete PNG images, receive a scan of
+  readable bytes; their signatures do not bypass credential checks. Compressed
+  document contents are not inspected. Notices name parts and files, never
+  the matched text. Kept files sit under `microsoft-package/` in the backup
+  and appear in no other download. This is a pattern check, so a key in an
+  unusual shape can still get through, and a person should still read a
+  package from an unknown source before sharing it. Evidence:
+  `readTeamsArchive`, `packagePath`, `holdsCredential`,
+  `withoutRegistrationIds`, `authFromCopilot`, and `packageServerAddress` in
+  `index.html`, and `tests/microsoft-package.test.mjs` ("unsafe references,
+  repeated paths, an unknown sign-in, and web-only descriptions are left out
+  with a notice each", "a key or token in an address or a kept file is never
+  kept or shown", and "a key in a skill file, an API description, or an
+  attached file leaves that file out", and "a key set on a YAML or settings
+  line leaves the file out, and a reference to a key does not", "a credential
+  in an assistant file leaves the assistant out of the project and backup",
+  and "unknown types require readable text while verified binary formats are
+  preserved", and "API descriptions at the item path limit import;
+  deeper ones are rejected with instructions", "credentials in root
+  manifest fields block the package without a skill fallback", and
+  "credentials in action descriptions exclude the action and its source
+  file", and "plaintext with a binary suffix is checked before attachments
+  or backup-only files are retained"). `npm test` on 2026-10-22 ran 332 tests,
+  and all passed.
+- An unlisted nested skill stays in the backup only, even when its parent
+  is listed. A listed descendant opens as a separate item. Files from a
+  rejected skill cannot be imported as files of its parent. Evidence: the
+  nested-skill tests in `tests/microsoft-package.test.mjs`.
+  Safe companion files from a rejected skill remain in the backup. Rejected
+  skill references retain the manifest and affected assistant descriptions.
+  Tests cover unsafe paths, missing folders, invalid types, and backup bytes.
+  A root skill cannot override a Microsoft manifest or become an assistant
+  attachment. Retained package paths keep their original depth and length
+  allowance without counting the fixed backup prefix; traversal and excess
+  depth or length remain refused. The same test file covers both rules and
+  their backup round trips.
+- Root files refused as attachments and items beyond the 20-item limit
+  retain their source files in the backup, subject to the credential and
+  executable-file checks. Notices explain what was not opened. The source
+  manifest and assistant descriptions are also retained when items exceed
+  the limit. Evidence: the refused-attachment and item-limit tests in
+  `tests/microsoft-package.test.mjs`, including backup round trips.
+- Unused package icons remain in backups. Invalid connector description
+  paths produce a notice and retain the source manifest without fetching
+  the path. The icon and connector-path tests in
+  `tests/microsoft-package.test.mjs` check backup round trips and reject
+  traversal, absolute paths, remote URLs, missing entries, and invalid types.
+  Duplicate connector IDs retain their source manifest while importing only
+  the first definition. A regression test verifies both original definitions
+  remain available after a backup round trip.
+- Actions beyond an assistant's 20-tool limit keep their source descriptions
+  and local API descriptions in the backup. Credential matches remain
+  excluded. The action-limit test covers remote tools, API descriptions,
+  actions shared between assistants, and credential exclusion through backups.
+  The manifest classification test confirms that unrelated web manifests
+  follow the skill importer; Microsoft manifests still receive the package
+  credential check. Both tests are in `tests/microsoft-package.test.mjs`.
+- A credential match in a package filename or folder blocks the package
+  without displaying the name. Tests cover text and binary files through
+  the package, plugin, and skill ZIP detection routes, and confirm that
+  error messages do not expose the synthetic key.
+- Connectors beyond the combined 10-server limit retain their source
+  manifest, and files beyond a listed skill's 50-file limit retain their
+  original package paths in the backup. Success notices count only imported
+  connectors. Boundary and backup tests in `tests/microsoft-package.test.mjs`
+  cover these rules, including credential and program exclusion for extra
+  skill files.
+- Credential references must match a complete allowed form. Settings with
+  literal fallbacks, substitutions, or appended values are not exempt from
+  the credential check. Tests confirm that matching values never reach
+  projects, notices, or backups, while plain variable references survive.
+  Additional tests reject credentials in unknown files containing NUL bytes
+  and UTF-16 text with or without a byte-order mark, while safe bytes survive.
+  URL checks reject user information and credential query names, including
+  `auth` and encoded query names. JSON escapes cannot hide those URLs.
+  Tests cover manifest rejection through all three detection routes and
+  credential exclusion from retained text and backup files.
+  Parsed JSON keys retain their value context, so namespaced fields such as
+  `X-API-Key` and `database_password` are checked regardless of text layout.
+  Tests cover nested objects, arrays, escaped keys, numeric passwords,
+  reference fallbacks, and allowed complete references through backups.
+  Credential literals have no minimum length. Tests exclude one-, two-, and
+  three-character passwords, numeric values including zero, and quoted spaces
+  from JSON, YAML, settings, and backups while preserving empty values and
+  complete external references.
+  Basic and Bearer authorization headers, including proxy headers and JSON
+  values, are excluded before files become attachments, skill files, or
+  backup-only files. Regression tests check imported and exported bytes.
+  Binary-signature tests cover fake PDF files, invalid-byte gaps, and NUL
+  obfuscation. XML tests cover elements, attributes, namespaces, CDATA,
+  character references, and allowed empty or external-reference values.
+  YAML flow-mapping tests cover nested and quoted fields, numeric values,
+  multiline values, and complete external references through backups.
+- Actions whose servers exceed the project limit retain their source files,
+  assistant descriptions, and manifest. An action keeps any remaining usable
+  provider; one with none is excluded. Missing or unsafe action paths retain
+  the assistant description and manifest for repair. Tests in
+  `tests/microsoft-package.test.mjs` cover shared actions, name collisions,
+  mixed providers, rejected paths, and backup round trips.
+- Local API references resolve from the action manifest's folder. Encoded
+  characters are decoded before validation, and parent references must stay
+  inside the package. Tests reject package escapes, remote and absolute
+  paths, backslashes, query strings, fragments, and malformed encodings.
+- Runtimes beyond an action's six-provider limit retain their definitions
+  and local descriptions with the action and assistant sources. Rejected
+  assistant references retain the package manifest. Tests cover boundaries,
+  shared actions, credential exclusion, and backup round trips.
+- API descriptions beyond an assistant's 50-file limit retain their bytes,
+  action sources, assistant description, and manifest in the backup. Tools
+  retain only providers with imported files. Tests cover both sides of the
+  limit and a shared action used by an assistant with room for all its files.
+  The same retention applies to invalid or unsupported file contents and
+  attachment-limit failures. Tests cover empty, binary, unknown, and program
+  files; programs remain excluded. A root attachment cannot replace an API
+  description at the same stored path. Conflicting backup names block the
+  package instead of dropping a source file. Malformed assistant files retain
+  their package manifest. Regression tests check these sources through backups.
+- OpenAPI runtimes without explicit operation names stay in the backup with
+  their action, API, assistant, and manifest sources. Function lists above
+  the 50-name limit also retain those sources. Tests cover omitted and
+  wildcard lists, both sides of the limit, shared actions, and backup bytes.
+  An explicit MCP tool list that normalizes to empty cannot become dynamic
+  discovery. Copilot export also rejects selections with no supported names.
+  Tests cover long names, invalid types, fallback prevention, and export
+  selections that retain only their supported names.
+- Inline API descriptions become uniquely named files beside their action
+  manifest and take precedence over URL references. Tests cover collisions,
+  shared actions, credential exclusion, backups, and Copilot exports.
+  Static MCP action descriptions retain their linked sources instead of
+  becoming dynamic tools. Valid connector tool lists retain the manifest
+  relationship. Both forms have backup round-trip tests.
+- Registration IDs in retained UTF-16 JSON and YAML are replaced while
+  preserving encoding and byte-order marks. Tests cover both byte orders,
+  files with and without marks, non-ASCII text, and backup round trips.
+  Fatal text decoding rejects malformed UTF-8 or UTF-16 before import.
+  Replacement characters also cause exclusion. Tests cover interrupted
+  credential assignments, control bytes, and supported binary preservation.
+- A plugin or Microsoft package cannot replace a skill's server settings
+  merely by using the same name. Different definitions get separate names;
+  assistant tool references follow the renamed package server. The same rule
+  applies between imported skills: each skill's tools use its own server.
+  Identical definitions reuse an existing numbered server. Tests import
+  eleven skills through Microsoft, plugin, and skill ZIP routes and confirm
+  that their two server definitions remain usable after a backup round trip.
+  Server limits apply after merging, so dropped names cannot be reassigned
+  during later merges. Skills whose tools lose a server retain their original
+  source files. Boundary tests cover ten, eleven, and twelve distinct servers.
+  Evidence:
+  `combineServers` in `index.html`, the three plugin collision tests in
+  `tests/project.test.mjs`, and the package server collision test in
+  `tests/microsoft-package.test.mjs`, including "listed skills with
+  conflicting server names keep their own endpoints and tool references".
+- Microsoft packages that would exceed the 50-file backup-only limit are
+  refused without returning a project. The count includes unsupported skill
+  files. Tests check both kinds of files below, at, and above the limit, and
+  verify retained bytes through backup round trips.
 - Programs are refused everywhere a file can arrive: attached files, files in
   a skill folder, and unrecognized files. A file with a program signature, a
   program extension, or a program extension hidden before its last extension
