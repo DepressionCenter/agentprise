@@ -199,7 +199,7 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-21 ran 309 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-21 ran 312 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -247,6 +247,10 @@ listed under known gaps.
   projects, notices, or backups, while plain variable references survive.
   Additional tests reject credentials in unknown files containing NUL bytes
   and UTF-16 text with or without a byte-order mark, while safe bytes survive.
+  URL checks reject user information and credential query names, including
+  `auth` and encoded query names. JSON escapes cannot hide those URLs.
+  Tests cover manifest rejection through all three detection routes and
+  credential exclusion from retained text and backup files.
 - Actions whose servers exceed the project limit retain their source files,
   assistant descriptions, and manifest. An action keeps any remaining usable
   provider; one with none is excluded. Missing or unsafe action paths retain
@@ -272,11 +276,18 @@ listed under known gaps.
   Identical definitions reuse an existing numbered server. Tests import
   eleven skills through Microsoft, plugin, and skill ZIP routes and confirm
   that their two server definitions remain usable after a backup round trip.
+  Server limits apply after merging, so dropped names cannot be reassigned
+  during later merges. Skills whose tools lose a server retain their original
+  source files. Boundary tests cover ten, eleven, and twelve distinct servers.
   Evidence:
   `combineServers` in `index.html`, the three plugin collision tests in
   `tests/project.test.mjs`, and the package server collision test in
   `tests/microsoft-package.test.mjs`, including "listed skills with
   conflicting server names keep their own endpoints and tool references".
+- Microsoft packages that would exceed the 50-file backup-only limit are
+  refused without returning a project. The count includes unsupported skill
+  files. Tests check both kinds of files below, at, and above the limit, and
+  verify retained bytes through backup round trips.
 - Programs are refused everywhere a file can arrive: attached files, files in
   a skill folder, and unrecognized files. A file with a program signature, a
   program extension, or a program extension hidden before its last extension

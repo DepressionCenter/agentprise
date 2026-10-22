@@ -285,6 +285,8 @@ A few things are worth knowing about files made elsewhere:
 - A project holds up to 10 tool servers, and a skill holds up to 50 files.
   If a Microsoft package exceeds those limits, a message says what opened.
   The backup keeps extra connector definitions and safe extra skill files.
+  A backup can keep at most 50 files that the app cannot use. If a Microsoft
+  package needs more, Agentprise asks you to split it before opening it.
   Split the package into smaller projects or skills to use them.
 - Programs are never kept, whatever the file calls them. Neither is a file or
   server address that looks like it holds a password, key, or token.

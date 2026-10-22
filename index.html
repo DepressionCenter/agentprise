@@ -2777,9 +2777,10 @@ function normalizeCapabilities(value, notices) {
  * executable name or path with no spaces.
  * @param {*} value {name: server}
  * @param {string[]} notices
+ * @param {number} [limit=LIMITS.servers] maximum results; merging defers this limit until all definitions are named
  * @returns {object}
  */
-function normalizeServers(value, notices) {
+function normalizeServers(value, notices, limit = LIMITS.servers) {
     const servers = {};
     const source = isPlainObject(value) ? value : {};
     Object.keys(source).forEach(function (name) {
@@ -2788,7 +2789,7 @@ function normalizeServers(value, notices) {
             notices.push("A tool server named \"" + String(name).slice(0, 40) + "\" was left out because its name or settings could not be used.");
             return;
         }
-        if (Object.keys(servers).length >= LIMITS.servers) {
+        if (Object.keys(servers).length >= limit) {
             notices.push("Only the first " + LIMITS.servers + " tool servers were kept.");
             return;
         }
@@ -2821,10 +2822,17 @@ function normalizeServers(value, notices) {
     return servers;
 }
 
+const CREDENTIAL_QUERY_NAME = /^(api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)$/i;
+
+/** Whether a parsed URL has user information or a credential query parameter. */
+function urlHasCredential(url) {
+    return Boolean(url.username || url.password) || Array.from(url.searchParams.keys()).some(function (name) { return CREDENTIAL_QUERY_NAME.test(name); });
+}
+
 /** An https address without user, password, or fragment, else "": every installer gets the file. */
 function cleanServerUrl(value) {
     const url = parseHttpsUrl(value);
-    if (!url || url.username || url.password || url.hash || value.indexOf("#") >= 0 || /[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)=/i.test(url.search)) {
+    if (!url || urlHasCredential(url) || url.hash || value.indexOf("#") >= 0) {
         return "";
     }
     return value;
@@ -2970,7 +2978,7 @@ function itemPaths(item) {
  * Copies an untrusted project: caps and cleans items, makes skill names unique,
  * checks links, and keeps unreadable files for the backup.
  * @param {*} input from storage, a file, or the library
- * @returns {{project: object, notices: string[]}}
+ * @returns {{project: object, notices: string[], unrecognizedOverflow: number}} count of backup-only files omitted by the capacity limit
  */
 function normalizeProject(input) {
     const notices = [];
@@ -3107,7 +3115,7 @@ function normalizeProject(input) {
     if (!project.description && project.items.length > 0) {
         project.description = project.items[0].description.slice(0, LIMITS.description);
     }
-    return { project: project, notices: notices };
+    return { project: project, notices: notices, unrecognizedOverflow: dropped.over };
 }
 
 /** A program by its first bytes, its type, or a hidden program extension. */
@@ -6721,7 +6729,7 @@ const COPILOT_AUTH_KINDS = Object.freeze({ None: "none", OAuthPluginVault: "oaut
 
 // Text that looks like a key, token, or password in a file the import would
 // otherwise keep for the backup.
-const CREDENTIAL_TEXT_PATTERN = /[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]{4,}"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
+const CREDENTIAL_TEXT_PATTERN = /[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]{4,}"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
 
 // A YAML or settings line that sets a key, such as "client_secret: abc123" or
 // "export OPENAI_API_KEY=abc123". The value is the second group.
@@ -6804,13 +6812,24 @@ function holdsCredential(name, bytes) {
     }
     const encoding = bytes[0] === 0xff && bytes[1] === 0xfe ? "utf-16le" : bytes[0] === 0xfe && bytes[1] === 0xff ? "utf-16be" : "utf-8";
     const text = new TextDecoder(encoding).decode(bytes);
-    return textHoldsCredential(text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "\n"));
+    const scanned = text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "\n");
+    const json = parseJsonObject(scanned);
+    return textHoldsCredential(scanned) || Boolean(json && textHoldsCredential(JSON.stringify(json)));
 }
 
 /** True when text matches a credential pattern rather than a reference to a key. */
 function textHoldsCredential(text) {
     if (CREDENTIAL_TEXT_PATTERN.test(text)) {
         return true;
+    }
+    for (const match of text.matchAll(/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>\\]+/gi)) {
+        try {
+            if (urlHasCredential(new URL(match[0]))) {
+                return true;
+            }
+        } catch (error) {
+            // Malformed addresses still receive the text-pattern checks.
+        }
     }
     return Array.from(text.matchAll(CREDENTIAL_LINE_PATTERN)).some(function (match) {
         const value = match[2].replace(/[ \t]+#.*$/, "").trim().replace(/^(["'])(.*)\1$/, "$2");
@@ -6906,8 +6925,8 @@ function addPackageServer(servers, key, server) {
  * @returns {{servers: object, names: object}} combined servers and added-name mapping
  */
 function combineServers(own, added, notices) {
-    const servers = normalizeServers(own, notices);
-    const incoming = normalizeServers(added, notices);
+    const servers = normalizeServers(own, notices, Infinity);
+    const incoming = normalizeServers(added, notices, Infinity);
     const names = Object.create(null);
     // Reserve existing names before assigning suffixes to collisions.
     Object.keys(incoming).forEach(function (name) {
@@ -7421,6 +7440,27 @@ function readTeamsArchive(entries) {
     // the assistants' tools are pointed at it.
     const combined = combineServers(read.servers, state.servers, notices);
     const servers = normalizeServers(combined.servers, notices);
+    const limitedSkillFolders = readFolders.filter(function (folder, index) {
+        return normalizeCapabilities(read.items[index].capabilities, []).some(function (capability) {
+            return Object.values(capability.providers).some(function (providers) {
+                return providers.some(function (provider) { return provider.kind === "mcp" && !Object.prototype.hasOwnProperty.call(servers, provider.server); });
+            });
+        });
+    });
+    if (limitedSkillFolders.length > 0) {
+        state.keepManifest = true;
+        entries.forEach(function (bytes, name) {
+            if (limitedSkillFolders.some(function (folder) { return name.indexOf(folder) === 0; })) {
+                state.keep.add(name);
+            }
+        });
+        agents.forEach(function (agent, index) {
+            if (agent.skillFolders.some(function (folder) { return limitedSkillFolders.indexOf(folder) >= 0; })) {
+                state.keep.add(importedAgentFiles[index]);
+            }
+        });
+        notices.push("Some skills need tool servers beyond the project's " + LIMITS.servers + "-server limit. Agentprise keeps their source files in the backup only. To use those tools, split the package into smaller projects and open each one.");
+    }
     const serverSurvives = function (name) {
         return Object.prototype.hasOwnProperty.call(combined.names, name) && Object.prototype.hasOwnProperty.call(servers, combined.names[name]);
     };
@@ -7550,6 +7590,9 @@ function readTeamsArchive(entries) {
         notices.push("The file doesn't say which license it uses. Check with its author before you share it.");
     }
     const result = normalizeProject(raw);
+    if (result.unrecognizedOverflow > 0) {
+        return { error: "Agentprise didn't open this package, because more than " + LIMITS.unrecognized + " files would need to stay in the backup only. Split the package into smaller packages and open each one.", blocked: true };
+    }
     // Skill names are final only once normalizeProject numbers repeated ones,
     // so each assistant's skills are matched by folder after it runs.
     const skillItems = result.project.items.slice(agents.length);

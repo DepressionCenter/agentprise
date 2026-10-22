@@ -115,6 +115,59 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("skills beyond the server limit retain sources without reusing lost server names", async () => {
+    for (const count of [10, 11, 12]) {
+      const folders = Array.from({ length: count }, (_, index) => "skills/skill" + index);
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentSkills: folders.map((folder) => ({ folder })) }))) },
+        ...folders.flatMap((folder, index) => [
+          { name: folder + "/SKILL.md", bytes: skillMd("skill" + index, "Looks up records.") },
+          { name: folder + "/agentprise.json", bytes: encode(JSON.stringify({ kind: "skill", servers: { shared: { transport: "http", url: "https://example.org/server" + index } }, capabilities: [{ id: "lookup", providers: { "*": [{ kind: "mcp", server: "shared" }] } }] })) },
+          { name: folder + "/references/guide.txt", bytes: encode("Guide " + index) },
+        ]),
+      ];
+      const { project, notices } = await openPackage(entries);
+      assert.equal(Object.keys(project.servers).length, 10);
+      for (const [index, item] of project.items.entries()) {
+        const providers = item.capabilities[0].providers["*"];
+        assert.equal(providers.length, index < 10 ? 1 : 0);
+        if (providers.length) assert.equal(project.servers[providers[0].server].url, "https://example.org/server" + index);
+      }
+      assert.equal(notices.some((notice) => notice.includes("Some skills need tool servers")), count > 10);
+      const { project: again } = await backupRoundTrip(project);
+      assert.deepEqual(again.servers, project.servers);
+      for (const source of entries.filter((entry) => count > 10 && (entry.name === "manifest.json" || folders.slice(10).some((folder) => entry.name.startsWith(folder + "/"))))) {
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + source.name).bytes, source.bytes);
+        }
+      }
+    }
+  });
+
+  test("backup capacity rejects packages instead of dropping retained or unsupported skill files", async () => {
+    for (const count of [49, 50, 51]) {
+      for (const inSkill of [false, true]) {
+        const folder = "skills/helper/";
+        const entries = [
+          { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentSkills: [{ folder }] }))) },
+          { name: folder + "SKILL.md", bytes: skillMd("helper", "Helps.") },
+          ...Array.from({ length: count }, (_, index) => ({ name: (inSkill ? folder : "extra/") + "file" + index + ".dat", bytes: encode("Safe contents " + index) })),
+        ];
+        const opened = await engine.imports.any("package.zip", engine.zip.write(entries));
+        if (count > 50) {
+          assert.equal(opened.project, undefined);
+          assert.equal(opened.blocked, true);
+          assert.ok(opened.error.includes("50") && opened.error.includes("Split the package"));
+        } else {
+          assert.equal(opened.error, undefined);
+          assert.equal(opened.project.unrecognized.length, count);
+          const { project: again } = await backupRoundTrip(opened.project);
+          assert.deepEqual(again.unrecognized, opened.project.unrecognized);
+        }
+      }
+    }
+  });
+
   test("aggregate API file limits preserve sources and do not truncate shared action definitions", async () => {
     for (const count of [8, 9, 10]) {
       const actions = Array.from({ length: count }, (_, index) => ({ id: "api" + index, file: "plugins/api" + index + ".json" }));
@@ -934,6 +987,9 @@ describe("unsafe and broken packages", () => {
   test("credentials in root manifest fields block the package without a skill fallback", async () => {
     const changes = [
       (manifest) => { manifest.developer.websiteUrl = "https://example.org/?token=" + SECRET; },
+      (manifest) => { manifest.developer.websiteUrl = "https://user:" + SECRET + "@example.org/"; },
+      (manifest) => { manifest.developer.privacyUrl = "https://example.org/?auth=" + SECRET; },
+      (manifest) => { manifest.developer.termsOfUseUrl = "https://example.org/?%61uth=" + SECRET; },
       (manifest) => { manifest.description.full = "Authorization: Bearer " + SECRET; },
       (manifest) => { manifest.agentConnectors = [{ id: "leaky", toolSource: { remoteMcpServer: { mcpServerUrl: "https://example.org/mcp?api_key=" + SECRET } } }]; },
     ];
@@ -961,6 +1017,32 @@ describe("unsafe and broken packages", () => {
         assert.ok(result.error.includes("manifest.json") && result.error.includes("Remove the key from manifest.json"));
         assert.equal(JSON.stringify(result).includes(SECRET), false);
       }
+    }
+  });
+
+  test("URL credentials are rejected from kept text while ordinary URL text survives", async () => {
+    const entries = skillOnlyEntries();
+    const unsafe = ["https://user:" + SECRET + "@example.org/", "https://example.org/?auth=" + SECRET, "https://example.org/?%61uth=" + SECRET];
+    unsafe.forEach((value, index) => entries.push({ name: "notes/unsafe" + index + ".txt", bytes: encode(value) }));
+    const safe = { name: "notes/safe.txt", bytes: encode("https://example.org/?author=Example\nhttps://example.org/path/user@example.org\n") };
+    entries.push(safe);
+    const { project, notices } = await openPackage(entries);
+    const { project: again, backup } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.equal(result.unrecognized.some((entry) => entry.path.includes("/unsafe")), false);
+      assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + safe.name).bytes, safe.bytes);
+    }
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+    for (const url of unsafe) {
+      const encodedEntries = skillOnlyEntries();
+      const manifest = JSON.parse(decode(encodedEntries[0].bytes));
+      manifest.developer.websiteUrl = url;
+      encodedEntries[0].bytes = encode(JSON.stringify(manifest).replace(/\//g, "\\/").replace(/auth/g, "\\u0061uth"));
+      const rejected = await engine.imports.any("encoded.zip", engine.zip.write(encodedEntries));
+      assert.equal(rejected.blocked, true);
+      assert.equal(rejected.project, undefined);
+      assert.equal(JSON.stringify(rejected).includes(SECRET), false);
     }
   });
 

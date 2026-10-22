@@ -888,8 +888,17 @@ Actions whose servers do not fit also retain their action, assistant, and
 manifest sources. Their remaining usable providers still open; an action
 with no usable provider stays in the backup only. A missing or rejected
 action reference also retains the assistant and manifest for repair.
+Skills whose tools need a missing server retain their source files and the
+manifest, plus any assistant description that names them. Server names are
+assigned before the limit applies, so a dropped server's name cannot be
+reassigned to a different address during the merge.
 A rejected assistant reference retains the manifest while valid package
 parts still open.
+
+A backup holds at most 50 files that the app cannot use. If a Microsoft
+package would exceed that limit, Agentprise refuses the whole package and
+asks you to split it. This count includes unsupported files inside skills.
+It prevents a partially preserved project from replacing the source package.
 
 Each action opens at most six usable runtimes. Extra runtime definitions
 and their local API descriptions stay in the backup with the action,
@@ -1002,6 +1011,9 @@ password stored in a fake PDF, is scanned before it can become a skill file
 or a backup-only file. Private
 key headers, including `BEGIN PRIVATE KEY` and `BEGIN RSA PRIVATE KEY`, count
 as matches. This heuristic does not detect every credential or encoding.
+URL user names and passwords also count as matches, as do `auth` query
+parameters. Query names are decoded before checking. JSON objects are checked
+with escapes decoded as well as in their original text form.
 
 A package with an assistant opens with the project license `Not stated` and
 a notice. A Microsoft package cannot declare the assistant's license, even
@@ -1235,7 +1247,7 @@ real account, unless the line names a tenant test.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 309 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 312 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
