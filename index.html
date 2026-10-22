@@ -6725,11 +6725,11 @@ const CREDENTIAL_TEXT_PATTERN = /[?&](api[_-]?key|key|token|access[_-]?token|sec
 
 // A YAML or settings line that sets a key, such as "client_secret: abc123" or
 // "export OPENAI_API_KEY=abc123". The value is the second group.
-const CREDENTIAL_LINE_PATTERN = /^[ \t]*(?:-[ \t]+|export[ \t]+)?["']?(?:[a-z0-9]+[_-])*(api[_-]?key|apikey|client[_-]?secret|password|passwd|access[_-]?token|refresh[_-]?token|bearer[_-]?token|private[_-]?key|secret|token)["']?[ \t]*[:=][ \t]*["']?([^\s"'#]{4,})/gim;
+const CREDENTIAL_LINE_PATTERN = /^[ \t]*(?:-[ \t]+|export[ \t]+)?["']?(?:[a-z0-9]+[_-])*(api[_-]?key|apikey|client[_-]?secret|password|passwd|access[_-]?token|refresh[_-]?token|bearer[_-]?token|private[_-]?key|secret|token)["']?[ \t]*[:=][ \t]*([^\r\n]+)/gim;
 
 // Values on such a line that name a key kept somewhere else, such as
 // "${API_KEY}" or "{{ secrets.token }}", or that say nothing, such as "true".
-const CREDENTIAL_REFERENCE_VALUE = /^(?:[$%{<*&]|(?:true|false|null|none|yes|no)$)/i;
+const CREDENTIAL_REFERENCE_VALUE = /^(?:\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})|%[A-Za-z_][A-Za-z0-9_]*%|\{\{\s*[A-Za-z_][A-Za-z0-9_.]*\s*\}\}|<[A-Za-z_][A-Za-z0-9_. -]*>|[*&][A-Za-z_][A-Za-z0-9_-]*|true|false|null|none|yes|no)$/i;
 
 // The backup note on files kept from a Microsoft package.
 const PACKAGE_KEPT_NOTE = "From a Microsoft 365 app package. Not interpreted by Agentprise.";
@@ -6773,7 +6773,10 @@ function textHoldsCredential(text) {
     if (CREDENTIAL_TEXT_PATTERN.test(text)) {
         return true;
     }
-    return Array.from(text.matchAll(CREDENTIAL_LINE_PATTERN)).some(function (match) { return !CREDENTIAL_REFERENCE_VALUE.test(match[2]); });
+    return Array.from(text.matchAll(CREDENTIAL_LINE_PATTERN)).some(function (match) {
+        const value = match[2].replace(/[ \t]+#.*$/, "").trim().replace(/^(["'])(.*)\1$/, "$2");
+        return value.length >= 4 && !CREDENTIAL_REFERENCE_VALUE.test(value);
+    });
 }
 
 /**
@@ -6984,17 +6987,23 @@ function actionLabel(manifest) {
  * @param {*} actions the declarative agent's list, untrusted
  * @param {object} state {servers, used, keep, notices}
  * @param {Array<{path: string, bytes: Uint8Array}>} files the assistant's files, added to
+ * @param {string} sourceFile the assistant description to retain when an action cannot be fully read
  * @returns {Array<object>} capabilities for normalizeItem
  */
-function readCopilotActions(entries, actions, state, files) {
+function readCopilotActions(entries, actions, state, files, sourceFile) {
     const capabilities = [];
     const seenHere = Object.create(null);
     let overflow = 0;
+    const keepSource = function () {
+        state.keep.add(sourceFile);
+        state.keepManifest = true;
+    };
     (Array.isArray(actions) ? actions : []).forEach(function (action, index) {
         const subject = "The action \"" + packageLabel(isPlainObject(action) ? action.id : "", "number " + (index + 1)) + "\"";
         const file = isPlainObject(action) ? packagePath(action.file) : "";
         if (!file || !entries.has(file)) {
-            state.notices.push(subject + " points at a file that isn't in the package, or at an unsafe path, so it was left out.");
+            keepSource();
+            state.notices.push(subject + " points at a file that isn't in the package, or at an unsafe path, so it was left out. Correct the action's file path in the package and open it again.");
             return;
         }
         if (seenHere[file]) {
@@ -7004,7 +7013,7 @@ function readCopilotActions(entries, actions, state, files) {
         seenHere[file] = true;
         if (capabilities.length >= LIMITS.capabilities) {
             state.keep.add(file);
-            state.keepManifest = true;
+            keepSource();
             overflow += 1;
             const source = parseJsonObject(fromBytes(entries.get(file)));
             (source && Array.isArray(source.runtimes) ? source.runtimes : []).forEach(function (runtime) {
@@ -7018,6 +7027,9 @@ function readCopilotActions(entries, actions, state, files) {
         // Another assistant in the package already read this file: share its tool and server.
         if (state.actionFiles.has(file)) {
             const shared = state.actionFiles.get(file);
+            if (!shared || state.keep.has(file)) {
+                keepSource();
+            }
             if (shared) {
                 capabilities.push(JSON.parse(JSON.stringify(shared.capability)));
                 shared.files.forEach(function (path) {
@@ -7031,6 +7043,7 @@ function readCopilotActions(entries, actions, state, files) {
         state.actionFiles.set(file, null);
         state.used.add(file);
         if (holdsCredential(file, entries.get(file))) {
+            keepSource();
             leaveOutForKey(state, file);
             state.notices.push(subject + " has a description file that looks like it holds a password, key, or token, so Agentprise left the action out. Remove the key from " + file + " and open the package again.");
             return;
@@ -7038,6 +7051,7 @@ function readCopilotActions(entries, actions, state, files) {
         const manifest = parseJsonObject(fromBytes(entries.get(file)));
         const runtimes = manifest && Array.isArray(manifest.runtimes) ? manifest.runtimes.filter(isPlainObject) : [];
         if (runtimes.length === 0) {
+            keepSource();
             state.notices.push(subject + " has a file this app can't read, so it was left out.");
             state.keep.add(file);
             return;
@@ -7051,6 +7065,7 @@ function readCopilotActions(entries, actions, state, files) {
             }
         });
         if (providers.length < runtimes.length) {
+            keepSource();
             state.keep.add(file);
         }
         if (providers.length === 0) {
@@ -7077,7 +7092,6 @@ function readCopilotActions(entries, actions, state, files) {
         state.actionFiles.set(file, { capability: capability, files: ownFiles.map(function (own) { return own.path; }) });
         capabilities.push(capability);
     });
-    state.actionOverflowCount += overflow;
     if (overflow > 0) {
         state.notices.push("Only the first " + LIMITS.capabilities + " actions of an assistant were opened. Agentprise keeps the files of the other actions in the backup only. To use them, move some actions to another assistant in the package and open it again.");
     }
@@ -7174,7 +7188,7 @@ function readTeamsArchive(entries) {
     }
     const source = manifest || {};
     const notices = [];
-    const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), actionIds: new Set(), actionOverflowCount: 0, withKeys: [], notices: notices, keepManifest: false };
+    const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), actionIds: new Set(), withKeys: [], notices: notices, keepManifest: false };
 
     // ### Find the declarative agents ###
     const listed = readPath(source, ["copilotAgents", "declarativeAgents"]);
@@ -7226,11 +7240,7 @@ function readTeamsArchive(entries) {
         }
         const raw = teamsAgentRaw(entries, manifest, declarative, notices);
         const files = [];
-        const actionOverflowBefore = state.actionOverflowCount;
-        raw.capabilities = readCopilotActions(entries, declarative.actions, state, files);
-        if (state.actionOverflowCount > actionOverflowBefore) {
-            state.keep.add(file);
-        }
+        raw.capabilities = readCopilotActions(entries, declarative.actions, state, files, file);
         raw.toolFiles = files;
         raw.skillFolders = [];
         (Array.isArray(declarative.agent_skills) ? declarative.agent_skills : []).forEach(function (entry) {
@@ -7323,12 +7333,34 @@ function readTeamsArchive(entries) {
     // the assistants' tools are pointed at it.
     const combined = combineServers(read.servers, state.servers, notices);
     const servers = normalizeServers(combined.servers, notices);
-    const connectorCount = connectorNames.filter(function (name) {
+    const serverSurvives = function (name) {
         return Object.prototype.hasOwnProperty.call(combined.names, name) && Object.prototype.hasOwnProperty.call(servers, combined.names[name]);
-    }).length;
+    };
+    const connectorCount = connectorNames.filter(serverSurvives).length;
     if (connectorCount < connectorNames.length) {
         state.keepManifest = true;
         notices.push("The project can hold at most " + LIMITS.servers + " tool servers, so Agentprise kept some connectors in the backup only. To use those connectors, split the package into smaller projects and open each one.");
+    }
+    const limitedActions = new Set();
+    state.actionFiles.forEach(function (action, file) {
+        if (action && action.capability.providers["*"].some(function (provider) { return provider.kind === "mcp" && !serverSurvives(provider.server); })) {
+            limitedActions.add(action.capability.id);
+            state.keep.add(file);
+            action.files.forEach(function (path) { state.keep.add(path); });
+        }
+    });
+    if (limitedActions.size > 0) {
+        state.keepManifest = true;
+        agents.forEach(function (agent, index) {
+            if (agent.capabilities.some(function (capability) { return limitedActions.has(capability.id); })) {
+                state.keep.add(importedAgentFiles[index]);
+            }
+            agent.capabilities = agent.capabilities.filter(function (capability) {
+                capability.providers["*"] = capability.providers["*"].filter(function (provider) { return provider.kind !== "mcp" || serverSurvives(provider.server); });
+                return capability.providers["*"].length > 0;
+            });
+        });
+        notices.push("Some actions need tool servers beyond the project's " + LIMITS.servers + "-server limit. Agentprise keeps their source files in the backup only. To use those actions, split the package into smaller projects and open each one.");
     }
     remapItemServers(agents, combined.names);
 

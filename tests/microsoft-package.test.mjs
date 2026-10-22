@@ -115,6 +115,64 @@ describe("this app's own Copilot app package", () => {
 });
 
 describe("Microsoft 365 app packages made elsewhere", () => {
+  test("actions dropped by server limits keep their sources without empty providers", async () => {
+    for (const [skillCount, actionCount, hybrid] of [[10, 1, false], [9, 2, false], [0, 11, false], [10, 1, true]]) {
+      const actions = Array.from({ length: actionCount }, (_, index) => ({ id: "action" + index, file: "actions/action" + index + ".json" }));
+      const servers = Object.fromEntries(Array.from({ length: skillCount }, (_, index) => ["skill" + index, { transport: "http", url: "https://skill.example.org/" + index }]));
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({
+          copilotAgents: { declarativeAgents: [{ id: "first", file: "agents/first.json" }, { id: "second", file: "agents/second.json" }] },
+          agentSkills: [{ folder: "skills/helper" }],
+        }))) },
+        ...["first", "second"].map((name) => ({ name: "agents/" + name + ".json", bytes: encode(JSON.stringify(declarativeAgent(name, { actions }))) })),
+        { name: "skills/helper/SKILL.md", bytes: skillMd("helper", "Helps.") },
+        { name: "skills/helper/agentprise.json", bytes: encode(JSON.stringify({ kind: "skill", servers })) },
+        ...actions.map((action, index) => ({ name: action.file, bytes: encode(JSON.stringify(serverPlugin("skill" + index, "https://action.example.org/" + index))) })),
+      ];
+      if (hybrid) {
+        const source = entries.find((entry) => entry.name === actions[0].file);
+        const action = JSON.parse(decode(source.bytes));
+        action.runtimes.push(openApiPlugin("skill0", "apis/records.yaml").runtimes[0]);
+        source.bytes = encode(JSON.stringify(action));
+        entries.push({ name: "apis/records.yaml", bytes: encode("openapi: 3.0.0\npaths: {}\n") });
+      }
+      const { project, notices } = await openPackage(entries);
+      assert.equal(Object.keys(project.servers).length, 10);
+      for (const agent of project.items.slice(0, 2)) {
+        assert.equal(agent.capabilities.length, 10 - skillCount + (hybrid ? 1 : 0));
+        assert.ok(agent.capabilities.every((capability) => capability.providers["*"].length > 0));
+        assert.ok(agent.capabilities.flatMap((capability) => capability.providers["*"]).filter((provider) => provider.kind === "mcp").every((provider) => project.servers[provider.server].url.startsWith("https://action.example.org/")));
+      }
+      assert.ok(notices.some((notice) => notice.includes("Some actions need tool servers beyond")));
+      const { project: again } = await backupRoundTrip(project);
+      const paths = ["manifest.json", "agents/first.json", "agents/second.json", actions.at(-1).file];
+      if (hybrid) paths.push("apis/records.yaml");
+      for (const path of paths) {
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + path).bytes, entries.find((entry) => entry.name === path).bytes);
+        }
+      }
+    }
+  });
+
+  test("rejected action paths retain the assistant and manifest for repair", async () => {
+    for (const file of ["missing.json", "../outside.json", "/absolute.json", "https://example.org/action.json", "", null, 42]) {
+      const entries = [
+        { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "helper", file: "agents/helper.json" }] } }))) },
+        { name: "agents/helper.json", bytes: encode(JSON.stringify(declarativeAgent("Helper", { actions: [{ id: "missing", file }] }))) },
+      ];
+      const { project, notices } = await openPackage(entries);
+      assert.deepEqual(project.items[0].capabilities, []);
+      assert.ok(notices.some((notice) => notice.includes("points at a file that isn't in the package")));
+      const { project: again } = await backupRoundTrip(project);
+      for (const original of entries) {
+        for (const result of [project, again]) {
+          assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + original.name).bytes, original.bytes);
+        }
+      }
+    }
+  });
+
   test("connectors beyond the combined server limit retain the source manifest", async () => {
     for (const [skillCount, actionCount, connectorTotal] of [[0, 0, 11], [0, 10, 1], [10, 0, 1], [5, 4, 2], [9, 0, 1]]) {
       const actions = Array.from({ length: actionCount }, (_, index) => ({ id: "action" + index, file: "actions/action" + index + ".json" }));
@@ -185,7 +243,8 @@ describe("Microsoft 365 app packages made elsewhere", () => {
       const entries = [
         { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: agents } }))) },
         ...agents.map((agent) => ({ name: agent.file, bytes: encode(JSON.stringify(declarativeAgent(agent.id, { actions: agent.id === "first" ? [extra] : actions }))) })),
-        ...actions.map((action) => ({ name: action.file, bytes: encode(JSON.stringify(serverPlugin(action.id, "https://example.org/" + action.id))) })),
+        ...actions.map((action) => ({ name: action.file, bytes: encode(JSON.stringify(action === extra ? serverPlugin(action.id, "https://example.org/mcp") : openApiPlugin(action.id, "apis/shared.yaml"))) })),
+        { name: "apis/shared.yaml", bytes: encode("openapi: 3.0.0\npaths: {}\n") },
       ];
       const retained = ["manifest.json", "agents/helper.json", extra.file];
       if (kind === "openapi") {
@@ -481,7 +540,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     // The registration id belongs to another tenant: the notice says so without showing it.
     assert.ok(notices.some((n) => n.includes("\"lookup\"") && n.includes("registers it again")));
     assert.equal(everythingShown(project, notices).includes("tenant-registration-1"), false);
-    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/agents/plugins/desktop.json", "microsoft-package/en.json", "microsoft-package/outline.png"]);
+    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/agents/plugins/desktop.json", "microsoft-package/agents/records.json", "microsoft-package/en.json", "microsoft-package/manifest.json", "microsoft-package/outline.png"]);
     assert.ok(project.unrecognized.every((entry) => entry.note === KEPT_NOTE));
     // The Copilot app package writes the OpenAPI action again from the item's file.
     const teams = await engine.exports.teamsPackage(project, agent, teamsIcons());
@@ -606,6 +665,22 @@ describe("Microsoft 365 app packages made elsewhere", () => {
 });
 
 describe("unsafe and broken packages", () => {
+  test("only complete credential references are exempt from the settings scan", async () => {
+    const unsafe = ["${MISSING:-" + SECRET + "}", "${MISSING-" + SECRET + "}", "${MISSING:=" + SECRET + "}", "${MISSING/old/" + SECRET + "}", "${MISSING}" + SECRET, "${MISSING} " + SECRET, "$MISSING:" + SECRET, "%MISSING%" + SECRET, "{{ secrets.token }}" + SECRET, "<MISSING>" + SECRET, "*alias " + SECRET];
+    const safe = ["${API_KEY}", "$API_KEY", "%API_KEY%", "{{ secrets.token }}", "<EXAMPLE_API_KEY>", "*key_alias", "true", "false", "null"];
+    const entries = skillOnlyEntries();
+    unsafe.forEach((value, index) => entries.push({ name: "config/unsafe" + index + ".env", bytes: encode("API_KEY=" + value + "\n") }));
+    safe.forEach((value, index) => entries.push({ name: "config/safe" + index + ".yaml", bytes: encode("api_key: '" + value + "' # external reference\n") }));
+    const { project, notices } = await openPackage(entries);
+    const { project: again, backup } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.equal(result.unrecognized.some((entry) => entry.path.includes("/unsafe")), false);
+      assert.equal(result.unrecognized.filter((entry) => entry.path.includes("/safe")).length, safe.length);
+    }
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+  });
+
   test("credential-bearing filenames and folders block packages without exposing the path", async () => {
     const paths = ["Bearer " + SECRET + ".txt", "skills/helper/Bearer " + SECRET + ".md", "config/Bearer " + SECRET + "/data.bin", "config/password=" + SECRET + ".txt", "Bearer " + SECRET + ".png"];
     for (const path of paths) {
@@ -784,7 +859,7 @@ describe("unsafe and broken packages", () => {
     has("Left out 1 program file.");
     // The unknown sign-in is refused rather than written back as no sign-in.
     assert.equal(project.items[0].capabilities.some((c) => c.id === "action.vault"), false);
-    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/manifest.json", "microsoft-package/outline.png", "microsoft-package/plugin-broken.json", "microsoft-package/plugin-vault.json", "microsoft-package/plugin-webspec.json", "microsoft-package/skills/real/SKILL.md"]);
+    assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/declarativeAgent_0.json", "microsoft-package/manifest.json", "microsoft-package/outline.png", "microsoft-package/plugin-broken.json", "microsoft-package/plugin-vault.json", "microsoft-package/plugin-webspec.json", "microsoft-package/skills/real/SKILL.md"]);
   });
 
   test("a key or token in an address or a kept file is never kept or shown", async () => {

@@ -875,6 +875,10 @@ The project holds at most 10 tool servers across skills, actions, and
 connectors. When a connector does not fit after those servers are combined,
 the source manifest stays in the backup. The success notice counts only
 connectors that opened. A separate notice explains how to open the rest.
+Actions whose servers do not fit also retain their action, assistant, and
+manifest sources. Their remaining usable providers still open; an action
+with no usable provider stays in the backup only. A missing or rejected
+action reference also retains the assistant and manifest for repair.
 
 Root files that cannot be attached because of their contents, name, or the
 20-file attachment limit stay in the backup when they pass those checks.
@@ -944,6 +948,12 @@ file, `withoutRegistrationIds` replaces each `reference_id` and `referenceId`
 value with `replace-with-your-auth-registration-id`, so no tenant's
 registration id reaches the backup. Programs are refused by
 `normalizeProject`, as for every import.
+
+A credential reference must occupy the whole settings value. Plain variable
+references such as `${CLIENT_SECRET}` and `{{ secrets.token }}` are allowed.
+Fallbacks, substitutions, and literal text added to a reference are checked
+as credential values. For example, `${CLIENT_SECRET:-EXAMPLE_SECRET}` is
+not treated as a reference to a key stored elsewhere.
 
 For retained package files, the `microsoft-package/` prefix does not count
 toward the original path's limit of eight components and 200 characters.
@@ -1191,10 +1201,12 @@ real account, unless the line names a tenant test.
   check credential-bearing filenames and folders through each detection
   route, connectors beyond the combined server limit, and skill files beyond
   the file-count limit. Overflow sources are checked through backup round trips.
+  Other cases check fallback secrets, rejected action paths, and action
+  servers beyond the combined limit, including shared and mixed-provider actions.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-21 ran 298 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-21 ran 301 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
