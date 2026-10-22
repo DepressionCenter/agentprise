@@ -6814,15 +6814,12 @@ function packageTextEncoding(bytes) {
     return "utf-8";
 }
 
-/** Returns scan text, null for a verified binary format, or undefined for unreadable text. */
+/** Decodes text strictly and exposes readable binary content; undefined means unreadable text. */
 function packageScanText(name, bytes) {
-    if (/\.png$/i.test(name) && pngIsComplete(bytes)) {
-        return null;
-    }
     const kind = fileKind(name);
-    const textual = !kind || kind === "text" || !fileContentMatches(kind, bytes);
-    if (!textual) {
-        return null;
+    const binary = (/\.png$/i.test(name) && pngIsComplete(bytes)) || (kind && kind !== "text" && fileContentMatches(kind, bytes));
+    if (binary) {
+        return new TextDecoder("utf-8").decode(bytes);
     }
     try {
         const text = new TextDecoder(packageTextEncoding(bytes), { fatal: true }).decode(bytes);
@@ -6832,14 +6829,14 @@ function packageScanText(name, bytes) {
     }
 }
 
-/** Rejects unreadable text or credential matches; verified binary formats bypass the text scan. */
+/** Rejects unreadable text or credential matches, including readable content in binary files. */
 function holdsCredential(name, bytes) {
     const text = packageScanText(name, bytes);
     if (typeof text !== "string") {
         return text === undefined;
     }
-    const split = text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "\n");
-    const joined = text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "");
+    const split = text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "\n");
+    const joined = text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "");
     return structuredTextHoldsCredential(split) || (joined !== split && structuredTextHoldsCredential(joined));
 }
 
@@ -6875,9 +6872,53 @@ function credentialValueIsLiteral(value) {
     return text.length > 0 && !CREDENTIAL_REFERENCE_VALUE.test(text);
 }
 
+/** Decodes standard XML character references without resolving external entities. */
+function xmlCredentialValue(text) {
+    const named = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+    return text.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|amp|lt|gt|quot|apos);/g, function (match, entity) {
+        if (entity.charAt(0) !== "#") {
+            return named[entity];
+        }
+        const hex = entity.charAt(1).toLowerCase() === "x";
+        const code = parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
+        return code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : match;
+    });
+}
+
+/** Checks XML-style credential elements and attributes without loading external content. */
+function xmlHoldsCredential(text) {
+    const attributes = /\b([A-Za-z_][A-Za-z0-9_.:-]*)\s*=\s*(["'])([\s\S]*?)\2/g;
+    for (const match of text.matchAll(attributes)) {
+        if (CREDENTIAL_FIELD_PATTERN.test(match[1].split(":").pop()) && credentialValueIsLiteral(xmlCredentialValue(match[3]))) {
+            return true;
+        }
+    }
+    for (const tag of text.matchAll(/<([A-Za-z_][A-Za-z0-9_.:-]*)\b[^>]*>/g)) {
+        const name = tag[1].split(":").pop();
+        const credentialField = CREDENTIAL_FIELD_PATTERN.test(name);
+        if ((credentialField || /^(?:proxy-)?authorization$/i.test(name)) && !/\/\s*>$/.test(tag[0])) {
+            const start = tag.index + tag[0].length;
+            const end = text.indexOf("</" + tag[1] + ">", start);
+            const unclosedXml = end < 0 && text.trim().charAt(0) === "<" && !CREDENTIAL_REFERENCE_VALUE.test(text.trim());
+            const value = end >= 0 ? xmlCredentialValue(text.slice(start, end)) : "";
+            if (unclosedXml || (end >= 0 && (credentialField ? credentialValueIsLiteral(value) : CREDENTIAL_HEADER_PATTERN.test(name + ": " + value)))) {
+                return true;
+            }
+        }
+        const fields = Object.create(null);
+        for (const attribute of tag[0].matchAll(attributes)) {
+            fields[attribute[1].split(":").pop().toLowerCase()] = xmlCredentialValue(attribute[3]);
+        }
+        if (CREDENTIAL_FIELD_PATTERN.test(fields.name || fields.key || "") && credentialValueIsLiteral(fields.value)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /** True when text matches a credential pattern rather than a reference to a key. */
 function textHoldsCredential(text) {
-    if (CREDENTIAL_TEXT_PATTERN.test(text) || CREDENTIAL_HEADER_PATTERN.test(text)) {
+    if (CREDENTIAL_TEXT_PATTERN.test(text) || CREDENTIAL_HEADER_PATTERN.test(text) || xmlHoldsCredential(text)) {
         return true;
     }
     for (const match of text.matchAll(/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>\\]+/gi)) {

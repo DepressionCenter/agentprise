@@ -1044,8 +1044,9 @@ bytes from decoded text before scanning. Other control bytes are checked both
 as separators and with those bytes removed, so neither form can hide a field.
 Files with invalid text encoding or replacement characters are excluded with
 a repair notice. An unreadable root manifest blocks the package. Known binary
-types, including complete PNG images, bypass decoding only when their bytes
-pass the existing format check. Mislabeled text, such as a
+types, including complete PNG images, receive a scan of their readable bytes.
+A format signature does not exempt those bytes from credential checks.
+This does not inspect compressed document contents. Mislabeled text, such as a
 password stored in a fake PDF, is scanned before it can become a skill file
 or a backup-only file. Private
 key headers, including `BEGIN PRIVATE KEY` and `BEGIN RSA PRIVATE KEY`, count
@@ -1059,6 +1060,10 @@ allowed; literal values and references with fallbacks remain excluded.
 Literal passwords and numeric values have no minimum length. Empty values
 remain allowed, but a quoted space is a literal value.
 Malformed JSON receives the text scan.
+XML-style credential elements and attributes are checked too, including
+namespace prefixes and `name` or `key` fields paired with a `value` attribute.
+Standard character references are decoded for that check; external entities
+are never loaded. Empty fields and complete external references remain allowed.
 
 A package with an assistant opens with the project license `Not stated` and
 a notice. A Microsoft package cannot declare the assistant's license, even
@@ -1292,7 +1297,7 @@ real account, unless the line names a tenant test.
   `tests/project.test.mjs` covers colliding server names in all three
   plugin layouts, identical definitions, and existing numbered names. The synthetic
   packages follow Microsoft's documentation and were not checked by
-  Microsoft's package validator. `npm test` on 2026-10-22 ran 328 tests, and
+  Microsoft's package validator. `npm test` on 2026-10-22 ran 330 tests, and
   all passed.
 - `tests/tools.test.mjs` exports a fixed synthetic project
   (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one

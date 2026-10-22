@@ -178,9 +178,10 @@ listed under known gaps.
   are scanned even when they contain zero bytes. UTF-16 byte-order marks
   select the decoder; zero characters are removed, while other control
   characters are tested both as separators and with those characters removed.
-  Invalid encodings and replacement characters cause exclusion. Known binary
-  types, including complete PNG images, are skipped only when their bytes pass the existing format
-  check; mislabeled text files are scanned. Notices name parts and files, never
+  Invalid encodings and replacement characters cause exclusion for text.
+  Recognized binary types, including complete PNG images, receive a scan of
+  readable bytes; their signatures do not bypass credential checks. Compressed
+  document contents are not inspected. Notices name parts and files, never
   the matched text. Kept files sit under `microsoft-package/` in the backup
   and appear in no other download. This is a pattern check, so a key in an
   unusual shape can still get through, and a person should still read a
@@ -200,7 +201,7 @@ listed under known gaps.
   manifest fields block the package without a skill fallback", and
   "credentials in action descriptions exclude the action and its source
   file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-22 ran 328 tests,
+  or backup-only files are retained"). `npm test` on 2026-10-22 ran 330 tests,
   and all passed.
 - An unlisted nested skill stays in the backup only, even when its parent
   is listed. A listed descendant opens as a separate item. Files from a
@@ -266,6 +267,9 @@ listed under known gaps.
   Basic and Bearer authorization headers, including proxy headers and JSON
   values, are excluded before files become attachments, skill files, or
   backup-only files. Regression tests check imported and exported bytes.
+  Binary-signature tests cover fake PDF files, invalid-byte gaps, and NUL
+  obfuscation. XML tests cover elements, attributes, namespaces, CDATA,
+  character references, and allowed empty or external-reference values.
 - Actions whose servers exceed the project limit retain their source files,
   assistant descriptions, and manifest. An action keeps any remaining usable
   provider; one with none is excluded. Missing or unsafe action paths retain

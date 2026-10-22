@@ -1129,6 +1129,45 @@ describe("Microsoft 365 app packages made elsewhere", () => {
 });
 
 describe("unsafe and broken packages", () => {
+  test("binary signatures cannot bypass credential checks", async () => {
+    const entries = mixedEntries();
+    const payloads = [encode("%PDF-1.7\npassword: " + SECRET), new Uint8Array([...encode("%PDF-1.7\npassword:"), 0xff, ...encode(" " + SECRET)]), encode("%PDF-1.7\n" + ("password: " + SECRET).split("").join("\u0000"))];
+    payloads.forEach((bytes, index) => {
+      for (const folder of ["", "config/", "skills/meeting-notes/"]) {
+        entries.push({ name: folder + "fake" + index + ".pdf", bytes });
+      }
+    });
+    const { project, notices } = await openPackage(entries);
+    const { project: again, backup } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.equal(everythingShown(result, []).includes(SECRET), false);
+      assert.equal(result.items.some((item) => item.files.some((file) => file.path.includes("fake"))), false);
+      assert.equal(result.unrecognized.some((file) => file.path.includes("fake")), false);
+    }
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.equal(backup.entries.some((entry) => entry.name.includes("fake")), false);
+  });
+
+  test("XML credential elements and attributes are excluded before attachment or backup", async () => {
+    const entries = mixedEntries();
+    const unsafe = ["<password>" + SECRET + "</password>", "<config><s:database_password>" + SECRET + "</s:database_password></config>", "<password><![CDATA[" + SECRET + "]]></password>", '<connection password="' + SECRET + '"/>', '<add key="database_password" value="' + SECRET + '"/>', '<field name="pass&#119;ord" value="' + SECRET + '"/>', "<Authorization>Basic dXNlcjpwYXNz</Authorization>"];
+    unsafe.forEach((text, index) => {
+      for (const folder of ["", "config/", "skills/meeting-notes/"]) entries.push({ name: folder + "unsafe" + index + ".xml", bytes: encode(text) });
+    });
+    const safe = ['<password>${PASSWORD}</password>', '<password/>', '<password></password>', '<add key="password" value="${PASSWORD}"/>', '<title>Public notes</title>'];
+    safe.forEach((text, index) => entries.push({ name: "config/safe" + index + ".xml", bytes: encode(text) }));
+    const { project, notices } = await openPackage(entries);
+    const { project: again, backup } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.equal(everythingShown(result, []).includes(SECRET), false);
+      assert.equal(result.items.some((item) => item.files.some((file) => file.path.includes("unsafe"))), false);
+      assert.equal(result.unrecognized.some((file) => file.path.includes("unsafe")), false);
+      assert.equal(result.unrecognized.filter((file) => file.path.includes("/safe")).length, safe.length);
+    }
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.equal(backup.entries.some((entry) => entry.name.includes("unsafe")), false);
+  });
+
   test("malformed encodings and control bytes cannot hide credential assignments", async () => {
     const entries = skillOnlyEntries();
     const variants = [
