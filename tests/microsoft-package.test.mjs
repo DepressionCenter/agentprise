@@ -1217,6 +1217,9 @@ describe("unsafe and broken packages", () => {
       { name: "config/unsafe18.yaml", text: "admin_password: {value: ['${ADMIN_PASSWORD}', '" + SECRET + "']}\n" },
       { name: "config/unsafe19.yaml", text: "admin_password:\n  value:\n    - " + SECRET + "\n" },
       { name: "config/unsafe20.json", text: '{"admin_password": {"value": ["' + SECRET + '"]}}' },
+      { name: "config/unsafe21.yaml", text: "api_key:\n  - ${API_KEY}\n  - " + SECRET + "\n" },
+      { name: "config/unsafe22.yaml", text: "api_key:\n- ${API_KEY}\n# second key\n- '" + SECRET + "'\nother: value\n" },
+      { name: "config/unsafe23.yaml", text: "password:\n  - type: string\n    format: password\n  - " + SECRET + "\n" },
     ];
     const safe = [
       { name: "config/safe0.yaml", text: "password:\n  type: string\n  format: password\n" },
@@ -1231,6 +1234,7 @@ describe("unsafe and broken packages", () => {
       { name: "config/safe9.json", text: '{"api_key": ["${API_KEY}"], "password": "${PASSWORD}", "password": null}' },
       { name: "config/safe11.yaml", text: "admin_password: {value: '${ADMIN_PASSWORD}'}\nclient_secret:\n  value: ${CLIENT_SECRET}\n" },
       { name: "config/safe13.yaml", text: "admin_password:\n  value: ['${ADMIN_PASSWORD}']\nclient_secret:\n  value:\n    - type: string\n" },
+      { name: "config/safe14.yaml", text: "api_key:\n  - ${API_KEY}\n  - '{{ secrets.backup_key }}'\nnames:\n  - first\n  - second\n" },
       { name: "config/safe12.yaml", text: "password:\n  type: object\n  description: Holds the value\n  properties:\n    value:\n      type: string\n" },
       { name: "config/safe10.json", text: '{"properties": {"password": {"type": "string", "format": "password", "description": "The account password"}}, "admin_password": {"value": "${ADMIN_PASSWORD}"}}' },
     ].map((file) => ({ name: file.name, bytes: encode(file.text) }));

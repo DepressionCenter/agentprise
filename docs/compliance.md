@@ -189,7 +189,8 @@ and files kept only in backups. Technical details are in
   Private key headers also count as matches. JSON escapes, XML character
   references, namespaces, and nested or multiline YAML values do not bypass
   these checks. A YAML value on the line below its key, such as `password:`
-  followed by an indented value or list item, is checked too. In JSON, a
+  followed by an indented value or a list, is checked too. Every item of the
+  list is checked, not only the first. In JSON, a
   secret under a repeated key and a list of literal values under a credential
   key are matches, including a list under a key that appears again later. External XML entities are never loaded.
 - A nested mapping under a credential key is not a secret, so API

@@ -1133,7 +1133,9 @@ YAML flow mappings, such as `database: {password: ...}`, also receive field
 checks. Quoted names, numeric values, and values that continue on the next
 line inside the braces are covered. A YAML key with nothing after it on its
 line, such as `client_secret:`, is checked against the value on the next line
-that is indented further, or the next list item (`CREDENTIAL_BLOCK_PATTERN`).
+that is indented further, or against every item of the list below it
+(`CREDENTIAL_BLOCK_PATTERN` and `yamlBlockListHoldsLiteral`). A list that
+starts with a reference such as `${API_KEY}` and has a literal later is a match.
 When that value is a nested mapping, such as `type: string`, it is not a
 secret, unless the mapping has a `value` key with a literal value, as in
 `admin_password: {value: abc123}` or `value: abc123` on an indented line below

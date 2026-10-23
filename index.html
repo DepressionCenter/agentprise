@@ -7482,6 +7482,39 @@ function yamlMappingWrapsLiteral(first, rest, childIndent) {
 }
 
 /**
+ * Whether any item of a YAML block list under a credential key holds a literal
+ * value, such as the second item in "api_key:" followed by "- ${API_KEY}" and
+ * "- abc123". Items that are nested mappings, such as "- type: string", are
+ * not values.
+ * @param {string} first The first item's text, after its dash.
+ * @param {string} rest The text after the first item's line.
+ * @param {number} itemIndent The indent of the list's dashes.
+ * @returns {boolean}
+ */
+function yamlBlockListHoldsLiteral(first, rest, itemIndent) {
+    const items = [first];
+    for (const line of rest.split(/\r?\n/).slice(1)) {
+        if (/^[ \t]*(?:#.*)?$/.test(line)) {
+            continue;
+        }
+        const indent = /^[ \t]*/.exec(line)[0].length;
+        // A deeper line belongs to the item above it, such as the second key of a mapping item.
+        if (indent > itemIndent) {
+            continue;
+        }
+        const item = /^[ \t]*-[ \t]+(.*)$/.exec(line);
+        if (indent < itemIndent || !item) {
+            break;
+        }
+        items.push(item[1]);
+    }
+    return items.some(function (item) {
+        const value = item.replace(/[ \t]+#.*$/, "").trim();
+        return !NESTED_BLOCK_MAPPING.test(value) && yamlValueIsLiteral(value);
+    });
+}
+
+/**
  * Whether a settings field with a credential name holds a literal value, in a
  * YAML flow mapping, on the same line as its name, or on the indented line
  * below it. These checks need the field name, so they are also safe to run on
@@ -7526,6 +7559,10 @@ function credentialFieldsHoldLiteral(text) {
         if (groups.dash && groups.lead.charAt(0) === "-") {
             return false;
         }
+        const rest = text.slice(match.index + match[0].length);
+        if (groups.lead.indexOf("-") >= 0) {
+            return yamlBlockListHoldsLiteral(groups.value, rest, groups.indent.length + /^[ \t]*/.exec(groups.lead)[0].length);
+        }
         const value = groups.value.replace(/[ \t]+#.*$/, "").trim();
         // A nested mapping, such as "type: string" in an API description, is not a
         // value, unless it wraps one in a "value" key.
@@ -7533,7 +7570,7 @@ function credentialFieldsHoldLiteral(text) {
             return yamlMappingWrapsLiteral(value, "", 0);
         }
         if (NESTED_BLOCK_MAPPING.test(value)) {
-            return groups.lead.indexOf("-") < 0 && yamlMappingWrapsLiteral(value, text.slice(match.index + match[0].length), groups.indent.length + groups.lead.length);
+            return yamlMappingWrapsLiteral(value, rest, groups.indent.length + groups.lead.length);
         }
         return credentialValueIsLiteral(value.replace(/^(["'])(.*)\1$/, "$2"));
     });
