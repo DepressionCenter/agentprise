@@ -12,7 +12,7 @@
   {
     "component": "Record server",
     "status": "requires-setup",
-    "note": "Connected through the Pinned tools server. An admin must register its sign-in and paste the id into plugin-pinned.json."
+    "note": "Connected through the Pinned tools server. Ask your admin to register its sign-in, then paste the registration ID they give you into plugin-pinned.json."
   },
   {
     "component": "Record server",

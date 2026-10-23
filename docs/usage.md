@@ -286,17 +286,19 @@ Files made elsewhere may need changes before you can use them:
   The backup keeps extra connection settings and skill files that pass the
   file checks.
   A backup can keep at most 50 files that the app cannot use. If a Microsoft
-  package needs more, Agentprise asks you to split it before opening it.
-  Ask the package author to split it into smaller projects or skills.
+  package needs more, Agentprise does not open it. Ask the package author to
+  split it into smaller packages, then open each one.
 - Programs are never kept, whatever the file calls them. Neither is a file or
   server address that looks like it holds a password, key, or token.
   Agentprise doesn't open a Microsoft package at all when its
   `manifest.json`, a filename, or a folder name looks like it holds one.
   Ask the package author to remove the secret and correct any affected file
   names and references. Then open the corrected package.
-- If text cannot be checked, that file is left out. Save it as valid UTF-8
-  or UTF-16 text and open the package again. Ask the package author for help
-  if needed. Agentprise also leaves out other file types it cannot check.
+- If Agentprise cannot read the text in a file, it leaves that file out. Ask
+  the package author to save text files as UTF-8 or UTF-16, which are text
+  formats you can choose in the **Save as** window of most editors. Then open
+  the package again. Agentprise also leaves out other file types it cannot
+  check.
   It keeps supported images and documents that pass its file checks.
 - If a skill or plugin does not say which license it uses, the license shows
   as "Not stated", and a note asks you to check with its author before you
@@ -396,6 +398,15 @@ choose **Add**, then **Upload plugin**. Then open the plugin's
 or someone allowed to upload plugins uploads the Plugin download from the
 Admin console, under **Plugins**.
 
+Under **More Microsoft downloads**, below the plugins, choose **View Microsoft
+downloads** to see three more choices:
+**Copilot skill**, **Copilot app with skills (preview)**, and **Microsoft 365
+plugin**. Each one has a **Review** button that opens the Inspect page, so you
+can see what changes and read the setup steps before you download. Ask your
+admin which ones your organization allows.
+[Make a new assistant for Microsoft 365 Copilot](how-to/make-an-assistant-for-copilot.md)
+has the steps.
+
 The [formats page](formats.md) explains what to do with each file once you have
 it, and what each one leaves out.
 
@@ -403,8 +414,10 @@ it, and what each one leaves out.
 
 Products differ, so a download is not always an exact copy of what you wrote.
 For example, Gemini and Claude have no separate place for an assistant, so the
-assistant becomes a skill whose description starts with "Persona:". Copilot
-has no skills, so a skill's steps are added to the assistant's instructions.
+assistant becomes a skill whose description starts with "Persona:". The
+**Copilot / Teams Apps** download has no place for skills, so a skill's steps
+are added to the assistant's instructions. To keep skills separate in
+Copilot, use **More Microsoft downloads**.
 
 To see what changes, choose **Inspect**, pick the product's tab, and read the
 list called **What changes in this download**. Each line has one of five
@@ -467,17 +480,17 @@ Drop the backup on the Workspace page any time to keep working on the
 project, or to download it for another product. The backup is for Agentprise. To upload
 to Gemini or Claude, use their own **Download** buttons instead.
 
-### Inspect the output
+### Inspect each download
 
 Choose **Inspect** at the top of the project page or under **Workspace** on the
 left. You can also choose **See what is inside each download** under the
 download buttons. Under **Files for each product**, choose a product to see
 its files, with your own words highlighted. To change anything, go back to the
-project page. The tabs run
-in alphabetical order and include **SKILL.md**, a plain Agent Skill with
-nothing specific to this app, **Claude Plugin** and **Plugin**, which show the
-files of the two plugins, and **Agentprise Backup**, which shows the files of
-the whole project. Each tab has its own download button under the files. When
+project page. The tabs include **SKILL.md**, a plain Agent Skill with
+nothing specific to this app; **Claude Plugin** and **Plugin**, which show the
+files of those two plugins; **Copilot skill**, **Copilot app with skills**,
+and **Microsoft 365 plugin**, which show the More Microsoft downloads; and
+**Agentprise Backup**, which shows the files of the whole project. Each tab has its own download button under the files. When
 a download changes something, the list **What changes in this download**
 appears above the files.
 

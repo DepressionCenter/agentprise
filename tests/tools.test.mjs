@@ -2,7 +2,7 @@
 // tests/tools.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-21
+// Last Modified: 2026-10-23
 // Summary: Tests for the tools stage: exports checked against the pinned vendor
 //          schemas, golden export files for every provider kind on every
 //          target, composed instructions, the conversion report, the setup
@@ -586,7 +586,7 @@ describe("conversionReport", () => {
     const project = engine.project.fromAgent(agent).project;
     const report = conversionReport(project, project.items[0], "teamsZip");
     assert.deepEqual(statusesOf(report), [["Welcome message", "unsupported"], ["Copyright and license", "unsupported"], ["Publisher details", "transformed"]]);
-    assert.ok(report[2].note.includes("name, website, privacy, terms"));
+    assert.ok(report[2].note.includes("the name, website, privacy link, and terms link."));
     const teams = await engine.exports.teamsPackage(project, project.items[0], teamsIcons());
     assert.deepEqual(teams.report, report);
     // The Teams Chat file keeps the welcome message and copyright, so neither is reported there.

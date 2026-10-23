@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/README.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-21
+Last Modified: 2026-10-23
 Summary: Index of the Agentprise documentation: one linked line per page, with
          who each page is for.
 Notes: See README file for documentation and full license information.
@@ -87,7 +87,6 @@ every Agentprise screen you will see along the way.
 - [Design: tools, skills, and plugins](design/tools-skills-plugins-design.md):
   the plan for projects, skills, and tools, in phases. Projects, skills,
   tools, conversion reports, and the plugin downloads are in the app now.
-  The open vendor checks are listed on the formats page.
 - [Documentation template](doc-template.md) and
   [skill authoring examples](skill-examples.md): guides that came with the
   repository template, kept for reference.
