@@ -1039,7 +1039,7 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     assert.deepEqual(agent.files.map((f) => f.path).sort(), ["agents/apis/records.yaml", "references/guide.pdf"]);
     assert.ok(notices.some((n) => n.includes("\"desktop\"") && n.includes("LocalPlugin")));
     // The registration id belongs to another tenant: the notice says so without showing it.
-    assert.ok(notices.some((n) => n.includes("\"lookup\"") && n.includes("registers it again")));
+    assert.ok(notices.some((n) => n.includes("\"lookup\"") && n.includes("register the connection")));
     assert.equal(everythingShown(project, notices).includes("tenant-registration-1"), false);
     assert.deepEqual(unrecognizedPaths(project), ["microsoft-package/agents/plugins/desktop.json", "microsoft-package/agents/records.json", "microsoft-package/en.json", "microsoft-package/manifest.json", "microsoft-package/outline.png"]);
     assert.ok(project.unrecognized.every((entry) => entry.note === KEPT_NOTE));
@@ -1578,14 +1578,14 @@ describe("unsafe and broken packages", () => {
     has("An assistant in the manifest points at a file that isn't in the package, or at an unsafe path");
     has("Two assistants in the manifest use the same file declarativeAgent_0.json");
     has("The action \"climb\" points at a file that isn't in the package, or at an unsafe path");
-    has("The action \"broken\" has a file this app can't read");
+    has("The action \"broken\" has a file Agentprise cannot read");
     has("The action \"token-again\" uses the same file as another action");
-    has("The action \"vault\" uses a kind of sign-in this app can't write back");
-    has("The action \"webspec\" reads its API description from the web");
+    has("The action \"vault\" uses a sign-in method Agentprise does not support");
+    has("The action \"webspec\" needs an API description from the web");
     has("A skill in the manifest points at the folder skills/missing, which has no SKILL.md");
     assert.equal(notices.filter((n) => n.includes("an unsafe or empty folder")).length, 3);
     has("The connector \"Leaky again\" has the same id as another connector");
-    has("A connector in the manifest has no id");
+    has("A connector has no identifier in manifest.json");
     has("Left out 1 program file.");
     // The unknown sign-in is refused rather than written back as no sign-in.
     assert.equal(project.items[0].capabilities.some((c) => c.id === "action.vault"), false);

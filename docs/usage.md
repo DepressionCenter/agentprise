@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/usage.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-22
+Last Modified: 2026-10-23
 Summary: How to use Agentprise, job by job: keep your projects, create an
          assistant, add skills, check its tools, open a file you have, start
          from the Library, download it for each product or as a plugin, read
@@ -252,9 +252,8 @@ or the home button at the top to get back to that page first. Agentprise opens:
   the app package `.zip`.
 - A `.agent` file exported from SharePoint.
 - An app package `.zip` exported from the Microsoft 365 Copilot app, or
-  another Microsoft 365 app package, such as a Copilot Cowork plugin. Its
-  assistants, their actions, its skills, and its connectors all open in the
-  project.
+  another Microsoft 365 app package, such as a Copilot Cowork plugin. Agentprise opens
+  its supported assistants, skills, and tool connections in one project.
 - Any Agent Skill `.zip` or `SKILL.md` file, from Gemini, Claude, or elsewhere.
   When a `.zip` holds several skills, each one becomes its own skill in the
   project.
@@ -272,7 +271,7 @@ asks what to do:
   made to yours are lost.
 - **Cancel** leaves everything as it was.
 
-A few things are worth knowing about files made elsewhere:
+Files made elsewhere may need changes before you can use them:
 
 - Some plugins carry parts Agentprise does not understand, such as hooks,
   commands, or agents folders. The app keeps them with the project and puts
@@ -284,19 +283,21 @@ A few things are worth knowing about files made elsewhere:
   and what doesn't.
 - A project holds up to 10 tool servers, and a skill holds up to 50 files.
   If a Microsoft package exceeds those limits, a message says what opened.
-  The backup keeps extra connector definitions and safe extra skill files.
+  The backup keeps extra connection settings and skill files that pass the
+  file checks.
   A backup can keep at most 50 files that the app cannot use. If a Microsoft
   package needs more, Agentprise asks you to split it before opening it.
-  Split the package into smaller projects or skills to use them.
+  Ask the package author to split it into smaller projects or skills.
 - Programs are never kept, whatever the file calls them. Neither is a file or
   server address that looks like it holds a password, key, or token.
   Agentprise doesn't open a Microsoft package at all when its
   `manifest.json`, a filename, or a folder name looks like it holds one.
-  Remove the key from the file or name, update references to that name,
-  and open the package again.
+  Ask the package author to remove the secret and correct any affected file
+  names and references. Then open the corrected package.
 - If text cannot be checked, that file is left out. Save it as valid UTF-8
-  or UTF-16 text and open the package again. Unknown binary formats are also
-  excluded when they cannot be checked; supported binary files remain usable.
+  or UTF-16 text and open the package again. Ask the package author for help
+  if needed. Agentprise also leaves out other file types it cannot check.
+  It keeps supported images and documents that pass its file checks.
 - If a skill or plugin does not say which license it uses, the license shows
   as "Not stated", and a note asks you to check with its author before you
   share it. The app never puts its own license on someone else's work.

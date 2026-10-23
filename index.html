@@ -3,7 +3,7 @@ This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-22
+Last Modified: 2026-10-23
 Summary: The whole Agentprise web app in one file. Lets a person describe an AI
          assistant once, then download it as an Agent Skill bundle (Gemini and
          Claude), a Microsoft 365 Copilot .agent file, a Teams app package, or
@@ -1178,7 +1178,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <span class="destination-text">
                                             <span class="destination-name">Teams Chat</span>
                                             <span class="destination-file">.agent file</span>
-                                            <span class="destination-note">Works until the end of March 2027, when Microsoft retires .agent files. Help says what to use instead.</span>
+                                            <span class="destination-note">Works through March 2027.</span>
                                             <span class="destination-note" id="note-msAgent" hidden></span>
                                         </span>
                                         <button type="button" class="download-button" data-format="msAgent"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the .agent file for Teams Chat</span></button>
@@ -1245,25 +1245,25 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                 </ul>
                                 <details>
                                     <summary>More Microsoft downloads</summary>
-                                    <p class="small muted">Choose these only if your organization supports them. The usual Copilot download above still works without native skills.</p>
+                                    <p class="small muted">Ask your admin which options your organization supports before choosing a download.</p>
                                     <ul class="destination-list" aria-label="Optional Microsoft downloads">
                                         <li>
                                             <span class="destination-text">
-                                                <span class="destination-name">Add a skill to Copilot</span>
+                                                <span class="destination-name">Copilot skill</span>
                                                 <span class="destination-file">One skill for an existing assistant (.zip)</span>
                                                 <span class="destination-note">Choose a skill in your project. In Copilot, open Configure, Skills, then Add.</span>
                                                 <span class="destination-note" id="note-copilotSkill" hidden></span>
                                             </span>
-                                            <button type="button" class="download-button" data-format="copilotSkill" data-review="true"><span class="bi bi-search" aria-hidden="true"></span>Review<span class="visually-hidden"> the Add a skill to Copilot download</span></button>
+                                            <button type="button" class="download-button" data-format="copilotSkill" data-review="true"><span class="bi bi-search" aria-hidden="true"></span>Review<span class="visually-hidden"> the Copilot skill download</span></button>
                                         </li>
                                         <li>
                                             <span class="destination-text">
                                                 <span class="destination-name">Copilot app with skills (preview)</span>
                                                 <span class="destination-file">This assistant and the skills it uses (.zip)</span>
-                                                <span class="destination-note">Requires native skills in your organization. Attached files must belong to a skill.</span>
+                                                <span class="destination-note">Your organization must allow skills in Copilot. Add reference files to a skill.</span>
                                                 <span class="destination-note" id="note-copilotSkills" hidden></span>
                                             </span>
-                                            <button type="button" class="download-button" data-format="copilotSkills" data-review="true"><span class="bi bi-search" aria-hidden="true"></span>Review<span class="visually-hidden"> the Copilot assistant with native skills download</span></button>
+                                            <button type="button" class="download-button" data-format="copilotSkills" data-review="true"><span class="bi bi-search" aria-hidden="true"></span>Review<span class="visually-hidden"> the Copilot app with skills download</span></button>
                                         </li>
                                         <li>
                                             <span class="destination-text">
@@ -1350,8 +1350,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                         <h2 id="receive-heading" class="card-title">Files for each product</h2>
                         <div class="field" id="inspect-item-wrap" hidden>
                             <label for="inspect-item">Part of the project</label>
-                            <select id="inspect-item"></select>
+                            <select id="inspect-item" aria-describedby="inspect-skill-hint"></select>
                         </div>
+                        <p class="hint" id="inspect-skill-hint" role="status" hidden></p>
                         <p class="hint">Choose a product to see the files it gets.</p>
                         <div class="product-tabs" role="tablist" aria-label="Product">
                             <button type="button" role="tab" id="ptab-backup" aria-controls="ppanel" aria-selected="true">Agentprise Backup</button>
@@ -1359,7 +1360,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             <button type="button" role="tab" id="ptab-claude" aria-controls="ppanel" aria-selected="false" tabindex="-1">Claude</button>
                             <button type="button" role="tab" id="ptab-claudePlugin" aria-controls="ppanel" aria-selected="false" tabindex="-1">Claude Plugin</button>
                             <button type="button" role="tab" id="ptab-teamsZip" aria-controls="ppanel" aria-selected="false" tabindex="-1">Copilot / Teams Apps</button>
-                            <button type="button" role="tab" id="ptab-copilotSkill" aria-controls="ppanel" aria-selected="false" tabindex="-1">Add a skill to Copilot</button>
+                            <button type="button" role="tab" id="ptab-copilotSkill" aria-controls="ppanel" aria-selected="false" tabindex="-1">Copilot skill</button>
                             <button type="button" role="tab" id="ptab-copilotSkills" aria-controls="ppanel" aria-selected="false" tabindex="-1">Copilot app with skills</button>
                             <button type="button" role="tab" id="ptab-microsoftPlugin" aria-controls="ppanel" aria-selected="false" tabindex="-1">Microsoft 365 plugin</button>
                             <button type="button" role="tab" id="ptab-gemini" aria-controls="ppanel" aria-selected="false" tabindex="-1">Gemini</button>
@@ -1417,14 +1418,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                         <li><strong>Gemini Notebook</strong> gets a .md file to add as a source, or the same text to paste.</li>
                     </ul>
                     <p>Not sure yet? Download a backup. You can come back any time and download it for another product.</p>
-                    <h2>When should I use More Microsoft downloads?</h2>
-                    <p>Open this section only if your organization supports native skills or Copilot Cowork. Choose Review to see what changes and what needs setup before downloading.</p>
+                    <h2>More Microsoft downloads</h2>
+                    <p>These options need skills in Copilot or access to Copilot Cowork. Choose Review to read the changes and setup steps.</p>
                     <ul>
-                        <li><strong>Add a skill to Copilot</strong> uploads one selected skill to an existing assistant. In Agent Builder, choose Configure, Skills, then Add.</li>
-                        <li><strong>Copilot app with skills (preview)</strong> keeps your assistant's skills separate, so Copilot can load them when needed. Your organization must enable this feature. Put attached files inside a skill.</li>
+                        <li><strong>Copilot skill</strong> uploads one selected skill to an existing assistant. In Agent Builder, choose Configure, Skills, then Add.</li>
+                        <li><strong>Copilot app with skills (preview)</strong> keeps your assistant's skills separate so Copilot can use them when needed. Ask your admin to enable this feature. Add reference files to a skill.</li>
                         <li><strong>Microsoft 365 plugin</strong> shares the whole project with Copilot Cowork. Assistants become optional skills and lose their assistant settings. Ask your admin to install the plugin.</li>
                     </ul>
-                    <p>These downloads leave out scripts and list other changes on Inspect. Keep a backup to preserve everything. Use the usual Copilot / Teams Apps download if your organization does not support these options.</p>
+                    <p>These downloads leave out scripts. Inspect lists other changes before you download. Keep a backup of your project. If your organization does not support these options, use Copilot / Teams Apps.</p>
                     <h2>Does it work with Kimi or OpenClaw?</h2>
                     <p>Partly. Kimi Code CLI and an OpenClaw you run yourself both read the SKILL.md download and the Plugin download, and OpenClaw also reads the Claude plugin. The Inspect page has the steps for each. Kimi chat, Kimi Agent mode, and the Kimi Claw that Kimi hosts for you have no way to upload a skill file yet, so Agentprise cannot make a download for them.</p>
                     <h2>What does "Download Backup" do?</h2>
@@ -1444,9 +1445,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <h2>Why does my assistant not answer in a Teams chat?</h2>
                     <p>App packages do not work in group chats, channels, or meeting chats. Use the Teams Chat download instead: put the .agent file in a SharePoint library, choose Copy link for Teams, paste the link in the chat, and choose Add to this chat.</p>
                     <h2>How long will the Teams Chat file keep working?</h2>
-                    <p>Until the end of March 2027. After that, Microsoft retires .agent files and they stop answering, in SharePoint, in Teams chats, and in the Copilot app. What to use instead depends on the job. The Copilot / Teams Apps download is not affected, so the Agents list keeps working. For a Teams chat, Microsoft shows an Upgrade to Microsoft 365 agent button in SharePoint from mid-November 2026 to anyone who can edit the file and share agents, or you can create the agent again in Copilot Agent Builder by pasting your text. Agentprise keeps opening .agent files after the date, so nothing you wrote is lost.</p>
+                    <p>Until the end of March 2027. After that, .agent files stop answering in SharePoint, Teams chats, and the Copilot app. The Copilot / Teams Apps download continues to work.</p>
+                    <p>From mid-November 2026, you can choose Upgrade to Microsoft 365 agent in SharePoint. You need permission to edit the file and site pages, and to share agents. Ask the file owner or site owner if you need help. You can also create an agent in Copilot Agent Builder and copy your text into it.</p>
+                    <p>Keep the original file and an Agentprise backup until the replacement works. Agentprise can still open .agent files after retirement so you can recover their contents.</p>
                     <h2>Can I upload the .agent file to Copilot Agent Builder?</h2>
-                    <p>No. A file you upload there becomes reading material for a new agent. It does not set up the agent, and you can't edit the result as if it had. To build the same assistant in Agent Builder, create a new agent there and paste the name, description, instructions, and example questions from Agentprise, then choose its sources again in the builder.</p>
+                    <p>No. Uploading a .agent file adds it as reference material. To create the assistant, start a new agent in Agent Builder. Copy the name, description, instructions, and example questions from Agentprise into the matching boxes, then choose the sources again.</p>
                     <h2>Why does Teams ask me to approve the answer?</h2>
                     <p>In a group chat, Teams shows the person who asked a preview whenever the answer used something the others may not be able to see, such as that person's own chats, mail, or meetings. Turn off Teams messages, email, and meetings under Copilot settings and answers post straight to the chat.</p>
                     <h2>What does the check for sensitive data look for?</h2>
@@ -1464,7 +1467,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             </thead>
                             <tbody>
                                 <tr><th scope="row">App package (.zip)</th><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
-                                <tr><th scope="row">Add a skill to Copilot (.zip)</th><td>In Agent Builder, with skills enabled</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+                                <tr><th scope="row">Copilot skill (.zip)</th><td>In Agent Builder, with skills enabled</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
                                 <tr><th scope="row">Copilot app with skills (.zip)</th><td>With native skills enabled</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
                                 <tr><th scope="row">Microsoft 365 plugin (.zip)</th><td>Copilot Cowork only</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
                                 <tr><th scope="row">.agent file</th><td>No</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
@@ -4614,7 +4617,7 @@ function msAgentImport(text) {
     // The file grants no switch, so none turns on. The notice keeps the
     // change visible to people used to these files searching the web.
     if (!extra && switchesListed === 0) {
-        notices.push("This file doesn't turn on web search, so it starts off. To turn it on, open More settings and look under Microsoft Copilot settings.");
+        notices.push("Web search is off in this file. To turn it on, open More settings, then Microsoft Copilot settings.");
     }
     if (extra) {
         const copilot = isPlainObject(extra.copilot) ? extra.copilot : {};
@@ -4852,7 +4855,7 @@ function planExport(project, item, exportId, options) {
                 report.push(reportEntry(capability.label, "unsupported", "Left out " + name + ", because " + why));
             };
             if (support === "omit") {
-                leave(microsoft && provider.kind === "script" ? "script runtimes and dependencies have not been verified for this Microsoft sandbox. Use a supported remote tool instead; script files are excluded from this download." : spec.label + " cannot use it.");
+                leave(microsoft && provider.kind === "script" ? "Agentprise has not checked whether this script can run in Microsoft. Use a supported web tool instead. This download leaves out script files." : spec.label + " cannot use it.");
                 return;
             }
             let status = support === "tool" ? "preserved" : "requires-setup";
@@ -4863,11 +4866,11 @@ function planExport(project, item, exportId, options) {
             } else if (provider.kind === "mcp") {
                 const server = serverFor(project, provider.server);
                 if (microsoft && (server.transport !== "http" || server.auth === "apikey")) {
-                    leave("this download supports HTTPS Streamable HTTP servers with no sign-in or OAuth only.");
+                    leave("this download needs a web server that uses HTTPS Streamable HTTP, with OAuth sign-in or no sign-in. Ask the tool owner for a compatible connection.");
                     return;
                 }
                 if (exportId === "microsoftPlugin" && (provider.tools.length > 0 || server.tools.length > 0)) {
-                    leave("the plugin discovers all server tools and cannot enforce this tool list. Use a server exposing only the permitted tools, or the Copilot app package.");
+                    leave("the plugin would allow tools outside your selected list. Use a server with only the allowed tools, or choose Copilot / Teams Apps.");
                     return;
                 }
                 if (support === "tool") {
@@ -4888,7 +4891,7 @@ function planExport(project, item, exportId, options) {
                 if (actionPackage) {
                     const tools = provider.tools.length > 0 ? provider.tools : server.tools;
                     if (tools.length > 0 && !tools.some(function (tool) { return COPILOT_FUNCTION_PATTERN.test(tool); })) {
-                        leave("none of its named tools has a supported Copilot function name. Rename the tools before downloading this action.");
+                        leave("Copilot cannot use any of the selected tool names. Ask the tool owner to correct the names before downloading.");
                         return;
                     }
                     action = copilotAction(actions, actionKeys, "mcp:" + provider.server, server.label);
@@ -5324,8 +5327,8 @@ function writeSetupGuide(project, items, exportId) {
     }
     if (exportId === "copilotSkills" || exportId === "microsoftPlugin") {
         steps.unshift("## Install in Microsoft 365\n\n" + (exportId === "microsoftPlugin"
-            ? "Ask your Microsoft 365 admin to upload this package for Copilot Cowork. Each assistant becomes an optional skill; the plugin does not set up an always-on assistant. Test each skill and tool connection before sharing."
-            : "Confirm that native skills are enabled in your organization's Copilot preview. Ask your admin to upload this app package in the Microsoft 365 admin center under Copilot, Agents, then Upload custom agent. This ZIP is not an Agent Builder skill upload or a Copilot Studio solution. Test a request that needs each skill, then save and reopen the assistant.") + "\n\nScript files are excluded. Microsoft native skill scripts cannot access the network or install packages. Use the backup to keep original scripts.\n");
+            ? "Ask your Microsoft 365 admin to upload this package for Copilot Cowork. Copilot uses each assistant as a skill when a request needs it. Test each skill and tool connection before sharing."
+            : "Ask your admin to confirm that Copilot skills are enabled for your organization. Ask your admin to upload this app package in the Microsoft 365 admin center under Copilot, Agents, then Upload custom agent. This ZIP is not an Agent Builder skill upload or a Copilot Studio solution. Test a request that needs each skill, then save and reopen the assistant.") + "\n\nScript files are excluded. Microsoft native skill scripts cannot access the network or install packages. Download a backup to keep the original scripts.\n");
     }
     if (exportId === "copilotSkill") {
         steps.unshift("## Add the skill to Copilot\n\n1. Open your assistant in Agent Builder.\n2. Choose Configure, then Skills, then Add.\n3. Upload this ZIP.\n4. Use Try it to ask a question that needs the skill and its reference files.\n\nYour organization must enable skills. This download adds one skill; it does not create an assistant or install tool connections. Scripts are excluded. Check the combined limit of eight skills and 350 files in your assistant.\n");
@@ -6453,7 +6456,7 @@ function microsoftSkillEntries(project, item, plan, plugin, report, root) {
     });
     const allowed = resources.filter(function (file) {
         if (MICROSOFT_SCRIPT_EXTENSION.test(file.path) || !MICROSOFT_RESOURCE_EXTENSION.test(file.path)) {
-            report.push(reportEntry(item.name + ": " + file.path, "unsupported", "This file is excluded from the Microsoft skill. Script runtimes and dependencies are not verified, and only supported resource types are included. Keep the backup to preserve the original file."));
+            report.push(reportEntry(item.name + ": " + file.path, "unsupported", "This file type is not supported in the Microsoft skill download. Script files are also excluded because Agentprise has not checked whether they can run in Microsoft. Download a backup to keep the original file."));
             return false;
         }
         return true;
@@ -6478,16 +6481,16 @@ function microsoftSkillEntries(project, item, plan, plugin, report, root) {
         });
         const key = entry.name.toLowerCase();
         if (unsafe || seen.has(key) || (!plugin && parts.length > 3) || (prefix + entry.name).length > 256) {
-            report.push(reportEntry(item.name + ": " + entry.name, "blocked", "This file has a repeated, unsafe, long, or deeply nested path. Rename it and update references in the skill before downloading."));
+            report.push(reportEntry(item.name + ": " + entry.name, "blocked", "The file name or folder location is not allowed, or another file uses the same name. Shorten or rename it, or move it to a higher folder. Update references in the skill before downloading."));
         }
         seen.add(key);
         if (plugin && entry.name !== "SKILL.md" && entry.bytes.length > 5 * 1024 * 1024) {
-            report.push(reportEntry(item.name + ": " + entry.name, "blocked", "Microsoft plugins allow at most 5 MB per resource file. Use a smaller file."));
+            report.push(reportEntry(item.name + ": " + entry.name, "blocked", "Microsoft plugins allow at most 5 MB per reference file. Use a smaller file."));
         }
     });
     const companions = entries.filter(function (entry) { return entry.name !== "SKILL.md"; });
     if (plugin && (companions.length > 20 || companions.reduce(function (sum, entry) { return sum + entry.bytes.length; }, 0) > MICROSOFT_PACKAGE_BYTES)) {
-        report.push(reportEntry(item.name, "blocked", "A Microsoft plugin skill can include at most 20 resource files totaling 10 MB, including its license. Remove files or split the skill."));
+        report.push(reportEntry(item.name, "blocked", "A Microsoft plugin skill can include at most 20 reference files totaling 10 MB, including its license. Remove files or split the skill."));
     }
     return entries.map(function (entry) { return { name: prefix + entry.name, bytes: entry.bytes }; });
 }
@@ -6533,7 +6536,7 @@ async function writeCopilotSkill(project, item) {
     assertNotBlocked(built.report, "The Copilot skill upload");
     const bytes = zipWrite(built.entries);
     if (bytes.length > 50 * 1024 * 1024) {
-        throw new Error("The complete Copilot skill ZIP exceeds 50 MB. Use smaller resource files.");
+        throw new Error("The complete Copilot skill ZIP exceeds 50 MB. Use smaller reference files.");
     }
     return { fileName: item.skillName + ".copilot-skill.zip", bytes: bytes, entries: built.entries, report: built.report, setup: writeSetupGuide(project, [item], "copilotSkill") };
 }
@@ -6562,18 +6565,18 @@ function planMicrosoftPackage(project, item, exportId) {
         candidates.filter(function (other) { return notForTarget(other, "copilot"); }).forEach(function (other) { report.push(notForEntry(other, "copilot")); });
     }
     report.push(reportEntry("Microsoft setup", "requires-setup", plugin
-        ? "Ask your Microsoft 365 admin to install this plugin for Copilot Cowork. Read the setup steps on Inspect before downloading. Installation and tool access need a tenant test."
-        : "Use this download only where your organization has enabled native Copilot skills. It needs the Frontier preview, does not support Information Barriers or public-store publication, and still needs a tenant test. Read the setup steps on Inspect."));
+        ? "Ask your Microsoft 365 admin to install this plugin for Copilot Cowork. Installation and tool access have not been tested in a Microsoft 365 organization. Read the setup steps and test both before sharing."
+        : "Ask your admin to confirm access to the Frontier preview for Copilot skills. Microsoft does not support this option with Information Barriers or in its public app store. Installation has not been tested in a Microsoft 365 organization. Read the setup steps and test the app before sharing."));
     if (included.length === 0 || included.length > (plugin ? 20 : 8)) {
         report.push(reportEntry("Skills", "blocked", included.length === 0
-            ? "No eligible skills are selected. Add a skill to this assistant, or allow an item to work in Copilot."
+            ? "No selected skills can be used in Copilot. Add a skill to this assistant, or change Products it works in for a skill."
             : "This download allows at most " + (plugin ? 20 : 8) + " skills. Split the project or use fewer skills."));
     }
     // Matching paths in different items do not identify the same attachment.
     if (!plugin && item.kind === "agent" && item.files.some(function (file) {
         return !prepared.plan.actions.some(function (action) { return action.ownerId === item.id && action.spec === file.path; });
     })) {
-        report.push(reportEntry("Attached files", "blocked", "Copilot cannot combine native skills with the assistant's attached knowledge files. Move those files into a skill, or choose the usual Copilot / Teams Apps download."));
+        report.push(reportEntry("Attached files", "blocked", "Copilot cannot use skills and files attached directly to the assistant together. Move the attached files into a skill, or choose Copilot / Teams Apps."));
     }
     included.forEach(function (other) {
         const plan = planExport(project, other, exportId);
@@ -6585,15 +6588,15 @@ function planMicrosoftPackage(project, item, exportId) {
             const c = other.copilot;
             const scoped = (c.webSearch && c.webSites.length) || (c.sharepoint && (other.sharepointLinks.length || other.sharepointItems.length)) || (c.teamsMessages && c.teamsLinks.length) || (c.email && (c.mailboxes.length || c.sharedMailbox || c.emailFolders.length)) || (c.meetings && c.meetingItems.length);
             report.push(reportEntry(other.name + ": Copilot settings", scoped ? "blocked" : "unsupported", scoped
-                ? "This plugin cannot enforce the assistant's source restrictions. Use the Copilot app package to keep them."
-                : "This assistant becomes an optional skill. Its welcome message, example questions, picture, source switches, and response mode are not included. Use the Copilot app package to keep assistant settings."));
+                ? "This plugin cannot keep the limits you set on the assistant's sources. Choose Copilot / Teams Apps to keep those limits."
+                : "This assistant becomes an optional skill. The download leaves out its welcome message, example questions, picture, source settings, and response mode. Choose Copilot / Teams Apps to keep it as an assistant."));
         }
         plan.servers.forEach(function (name) { if (servers.indexOf(name) < 0) { servers.push(name); } });
         entries.push.apply(entries, microsoftSkillEntries(project, other, plan, plugin, report));
-        report.push(reportEntry(other.name, "preserved", "Included as a separate skill folder with its description and resource files. Copilot loads the skill when it is needed."));
+        report.push(reportEntry(other.name, "preserved", "The download includes the skill, its description, and its reference files. Copilot uses the skill when a request needs it."));
     });
     if (!plugin && entries.length > MICROSOFT_SKILL_FILES) {
-        report.push(reportEntry("Skill files", "blocked", "This download allows at most 350 files across its skills, including generated files. Remove files or split the assistant."));
+        report.push(reportEntry("Skill files", "blocked", "This download allows at most 350 files across its skills, including files added by Agentprise. Remove files or divide the skills between assistants."));
     }
     if (entries.reduce(function (sum, entry) { return sum + entry.bytes.length; }, 0) > MICROSOFT_PACKAGE_BYTES) {
         report.push(reportEntry("Package size", "blocked", "The skill files exceed the 10 MB package limit. Use smaller files."));
@@ -6656,7 +6659,7 @@ async function writeMicrosoftPackage(project, item, icons, exportId) {
     const entries = Array.from(archive, function (pair) { return { name: pair[0], bytes: pair[1] }; }).concat(built.entries);
     const bytes = zipWrite(entries);
     if (bytes.length > MICROSOFT_PACKAGE_BYTES) {
-        throw new Error("The complete Microsoft package exceeds 10 MB. Use smaller resource files or a smaller picture.");
+        throw new Error("The complete Microsoft package exceeds 10 MB. Use smaller reference files or a smaller picture.");
     }
     if (!plugin) {
         if (item.kind === "agent") { item.copilot.appId = base.appId; } else { item.appId = base.appId; }
@@ -6988,7 +6991,7 @@ async function teamsZipImport(bytes) {
     if (skipped.length > 0) {
         notices.push("Left out " + countOf(skipped.length, "file", "files") + " this app can't use: " + listNames(skipped) + ".");
     }
-    notices.push("Copilot app packages don't include a welcome message, so that field is empty.");
+    notices.push("Copilot app packages do not include a welcome message. You can add one in the editor.");
     const result = normalizeAgent(raw);
     return { agent: result.agent, notices: notices.concat(result.notices) };
 }
@@ -7348,12 +7351,12 @@ function authFromCopilot(auth, subject, notices) {
     const type = isPlainObject(auth) && typeof auth.type === "string" ? auth.type : "";
     const kind = Object.prototype.hasOwnProperty.call(COPILOT_AUTH_KINDS, type) ? COPILOT_AUTH_KINDS[type] : "";
     if (!kind) {
-        notices.push(subject + " uses a kind of sign-in this app can't write back, so it was left out.");
+        notices.push(subject + " uses a sign-in method Agentprise does not support, so it was left out. Ask the tool owner for a supported connection.");
         return "";
     }
     const reference = auth.reference_id !== undefined ? auth.reference_id : auth.referenceId;
     if (kind !== "none" && typeof reference === "string" && reference && reference !== COPILOT_AUTH_PLACEHOLDER) {
-        notices.push(subject + " signs in through a registration in the tenant it came from. Agentprise keeps the kind of sign-in but not the registration, so your admin registers it again where you install it.");
+        notices.push(subject + " needs sign-in setup for your organization. Ask your admin to register the connection before you use the download.");
     }
     return kind;
 }
@@ -7366,7 +7369,7 @@ function packageServerAddress(value, subject, notices) {
     }
     const url = raw.length <= LIMITS.sharepointLinkText ? cleanServerUrl(raw) : "";
     if (!url) {
-        notices.push(subject + " has an address this app can't keep, because it isn't https or it holds a sign-in, key, or token. Add the address again under Tool connections.");
+        notices.push(subject + " has an address Agentprise cannot keep. It must start with https and contain no username, password, key, or token. Add a suitable address under Tool connections.");
     }
     return { url: url, userSupplied: !url };
 }
@@ -7493,13 +7496,13 @@ function actionProvider(entries, manifest, runtime, subject, state, files, manif
         } else {
             const address = typeof spec.url === "string" ? spec.url : "";
             if (/^[a-z][a-z0-9+.-]*:/i.test(address)) {
-                state.notices.push(subject + " reads its API description from the web, and Agentprise never downloads files, so it was left out.");
+                state.notices.push(subject + " needs an API description from the web, so it was left out. Ask the package author to include that file in the package and update the reference.");
                 return null;
             }
             path = packageRelativePath(manifestFile, address);
         }
         if (!path || !entries.has(path)) {
-            state.notices.push(subject + " names an API description that isn't in the package, so it was left out.");
+            state.notices.push(subject + " names an API description that is missing or has an invalid location. Ask the package author to include the file and correct its location, then open the package again.");
             return null;
         }
         if (cleanArchivePath(path, { depth: LIMITS.itemPathDepth, hidden: false }) !== path) {
@@ -7508,7 +7511,7 @@ function actionProvider(entries, manifest, runtime, subject, state, files, manif
         }
         if (holdsCredential(path, entries.get(path))) {
             leaveOutForKey(state, path);
-            state.notices.push(subject + " has an API description that looks like it holds a password, key, or token, so it was left out.");
+            state.notices.push(subject + " has an API description that looks like it holds a password, key, or token, so it was left out. Ask the package author to remove the secret, then open the package again.");
             return null;
         }
         if (functions.length === 0) {
@@ -7532,7 +7535,7 @@ function actionProvider(entries, manifest, runtime, subject, state, files, manif
         if (path && entries.has(path)) {
             state.keep.add(path);
         }
-        state.notices.push(subject + " uses a fixed tool list that Agentprise can't write back. Its source files stay in the backup only. Use dynamic tool discovery in the action file if you want to import this runtime.");
+        state.notices.push(subject + " uses a fixed tool list that Agentprise cannot include in a download. Its source files stay in the backup only. Ask the package author for a supported connection that keeps the same tool restrictions.");
         return null;
     }
     const selected = runtime.run_for_functions;
@@ -7632,7 +7635,7 @@ function readCopilotActions(entries, actions, state, files, sourceFile) {
         const runtimes = manifest && Array.isArray(manifest.runtimes) ? manifest.runtimes.filter(isPlainObject) : [];
         if (runtimes.length === 0) {
             keepSource();
-            state.notices.push(subject + " has a file this app can't read, so it was left out.");
+            state.notices.push(subject + " has a file Agentprise cannot read, so it was left out. Ask the package author to repair the file, then open the package again.");
             state.keep.add(file);
             return;
         }
@@ -7704,7 +7707,7 @@ function readAgentConnectors(entries, list, state) {
         const id = isPlainObject(connector) && typeof connector.id === "string" ? connector.id : "";
         const subject = "The connector \"" + packageLabel(isPlainObject(connector) ? connector.displayName || id : "", "number " + (index + 1)) + "\"";
         if (!isPlainObject(connector) || !id) {
-            state.notices.push("A connector in the manifest has no id, so it was left out.");
+            state.notices.push("A connector has no identifier in manifest.json, so it was left out. Ask the package author to add its id and send the corrected package.");
             state.keepManifest = true;
             return;
         }
@@ -7716,7 +7719,7 @@ function readAgentConnectors(entries, list, state) {
         seen[id] = true;
         const remote = readPath(connector, ["toolSource", "remoteMcpServer"]);
         if (!isPlainObject(remote)) {
-            state.notices.push(subject + " isn't a tool server on the web, which is the only kind this app reads, so it was left out.");
+            state.notices.push(subject + " is not a web tool server, so it was left out. Ask the package author for a supported web connection.");
             state.keepManifest = true;
             return;
         }
@@ -7833,7 +7836,7 @@ function readTeamsArchive(entries) {
         notices.push("Left out " + countOf(programs.length, "program file", "program files") + ". Agentprise never keeps or runs programs.");
     }
     if (unreadable.length > 0) {
-        notices.push("Agentprise couldn't check the text in " + listNames(unreadable) + ", so those files were left out. Save text files as valid UTF-8 or UTF-16. For binary files, use the correct file type, then open the package again.");
+        notices.push("Agentprise couldn't check the text in " + listNames(unreadable) + ". The import skipped that content. Ask the package author to save text files as UTF-8 or UTF-16 and use supported types for other files. Then open the package again.");
     }
     const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), actionIds: new Set(), withKeys: [], notices: notices, keepManifest: false };
 
@@ -7877,7 +7880,7 @@ function readTeamsArchive(entries) {
         }
         const declarative = parseJsonObject(fromBytes(entries.get(file)));
         if (!declarative) {
-            notices.push("The assistant file " + file + " is not valid JSON, so it was left out.");
+            notices.push("The assistant file " + file + " is not valid JSON, so it was left out. Ask the package author to repair the file, then open the package again.");
             state.keep.add(file);
             state.keepManifest = true;
             return;
@@ -7951,7 +7954,7 @@ function readTeamsArchive(entries) {
     const allSkillFolders = skillFolders(entries, "").sort(function (a, b) { return b.length - a.length; });
     const readableFolders = skillFolderList.filter(function (folder) {
         if (holdsCredential("SKILL.md", entries.get(folder + "SKILL.md"))) {
-            notices.push("The skill in " + folder + " has a SKILL.md that looks like it holds a password, key, or token, so it was left out.");
+            notices.push("The skill in " + folder + " has a SKILL.md that looks like it holds a password, key, or token, so it was left out. Ask the package author to remove the secret, then open the package again.");
             state.keepManifest = true;
             agents.forEach(function (agent, index) {
                 if (agent.skillFolders.indexOf(folder) >= 0) {
@@ -8129,7 +8132,7 @@ function readTeamsArchive(entries) {
 
     // ### Build the project ###
     if (agents.length > 1) {
-        notices.push("This package holds " + agents.length + " assistants. Agentprise downloads each one as its own Copilot app package, so only " + packageLabel(agents[0].name, "the first") + " keeps the package's app id.");
+        notices.push("This package holds " + agents.length + " assistants. Each downloads as a separate Copilot app. Only " + packageLabel(agents[0].name, "the first") + " can update the original app; the others install as new apps.");
         agents.slice(1).forEach(function (raw) { raw.copilot.appId = ""; });
         if (attachments.length > 0) {
             notices.push("The package doesn't say which assistant uses its attached files, so each assistant got a copy. Remove them where they aren't needed.");
@@ -8151,7 +8154,7 @@ function readTeamsArchive(entries) {
         notices.push("Added " + countOf(connectorCount, "connector", "connectors") + " to Tool connections, for the whole project. A download includes a connector only when a tool uses it, and the backup always keeps " + (connectorCount === 1 ? "it" : "them") + ".");
     }
     if (agents.length > 0) {
-        notices.push("Copilot app packages don't include a welcome message, so that field is empty.");
+        notices.push("Copilot app packages do not include a welcome message. You can add one in the editor.");
     }
     // One assistant names the project, as every other single-item file does.
     const first = agents[0];
@@ -8420,12 +8423,12 @@ const REVIEW_FIELDS = { name: "s-name", description: "s-description", instructio
 const WORKSPACE_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions" };
 const DETAILS_FIELDS = { name: "d-name", description: "d-description", instructions: "d-instructions" };
 const PRODUCT_HINTS = {
-    copilotSkill: "One selected skill to add to an existing Copilot assistant. In Agent Builder, choose Configure, Skills, then Add. Review the changes and setup steps below.",
-    copilotSkills: "This assistant and the skills it uses, loaded when needed. Requires native skills in your organization's Copilot preview. Read the changes and setup steps below before downloading.",
-    microsoftPlugin: "The whole project as optional skills for Copilot Cowork, with supported tool connections. Ask your Microsoft 365 admin to install it. Read the changes and setup steps below.",
+    copilotSkill: "Add the selected skill to an existing Copilot assistant through Agent Builder.",
+    copilotSkills: "Download this assistant with separate skills for organizations that have enabled the Copilot skills preview.",
+    microsoftPlugin: "Download the whole project as optional skills for Copilot Cowork, with supported tool connections.",
     gemini: "A skill to upload to Gemini, with any files it uses.",
     claude: "A skill to upload to Claude, with any files it uses.",
-    msAgent: "One file to put in SharePoint or OneDrive and add to a Teams chat. It works until the end of March 2027, when Microsoft retires .agent files; the Help page says what to use instead.",
+    msAgent: "Add this file to SharePoint or OneDrive, then to a Teams chat; support ends after March 2027. See Help for replacement options.",
     teamsZip: "When you change the assistant later, download this again from the same project. Copilot then updates the app you shared instead of adding a new one.",
     chatgpt: "There is no file to upload. Paste the text into the instructions of a ChatGPT project. To include skills and tools, use the Plugin download instead.",
     claudePlugin: "The whole project as one Claude plugin, with every assistant and skill and the tool servers Claude can connect to.",
@@ -8439,7 +8442,7 @@ const AFTER_STEPS = {
         ["In Copilot Agent Builder", ["Open the assistant that will use this skill.", "Choose Configure, then Skills, then Add, and upload this ZIP.", "Use Try it to ask a question that needs the skill and its reference files.", "Your organization must enable skills. Tool connections and permissions need separate setup."]]
     ],
     copilotSkills: [
-        ["In an organization with native Copilot skills", ["Confirm with your admin that native skills are enabled.", "Read Setup steps on this page. Ask your admin to upload the ZIP in the Microsoft 365 admin center under Copilot, Agents, then Upload custom agent.", "This app package is not an Agent Builder skill upload or a Copilot Studio solution.", "Test a question that needs each skill, then save and reopen the assistant."]]
+        ["In Microsoft 365 with skills enabled", ["Ask your admin to confirm that Copilot skills are enabled.", "Read Setup steps on this page. Ask your admin to upload the ZIP in the Microsoft 365 admin center under Copilot, Agents, then Upload custom agent.", "This app package is not an Agent Builder skill upload or a Copilot Studio solution.", "Test a question that needs each skill, then save and reopen the assistant."]]
     ],
     microsoftPlugin: [
         ["In Microsoft 365", ["Read Setup steps on this page. A tool connection may need your admin to register its sign-in.", "Ask your admin to upload the ZIP as a custom app in the Microsoft 365 admin center.", "Open the plugin in Copilot Cowork and test each skill and connection. Installing a plugin does not grant access to its sources."]]
@@ -10969,7 +10972,7 @@ function renderProductBlocked() {
     });
 }
 
-/** Shown only for projects with several items. */
+/** Shows the current item and explains the skill requirement for Copilot. */
 function renderInspectItems() {
     const select = $("inspect-item");
     clearChildren(select);
@@ -10978,6 +10981,17 @@ function renderInspectItems() {
     });
     select.value = currentItem().id;
     $("inspect-item-wrap").hidden = ui.project.items.length < 2;
+    const hint = $("inspect-skill-hint");
+    const skillUpload = ui.product === "copilotSkill";
+    hint.hidden = !skillUpload;
+    let text = "";
+    if (skillUpload) {
+        const skills = ui.project.items.filter(function (item) { return item.kind === "skill"; });
+        text = skills.length === 0 ? "This project has no skills. Return to the editor and choose Add a skill."
+            : currentItem().kind !== "skill" ? "Select a skill from Part of the project to download it for Copilot."
+            : "Selected skill: " + (currentItem().name || "Untitled") + "." + (skills.length > 1 ? " Use Part of the project to choose a different skill." : "");
+    }
+    setText(hint, text);
 }
 
 /** Waits for typing to stop, since the Teams package is a whole ZIP. */
@@ -11037,6 +11051,14 @@ function selectProduct(name) {
         tab.tabIndex = selected ? 0 : -1;
     });
     $("ppanel").setAttribute("aria-labelledby", "ptab-" + name);
+    if (name === "copilotSkill" && currentItem().kind !== "skill") {
+        const skill = ui.project.items.find(function (item) { return item.kind === "skill"; });
+        if (skill) {
+            selectItem(skill.id, false);
+            return;
+        }
+    }
+    renderInspectItems();
     renderProductPanel();
 }
 

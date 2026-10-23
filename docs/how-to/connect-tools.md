@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/connect-tools.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-10
-Last Modified: 2026-10-22
+Last Modified: 2026-10-23
 Summary: Guide for people who install a download that uses tools: what "needs
          setup" means, and how to turn on connectors, fill in a server address,
          allow custom apps and sign-in ids in Copilot, and let scripts reach
@@ -242,31 +242,32 @@ the **Plugin** download, which hold every assistant and skill in the project.
 
 ### Tools in the optional Microsoft downloads
 
-**Add a skill to Copilot** adds one skill to an existing assistant through
-Agent Builder. It keeps supported connector and remote tool references as
-instructions with setup steps. It does not install connections or grant access.
-API actions, script routes, and web-search settings are excluded with notices.
+**Copilot skill** adds one skill to an existing assistant through
+Agent Builder. The skill includes instructions for supported
+tools and separate setup steps. Uploading it does not connect tools or grant
+access. This download leaves out scripts, web-search settings, and tools that
+need an API description file. Inspect lists those omissions.
 Ask your admin to set up any required tools and permissions separately.
 
-**Copilot app with skills** connects supported tools as assistant actions, just
-like the usual app package. **Microsoft 365 plugin** instead connects supported
-remote tool servers through the plugin's own connector settings. These are
-different Microsoft formats.
+**Copilot app with skills** connects supported tools to the assistant.
+**Microsoft 365 plugin** connects supported web tool servers to Copilot Cowork.
 
 All three choices open Inspect before downloading. Read the report, then select
-**Setup steps (not in the package)** in the file list. For an OAuth action or
-plugin connector, ask your admin to register the sign-in and replace the
-placeholder id in the named package file. The standalone skill has no such
-registration file. Do not paste a password or token into Agentprise.
+**Setup steps (not in the package)** in the file list. If a tool needs OAuth
+sign-in, ask your admin to register the connection and follow the instructions
+for the named file. An individual skill upload has no sign-in settings file.
+Do not paste a password or token into Agentprise.
 
-The new exports leave out scripts. The Microsoft plugin also leaves out local
-servers, unsupported sign-in types, actions defined by an API description,
-and connections whose tool restrictions it cannot preserve. The original
-project keeps these parts. Test each connection in Microsoft before sharing;
-Agentprise never contacts a tool server to check it.
+These downloads leave out scripts. The Microsoft plugin also leaves out
+servers that run on your computer, unsupported sign-in methods, and tools that
+need an API description file. It leaves out a connection if it cannot keep
+the limits you set on its tools. Your project still keeps these settings.
 
-See [optional Microsoft exports](../formats.md#optional-microsoft-exports)
-for the complete limits and tenant tests.
+Test each connection in Microsoft before sharing. Agentprise never contacts a
+tool server to check it.
+
+See [optional Microsoft downloads](../formats.md#optional-microsoft-exports)
+for the limits and checks to run in your organization.
 
 ### What happens without the tool
 
