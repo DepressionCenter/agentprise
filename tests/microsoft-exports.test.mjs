@@ -196,6 +196,37 @@ describe("Microsoft native exports", () => {
     assert.deepEqual(project, before);
   });
 
+  test("a skill's action path cannot hide an assistant's separate attachment", async () => {
+    const project = build();
+    project.items[0].files.push({ path: "openapi/records.yaml", bytes: encode("Synthetic assistant knowledge, not an API description.") });
+    const before = structuredClone(project);
+    blocks(project, /cannot combine/);
+    await assert.rejects(write(project, "copilotSkills"), /cannot combine/);
+    assert.deepEqual(project, before);
+  });
+
+  test("assistant and skill actions with the same path keep their own bytes", async () => {
+    const project = build();
+    const skill = project.items[1];
+    const agent = project.items[0];
+    agent.capabilities = [structuredClone(skill.capabilities.find((entry) => entry.id === "records.api"))];
+    agent.capabilities[0].id = "assistant.records.api";
+    const skillSpec = skill.files.find((entry) => entry.path === "openapi/records.yaml");
+    const agentBytes = encode(text(skillSpec.bytes).replace("Example records API", "Separate assistant API"));
+    agent.files = [{ path: skillSpec.path, bytes: agentBytes }];
+    const before = structuredClone(project);
+    const result = await write(project, "copilotSkills");
+    const entries = await engine.zip.read(result.bytes);
+    const specs = json(entries, "declarativeAgent_0.json").actions
+      .flatMap((action) => json(entries, action.file).runtimes)
+      .filter((runtime) => runtime.type === "OpenApi")
+      .map((runtime) => entries.get(runtime.spec.url));
+    assert.equal(specs.length, 2);
+    assert.ok(specs.some((bytes) => Buffer.from(bytes).equals(Buffer.from(agentBytes))));
+    assert.ok(specs.some((bytes) => Buffer.from(bytes).equals(Buffer.from(skillSpec.bytes))));
+    assert.deepEqual(project, before);
+  });
+
   test("product exclusions remove skills and tools, and all-excluded plugins are blocked", async () => {
     const project = build();
     project.items[1].notFor = ["copilot"];

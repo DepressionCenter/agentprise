@@ -4943,6 +4943,7 @@ function planExport(project, item, exportId, options) {
                         leave("Copilot takes at most " + COPILOT_ACTION_LIMIT + " actions.");
                         return;
                     }
+                    action.ownerId = link.owner.id;
                     action.spec = provider.spec;
                     action.specBytes = specBytes;
                     action.auth = provider.auth;
@@ -6568,7 +6569,10 @@ function planMicrosoftPackage(project, item, exportId) {
             ? "No eligible skills are selected. Add a skill to this assistant, or allow an item to work in Copilot."
             : "This download allows at most " + (plugin ? 20 : 8) + " skills. Split the project or use fewer skills."));
     }
-    if (!plugin && item.kind === "agent" && item.files.some(function (file) { return prepared.plan.named.indexOf(file.path) < 0; })) {
+    // Matching paths in different items do not identify the same attachment.
+    if (!plugin && item.kind === "agent" && item.files.some(function (file) {
+        return !prepared.plan.actions.some(function (action) { return action.ownerId === item.id && action.spec === file.path; });
+    })) {
         report.push(reportEntry("Attached files", "blocked", "Copilot cannot combine native skills with the assistant's attached knowledge files. Move those files into a skill, or choose the usual Copilot / Teams Apps download."));
     }
     included.forEach(function (other) {

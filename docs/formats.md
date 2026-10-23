@@ -1148,7 +1148,9 @@ and skill text of 20,000 characters or more after tool notes are added.
 Relative resource paths have at most three components. The complete ZIP must
 fit within 10 MB. It blocks attached assistant knowledge files; move them into
 a skill or use the usual download. API descriptions registered as actions are
-not counted as attached knowledge.
+not counted as attached knowledge. That exemption matches both the owning
+item and the file path, so a skill action cannot hide an assistant attachment
+with the same name.
 
 #### Microsoft 365 plugin
 
