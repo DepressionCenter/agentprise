@@ -1116,7 +1116,9 @@ the same name. A secret under a repeated key is caught, even inside a list,
 such as `{"api_key": ["abc123"], "api_key": null}`, and an escaped key such as
 `pass\u0077ord` is decoded first. A list under a credential key, such as
 `{"api_key": ["abc123"]}`, is a match when any item is a literal value. An
-object under a credential key is allowed, so JSON Schema files still open.
+object under a credential key is allowed, so JSON Schema files still open,
+but its `value` key counts as the credential's value, as in a settings file
+such as `{"admin_password": {"value": "abc123"}}`.
 Names such as `X-API-Key` and `database_password` use the same
 credential-name rules as settings files. Complete variable references remain
 allowed; literal values and references with fallbacks remain excluded.

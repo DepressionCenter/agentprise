@@ -1207,6 +1207,8 @@ describe("unsafe and broken packages", () => {
       { name: "config/unsafe8.json", text: '{"api_key":["' + SECRET + '"],"api_key":null}' },
       { name: "config/unsafe9.json", text: '{"url": "https://user:' + SECRET + '@example.org/", "url": null}' },
       { name: "config/unsafe10.json", text: '{"api_key": [["' + SECRET + '"]], "api_key": []}' },
+      { name: "config/unsafe11.json", text: '{"parameters": {"admin_password": {"value": "' + SECRET + '"}}}' },
+      { name: "config/unsafe12.json", text: '{"api_key": {"value": "' + SECRET + '"}, "api_key": null}' },
     ];
     const safe = [
       { name: "config/safe0.yaml", text: "password:\n  type: string\n  format: password\n" },
@@ -1219,6 +1221,7 @@ describe("unsafe and broken packages", () => {
       { name: "config/safe7.yaml", text: "securitySchemes:\n  api_key:\n    type: apiKey\n    in: header\n    name: X-API-Key\n" },
       { name: "config/safe8.json", text: '{"api_key": "${API_KEY}", "token": "{{ secrets.token }}", "password": {"type": "string"}}' },
       { name: "config/safe9.json", text: '{"api_key": ["${API_KEY}"], "password": "${PASSWORD}", "password": null}' },
+      { name: "config/safe10.json", text: '{"properties": {"password": {"type": "string", "format": "password", "description": "The account password"}}, "admin_password": {"value": "${ADMIN_PASSWORD}"}}' },
     ].map((file) => ({ name: file.name, bytes: encode(file.text) }));
     const entries = skillOnlyEntries();
     unsafe.forEach((file) => entries.push({ name: file.name, bytes: encode(file.text) }));

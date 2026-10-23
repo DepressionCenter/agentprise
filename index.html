@@ -7254,7 +7254,8 @@ function structuredTextHoldsCredential(scanned) {
  * name, but the file still holds both values. A value inside a list belongs to
  * the key the list sits under, such as "abc123" in {"api_key": ["abc123"]}. An
  * object under a credential key is allowed, so JSON Schema files still open;
- * its own keys are checked.
+ * its own keys are checked, and its "value" key counts as the credential's
+ * value, as in a settings file such as {"admin_password": {"value": "abc123"}}.
  * @param {string} text Text that JSON.parse accepts.
  * @returns {boolean} True when a credential key holds a literal value, a key or
  *     string value holds a credential, or a value forms an authorization header.
@@ -7266,8 +7267,9 @@ function jsonTextHoldsCredential(text) {
     let pendingKey = "";
     let lastString = null;
     let match;
-    function valueHoldsCredential(key, value) {
-        if (CREDENTIAL_FIELD_PATTERN.test(key) && credentialValueIsLiteral(value)) {
+    function valueHoldsCredential(key, value, frame) {
+        const wrapped = frame.kind === "object" && /^value$/i.test(key) && CREDENTIAL_FIELD_PATTERN.test(frame.key);
+        if ((wrapped || CREDENTIAL_FIELD_PATTERN.test(key)) && credentialValueIsLiteral(value)) {
             return true;
         }
         return typeof value === "string" && (textHoldsCredential(value) || CREDENTIAL_HEADER_PATTERN.test(key + ": " + value));
@@ -7278,11 +7280,11 @@ function jsonTextHoldsCredential(text) {
         if (match[1] !== undefined) {
             lastString = JSON.parse('"' + match[1] + '"');
             // A string in an object waits for ":" to show whether it is a key.
-            if (frame.kind === "list" && valueHoldsCredential(owner, lastString)) {
+            if (frame.kind === "list" && valueHoldsCredential(owner, lastString, frame)) {
                 return true;
             }
         } else if (match[2] !== undefined) {
-            if (valueHoldsCredential(owner, JSON.parse(match[2]))) {
+            if (valueHoldsCredential(owner, JSON.parse(match[2]), frame)) {
                 return true;
             }
         } else if (match[3] === ":") {
@@ -7292,7 +7294,7 @@ function jsonTextHoldsCredential(text) {
                 return true;
             }
         } else if (match[3] === "," || match[3] === "}") {
-            if (frame.kind === "object" && lastString !== null && valueHoldsCredential(pendingKey, lastString)) {
+            if (frame.kind === "object" && lastString !== null && valueHoldsCredential(pendingKey, lastString, frame)) {
                 return true;
             }
             lastString = null;

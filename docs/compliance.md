@@ -210,7 +210,8 @@ and files kept only in backups. Technical details are in
 - A nested mapping under a credential key is not a secret, so API
   descriptions with `password:` followed by `type: string`, and JSON Schema
   objects under a credential key, still open. Their own keys are still
-  checked.
+  checked, and a `value` key inside such an object counts as the credential's
+  value, as in `{"admin_password": {"value": "abc123"}}`.
 - Credential values have no minimum length. Numeric values, including zero,
   and quoted spaces are checked. Empty values and complete references to
   secrets stored elsewhere are allowed, such as `${API_KEY}`, `%API_KEY%`,
