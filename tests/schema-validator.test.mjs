@@ -2,7 +2,7 @@
 // tests/schema-validator.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-10
+// Last Modified: 2026-10-22
 // Summary: Self-tests for the JSON Schema subset validator used by the export
 //          tests: each supported keyword accepts and rejects what it should,
 //          unknown keywords throw, and every pinned schema uses only supported
@@ -37,9 +37,12 @@ const PINNED = {
   "agent-plugins/plugin.schema.json": "0a4aad95ce337878ad38802ebf0daa3fde76abe3f65400c86bcbb1ec0b3ab883",
   "agent-plugins/mcp.schema.json": "6539175bfcdf43085855183e86da40ea94b166547a72b47ae9a0a390516d3acb",
   "copilot/declarative-agent-v1.8.schema.json": "57b0f6784fbff614f249597ed7720775adff88a75f60989f93539d3221a97035",
+  "copilot/declarative-agent-v1.9.schema.json": "102abde77894ed0d30c5e097a1b17181a16527865fdcd2f824e2578799abd3a5",
   "copilot/plugin-v2.4.schema.json": "ea3016aa4917e1b714454a6a7be9444f8aa7a1923cba0a42343a6fd234a0eb00",
   "teams/manifest-v1.28.schema.json": "cce967bb1c77641634ce30353f2a699c44cf245e695d2c7a34bb8be771877c3d",
+  "teams/manifest-v1.29.schema.json": "53e860fd650fd03fe587379d92af6c91374e791f041ce3f26c92d5e74aeafa0b",
 };
+const NATIVE_MICROSOFT_SCHEMAS = new Set(["copilot/declarative-agent-v1.9.schema.json", "teams/manifest-v1.29.schema.json"]);
 
 describe("schema validator keywords", () => {
   test("type, including lists of types and integer", () => {
@@ -159,7 +162,8 @@ describe("pinned schemas", () => {
     for (const [path, hash] of Object.entries(PINNED)) {
       const row = sources.split("\n").find((line) => line.startsWith("| `" + path + "`"));
       assert.ok(row, path + " has a row");
-      assert.ok(row.includes(hash) && row.includes("2026-10-10") && row.includes("https://"), path);
+      const date = NATIVE_MICROSOFT_SCHEMAS.has(path) ? "2026-10-22" : "2026-10-10";
+      assert.ok(row.includes(hash) && row.includes(date) && row.includes("https://"), path);
     }
   });
 
@@ -168,6 +172,8 @@ describe("pinned schemas", () => {
     bad(loadSchema("agent-plugins/mcp.schema.json"), { mcpServers: { x: { type: "streamable-http" } } });
     bad(loadSchema("copilot/plugin-v2.4.schema.json"), { schema_version: "v2.4" });
     bad(loadSchema("copilot/declarative-agent-v1.8.schema.json"), { version: "v1.8", name: "x" });
+    bad(loadSchema("copilot/declarative-agent-v1.9.schema.json"), { version: "v1.9", name: "x" });
     bad(loadSchema("teams/manifest-v1.28.schema.json"), { manifestVersion: "1.28", extra: true });
+    bad(loadSchema("teams/manifest-v1.29.schema.json"), { manifestVersion: "1.29", extra: true });
   });
 });

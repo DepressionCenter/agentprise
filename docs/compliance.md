@@ -607,6 +607,42 @@ borders.
   check is a short pattern list, not a review of the text, and a clean result
   does not mean the text holds no personal information.
 
+### Optional Microsoft export checks
+
+The Agent Builder skill, native-skill app, and Microsoft plugin exports run
+entirely in the browser.
+They add no runtime dependency or network call. Tests in
+`tests/microsoft-exports.test.mjs` check pinned schemas, resource bytes, paths,
+counts, sizes, source restrictions, and exclusions. The new profiles omit
+scripts and unsupported tool routes. OAuth sign-in uses a placeholder
+registration id, never a credential. A plugin cannot silently widen a named
+tool list or discard an assistant's active source limits.
+
+The optional choices open a review page before download. On 2026-10-22, the
+user reported a successful synthetic skill upload through Agent Builder's
+**Configure**, **Skills**, **Add** route. Asking for the sample marker returned
+`COPPER-FINCH`, stored in `references/check.txt`. The test used a manually
+prepared root-level skill ZIP. The browser download was then checked against
+that ZIP: all filenames and file contents matched exactly. Full app and Cowork
+plugin installation, tool sign-in, updates, and access by another user remain
+unverified. See [Formats](formats.md#optional-microsoft-exports).
+These checks are not an assessment of a tenant's privacy or compliance.
+
+On 2026-10-22, the Windows suite passed all 366 tests, including imported license
+preservation, conflicting license names, Agent Builder upload boundaries, and
+separate ownership of identically named assistant and skill files. Valid
+leading-hyphen resource names are retained; hidden and reserved names remain
+blocked. The two new pinned schemas retain their original hashes and include
+the publisher's MIT License in sibling notice files.
+In an isolated Chromium browser, all three Microsoft Inspect tabs had zero axe 4.10.3 WCAG A/AA
+findings in light and dark themes. Keyboard activation opened the optional
+choices and the review page; arrow keys moved between tabs. The download
+buttons produced the expected ZIP layouts. The skill upload blocks a selected
+assistant with an explanation and works after selecting a skill. Reflow checks
+at 320 CSS pixels and 200 percent CSS zoom found no horizontal page overflow.
+No page errors occurred. These checks do not replace desktop browser zoom or
+a screen reader pass; both still need a person to check them.
+
 ### Conclusion
 
 The controls above are in place and the checks listed were run on the dates

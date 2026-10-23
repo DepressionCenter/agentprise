@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/make-an-assistant-for-copilot.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-21
+Last Modified: 2026-10-22
 Summary: Step-by-step guide with screenshots: make a new assistant in Agentprise
          and add it to the Agents list in Microsoft 365 Copilot or Teams.
 Notes: See README file for documentation and full license information.
@@ -150,6 +150,46 @@ page, or drop the backup on the Workspace start page. Make your changes, and
 download the app package again. Upload the new file in
 place of the old one. It keeps the same id, so Copilot treats it as an update
 rather than a second assistant.
+
+### Add a skill to an existing Copilot assistant
+
+Your organization must enable skills in Copilot Agent Builder.
+
+1. In Agentprise, select a skill in your project.
+2. In Download, expand **More Microsoft downloads**.
+3. Choose **Review** beside **Add a skill to Copilot**.
+4. Read the changes and setup steps, then download the ZIP.
+5. In Agent Builder, open your assistant. Choose **Configure**, **Skills**, then **Add**.
+6. Upload the ZIP. In **Try it**, ask a question that needs the skill's reference files.
+
+This adds one skill to the assistant you already have. It excludes scripts and
+does not install tool connections. Follow the setup steps for any tools it uses.
+See Microsoft's [skill upload guide](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/agent-builder-add-skills).
+
+### Download a whole Copilot app with skills
+
+If your organization has enabled native Copilot skills, you can keep each
+skill separate from the assistant's instructions.
+
+1. Add the skills to your project and select them under **Skills it can use**.
+2. In Download, expand **More Microsoft downloads**.
+3. Choose **Review** beside **Copilot app with skills (preview)**.
+4. Read **What changes in this download** and **Setup steps (not in the package)**.
+5. Ask your admin to upload the ZIP in the Microsoft 365 admin center under
+   **Copilot**, **Agents**, then **Upload custom agent**.
+
+This choice allows up to eight skills and excludes script files. Copilot does
+not yet support combining native skills with attached assistant knowledge
+files. Move those files into a skill, or keep using **Copilot / Teams Apps**.
+The full app download still needs a tenant test. It is not an Agent Builder
+skill upload or a Copilot Studio solution. Use **Add a skill to Copilot** for
+the skill upload route above.
+
+To use the whole project as optional skills in Copilot Cowork, review the
+**Microsoft 365 plugin** choice instead. Ask your admin to install that package.
+It does not create an always-on assistant. See
+[optional Microsoft exports](../formats.md#optional-microsoft-exports) for
+limits and the tenant test checklist.
 
 ### Conclusion
 
