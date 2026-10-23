@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/compliance.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-22
+Last Modified: 2026-10-23
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
          the controls in place, the evidence behind them, and the known gaps.
 Notes: See README file for documentation and full license information.

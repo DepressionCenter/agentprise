@@ -2,7 +2,7 @@
 // tests/microsoft-package.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-21
-// Last Modified: 2026-10-22
+// Last Modified: 2026-10-23
 // Summary: Opens Microsoft 365 app packages through the importer the app uses
 //          for dropped files: this app's own package with three actions, and
 //          synthetic packages with an assistant, skills only, connectors only,
