@@ -91,6 +91,8 @@ Downloads with tools come with setup steps written for that product.
 - The Copilot app package has no place for extra files. Its steps show on the
   Inspect page instead, as a file called
   **Setup steps (not in the package)** on the **Copilot / Teams Apps** tab.
+  The **Copilot skill**, **Copilot app with skills**, and **Microsoft 365
+  plugin** tabs show their steps the same way.
 - The Teams Chat file, the ChatGPT project instructions, and the Gemini
   Notebook file have no setup steps of their own. Read the notes in the
   report, and use the steps on this page.
@@ -240,34 +242,39 @@ assistant uses a skill, the report says "needs setup" for that skill. Download
 the skill too and add it in the same place. Or use the **Claude plugin** or
 the **Plugin** download, which hold every assistant and skill in the project.
 
-### Tools in the optional Microsoft downloads
+### Tools in the More Microsoft downloads
 
-**Copilot skill** adds one skill to an existing assistant through
-Agent Builder. The skill includes instructions for supported
-tools and separate setup steps. Uploading it does not connect tools or grant
-access. This download leaves out scripts, web-search settings, and tools that
-need an API description file. Inspect lists those omissions.
-Ask your admin to set up any required tools and permissions separately.
+**Copilot skill** adds one skill to an assistant you already have, through
+Agent Builder. The skill's instructions name the tools it supports. The setup
+steps are not in the ZIP, so read them on the Inspect page. Uploading the
+skill does not connect tools or give anyone access to them. This download
+leaves out scripts, web search settings, and tools that need a file
+describing a web service (an API description). Inspect lists what it leaves
+out. Ask your admin to set up the tools and permissions the skill needs.
 
 **Copilot app with skills** connects supported tools to the assistant.
-**Microsoft 365 plugin** connects supported web tool servers to Copilot Cowork.
+**Microsoft 365 plugin** connects supported tool servers on the web to Copilot
+Cowork.
 
-All three choices open Inspect before downloading. Read the report, then select
-**Setup steps (not in the package)** in the file list. If a tool needs OAuth
-sign-in, ask your admin to register the connection and follow the instructions
-for the named file. An individual skill upload has no sign-in settings file.
-Do not paste a password or token into Agentprise.
+All three choices open the Inspect page before you download. Read the report,
+then choose **Setup steps** in the list of files. If a tool needs a sign-in,
+ask your admin to register it. Then follow the setup steps to add the
+registration to the file they name. See
+[Register a sign-in for a Copilot action](#register-a-sign-in-for-a-copilot-action).
+A **Copilot skill** download has no file for sign-in settings. Do not paste a
+password or token into Agentprise.
 
-These downloads leave out scripts. The Microsoft plugin also leaves out
-servers that run on your computer, unsupported sign-in methods, and tools that
-need an API description file. It leaves out a connection if it cannot keep
-the limits you set on its tools. Your project still keeps these settings.
+All three downloads leave out scripts. The **Microsoft 365 plugin** also
+leaves out servers that run on your computer, sign-in methods it can't use,
+and tools that need a file describing a web service. It leaves out a
+connection if it cannot keep the limits you set on its tools. Your project
+still keeps these settings.
 
-Test each connection in Microsoft before sharing. Agentprise never contacts a
-tool server to check it.
+Test each connection in Microsoft before you share the download. Agentprise
+never contacts a tool server to check it.
 
-See [optional Microsoft downloads](../formats.md#optional-microsoft-exports)
-for the limits and checks to run in your organization.
+See [optional Microsoft downloads](../formats.md#optional-microsoft-downloads)
+for the limits and the checks to run in your organization.
 
 ### What happens without the tool
 

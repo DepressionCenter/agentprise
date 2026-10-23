@@ -63,6 +63,34 @@ It depends on where people will use the assistant.
 Not sure yet? Download a backup. You can come back any time and download it
 for another product.
 
+### What are the More Microsoft downloads?
+
+Under **More Microsoft downloads**, below the plugins, choose **View
+Microsoft downloads** to see three more choices.
+Each one works only if your organization allows skills in Copilot or uses
+Copilot Cowork, so ask your admin first. Each one has a **Review** button that
+opens the Inspect page, where you can see what changes and read the setup
+steps before you download.
+
+- **Copilot skill** gives you one skill (`.zip`) to add to an assistant you
+  already have in Copilot. In Agent Builder, open the assistant and choose
+  **Configure**, **Skills**, then **Add**.
+- **Copilot app with skills (preview)** gives you an app package (`.zip`)
+  that keeps the assistant's skills separate, so Copilot uses each skill only
+  when a question needs it. Ask your admin to turn on skills in Copilot. This
+  download can't include files attached to the assistant, so attach them to a
+  skill instead.
+- **Microsoft 365 plugin** gives you the whole project for Copilot Cowork.
+  Each assistant becomes a skill and loses its welcome message, example
+  questions, picture, source settings, and response mode. Ask your admin to install the
+  plugin.
+
+These downloads leave out scripts. The setup steps are not in the `.zip` file,
+so read them on the Inspect page. Keep a backup of your project. If your
+organization does not allow these choices, use **Copilot / Teams Apps**.
+[Make a new assistant for Microsoft 365 Copilot](how-to/make-an-assistant-for-copilot.md)
+has the steps.
+
 ### Does it work with Kimi or OpenClaw?
 
 Partly. Kimi Code CLI and an OpenClaw you run yourself both read the
@@ -123,8 +151,10 @@ it can and tells people it couldn't use the tool. See
 On the Inspect page, the list **What changes in this download** marks each part
 of a download as kept, changed, needs setup, left out, or blocked. "Needs
 setup" means the part is in the download but works only after a step from you
-or your admin. The steps are in the `SETUP.md` file inside the download, or on
-the Inspect page for the Copilot app package.
+or your admin. The steps are in the `SETUP.md` file inside the download. For
+the Copilot app package and the More Microsoft downloads, the steps are not in
+the download, so read them under **Setup steps** in the list of files on the
+Inspect page.
 
 ### Why is a download button turned off?
 
@@ -144,10 +174,12 @@ works in**, and check the product.
 
 Gemini, Claude, and plugins have skills but no separate place for an always-on
 assistant. So Agentprise writes the assistant as a skill and starts its
-description with "Persona:". Copilot, Teams Chat, ChatGPT project
-instructions, and Gemini Notebook have the opposite problem, so a skill
-becomes an assistant there, and an assistant's skills are added to its
-instructions.
+description with "Persona:". The Microsoft 365 plugin does the same.
+
+Copilot / Teams Apps, Teams Chat, ChatGPT project instructions, and Gemini
+Notebook have no separate place for skills. In those downloads, a skill
+becomes an assistant, and an assistant's skills are added to its instructions.
+The Copilot skill and Copilot app with skills downloads keep skills separate.
 
 ### Can I bring over a custom GPT or a Gem?
 
@@ -165,8 +197,8 @@ walks through both, step by step.
 
 Open it from Your projects on the Workspace page, or drop the file you
 downloaded before on that page, make your changes, and download it again. For
-an app package, upload the new file in place of the old one. It keeps the same
-id, so Copilot treats it as an update.
+an app package, upload the new file in place of the old one. Copilot then
+updates the assistant you already shared.
 
 ### Why does my assistant not answer in a Teams chat?
 
@@ -183,7 +215,9 @@ download continues to work.
 
 From mid-November 2026, you can choose **Upgrade to Microsoft 365 agent** in
 SharePoint. You need permission to edit the file and site pages, and to share
-agents. Ask the file owner, creator, or site owner if you need help.
+agents. If you don't have those permissions, ask the file owner, its creator,
+or a site owner to start the upgrade. You can also create the assistant again
+in Copilot Agent Builder and copy your text into it.
 
 See [Retirement of .agent files](how-to/add-an-assistant-to-a-teams-chat.md#retirement-of-agent-files)
 for replacement options, and
@@ -193,8 +227,8 @@ Agentprise can still open `.agent` files after retirement to recover their conte
 
 ### Can I upload the .agent file to Copilot Agent Builder?
 
-Uploading a `.agent` file adds it as reference material. To create the
-assistant, start a new agent in Agent Builder. Copy the name, description,
+No. Uploading a `.agent` file adds it as reference material. To create the
+assistant, open Agent Builder and start a new one. Copy the name, description,
 instructions, and example questions from Agentprise into the matching boxes,
 then choose the sources again. The
 [Teams chat guide](how-to/add-an-assistant-to-a-teams-chat.md#create-the-assistant-in-copilot-agent-builder)
@@ -247,6 +281,9 @@ or start the included server as the README describes.
 | Download | Copilot / Teams Apps | Teams Chat | Gemini | Claude | ChatGPT |
 |---|---|---|---|---|---|
 | App package (`.zip`) | Yes | No | No | No | No |
+| Copilot skill (`.zip`) | In Agent Builder, when your admin turns on skills | No | No | No | No |
+| Copilot app with skills (`.zip`) | When your admin turns on skills | No | No | No | No |
+| Microsoft 365 plugin (`.zip`) | Copilot Cowork only | No | No | No | No |
 | `.agent` file | No | Yes | No | No | No |
 | Skill (`.zip`) | No | No | Yes | Yes | No |
 | Plain skill, SKILL.md (`.skill.zip`) | No | No | Yes | Yes | No |

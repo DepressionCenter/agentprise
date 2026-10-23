@@ -8,7 +8,7 @@ This file is part of Agentprise
 skills/project-preferences/SKILL.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-21
+Last Modified: 2026-10-23
 Summary: Project-specific preferences for Agentprise: the single-file build, the
          project backup format, workspace storage, the download cards, and how
          to test.
@@ -195,22 +195,50 @@ the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
 - Opening a file always creates a new project. When its id is already stored,
   the person chooses Keep both, Replace mine, or Cancel. "Add from a file"
   merges a file's items into the open project instead.
-- Downloads other than the backup are for the item being edited: the skill
-  `.zip` (labeled Gemini and Claude), the plain skill (`.skill.zip`, standard
-  fields only), the `.agent` file (labeled "Teams Chat"), the Teams app package
-  (labeled "Copilot / Teams Apps"), the copy boxes for ChatGPT, and the `.md`
-  file for Gemini Notebook. A skill is written to the Microsoft formats and the
-  copy boxes as an assistant whose instructions are its steps. "Download
-  Backup" saves the whole project. Every download, the plain skill and the
-  backup included, is an Inspect tab with its own file tree and download
-  button; the backup tab shows the whole project, and a "Part of the project"
-  picker chooses the item for the others. Gemini and Claude have separate tabs
-  even while their files match. Do not add a vendor until it has a real file
-  to download.
+- Downloads other than the backup and the plugins are for the item being
+  edited: the skill `.zip` (labeled Gemini and Claude), the plain skill
+  (`.skill.zip`, standard fields only, labeled SKILL.md), the `.agent` file
+  (labeled "Teams Chat"), the Copilot app package (labeled "Copilot / Teams
+  Apps"), the copy boxes for ChatGPT, and the `.md` file for Gemini Notebook.
+  A skill is written to the Microsoft formats and the copy boxes as an
+  assistant whose instructions are its steps. "Download Backup" saves the
+  whole project, and so do the Claude plugin, the Plugin, and the Microsoft
+  365 plugin. Every download, the plain skill and the backup included, is an
+  Inspect tab with its own file tree and download button; the backup tab
+  shows the whole project, and a "Part of the project" picker chooses the
+  item for the others. Gemini and Claude have separate tabs even while their
+  files match. Do not add a vendor until it has a real file to download.
+- Three optional Microsoft downloads sit under a "More Microsoft downloads"
+  heading at the end of the Download card, in a `details` section that opens
+  with "View Microsoft downloads". The heading names the list through
+  `aria-labelledby`. Each line has a Review button that opens its Inspect tab
+  instead of downloading, and the Inspect page shows its setup steps:
+  - **Copilot skill**: one skill as `<skill-name>.copilot-skill.zip`, with
+    `SKILL.md` at the root, for Copilot Agent Builder. When an assistant is
+    selected, its tab selects a skill (`skillForCopilotTab`): the first skill
+    the assistant uses that works in Copilot, then any skill that works in
+    Copilot, then the first skill. A note under the picker
+    (`inspect-skill-hint`) names the skill or says the project has none.
+    Leaving the tab selects the assistant again and announces it, but only
+    while the picked skill is still selected (`itemForProductTab` and
+    `ui.skillTabSwap`).
+  - **Copilot app with skills**: the assistant and the skills it uses, written
+    as declarative agent v1.9 with `agent_skills` inside the usual manifest
+    1.28 app package. Its line on the card adds "(preview)". It blocks files
+    attached to the assistant.
+  - **Microsoft 365 plugin**: the whole project as
+    `<project-slug>.microsoft-plugin.zip` for Copilot Cowork, written as
+    manifest 1.29 with root `agentSkills` and `agentConnectors` and no
+    declarative agent. Assistants become skills. It is blocked when one skill
+    limits a server to certain tools and another skill uses the whole server.
+
+  These downloads leave out script files. The Copilot app package still writes
+  declarative agent v1.8 and manifest 1.28. A blocked download's error starts
+  with the download's name, such as "The Copilot app with skills".
 - The project editor's Download card is one line per product: the product name and
-  its file on the left, a short Download or Copy button on the right. Each
-  button carries hidden text naming its file, so screen readers do not hear
-  seven identical buttons.
+  its file on the left, a short Download, Copy, or Review button on the right.
+  Each button has hidden text naming its file or download, so screen
+  readers do not hear a row of identical buttons.
 - The top bar carries three square icon links, in this order: home (the
   Workspace page), Help, and GitHub, in the same shape as the header of
   code.depressioncenter.org. The footer links to code.depressioncenter.org as
@@ -255,8 +283,15 @@ the pages under `docs/`.
   suggestions", "conversation starters", or "starters".
 - **backup**: the `.agentprise.zip` file with the whole project. Not "complete
   copy" or "bundle".
-- **Copilot app package** and **Teams Chat file**: the two Microsoft downloads.
-  Not "Teams package" or "SharePoint file".
+- **Copilot app package**, **Teams Chat file**, **Copilot skill**, **Copilot
+  app with skills**, and **Microsoft 365 plugin**: the five Microsoft
+  downloads. Not "Teams package", "SharePoint file", "package with native
+  skills", or "Copilot skill upload". The last three are the optional downloads under **More Microsoft
+  downloads**.
+- **skills in Copilot**: Microsoft's skills feature, which an admin turns on.
+  Not "native skills".
+- **attached files**: files added to an assistant or a skill. Not "reference
+  files" in interface text or the docs for people using the app.
 
 ### Project skills
 

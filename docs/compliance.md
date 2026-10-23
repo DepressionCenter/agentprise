@@ -143,9 +143,7 @@ listed under known gaps.
   known keys of the Agentprise extension in `plugin.json` are copied. Evidence:
   `tests/engine.test.mjs`, `tests/formats.test.mjs`, `tests/library.test.mjs`,
   `tests/project.test.mjs`, `tests/scan.test.mjs`, and `tests/tools.test.mjs`.
-  `npm test` on 2026-10-10 ran 220 tests, and 219 passed. The one failure was
-  a content check on the Library entry `pubmed-search.zip` (it must refuse
-  legal and medical advice), not a control on this page.
+  `npm test` on 2026-10-23 ran 387 tests, and all of them passed.
 - Importing executes nothing and contacts nothing. Plugin manifests, MCP
   server files, skill files, hooks, commands, and agents are read as data. A
   local tool server's command is stored as text and never run. Server
@@ -205,25 +203,47 @@ and files kept only in backups. Technical details are in
   XML, and Basic or Bearer authorization headers, including proxy headers.
   Private key headers also count as matches. JSON escapes, XML character
   references, namespaces, and nested or multiline YAML values do not bypass
-  these checks. External XML entities are never loaded.
+  these checks. A YAML value on the line below its key, such as `password:`
+  followed by an indented value or list item, is checked too. In JSON, a
+  secret under a repeated key and a list of literal values under a credential
+  key are matches. External XML entities are never loaded.
+- A nested mapping under a credential key is not a secret, so API
+  descriptions with `password:` followed by `type: string`, and JSON Schema
+  objects under a credential key, still open. Their own keys are still
+  checked.
 - Credential values have no minimum length. Numeric values, including zero,
   and quoted spaces are checked. Empty values and complete references to
-  secrets stored elsewhere are allowed. References with fallback values,
-  substitutions, or added text are checked as possible credentials.
-- Text checks cover UTF-8 and UTF-16, with or without byte-order marks.
+  secrets stored elsewhere are allowed, such as `${API_KEY}`, `%API_KEY%`,
+  `{{ secrets.token }}`, `<EXAMPLE_API_KEY>`, or a YAML alias. So are the bare
+  words `true`, `false`, `yes`, `no`, `null`, and `none`. References with
+  fallback values, substitutions, or added text are checked as possible
+  credentials.
+- Text checks cover UTF-8, UTF-16 with a byte-order mark, and UTF-16 without
+  one when the file starts with two common Western characters, such as `{` or
+  `#`. Other text without the mark is read as UTF-8, and a file that is not
+  valid UTF-8 is excluded.
   Zero characters are removed. Other control characters are checked both as
   separators and after removal. Invalid encoding or replacement characters
   cause exclusion. This also applies to unknown types such as `.env`, `.toml`,
   and `.pem`.
-- Supported binary files, including complete PNG images, receive a scan of
-  readable bytes. A file signature does not bypass credential checks.
-  Compressed document contents are not inspected. These pattern checks can
-  miss credentials, so review files from unknown sources before sharing.
+- Supported binary files, such as PDF, Office, and OneNote files and complete
+  PNG images, receive a scan of readable bytes. The second pass of that scan
+  joins only runs of four or more readable characters, so single bytes in
+  compressed data cannot form a false match and leave a large document out.
+  A file signature does not bypass credential checks. Compressed document
+  contents are not inspected. These pattern checks can miss credentials, so
+  review files from unknown sources before sharing.
+- The attribute, web address, and tag checks take time in proportion to the
+  file's length, so a file built from long runs of name characters or
+  repeated tags does not stall the browser. Evidence: a test in
+  `tests/microsoft-package.test.mjs` opens a package with five such files of
+  about 1 MB each and requires it to finish within 2 seconds.
 - Microsoft sign-in registration identifiers are removed from imported tools
   and servers. Saved JSON and YAML files use a replacement value, while keeping
-  their UTF-8 or UTF-16 encoding and byte-order marks. An admin must register
-  sign-in again for the destination organization. Unsupported sign-in methods
-  cause exclusion; Agentprise never changes them to no sign-in.
+  their UTF-8 or UTF-16 encoding and byte-order marks. Ask your admin to
+  register sign-in again for the destination organization. Unsupported
+  sign-in methods cause exclusion; Agentprise never changes them to no
+  sign-in.
 
 ##### Skills, tools, and saved source files
 
@@ -261,7 +281,7 @@ Evidence: `readTeamsArchive`, `packagePath`, `packageRelativePath`,
 `tests/microsoft-package.test.mjs` checks the limits, rejected inputs, notices,
 and saved bytes after downloading and reopening backups.
 `tests/project.test.mjs` also checks conflicting server names across plugin
-formats. On 2026-10-22, all 332 tests in the suite passed.
+formats. On 2026-10-23, `npm test` ran 387 tests, and all of them passed.
 
 #### Other file and input checks
 
@@ -292,10 +312,12 @@ formats. On 2026-10-22, all 332 tests in the suite passed.
   `quoteHeadings`, and `oneLine` in `index.html`, and `tests/tools.test.mjs`.
 - Validation runs offline against pinned schemas. The tests check exports
   against exact copies of the Agent Plugins 1.0.0 `plugin.json` and `mcp.json`
-  schemas, the declarative agent v1.8 schema, the Copilot plugin manifest v2.4
-  schema, and the Teams manifest 1.28 schema, kept in `tests/schemas/` with
-  each file's URL, download date (2026-10-10), and SHA-256 hash in
-  `tests/schemas/SOURCES.md`. The validator is a small file in the repository
+  schemas, the declarative agent v1.8 and v1.9 schemas, the Copilot plugin
+  manifest v2.4 schema, and the Teams app manifest 1.28 and 1.29 schemas, kept
+  in `tests/schemas/` with each file's URL, download date (2026-10-10, or
+  2026-10-22 for v1.9 and 1.29), and SHA-256 hash in
+  `tests/schemas/SOURCES.md`. Each Microsoft schema keeps Microsoft's MIT
+  License in a `.LICENSE.txt` file beside it. The validator is a small file in the repository
   (`tests/schema-validator.mjs`) with its own tests, so no dependency was
   added. The page never fetches a schema: the schema ids it writes, such as
   `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`, are
@@ -525,8 +547,10 @@ borders.
 - 200 percent zoom was checked only through the 320 pixel reflow test, not by a
   person zooming a desktop browser.
 - Uploads to real Gemini, Claude, ChatGPT, SharePoint, and Teams accounts are
-  open, including both plugins and Copilot packages with actions; see the
-  open tests V1 to V8 and the others on the [formats page](formats.md).
+  open, including both plugins, Copilot packages with actions, and the
+  optional Microsoft downloads; see the open tests V1 to V8 and the others on
+  the [formats page](formats.md), and
+  [Optional Microsoft download checks](#optional-microsoft-download-checks).
 - Agentprise does not check what a script in a skill does. It checks that the
   file is plain text and not a program, then carries it. The setup steps ask
   the installer to allow its network access, and the
@@ -542,12 +566,23 @@ borders.
 The three optional Microsoft downloads are built entirely in your browser.
 They add no software dependency or network request. Tests in
 `tests/microsoft-exports.test.mjs` check package formats, file contents and
-locations, count and size limits, source restrictions, and omitted content.
+locations, count and size limits, source restrictions, license and `NOTICE`
+files, and omitted content. Tests in `tests/inspect-tabs.test.mjs` check which
+skill the **Copilot skill** tab selects, when Inspect selects the earlier item
+again, and the wording of the Microsoft download messages. On 2026-10-23,
+`npm test` ran 387 tests, and all of them passed.
 
 The downloads leave out scripts and unsupported tool connections. OAuth
 sign-in settings contain an instruction to register the connection, never a
-credential. A plugin cannot allow more tools than the selected list or remove
-limits on an assistant's sources without blocking the download.
+credential. Agentprise leaves out a tool connection when it cannot keep that
+connection's tool list, so a plugin never allows more tools than you selected.
+It blocks a **Microsoft 365 plugin** download when one skill limits a server to
+certain tools and another skill uses the whole server, because a plugin gives
+every skill all of the server's tools. It also blocks a plugin download that
+would remove limits on an assistant's sources. A `NOTICE` file is never
+written as a skill's license terms; Agentprise copies only `LICENSE`,
+`LICENCE`, or `COPYING` terms to `LICENSE.txt` and otherwise writes that file
+itself.
 
 Each choice opens Inspect before downloading. On 2026-10-22, a tester reported
 uploading a sample skill through Agent Builder's **Configure**, **Skills**,
@@ -557,32 +592,39 @@ The browser download matched every filename and file's contents in that ZIP.
 
 Full app and Cowork plugin installation, tool sign-in, updates, and access by
 another user remain unverified. See
-[Optional Microsoft downloads](formats.md#optional-microsoft-exports).
+[Optional Microsoft downloads](formats.md#optional-microsoft-downloads).
 These checks do not assess an organization's privacy or compliance.
 
-On 2026-10-22, the Windows suite passed all 366 tests, including imported license
-preservation, conflicting license names, Agent Builder upload boundaries, and
-separate ownership of identically named assistant and skill files. Valid
-leading-hyphen resource names are retained; hidden and reserved names remain
-blocked. The two Microsoft schema files retain their original hashes and have the
-publisher's MIT License in separate notice files beside them.
-In an isolated Chromium browser, all three Microsoft Inspect tabs had zero axe 4.10.3 WCAG A/AA
-findings in light and dark themes. Keyboard activation opened the optional
-choices and the review page; arrow keys moved between tabs. The download
-buttons produced the expected ZIP layouts. Reflow checks at 320 CSS pixels and
-200 percent CSS zoom found no horizontal page overflow. No page errors occurred.
+#### Browser checks on 2026-10-22
 
-Checks on 2026-10-22 also covered the **Copilot skill** selection behavior.
-Opening the choice from the editor or with keyboard tab navigation selected
-the first skill when an assistant was selected. An already selected skill
-stayed selected. Choosing an assistant in the dropdown showed a prompt and
-blocked downloading; a project with no skills showed instructions to add one.
-The skill ZIP downloaded successfully. The selected tab had a visible 3-pixel
-focus outline. All three Microsoft tabs had zero axe 4.10.3 WCAG A/AA findings
-in light and dark themes. All 366 Windows tests passed.
+These checks ran on 2026-10-22 and describe the page as it was that day.
+Valid leading-hyphen resource names were kept, and hidden and reserved names
+were blocked. In an isolated Chromium browser, all three Microsoft Inspect tabs
+had zero axe 4.10.3 WCAG A/AA findings in light and dark themes. Keyboard
+activation opened the optional choices and the review page, and arrow keys
+moved between tabs. The download buttons produced the expected ZIP layouts.
+Reflow checks at 320 CSS pixels and 200 percent CSS zoom found no horizontal
+page overflow, and no page errors occurred. On the **Copilot skill** tab, an
+already selected skill stayed selected, choosing an assistant in **Part of the
+project** showed a prompt and blocked downloading, and a project with no skills
+showed instructions to add one. The selected tab had a visible 3-pixel focus
+outline.
 
-These checks do not replace desktop browser zoom or a screen reader pass.
-Both still need a person to check them.
+#### Changes not yet checked in a browser
+
+Since those checks, these parts of the page changed. The Node tests cover the
+second and third. Nothing has checked the first yet:
+
+- **More Microsoft downloads** is now a third-level heading above the list,
+  which a person opens with **View Microsoft downloads**. The list is named by
+  that heading.
+- The **Copilot skill** tab selects the first skill the assistant uses that
+  works in Copilot, instead of the first skill in the project.
+- Leaving the **Copilot skill** tab selects the earlier assistant again and
+  announces "Showing" and its name, unless the person chose another item.
+
+Run axe, a keyboard pass, and a screen reader pass on these parts. Desktop
+browser zoom and a screen reader pass still need a person for all three tabs.
 
 ### Conclusion
 

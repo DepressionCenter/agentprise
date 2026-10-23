@@ -5,9 +5,10 @@ Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
 Last Modified: 2026-10-23
 Summary: The whole Agentprise web app in one file. Lets a person describe an AI
-         assistant once, then download it as an Agent Skill bundle (Gemini and
-         Claude), a Microsoft 365 Copilot .agent file, a Teams app package, or
-         copy-ready text for ChatGPT and Gemini Notebook. Nothing leaves the browser.
+         assistant once, then download it as a skill for Gemini and Claude, a
+         Copilot app package, a Teams Chat file, a plugin, copy-ready text for
+         ChatGPT and Gemini Notebook, one of the optional Microsoft downloads,
+         or a backup of the whole project. Nothing leaves the browser.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -1243,15 +1244,16 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <button type="button" class="download-button" data-format="portablePlugin"><span class="bi bi-download" aria-hidden="true"></span>Download<span class="visually-hidden"> the plugin with the whole project for ChatGPT and other tools</span></button>
                                     </li>
                                 </ul>
+                                <h3 class="destination-group" id="more-microsoft-label">More Microsoft downloads</h3>
                                 <details>
-                                    <summary>More Microsoft downloads</summary>
+                                    <summary>View Microsoft downloads</summary>
                                     <p class="small muted">Ask your admin which options your organization supports before choosing a download.</p>
-                                    <ul class="destination-list" aria-label="Optional Microsoft downloads">
+                                    <ul class="destination-list" aria-labelledby="more-microsoft-label">
                                         <li>
                                             <span class="destination-text">
                                                 <span class="destination-name">Copilot skill</span>
                                                 <span class="destination-file">One skill for an existing assistant (.zip)</span>
-                                                <span class="destination-note">Choose a skill in your project. In Copilot, open Configure, Skills, then Add.</span>
+                                                <span class="destination-note">Choose a skill in your project. In Copilot Agent Builder, choose Configure, Skills, then Add.</span>
                                                 <span class="destination-note" id="note-copilotSkill" hidden></span>
                                             </span>
                                             <button type="button" class="download-button" data-format="copilotSkill" data-review="true"><span class="bi bi-search" aria-hidden="true"></span>Review<span class="visually-hidden"> the Copilot skill download</span></button>
@@ -1260,7 +1262,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                             <span class="destination-text">
                                                 <span class="destination-name">Copilot app with skills (preview)</span>
                                                 <span class="destination-file">This assistant and the skills it uses (.zip)</span>
-                                                <span class="destination-note">Your organization must allow skills in Copilot. Add reference files to a skill.</span>
+                                                <span class="destination-note">Ask your admin to turn on skills in Copilot. Attach files to a skill, not to the assistant.</span>
                                                 <span class="destination-note" id="note-copilotSkills" hidden></span>
                                             </span>
                                             <button type="button" class="download-button" data-format="copilotSkills" data-review="true"><span class="bi bi-search" aria-hidden="true"></span>Review<span class="visually-hidden"> the Copilot app with skills download</span></button>
@@ -1275,7 +1277,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                             <button type="button" class="download-button" data-format="microsoftPlugin" data-review="true"><span class="bi bi-search" aria-hidden="true"></span>Review<span class="visually-hidden"> the Microsoft 365 plugin download</span></button>
                                         </li>
                                     </ul>
-                                    <p class="small"><a href="#details">Check what changes and what needs setup before downloading.</a> Script files are excluded from these downloads.</p>
+                                    <p class="small">These downloads leave out script files. Choose Review to see the other changes and the setup steps.</p>
                                 </details>
                                 <button type="button" class="primary download-button" data-format="backup" id="keep-copy"><span class="bi bi-archive" aria-hidden="true"></span>Download Backup</button>
                                 <p class="small muted">Saves the whole project as one .zip file that you can open here again later.<br><a href="#details"><span class="bi bi-search" aria-hidden="true"></span>See what is inside each download</a></p>
@@ -1419,19 +1421,19 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     </ul>
                     <p>Not sure yet? Download a backup. You can come back any time and download it for another product.</p>
                     <h2>More Microsoft downloads</h2>
-                    <p>These options need skills in Copilot or access to Copilot Cowork. Choose Review to read the changes and setup steps.</p>
+                    <p>Under More Microsoft downloads, below the plugins, choose View Microsoft downloads to see three more choices. Each one works only if your organization allows skills in Copilot or uses Copilot Cowork, so ask your admin first. Each one has a Review button that opens the Inspect page, where you can see what changes and read the setup steps before you download.</p>
                     <ul>
-                        <li><strong>Copilot skill</strong> uploads one selected skill to an existing assistant. In Agent Builder, choose Configure, Skills, then Add.</li>
-                        <li><strong>Copilot app with skills (preview)</strong> keeps your assistant's skills separate so Copilot can use them when needed. Ask your admin to enable this feature. Add reference files to a skill.</li>
-                        <li><strong>Microsoft 365 plugin</strong> shares the whole project with Copilot Cowork. Assistants become optional skills and lose their assistant settings. Ask your admin to install the plugin.</li>
+                        <li><strong>Copilot skill</strong> gives you one skill (.zip) to add to an assistant you already have in Copilot. In Agent Builder, open the assistant and choose Configure, Skills, then Add.</li>
+                        <li><strong>Copilot app with skills (preview)</strong> gives you an app package (.zip) that keeps the assistant's skills separate, so Copilot uses each skill only when a question needs it. Ask your admin to turn on skills in Copilot. This download can't include files attached to the assistant, so attach them to a skill instead.</li>
+                        <li><strong>Microsoft 365 plugin</strong> gives you the whole project for Copilot Cowork. Each assistant becomes a skill and loses its welcome message, example questions, picture, source settings, and response mode. Ask your admin to install the plugin.</li>
                     </ul>
-                    <p>These downloads leave out scripts. Inspect lists other changes before you download. Keep a backup of your project. If your organization does not support these options, use Copilot / Teams Apps.</p>
+                    <p>These downloads leave out scripts. The setup steps are not in the .zip file, so read them on the Inspect page. Keep a backup of your project. If your organization does not allow these choices, use Copilot / Teams Apps.</p>
                     <h2>Does it work with Kimi or OpenClaw?</h2>
                     <p>Partly. Kimi Code CLI and an OpenClaw you run yourself both read the SKILL.md download and the Plugin download, and OpenClaw also reads the Claude plugin. The Inspect page has the steps for each. Kimi chat, Kimi Agent mode, and the Kimi Claw that Kimi hosts for you have no way to upload a skill file yet, so Agentprise cannot make a download for them.</p>
                     <h2>What does "Download Backup" do?</h2>
                     <p>It saves the whole project, with every assistant, skill, and file, as one .zip file on your computer. Drop that file on the Workspace page later to open it again, change it, or download it for a different product. To upload to Gemini or Claude, use their own Download buttons instead.</p>
                     <h2>What are tools, and what does "needs setup" mean?</h2>
-                    <p>Some assistants and skills, such as PubMed Search, can use a tool to look things up. Each product connects tools its own way, so every download lists what changes for it under "What changes in this download" on the Inspect page. "Needs setup" means one more step after you install, such as turning on a connector or pasting a server address. The setup steps that come with the download say how. If the tool isn't connected, the assistant does what it can and tells people it couldn't use the tool.</p>
+                    <p>Some assistants and skills, such as PubMed Search, can use a tool to look things up. Each product connects tools its own way, so every download lists what changes for it under "What changes in this download" on the Inspect page. "Needs setup" means one more step after you install, such as turning on a connector or pasting a server address. The setup steps say how. Most downloads include them, and the Inspect page shows them for the Copilot app package and the More Microsoft downloads. If the tool isn't connected, the assistant does what it can and tells people it couldn't use the tool.</p>
                     <h2>Why is a download button grayed out?</h2>
                     <p>Either a required question is still empty, the product can't accept the project as it is, for example more than four web search sites for Copilot, or the author marked the assistant or skill as not for that product under More settings, then Products it works in. The Inspect page says what to change.</p>
                     <h2>Which files can I attach?</h2>
@@ -1441,15 +1443,15 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <h2>Who can use my assistant?</h2>
                     <p>In Microsoft 365, people need a Copilot license and permission to any files you linked. Guests cannot use it in Teams chats. Gemini skills may need a paid Google AI plan, and Claude skills need a paid Claude plan.</p>
                     <h2>How do I change an assistant I already shared?</h2>
-                    <p>Open it from Your projects on the Workspace page, or drop the file you downloaded before on that page, make your changes, and download it again. For an app package, upload the new file in place of the old one. It keeps the same id, so Copilot treats it as an update.</p>
+                    <p>Open it from Your projects on the Workspace page, or drop the file you downloaded before on that page, make your changes, and download it again. For an app package, upload the new file in place of the old one. Copilot then updates the assistant you already shared.</p>
                     <h2>Why does my assistant not answer in a Teams chat?</h2>
                     <p>App packages do not work in group chats, channels, or meeting chats. Use the Teams Chat download instead: put the .agent file in a SharePoint library, choose Copy link for Teams, paste the link in the chat, and choose Add to this chat.</p>
                     <h2>How long will the Teams Chat file keep working?</h2>
                     <p>Until the end of March 2027. After that, .agent files stop answering in SharePoint, Teams chats, and the Copilot app. The Copilot / Teams Apps download continues to work.</p>
-                    <p>From mid-November 2026, you can choose Upgrade to Microsoft 365 agent in SharePoint. You need permission to edit the file and site pages, and to share agents. Ask the file owner or site owner if you need help. You can also create an agent in Copilot Agent Builder and copy your text into it.</p>
+                    <p>From mid-November 2026, you can choose Upgrade to Microsoft 365 agent in SharePoint. You need permission to edit the file and site pages, and to share agents. If you don't have those permissions, ask the file owner, its creator, or a site owner to start the upgrade. You can also create the assistant again in Copilot Agent Builder and copy your text into it.</p>
                     <p>Keep the original file and an Agentprise backup until the replacement works. Agentprise can still open .agent files after retirement so you can recover their contents.</p>
                     <h2>Can I upload the .agent file to Copilot Agent Builder?</h2>
-                    <p>No. Uploading a .agent file adds it as reference material. To create the assistant, start a new agent in Agent Builder. Copy the name, description, instructions, and example questions from Agentprise into the matching boxes, then choose the sources again.</p>
+                    <p>No. Uploading a .agent file adds it as reference material. To create the assistant, open Agent Builder and start a new one. Copy the name, description, instructions, and example questions from Agentprise into the matching boxes, then choose the sources again.</p>
                     <h2>Why does Teams ask me to approve the answer?</h2>
                     <p>In a group chat, Teams shows the person who asked a preview whenever the answer used something the others may not be able to see, such as that person's own chats, mail, or meetings. Turn off Teams messages, email, and meetings under Copilot settings and answers post straight to the chat.</p>
                     <h2>What does the check for sensitive data look for?</h2>
@@ -1467,8 +1469,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             </thead>
                             <tbody>
                                 <tr><th scope="row">App package (.zip)</th><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
-                                <tr><th scope="row">Copilot skill (.zip)</th><td>In Agent Builder, with skills enabled</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
-                                <tr><th scope="row">Copilot app with skills (.zip)</th><td>With native skills enabled</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+                                <tr><th scope="row">Copilot skill (.zip)</th><td>In Agent Builder, when your admin turns on skills</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
+                                <tr><th scope="row">Copilot app with skills (.zip)</th><td>When your admin turns on skills</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
                                 <tr><th scope="row">Microsoft 365 plugin (.zip)</th><td>Copilot Cowork only</td><td>No</td><td>No</td><td>No</td><td>No</td></tr>
                                 <tr><th scope="row">.agent file</th><td>No</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
                                 <tr><th scope="row">Skill (.zip)</th><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
@@ -4309,6 +4311,14 @@ function countOf(count, singular, pluralForm) {
     return count + " " + (count === 1 ? singular : pluralForm);
 }
 
+/** "A", "A and B", or "A, B, and C" for names in a sentence. */
+function namesInSentence(names) {
+    if (names.length <= 2) {
+        return names.join(" and ");
+    }
+    return names.slice(0, -1).join(", ") + ", and " + names[names.length - 1];
+}
+
 /** "pdf-processing" becomes a display name. */
 function humanizeSkillName(skillName) {
     return String(skillName || "").split("-").filter(Boolean).map(function (word) {
@@ -4646,8 +4656,8 @@ function msAgentImport(text) {
  */
 const EXPORTS = Object.freeze({
     teamsZip: { target: "copilot", skills: false, files: true, limit: COPILOT_INSTRUCTION_LIMIT, label: "the Copilot app package" },
-    copilotSkill: { target: "copilot", skills: true, files: true, limit: 19999, label: "the Copilot skill upload" },
-    copilotSkills: { target: "copilot", skills: true, files: false, limit: COPILOT_INSTRUCTION_LIMIT, label: "the Copilot package with native skills" },
+    copilotSkill: { target: "copilot", skills: true, files: true, limit: 19999, label: "the Copilot skill" },
+    copilotSkills: { target: "copilot", skills: true, files: false, limit: COPILOT_INSTRUCTION_LIMIT, label: "the Copilot app with skills" },
     microsoftPlugin: { target: "copilot", skills: true, files: true, limit: 19999, label: "the Microsoft 365 plugin" },
     msAgent: { target: "copilot", skills: false, files: false, limit: COPILOT_INSTRUCTION_LIMIT, label: "the Teams Chat file" },
     chatgpt: { target: "chatgpt", skills: false, files: false, limit: 0, label: "the ChatGPT text" },
@@ -4866,7 +4876,7 @@ function planExport(project, item, exportId, options) {
             } else if (provider.kind === "mcp") {
                 const server = serverFor(project, provider.server);
                 if (microsoft && (server.transport !== "http" || server.auth === "apikey")) {
-                    leave("this download needs a web server that uses HTTPS Streamable HTTP, with OAuth sign-in or no sign-in. Ask the tool owner for a compatible connection.");
+                    leave("this download connects only to tool servers on the web that use Streamable HTTP and need no API key. Ask the tool owner for an address that meets both.");
                     return;
                 }
                 if (exportId === "microsoftPlugin" && (provider.tools.length > 0 || server.tools.length > 0)) {
@@ -4924,7 +4934,7 @@ function planExport(project, item, exportId, options) {
                 if ((actionPackage || exportId === "microsoftPlugin") && server.auth !== "none") {
                     status = "requires-setup";
                     const authFile = actionPackage ? action.file : "manifest.json";
-                    note += " An admin must register its sign-in and paste the id into " + authFile + ".";
+                    note += " Ask your admin to register its sign-in, then paste the registration ID they give you into " + authFile + ".";
                     setup.push({ key: "auth:" + (actionPackage ? action.file : provider.server), kind: "auth", label: server.label, file: authFile });
                 }
             } else if (provider.kind === "openapi") {
@@ -4960,7 +4970,7 @@ function planExport(project, item, exportId, options) {
                     note = "Written as a Copilot action, with its API description inside the package. Your admin must allow custom apps.";
                     if (provider.auth !== "none") {
                         status = "requires-setup";
-                        note += " An admin must register its sign-in or key and paste the id into " + action.file + ".";
+                        note += " Ask your admin to register its sign-in or key, then paste the registration ID they give you into " + action.file + ".";
                         setup.push({ key: "auth:" + action.file, kind: "auth", label: capability.label, file: action.file });
                     }
                 } else {
@@ -5180,11 +5190,12 @@ function formatReport(project, item, exportId, named) {
     const report = [];
     const view = agentView(project, item);
     if (exportId === "teamsZip" || exportId === "copilotSkills") {
+        const packageName = exportId === "copilotSkills" ? "The Copilot app with skills" : "The Copilot app package";
         if (view.welcome) {
-            report.push(reportEntry("Welcome message", "unsupported", "The Copilot app package has no place for it."));
+            report.push(reportEntry("Welcome message", "unsupported", packageName + " has no place for it."));
         }
         if (view.copyright || view.license !== DEFAULT_LICENSE) {
-            report.push(reportEntry("Copyright and license", "unsupported", "The Copilot app package has no place for them."));
+            report.push(reportEntry("Copyright and license", "unsupported", packageName + " has no place for them."));
         }
         (exportId === "copilotSkills" ? [] : view.files).forEach(function (file) {
             if (isCopilotFileName(file.name) || (named || []).indexOf(BUNDLE_FILES_FOLDER + file.name) >= 0) {
@@ -5198,9 +5209,11 @@ function formatReport(project, item, exportId, named) {
         });
     }
     if (exportId === "teamsZip" || exportId === "copilotSkills" || exportId === "microsoftPlugin") {
-        const missing = ["name", "website", "privacy", "terms"].filter(function (key) { return !view.creator[key]; });
+        // Words for each Publisher details field, as they read after "the" in a sentence.
+        const publisherWords = { name: "name", website: "website", privacy: "privacy link", terms: "terms link" };
+        const missing = ["name", "website", "privacy", "terms"].filter(function (key) { return !view.creator[key]; }).map(function (key) { return publisherWords[key]; });
         if (missing.length > 0) {
-            report.push(reportEntry("Publisher details", "transformed", "Placeholder values were used for the " + missing.join(", ") + ". Fill in Publisher details to replace them."));
+            report.push(reportEntry("Publisher details", "transformed", "Agentprise filled in sample text for the " + namesInSentence(missing) + ". Fill in Publisher details to use your own."));
         }
     }
     if (exportId === "msAgent" && view.files.length > 0) {
@@ -5305,7 +5318,7 @@ function writeSetupGuide(project, items, exportId) {
             } else if (step.kind === "connect") {
                 lines = ["## Connect the " + step.label, "", "The instructions mention the " + step.label + ". Connect it in the product's settings for tools or connectors" + (step.url ? ", using the address " + step.url : "") + ". Until you do, the assistant tells people it can't use this tool."];
             } else if (step.kind === "auth") {
-                lines = ["## Register the sign-in for " + step.label, "", "This action needs a sign-in or key that your Microsoft 365 admin registers, for example in the Teams Developer Portal. Ask them to register it, then open " + step.file + " inside the app package and replace " + COPILOT_AUTH_PLACEHOLDER + " with the id they give you."];
+                lines = ["## Register the sign-in for " + step.label, "", "This action needs a sign-in or key that your Microsoft 365 admin registers, for example in the Teams Developer Portal. Ask them to register it, then open " + step.file + " inside the app package and replace " + COPILOT_AUTH_PLACEHOLDER + " with the registration ID they give you."];
             } else if (step.kind === "script") {
                 const file = step.owner.files.find(function (entry) { return entry.path === step.path; });
                 const hosts = file ? hostsInText(file.bytes) : [];
@@ -5328,10 +5341,10 @@ function writeSetupGuide(project, items, exportId) {
     if (exportId === "copilotSkills" || exportId === "microsoftPlugin") {
         steps.unshift("## Install in Microsoft 365\n\n" + (exportId === "microsoftPlugin"
             ? "Ask your Microsoft 365 admin to upload this package for Copilot Cowork. Copilot uses each assistant as a skill when a request needs it. Test each skill and tool connection before sharing."
-            : "Ask your admin to confirm that Copilot skills are enabled for your organization. Ask your admin to upload this app package in the Microsoft 365 admin center under Copilot, Agents, then Upload custom agent. This ZIP is not an Agent Builder skill upload or a Copilot Studio solution. Test a request that needs each skill, then save and reopen the assistant.") + "\n\nScript files are excluded. Microsoft native skill scripts cannot access the network or install packages. Download a backup to keep the original scripts.\n");
+            : "Ask your admin to confirm that skills in Copilot are turned on for your organization. Ask your admin to upload this app package in the Microsoft 365 admin center under Copilot, Agents, then Upload custom agent. Do not upload it in Agent Builder or Copilot Studio. Test a request that needs each skill, then save and reopen the assistant.") + "\n\nThis download leaves out script files, because scripts in skills cannot connect to the internet or install packages in Copilot. Download a backup to keep the original scripts.\n");
     }
     if (exportId === "copilotSkill") {
-        steps.unshift("## Add the skill to Copilot\n\n1. Open your assistant in Agent Builder.\n2. Choose Configure, then Skills, then Add.\n3. Upload this ZIP.\n4. Use Try it to ask a question that needs the skill and its reference files.\n\nYour organization must enable skills. This download adds one skill; it does not create an assistant or install tool connections. Scripts are excluded. Check the combined limit of eight skills and 350 files in your assistant.\n");
+        steps.unshift("## Add the skill to Copilot\n\n1. Open your assistant in Agent Builder.\n2. Choose Configure, then Skills, then Add.\n3. Upload this ZIP.\n4. Use Try it to ask a question that needs the skill and its attached files.\n\nAsk your admin to turn on skills in Copilot. This download adds one skill and leaves out script files. It does not create an assistant or set up tool connections. Check that your assistant stays within eight skills and 350 files in total.\n");
     }
     if (steps.length === 0) {
         return "";
@@ -6463,10 +6476,10 @@ function microsoftSkillEntries(project, item, plan, plugin, report, root) {
     });
     const copy = Object.assign({}, item, { files: allowed });
     // Skill metadata refers to LICENSE.txt even when imported terms use another name.
-    // Copy those terms byte for byte instead of generating a notice about that path.
+    // Copy LICENSE or COPYING terms byte for byte. A NOTICE file is attribution, not
+    // terms, so it stays beside the generated LICENSE.txt.
     const terms = allowed.find(function (file) { return /^LICEN[CS]E\.(txt|md)$/i.test(file.path); })
-        || allowed.find(function (file) { return /^COPYING\.(txt|md)$/i.test(file.path); })
-        || allowed.find(function (file) { return LICENSE_FILE_PATTERN.test(file.path); });
+        || allowed.find(function (file) { return /^COPYING\.(txt|md)$/i.test(file.path); });
     if (terms && !itemFileBytes(copy, "LICENSE.txt")) {
         copy.files.push({ path: "LICENSE.txt", bytes: terms.bytes });
         report.push(reportEntry(item.name + ": License", "transformed", "The original text from " + terms.path + " is also included as LICENSE.txt so the skill's license link can be opened."));
@@ -6485,12 +6498,12 @@ function microsoftSkillEntries(project, item, plan, plugin, report, root) {
         }
         seen.add(key);
         if (plugin && entry.name !== "SKILL.md" && entry.bytes.length > 5 * 1024 * 1024) {
-            report.push(reportEntry(item.name + ": " + entry.name, "blocked", "Microsoft plugins allow at most 5 MB per reference file. Use a smaller file."));
+            report.push(reportEntry(item.name + ": " + entry.name, "blocked", "The Microsoft 365 plugin allows at most 5 MB per attached file. Use a smaller file."));
         }
     });
     const companions = entries.filter(function (entry) { return entry.name !== "SKILL.md"; });
     if (plugin && (companions.length > 20 || companions.reduce(function (sum, entry) { return sum + entry.bytes.length; }, 0) > MICROSOFT_PACKAGE_BYTES)) {
-        report.push(reportEntry(item.name, "blocked", "A Microsoft plugin skill can include at most 20 reference files totaling 10 MB, including its license. Remove files or split the skill."));
+        report.push(reportEntry(item.name, "blocked", "A skill in the Microsoft 365 plugin can include at most 20 attached files totaling 10 MB, including its license. Remove files or split the skill."));
     }
     return entries.map(function (entry) { return { name: prefix + entry.name, bytes: entry.bytes }; });
 }
@@ -6503,7 +6516,7 @@ function microsoftSkillEntries(project, item, plan, plugin, report, root) {
  */
 function planCopilotSkill(project, item) {
     if (item.kind !== "skill") {
-        return { entries: [], report: [reportEntry("Selected item", "blocked", "Choose a skill in your project to add it to Copilot. To download a whole assistant, choose Copilot app with skills instead.")] };
+        return { entries: [], report: [reportEntry("Part of the project", "blocked", "Choose a skill under Part of the project. To download a whole assistant, choose Copilot app with skills instead.")] };
     }
     const prepared = prepareExport(project, item, "copilotSkill");
     const report = prepared.report.slice();
@@ -6511,16 +6524,16 @@ function planCopilotSkill(project, item) {
     const entries = microsoftSkillEntries(project, item, prepared.plan, false, report, true);
     entries.forEach(function (entry) {
         if (entry.bytes.length > 25 * 1024 * 1024) {
-            report.push(reportEntry(entry.name, "blocked", "Copilot skill uploads allow at most 25 MB per file. Use a smaller file."));
+            report.push(reportEntry(entry.name, "blocked", "The Copilot skill allows at most 25 MB per file. Use a smaller file."));
         }
     });
     if (entries.length > MICROSOFT_SKILL_FILES) {
         report.push(reportEntry("Skill files", "blocked", "Copilot allows at most 350 files across an assistant's skills. Remove files or split the skill."));
     }
     if (entries.reduce(function (sum, entry) { return sum + entry.bytes.length; }, 0) > 50 * 1024 * 1024) {
-        report.push(reportEntry("Skill size", "blocked", "A Copilot skill upload allows at most 50 MB. Use smaller files."));
+        report.push(reportEntry("Skill size", "blocked", "The Copilot skill allows at most 50 MB. Use smaller files."));
     }
-    report.push(reportEntry("Add to Copilot", "requires-setup", "Open your assistant in Agent Builder. Choose Configure, Skills, then Add, and upload this ZIP. Your organization must enable skills. Check the assistant's combined limit of eight skills and 350 files. Tool connections and permissions must be set up separately."));
+    report.push(reportEntry("Add to Copilot", "requires-setup", "Open your assistant in Agent Builder. Choose Configure, Skills, then Add, and upload this ZIP. Ask your admin to turn on skills in Copilot. Check that the assistant stays within eight skills and 350 files in total. If the skill uses tools, ask your admin to set up the tool connections and permissions."));
     return { entries: entries, report: report };
 }
 
@@ -6533,10 +6546,10 @@ function planCopilotSkill(project, item) {
  */
 async function writeCopilotSkill(project, item) {
     const built = planCopilotSkill(project, item);
-    assertNotBlocked(built.report, "The Copilot skill upload");
+    assertNotBlocked(built.report, "The Copilot skill");
     const bytes = zipWrite(built.entries);
     if (bytes.length > 50 * 1024 * 1024) {
-        throw new Error("The complete Copilot skill ZIP exceeds 50 MB. Use smaller reference files.");
+        throw new Error("The complete Copilot skill ZIP exceeds 50 MB. Use smaller attached files.");
     }
     return { fileName: item.skillName + ".copilot-skill.zip", bytes: bytes, entries: built.entries, report: built.report, setup: writeSetupGuide(project, [item], "copilotSkill") };
 }
@@ -6561,12 +6574,14 @@ function planMicrosoftPackage(project, item, exportId) {
     const included = candidates.filter(function (other) { return !notForTarget(other, "copilot"); });
     const entries = [];
     const servers = [];
+    // Names of the items that use each server with all of its tools.
+    const serverUsers = Object.create(null);
     if (plugin) {
         candidates.filter(function (other) { return notForTarget(other, "copilot"); }).forEach(function (other) { report.push(notForEntry(other, "copilot")); });
     }
     report.push(reportEntry("Microsoft setup", "requires-setup", plugin
-        ? "Ask your Microsoft 365 admin to install this plugin for Copilot Cowork. Installation and tool access have not been tested in a Microsoft 365 organization. Read the setup steps and test both before sharing."
-        : "Ask your admin to confirm access to the Frontier preview for Copilot skills. Microsoft does not support this option with Information Barriers or in its public app store. Installation has not been tested in a Microsoft 365 organization. Read the setup steps and test the app before sharing."));
+        ? "Ask your Microsoft 365 admin to install this plugin for Copilot Cowork. The Agentprise team has not tested installing it or its tool access in a Microsoft 365 organization. Read the setup steps and test both before sharing."
+        : "Ask your admin to confirm access to the Frontier preview of skills in Copilot. Microsoft does not support this option with Information Barriers or in its public app store. The Agentprise team has not tested installing this app in a Microsoft 365 organization. Read the setup steps and test the app before sharing."));
     if (included.length === 0 || included.length > (plugin ? 20 : 8)) {
         report.push(reportEntry("Skills", "blocked", included.length === 0
             ? "No selected skills can be used in Copilot. Add a skill to this assistant, or change Products it works in for a skill."
@@ -6580,10 +6595,11 @@ function planMicrosoftPackage(project, item, exportId) {
     }
     included.forEach(function (other) {
         const plan = planExport(project, other, exportId);
+        // The selected item's own plan notices and problems are already in the report above.
         if (plugin || other.id !== item.id) {
             plan.report.forEach(function (entry) { report.push(reportEntry(other.name + ": " + entry.component, entry.status, entry.note)); });
+            validateItem(project, other).problems.forEach(function (problem) { report.push(reportEntry(other.name, "blocked", problem.message)); });
         }
-        validateItem(project, other).problems.forEach(function (problem) { report.push(reportEntry(other.name, "blocked", problem.message)); });
         if (plugin && other.kind === "agent") {
             const c = other.copilot;
             const scoped = (c.webSearch && c.webSites.length) || (c.sharepoint && (other.sharepointLinks.length || other.sharepointItems.length)) || (c.teamsMessages && c.teamsLinks.length) || (c.email && (c.mailboxes.length || c.sharedMailbox || c.emailFolders.length)) || (c.meetings && c.meetingItems.length);
@@ -6591,10 +6607,33 @@ function planMicrosoftPackage(project, item, exportId) {
                 ? "This plugin cannot keep the limits you set on the assistant's sources. Choose Copilot / Teams Apps to keep those limits."
                 : "This assistant becomes an optional skill. The download leaves out its welcome message, example questions, picture, source settings, and response mode. Choose Copilot / Teams Apps to keep it as an assistant."));
         }
-        plan.servers.forEach(function (name) { if (servers.indexOf(name) < 0) { servers.push(name); } });
+        plan.servers.forEach(function (name) {
+            if (servers.indexOf(name) < 0) { servers.push(name); }
+            serverUsers[name] = serverUsers[name] || [];
+            if (serverUsers[name].indexOf(other.name) < 0) { serverUsers[name].push(other.name); }
+        });
         entries.push.apply(entries, microsoftSkillEntries(project, other, plan, plugin, report));
-        report.push(reportEntry(other.name, "preserved", "The download includes the skill, its description, and its reference files. Copilot uses the skill when a request needs it."));
+        report.push(reportEntry(other.name, "preserved", "The download includes the skill, its description, and its attached files. Copilot uses the skill when a request needs it."));
     });
+    // A plugin connects each server once for every skill, so a tool list that one
+    // skill sets on a server cannot be kept when another skill uses the whole server.
+    if (plugin) {
+        servers.forEach(function (name) {
+            const limiting = included.filter(function (other) {
+                return other.capabilities.some(function (capability) {
+                    return providersFor(capability, EXPORTS[exportId].target).some(function (provider) {
+                        return provider.kind === "mcp" && provider.server === name && provider.tools.length > 0;
+                    });
+                });
+            }).map(function (other) { return other.name; });
+            if (limiting.length === 0) {
+                return;
+            }
+            const server = providerName(project, { kind: "mcp", server: name });
+            const users = serverUsers[name];
+            report.push(reportEntry(serverFor(project, name).label, "blocked", namesInSentence(limiting) + (limiting.length === 1 ? " limits " : " limit ") + server + " to certain tools, but " + namesInSentence(users) + (users.length === 1 ? " uses" : " use") + " all of its tools. A plugin gives every skill all of the server's tools. Use a server with only the allowed tools, or choose Copilot / Teams Apps."));
+        });
+    }
     if (!plugin && entries.length > MICROSOFT_SKILL_FILES) {
         report.push(reportEntry("Skill files", "blocked", "This download allows at most 350 files across its skills, including files added by Agentprise. Remove files or divide the skills between assistants."));
     }
@@ -6620,7 +6659,8 @@ async function writeMicrosoftPackage(project, item, icons, exportId) {
     }
     const plugin = exportId === "microsoftPlugin";
     const built = planMicrosoftPackage(project, item, exportId);
-    assertNotBlocked(built.report, EXPORTS[exportId].label);
+    const downloadName = plugin ? "The Microsoft 365 plugin" : "The Copilot app with skills";
+    assertNotBlocked(built.report, downloadName);
     const view = built.prepared.view;
     view.files = [];
     if (plugin) {
@@ -6659,7 +6699,7 @@ async function writeMicrosoftPackage(project, item, icons, exportId) {
     const entries = Array.from(archive, function (pair) { return { name: pair[0], bytes: pair[1] }; }).concat(built.entries);
     const bytes = zipWrite(entries);
     if (bytes.length > MICROSOFT_PACKAGE_BYTES) {
-        throw new Error("The complete Microsoft package exceeds 10 MB. Use smaller reference files or a smaller picture.");
+        throw new Error(downloadName + " is larger than 10 MB. Use smaller attached files or a smaller picture.");
     }
     if (!plugin) {
         if (item.kind === "agent") { item.copilot.appId = base.appId; } else { item.appId = base.appId; }
@@ -6863,7 +6903,7 @@ async function teamsZipExport(agent, icons, extras) {
         }
     });
     if (placeholdersUsed.length > 0) {
-        warnings.push("Placeholder values were used for the creator " + placeholdersUsed.join(", ") + ". Fill in Publisher details to replace them.");
+        warnings.push("Agentprise filled in sample text for the publisher " + namesInSentence(placeholdersUsed.map(function (key) { return { name: "name", website: "website", privacy: "privacy link", terms: "terms link" }[key]; })) + ". Fill in Publisher details to use your own.");
     }
     const developerName = truncateWithWarning(creator.name, TEAMS_DEVELOPER_NAME_MAX, "creator name", warnings);
     const shortName = truncateWithWarning(agent.name, TEAMS_SHORT_NAME_MAX, "name shown in the app list", warnings);
@@ -7075,10 +7115,22 @@ const CREDENTIAL_FIELD_NAME = "(?:[a-z0-9]+[_-])*(api[_-]?key|apikey|client[_-]?
 const CREDENTIAL_FIELD_PATTERN = new RegExp("^" + CREDENTIAL_FIELD_NAME + "$", "i");
 const CREDENTIAL_LINE_PATTERN = new RegExp("^[ \\t]*(?:-[ \\t]+|export[ \\t]+)?[\"']?" + CREDENTIAL_FIELD_NAME + "[\"']?[ \\t]*[:=][ \\t]*([^\\r\\n]+)", "gim");
 const CREDENTIAL_FLOW_PATTERN = new RegExp(String.raw`[{,]\s*["']?` + CREDENTIAL_FIELD_NAME + String.raw`["']?\s*:\s*("(?:\\.|[^"\\])*"|'(?:''|[^'])*'|[^,}\]]*)`, "gi");
+// A YAML key with nothing after it on its line, such as "client_secret:", whose
+// value is on the next more-indented line or list item, after any blank or
+// comment lines. Named groups: indent and dash of the key line, lead of the
+// value line, and the value itself.
+const CREDENTIAL_BLOCK_PATTERN = new RegExp(String.raw`^(?<indent>[ \t]*)(?<dash>-[ \t]+)?["']?` + CREDENTIAL_FIELD_NAME + String.raw`["']?[ \t]*:[ \t]*(?:#[^\r\n]*)?\r?\n(?:[ \t]*(?:#[^\r\n]*)?\r?\n)*\k<indent>(?<lead>[ \t]+(?:-[ \t]+)?|-[ \t]+)(?<value>[^\r\n]+)`, "gim");
 
 // Values on such a line that name a key kept somewhere else, such as
 // "${API_KEY}" or "{{ secrets.token }}", or that say nothing, such as "true".
 const CREDENTIAL_REFERENCE_VALUE = /^(?:\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})|%[A-Za-z_][A-Za-z0-9_]*%|\{\{\s*[A-Za-z_][A-Za-z0-9_.]*\s*\}\}|<[A-Za-z_][A-Za-z0-9_. -]*>|[*&][A-Za-z_][A-Za-z0-9_-]*|true|false|null|none|yes|no)$/i;
+
+// A nested YAML mapping given as a value, such as "{type: string, format: password}"
+// in an API description. It is not a secret itself; its own keys are checked separately.
+const NESTED_FLOW_MAPPING = /^\{\s*["']?[A-Za-z_][\w-]*["']?\s*:/;
+
+// A nested YAML block mapping on the line below a key, such as "type: string".
+const NESTED_BLOCK_MAPPING = /^(?:[^"'\s#][^:]*|"[^"]*"[ \t]*|'[^']*'[ \t]*):(?:[ \t]|$)/;
 
 // The backup note on files kept from a Microsoft package.
 const PACKAGE_KEPT_NOTE = "From a Microsoft 365 app package. Not interpreted by Agentprise.";
@@ -7151,11 +7203,15 @@ function packageTextEncoding(bytes) {
     return "utf-8";
 }
 
+/** Whether a package file is a supported binary type whose bytes match its name, such as a PDF or PNG. */
+function packageFileIsBinary(name, bytes) {
+    const kind = fileKind(name);
+    return Boolean((/\.png$/i.test(name) && pngIsComplete(bytes)) || (kind && kind !== "text" && fileContentMatches(kind, bytes)));
+}
+
 /** Decodes text strictly and exposes readable binary content; undefined means unreadable text. */
 function packageScanText(name, bytes) {
-    const kind = fileKind(name);
-    const binary = (/\.png$/i.test(name) && pngIsComplete(bytes)) || (kind && kind !== "text" && fileContentMatches(kind, bytes));
-    if (binary) {
+    if (packageFileIsBinary(name, bytes)) {
         return new TextDecoder("utf-8").decode(bytes);
     }
     try {
@@ -7173,7 +7229,11 @@ function holdsCredential(name, bytes) {
         return text === undefined;
     }
     const split = text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "\n");
-    const joined = text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "");
+    // In a binary file, join only readable runs of 4 or more characters, as the
+    // strings tool does, so single bytes in compressed data cannot form a match.
+    const joined = packageFileIsBinary(name, bytes)
+        ? (text.replace(/\u0000/g, "").match(/[^\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]{4,}/g) || []).join("")
+        : text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "");
     return structuredTextHoldsCredential(split) || (joined !== split && structuredTextHoldsCredential(joined));
 }
 
@@ -7186,11 +7246,30 @@ function structuredTextHoldsCredential(scanned) {
         // Non-JSON files and malformed JSON still receive the text scan.
         return textHoldsCredential(scanned);
     }
+    // Each key and value as written, because JSON.parse keeps only the last of
+    // two keys with the same name, while the file still holds both values.
+    for (const pair of scanned.matchAll(/"((?:\\.|[^"\\])*)"\s*:\s*("(?:\\.|[^"\\])*"|-?\d[\d.eE+-]*)/g)) {
+        let key;
+        let pairValue;
+        try {
+            key = JSON.parse('"' + pair[1] + '"');
+            pairValue = JSON.parse(pair[2]);
+        } catch (error) {
+            continue;
+        }
+        if (CREDENTIAL_FIELD_PATTERN.test(key) && credentialValueIsLiteral(pairValue)) {
+            return true;
+        }
+    }
     const values = [{ key: "", value: json }];
     while (values.length > 0) {
         const entry = values.pop();
         const value = entry.value;
         if (textHoldsCredential(entry.key) || (CREDENTIAL_FIELD_PATTERN.test(entry.key) && credentialValueIsLiteral(value))) {
+            return true;
+        }
+        // A list of values under a credential key, such as {"api_key": ["abc123"]}.
+        if (CREDENTIAL_FIELD_PATTERN.test(entry.key) && Array.isArray(value) && value.some(credentialValueIsLiteral)) {
             return true;
         }
         if (typeof value === "string" && (textHoldsCredential(value) || CREDENTIAL_HEADER_PATTERN.test(entry.key + ": " + value))) {
@@ -7222,21 +7301,50 @@ function xmlCredentialValue(text) {
     });
 }
 
+/**
+ * The attribute name in a run of name characters, such as "password" in
+ * "--password" or "x:password" in "x:password". It starts at the first letter
+ * or underscore that begins the run or follows ".", ":", or "-". Empty when
+ * the run has no such start, such as "123".
+ * @param {string} run characters from [A-Za-z0-9_.:-] only
+ * @returns {string}
+ */
+function xmlAttributeName(run) {
+    const found = /(?:^|[.:-])([A-Za-z_][A-Za-z0-9_.:-]*)$/.exec(run);
+    return found ? found[1] : "";
+}
+
 /** Checks XML-style credential elements and attributes without loading external content. */
 function xmlHoldsCredential(text) {
-    const attributes = /\b([A-Za-z_][A-Za-z0-9_.:-]*)\s*=\s*(["'])([\s\S]*?)\2/g;
+    // Each attempt starts only where a run of name characters starts, so a long
+    // run such as "a-a-a-..." is read once rather than once per word inside it.
+    const attributes = /(?<![A-Za-z0-9_.:-])([A-Za-z0-9_.:-]+)\s*=\s*(["'])([\s\S]*?)\2/g;
     for (const match of text.matchAll(attributes)) {
-        if (CREDENTIAL_FIELD_PATTERN.test(match[1].split(":").pop()) && credentialValueIsLiteral(xmlCredentialValue(match[3]))) {
+        const attributeName = xmlAttributeName(match[1]);
+        if (attributeName && CREDENTIAL_FIELD_PATTERN.test(attributeName.split(":").pop()) && credentialValueIsLiteral(xmlCredentialValue(match[3]))) {
             return true;
         }
     }
-    for (const tag of text.matchAll(/<([A-Za-z_][A-Za-z0-9_.:-]*)\b[^>]*>/g)) {
+    // No tag can end after the last ">", so the tag scan stops there instead of
+    // reading to the end of the text for every "<" that has no ">".
+    const tagText = text.slice(0, text.lastIndexOf(">") + 1);
+    // The first closing tag at or after a position, by tag name, so repeated
+    // opening tags do not search the rest of the text again. -1 means none.
+    const closings = new Map();
+    let startsAsXml;
+    for (const tag of tagText.matchAll(/<([A-Za-z_][A-Za-z0-9_.:-]*)\b[^>]*>/g)) {
         const name = tag[1].split(":").pop();
         const credentialField = CREDENTIAL_FIELD_PATTERN.test(name);
         if ((credentialField || /^(?:proxy-)?authorization$/i.test(name)) && !/\/\s*>$/.test(tag[0])) {
             const start = tag.index + tag[0].length;
-            const end = text.indexOf("</" + tag[1] + ">", start);
-            const unclosedXml = end < 0 && text.trim().charAt(0) === "<" && !CREDENTIAL_REFERENCE_VALUE.test(text.trim());
+            const known = closings.get(tag[1]);
+            const end = known !== undefined && (known < 0 || known >= start) ? known : text.indexOf("</" + tag[1] + ">", start);
+            closings.set(tag[1], end);
+            if (end < 0 && startsAsXml === undefined) {
+                const trimmed = text.trim();
+                startsAsXml = trimmed.charAt(0) === "<" && !CREDENTIAL_REFERENCE_VALUE.test(trimmed);
+            }
+            const unclosedXml = end < 0 && startsAsXml;
             const value = end >= 0 ? xmlCredentialValue(text.slice(start, end)) : "";
             if (unclosedXml || (end >= 0 && (credentialField ? credentialValueIsLiteral(value) : CREDENTIAL_HEADER_PATTERN.test(name + ": " + value)))) {
                 return true;
@@ -7244,7 +7352,10 @@ function xmlHoldsCredential(text) {
         }
         const fields = Object.create(null);
         for (const attribute of tag[0].matchAll(attributes)) {
-            fields[attribute[1].split(":").pop().toLowerCase()] = xmlCredentialValue(attribute[3]);
+            const attributeName = xmlAttributeName(attribute[1]);
+            if (attributeName) {
+                fields[attributeName.split(":").pop().toLowerCase()] = xmlCredentialValue(attribute[3]);
+            }
         }
         if (CREDENTIAL_FIELD_PATTERN.test(fields.name || fields.key || "") && credentialValueIsLiteral(fields.value)) {
             return true;
@@ -7260,6 +7371,9 @@ function textHoldsCredential(text) {
     }
     for (const match of text.matchAll(CREDENTIAL_FLOW_PATTERN)) {
         let value = match[2].trim();
+        if (NESTED_FLOW_MAPPING.test(value)) {
+            continue;
+        }
         if (value.charAt(0) === '"') {
             try {
                 value = JSON.parse(value);
@@ -7275,18 +7389,41 @@ function textHoldsCredential(text) {
             return true;
         }
     }
-    for (const match of text.matchAll(/\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>\\]+/gi)) {
+    // Each attempt starts only where a run of scheme characters starts, so a long
+    // run such as "a-a-a-..." is read once. The address starts at the first letter
+    // that begins the run or follows "+", ".", or "-", such as "https" in "--https".
+    for (const match of text.matchAll(/(?<![a-z0-9+.-])([a-z0-9+.-]+):\/\/[^\s"'<>\\]+/gi)) {
+        const schemeStart = /(?:^|[+.-])(?=[a-z])/i.exec(match[1]);
+        if (!schemeStart) {
+            continue;
+        }
         try {
-            if (urlHasCredential(new URL(match[0]))) {
+            if (urlHasCredential(new URL(match[0].slice(schemeStart.index + schemeStart[0].length)))) {
                 return true;
             }
         } catch (error) {
             // Malformed addresses still receive the text-pattern checks.
         }
     }
-    return Array.from(text.matchAll(CREDENTIAL_LINE_PATTERN)).some(function (match) {
+    const lineValue = Array.from(text.matchAll(CREDENTIAL_LINE_PATTERN)).some(function (match) {
         const value = match[2].replace(/[ \t]+#.*$/, "").trim().replace(/^(["'])(.*)\1$/, "$2");
-        return credentialValueIsLiteral(value);
+        return !NESTED_FLOW_MAPPING.test(value) && credentialValueIsLiteral(value);
+    });
+    if (lineValue) {
+        return true;
+    }
+    return Array.from(text.matchAll(CREDENTIAL_BLOCK_PATTERN)).some(function (match) {
+        const groups = match.groups;
+        // "- password:" followed by "- other" at the same indent is a sibling list item, not a value.
+        if (groups.dash && groups.lead.charAt(0) === "-") {
+            return false;
+        }
+        const value = groups.value.replace(/[ \t]+#.*$/, "").trim();
+        // A nested mapping, such as "type: string" in an API description, is not a value.
+        if (NESTED_BLOCK_MAPPING.test(value) || NESTED_FLOW_MAPPING.test(value)) {
+            return false;
+        }
+        return credentialValueIsLiteral(value.replace(/^(["'])(.*)\1$/, "$2"));
     });
 }
 
@@ -7473,7 +7610,8 @@ function actionProvider(entries, manifest, runtime, subject, state, files, manif
     const spec = isPlainObject(runtime.spec) ? runtime.spec : {};
     const listedFunctions = runtimeFunctions(manifest, runtime);
     const functions = asNameList(listedFunctions, TOOL_NAME_PATTERN, LIMITS.providerList);
-    const partialFunctions = functions.length < listedFunctions.length;
+    // A name listed twice is not a problem, so only invalid names or names past the limit count.
+    const partialFunctions = functions.length < new Set(listedFunctions).size;
     if (partialFunctions) {
         state.keep.add(manifestFile);
         state.notices.push(subject + " has function names that exceed this app's limits. Agentprise keeps its complete source files in the backup. Check the names, split lists longer than " + LIMITS.providerList + " across actions, and open the package again.");
@@ -7707,13 +7845,13 @@ function readAgentConnectors(entries, list, state) {
         const id = isPlainObject(connector) && typeof connector.id === "string" ? connector.id : "";
         const subject = "The connector \"" + packageLabel(isPlainObject(connector) ? connector.displayName || id : "", "number " + (index + 1)) + "\"";
         if (!isPlainObject(connector) || !id) {
-            state.notices.push("A connector has no identifier in manifest.json, so it was left out. Ask the package author to add its id and send the corrected package.");
+            state.notices.push("A connector in manifest.json has no \"id\" value, so Agentprise left it out. Ask the package author to add one and send the corrected package.");
             state.keepManifest = true;
             return;
         }
         if (seen[id]) {
             state.keepManifest = true;
-            state.notices.push(subject + " has the same id as another connector, so Agentprise read it once.");
+            state.notices.push(subject + " has the same \"id\" value as another connector, so Agentprise read only the first one.");
             return;
         }
         seen[id] = true;
@@ -7836,7 +7974,7 @@ function readTeamsArchive(entries) {
         notices.push("Left out " + countOf(programs.length, "program file", "program files") + ". Agentprise never keeps or runs programs.");
     }
     if (unreadable.length > 0) {
-        notices.push("Agentprise couldn't check the text in " + listNames(unreadable) + ". The import skipped that content. Ask the package author to save text files as UTF-8 or UTF-16 and use supported types for other files. Then open the package again.");
+        notices.push("Agentprise couldn't check the text in " + listNames(unreadable) + ", so it left " + (unreadable.length === 1 ? "that file" : "those files") + " out. Ask the package author to save text files as UTF-8 or UTF-16 and use supported types for other files, then open the package again.");
     }
     const state = { servers: {}, used: new Set(), keep: new Set(), actionFiles: new Map(), actionIds: new Set(), withKeys: [], notices: notices, keepManifest: false };
 
@@ -8365,6 +8503,10 @@ globalThis.Agentprise = {
         plugin: readPluginArchive,
         skillArchive: readSkillArchive,
         skillMd: readSkillMd
+    },
+    inspect: {
+        itemForProductTab: itemForProductTab,
+        skillForCopilotTab: skillForCopilotTab
     }
 };
 
@@ -8423,8 +8565,8 @@ const REVIEW_FIELDS = { name: "s-name", description: "s-description", instructio
 const WORKSPACE_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions" };
 const DETAILS_FIELDS = { name: "d-name", description: "d-description", instructions: "d-instructions" };
 const PRODUCT_HINTS = {
-    copilotSkill: "Add the selected skill to an existing Copilot assistant through Agent Builder.",
-    copilotSkills: "Download this assistant with separate skills for organizations that have enabled the Copilot skills preview.",
+    copilotSkill: "Add the selected skill to an existing Copilot assistant in Agent Builder, once your admin turns on skills in Copilot.",
+    copilotSkills: "Download this assistant with separate skills for organizations that have turned on the preview of skills in Copilot.",
     microsoftPlugin: "Download the whole project as optional skills for Copilot Cowork, with supported tool connections.",
     gemini: "A skill to upload to Gemini, with any files it uses.",
     claude: "A skill to upload to Claude, with any files it uses.",
@@ -8439,10 +8581,10 @@ const PRODUCT_HINTS = {
 };
 const AFTER_STEPS = {
     copilotSkill: [
-        ["In Copilot Agent Builder", ["Open the assistant that will use this skill.", "Choose Configure, then Skills, then Add, and upload this ZIP.", "Use Try it to ask a question that needs the skill and its reference files.", "Your organization must enable skills. Tool connections and permissions need separate setup."]]
+        ["In Copilot Agent Builder", ["Open the assistant that will use this skill.", "Choose Configure, then Skills, then Add, and upload this ZIP.", "Use Try it to ask a question that needs the skill and its attached files.", "If the skill uses tools, ask your admin to set up the tool connections and permissions."]]
     ],
     copilotSkills: [
-        ["In Microsoft 365 with skills enabled", ["Ask your admin to confirm that Copilot skills are enabled.", "Read Setup steps on this page. Ask your admin to upload the ZIP in the Microsoft 365 admin center under Copilot, Agents, then Upload custom agent.", "This app package is not an Agent Builder skill upload or a Copilot Studio solution.", "Test a question that needs each skill, then save and reopen the assistant."]]
+        ["In Microsoft 365 with skills in Copilot turned on", ["Ask your admin to confirm that skills in Copilot are turned on.", "Read Setup steps on this page.", "Ask your admin to upload the ZIP in the Microsoft 365 admin center under Copilot, Agents, then Upload custom agent. Do not upload it in Agent Builder or Copilot Studio.", "Test a question that needs each skill, then save and reopen the assistant."]]
     ],
     microsoftPlugin: [
         ["In Microsoft 365", ["Read Setup steps on this page. A tool connection may need your admin to register its sign-in.", "Ask your admin to upload the ZIP as a custom app in the Microsoft 365 admin center.", "Open the plugin in Copilot Cowork and test each skill and connection. Installing a plugin does not grant access to its sources."]]
@@ -8547,7 +8689,9 @@ const ui = {
     previewEntry: null,
     findings: [],
     fileScanKey: "",
-    fileTexts: []
+    fileTexts: [],
+    // The item the Copilot skill tab replaced with a skill: {from, to} ids, or null.
+    skillTabSwap: null
 };
 
 /** Null when no project is open. */
@@ -9064,6 +9208,7 @@ async function refreshProjectList() {
 function setProject(project, itemId) {
     ui.project = project;
     ui.itemId = itemId && findItem(project, itemId) ? itemId : (project.items[0] ? project.items[0].id : "");
+    ui.skillTabSwap = null;
     ui.savedRecord = "";
     ui.previewOrder = [];
     ui.product = ui.product || "backup";
@@ -9567,6 +9712,8 @@ function selectItem(id, moveFocus) {
         return;
     }
     ui.itemId = id;
+    // A choice the person makes keeps its item when they change tabs.
+    ui.skillTabSwap = null;
     ui.previewOrder = [];
     renderForm();
     if (ui.view === "details") {
@@ -11051,15 +11198,64 @@ function selectProduct(name) {
         tab.tabIndex = selected ? 0 : -1;
     });
     $("ppanel").setAttribute("aria-labelledby", "ptab-" + name);
-    if (name === "copilotSkill" && currentItem().kind !== "skill") {
-        const skill = ui.project.items.find(function (item) { return item.kind === "skill"; });
-        if (skill) {
-            selectItem(skill.id, false);
-            return;
+    const change = itemForProductTab(ui.project, ui.itemId, name, ui.skillTabSwap);
+    if (change.itemId !== currentItem().id) {
+        const restored = !change.swap && ui.skillTabSwap && change.itemId === ui.skillTabSwap.from;
+        selectItem(change.itemId, false);
+        // selectItem clears the swap, so it is stored after the change.
+        ui.skillTabSwap = change.swap;
+        if (restored) {
+            announce("Showing " + (currentItem().name || "Untitled") + " again.");
         }
+        return;
     }
+    ui.skillTabSwap = change.swap;
     renderInspectItems();
     renderProductPanel();
+}
+
+/**
+ * The skill the Copilot skill tab selects when an assistant is selected: the
+ * first skill the assistant uses that works in Copilot, then any skill in the
+ * project that works in Copilot, then the first skill it uses or the first in
+ * the project, so the report can say why it is blocked.
+ * @param {object} project Normalized project.
+ * @param {object} item The selected item, usually an assistant.
+ * @returns {object|null} A skill, or null when the project has no skills.
+ */
+function skillForCopilotTab(project, item) {
+    const allSkills = project.items.filter(function (other) { return other.kind === "skill"; });
+    const pool = usedSkills(project, item).concat(allSkills);
+    return pool.find(function (skill) { return !notForTarget(skill, "copilot"); }) || pool[0] || null;
+}
+
+/**
+ * Decides which item Inspect shows when the person opens a tab. The Copilot
+ * skill tab needs a skill, so it selects one and remembers the earlier item.
+ * Any other tab selects the earlier item again, unless the person chose a
+ * different item while on the Copilot skill tab.
+ * @param {object} project Normalized project.
+ * @param {string} itemId The selected item's id.
+ * @param {string} product The tab being opened, from PRODUCT_NAMES.
+ * @param {{from: string, to: string}|null} swap The automatic choice still in effect, or null.
+ * @returns {{itemId: string, swap: ({from: string, to: string}|null)}} The item to select and the swap to keep.
+ */
+function itemForProductTab(project, itemId, product, swap) {
+    const item = findItem(project, itemId) || project.items[0] || null;
+    if (!item) {
+        return { itemId: itemId, swap: null };
+    }
+    if (product === "copilotSkill") {
+        if (item.kind === "skill") {
+            return { itemId: item.id, swap: swap && swap.to === item.id ? swap : null };
+        }
+        const skill = skillForCopilotTab(project, item);
+        return skill ? { itemId: skill.id, swap: { from: item.id, to: skill.id } } : { itemId: item.id, swap: null };
+    }
+    if (swap && swap.to === item.id && findItem(project, swap.from)) {
+        return { itemId: swap.from, swap: null };
+    }
+    return { itemId: item.id, swap: null };
 }
 
 function setupProductTabs() {

@@ -89,7 +89,7 @@ Copilot. Choose **More settings** under the questions to open them.
   first letter of the name on a blue square.
 - **Publisher details.** Open this section and fill in your name, your website, and
   links to a privacy page and a terms page. The Copilot app package needs all
-  four. If you leave any blank, the app fills in placeholder values and tells
+  four. If you leave any blank, Agentprise fills in sample text and tells
   you so before you download.
 - **File attachments.** Add files from your computer. Files can be documents,
   OneNote pages, or plain text, including scripts, which Copilot receives as
@@ -156,13 +156,15 @@ Ask your admin to confirm that your organization allows skills in Copilot Agent 
 
 1. Open your project in Agentprise. If it has no skills, choose **Add a skill**
    and fill in its name, description, and steps.
-2. In Download, expand **More Microsoft downloads**.
+2. In Download, under **More Microsoft downloads**, choose **View Microsoft
+   downloads**.
 3. Choose **Review** beside **Copilot skill**.
 4. Inspect selects the first skill if you had an assistant selected. Use
    **Part of the project** to choose a different skill. Read the changes and
    setup steps, then download the ZIP.
 5. In Agent Builder, open your assistant. Choose **Configure**, **Skills**, then **Add**.
-6. Upload the ZIP. In **Try it**, ask a question that needs the skill's reference files.
+6. Upload the ZIP. In **Try it**, ask a question that needs the skill and
+   its attached files.
 
 The download adds one skill to your existing assistant. It leaves out scripts.
 If the skill uses tools, follow their setup steps before testing the skill.
@@ -172,12 +174,14 @@ See Microsoft's [skill upload guide](https://learn.microsoft.com/en-us/microsoft
 ### Download a whole Copilot app with skills
 
 This download creates an assistant with separate skills. Ask your admin to
-confirm that your organization has access to the Copilot skills preview.
+confirm that your organization has access to the preview of skills in Copilot.
 
 1. Add the skills to your project and select them under **Skills it can use**.
-2. In Download, expand **More Microsoft downloads**.
+2. In Download, under **More Microsoft downloads**, choose **View Microsoft
+   downloads**.
 3. Choose **Review** beside **Copilot app with skills (preview)**.
-4. Read **What changes in this download** and **Setup steps (not in the package)**.
+4. Read **What changes in this download**, then choose **Setup steps** in the
+   list of files and read the steps.
 5. Ask your admin to upload the ZIP in the Microsoft 365 admin center under
    **Copilot**, **Agents**, then **Upload custom agent**.
 
@@ -185,15 +189,15 @@ This choice allows up to eight skills and leaves out scripts. Copilot cannot
 use these skills with files attached directly to the assistant. Move those
 files into a skill, or use **Copilot / Teams Apps**.
 
-Installation of the full app has not been tested in a Microsoft 365
-organization. Test it before sharing. Use the admin upload route above; Agent
-Builder accepts individual skill ZIPs, and Copilot Studio uses a different
-file type.
+The Agentprise team has not tested installing this app in a Microsoft 365
+organization. Test it in yours before you share it. Ask your admin to upload
+it as described above. Agent Builder accepts only single skill ZIPs, and
+Copilot Studio uses a different file type.
 
 To use the whole project as optional skills in Copilot Cowork, review the
-**Microsoft 365 plugin** choice instead. Ask your admin to install that package.
+**Microsoft 365 plugin** choice instead. Ask your admin to install the plugin.
 Copilot uses these skills when a request needs them. See
-[optional Microsoft downloads](../formats.md#optional-microsoft-exports) for
+[optional Microsoft downloads](../formats.md#optional-microsoft-downloads) for
 limits and checks to run before sharing.
 
 ### Conclusion

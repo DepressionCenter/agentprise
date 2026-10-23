@@ -606,7 +606,7 @@ describe("Teams app package", () => {
     agent.copilot.preferMyFiles = false;
     agent.copilot.responseMode = "Auto";
     const { bytes, warnings } = await engine.formats.teamsZip.export(agent, teamsIcons());
-    assert.equal(warnings.filter((w) => w.includes("Placeholder")).length, 1);
+    assert.deepEqual(warnings.filter((w) => w.includes("sample text")), ["Agentprise filled in sample text for the publisher name, website, privacy link, and terms link. Fill in Publisher details to use your own."]);
     const entries = await engine.zip.read(bytes);
     const manifest = JSON.parse(decode(entries.get("manifest.json")));
     assert.equal(manifest.developer.websiteUrl, "https://example.com");

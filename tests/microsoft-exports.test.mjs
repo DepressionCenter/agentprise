@@ -1,6 +1,6 @@
 // This file is part of Agentprise
 // tests/microsoft-exports.test.mjs
-// Author(s): First Last.
+// Author(s): Gabriel Mongefranco.
 // Created: 2026-10-22
 // Last Modified: 2026-10-23
 // Summary: Checks native Microsoft skill packages, connectors, restrictions,
@@ -90,7 +90,7 @@ describe("Microsoft native exports", () => {
   });
 
   test("imported extensionless license terms survive both Microsoft downloads", async () => {
-    for (const path of ["LICENSE", "LICENCE", "COPYING", "NOTICE", "LICENSE.md", "license", "license.txt"]) {
+    for (const path of ["LICENSE", "LICENCE", "COPYING", "LICENSE.md", "license", "license.txt"]) {
       const terms = encode("Synthetic terms for " + path + ": retain this notice.\n");
       const source = engine.zip.write([
         { name: "sample/SKILL.md", bytes: encode("---\nname: sample\ndescription: Reads a fictional marker.\n---\nRead the sample marker.\n") },
@@ -111,6 +111,30 @@ describe("Microsoft native exports", () => {
       }
       assert.deepEqual(project.items[0].files, before.items[0].files);
       assert.equal(project.items[0].license, before.items[0].license);
+    }
+  });
+
+  test("a NOTICE file stays attribution and is never written as the license terms", async () => {
+    const notice = encode("This product includes software developed by Example Org.\n");
+    const source = engine.zip.write([
+      { name: "sample/SKILL.md", bytes: encode("---\nname: sample\ndescription: Reads a fictional marker.\nlicense: Apache-2.0\n---\nRead the sample marker.\n") },
+      { name: "sample/NOTICE", bytes: notice },
+    ]);
+    const imported = await engine.imports.any("sample.zip", source);
+    assert.ok(!imported.error, imported.error);
+    const project = imported.project;
+    const outputs = [];
+    for (const profile of ["copilotSkills", "microsoftPlugin"]) {
+      const entries = await engine.zip.read((await write(project, profile)).bytes);
+      outputs.push({ notice: entries.get("skills/sample/NOTICE.txt"), license: entries.get("skills/sample/LICENSE.txt") });
+    }
+    const upload = await engine.zip.read((await engine.exports.copilotSkill(project, project.items[0])).bytes);
+    outputs.push({ notice: upload.get("NOTICE.txt"), license: upload.get("LICENSE.txt") });
+    for (const output of outputs) {
+      assert.deepEqual(output.notice, notice);
+      assert.ok(output.license, "LICENSE.txt is written");
+      assert.ok(!text(output.license).includes("Example Org"));
+      assert.match(text(output.license), /Apache-2\.0/);
     }
   });
 
@@ -163,13 +187,42 @@ describe("Microsoft native exports", () => {
     assert.ok(!JSON.stringify(manifest).includes("reference_id"));
   });
 
+  test("a plugin is blocked when one skill limits a server's tools and another uses the whole server", async () => {
+    const project = build();
+    const recordServer = project.items[1].capabilities.find((capability) => capability.id === "records.server");
+    recordServer.providers["*"].find((provider) => provider.server === "remote").tools = ["search"];
+    const whole = structuredClone(recordServer);
+    whole.id = "scout.server";
+    whole.providers = { "*": [{ kind: "mcp", server: "remote", tools: [], instructions: "Ask the server for its tools first." }] };
+    project.items[0].capabilities.push(whole);
+    const before = structuredClone(project);
+    blocks(project, /^Record Finder limits the Example search server to certain tools, but Golden Scout uses all of its tools\. A plugin gives every skill all of the server's tools\./, "microsoftPlugin");
+    await assert.rejects(write(project, "microsoftPlugin"));
+    assert.deepEqual(project, before);
+    // Without the whole-server use, the limited server is left out and the plugin downloads.
+    project.items[0].capabilities.pop();
+    assert.ok(!report(project, "microsoftPlugin").some((entry) => /gives every skill all of the server's tools/.test(entry.note)));
+    const manifest = json(await engine.zip.read((await write(project, "microsoftPlugin")).bytes), "manifest.json");
+    assert.equal(manifest.agentConnectors, undefined);
+  });
+
+  test("a selected skill's problems appear once in the report", () => {
+    const project = build(simpleRaw());
+    project.items[1].body = "";
+    project.items[1].description = "";
+    const entries = engine.tools.conversionReport(project, project.items[1], "copilotSkills").filter((entry) => entry.status === "blocked");
+    assert.ok(entries.length >= 2, JSON.stringify(entries));
+    const keys = entries.map((entry) => entry.component + "|" + entry.note);
+    assert.equal(new Set(keys).size, keys.length, JSON.stringify(keys));
+  });
+
   test("unsupported transports, API keys, and placeholder addresses get specific reports", async () => {
     for (const field of ["transport", "auth"]) {
       const project = build();
       project.servers.remote[field] = field === "transport" ? "sse" : "apikey";
       const result = await write(project, "microsoftPlugin");
       assert.equal(json(await engine.zip.read(result.bytes), "manifest.json").agentConnectors, undefined);
-      assert.ok(result.report.some((entry) => /Streamable HTTP/.test(entry.note)));
+      assert.ok(result.report.some((entry) => /need no API key/.test(entry.note)));
     }
     const project = build();
     project.servers.remote.url = "";
@@ -326,7 +379,7 @@ describe("Microsoft native exports", () => {
     project.items[1].files = Array.from({ length: 19 }, (_, i) => ({ path: "references/file-" + i + ".txt", bytes: encode("Example.") }));
     await write(project, "microsoftPlugin");
     project.items[1].files.push({ path: "references/extra.txt", bytes: encode("Example.") });
-    blocks(project, /at most 20 reference files/, "microsoftPlugin");
+    blocks(project, /at most 20 attached files/, "microsoftPlugin");
     await write(project, "copilotSkills");
   });
 
@@ -351,7 +404,7 @@ describe("Microsoft native exports", () => {
     project.creator = { name: "", organization: "", url: "", privacy: "", terms: "" };
     project.items[0].notFor = ["copilot"];
     const result = await write(project, "microsoftPlugin");
-    assert.ok(result.report.some((entry) => entry.component === "Publisher details" && /Placeholder/.test(entry.note)));
+    assert.ok(result.report.some((entry) => entry.component === "Publisher details" && /sample text for the name, website, privacy link, and terms link\./.test(entry.note)));
     schema(json(await engine.zip.read(result.bytes), "manifest.json"), "teams/manifest-v1.29.schema.json");
   });
 });
@@ -403,7 +456,8 @@ describe("Copilot Agent Builder skill uploads", () => {
     assert.ok(![...entries.keys()].some((name) => /manifest|declarativeAgent|plugin-|scripts\//.test(name)));
     assert.ok(result.report.some((entry) => entry.status === "requires-setup"));
     assert.ok(result.report.some((entry) => entry.status === "unsupported"));
-    assert.match(result.setup, /does not create an assistant or install tool connections/);
+    assert.match(result.setup, /does not create an assistant or set up tool connections/);
+    assert.match(result.setup, /leaves out script files/);
     assert.match(text(entries.get("SKILL.md")), /If none of them is available/);
   });
 

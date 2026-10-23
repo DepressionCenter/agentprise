@@ -106,14 +106,15 @@ Choose a replacement based on the assistant's purpose:
 |---|---|
 | Answers questions about one SharePoint site | Copilot in SharePoint, which needs no agent file |
 | Repeats one task on a site, such as summarizing new items | A skill. Microsoft plans a conversion tool in Copilot in SharePoint. Agentprise can already download your instructions as SKILL.md |
-| Is a named assistant that answers people's questions | Copilot Agent Builder. See the next section for how to move your text there |
+| Is a named assistant that answers people's questions | Copilot Agent Builder. See [Create the assistant in Copilot Agent Builder](#create-the-assistant-in-copilot-agent-builder) |
 | Works in the Agents list in Teams or the Copilot app | The Copilot / Teams Apps download, which is a different file type and is not affected |
 
 #### Upgrade permissions and effects
 
-You must start the upgrade yourself. It requires permission to edit the
-`.agent` file and site pages, and to share agents. Ask the file owner, creator,
-or site owner to run it if you do not have those permissions.
+The upgrade does not happen on its own. To start it, you need permission to
+edit the `.agent` file and the site pages, and to share agents. If you don't
+have those permissions, ask the file owner, its creator, or a site owner to
+start the upgrade.
 
 After the upgrade, you cannot edit the original `.agent` file. Share the
 upgraded agent again unless it was already shared with the whole organization.
@@ -129,7 +130,7 @@ sharing permissions, installations, or history stored by Microsoft.
 
 Uploading a `.agent` file to Copilot Agent Builder adds it as reference
 material. To set up an assistant with the same name, instructions, and
-settings, copy your text into a new agent.
+settings, copy your text into a new assistant there.
 
 To build the same assistant in Agent Builder:
 
