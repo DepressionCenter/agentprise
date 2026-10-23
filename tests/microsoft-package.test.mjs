@@ -1204,6 +1204,9 @@ describe("unsafe and broken packages", () => {
       { name: "config/unsafe5.json", text: '{"api_key": ["' + SECRET + '"]}' },
       { name: "config/unsafe6.json", text: '{"password": "' + SECRET + '", "password": null}' },
       { name: "config/unsafe7.json", text: '{"settings": {"pass\\u0077ord": "' + SECRET + '", "password": "${PASSWORD}"}}' },
+      { name: "config/unsafe8.json", text: '{"api_key":["' + SECRET + '"],"api_key":null}' },
+      { name: "config/unsafe9.json", text: '{"url": "https://user:' + SECRET + '@example.org/", "url": null}' },
+      { name: "config/unsafe10.json", text: '{"api_key": [["' + SECRET + '"]], "api_key": []}' },
     ];
     const safe = [
       { name: "config/safe0.yaml", text: "password:\n  type: string\n  format: password\n" },

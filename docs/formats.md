@@ -1108,11 +1108,12 @@ is scanned before it can become a skill file or a backup-only file. Private
 key headers, including `BEGIN PRIVATE KEY` and `BEGIN RSA PRIVATE KEY`, count
 as matches. This heuristic does not detect every credential or encoding.
 URL user names and passwords also count as matches, as do `auth` query
-parameters. Query names are decoded before checking. Valid JSON is scanned
-as parsed keys and values, including nested objects, arrays, and escaped
-field names. It is also scanned as each key and value pair written in the
-file, because `JSON.parse` keeps only the last of two keys with the same
-name. A secret under a repeated key is caught, and an escaped key such as
+parameters. Query names are decoded before checking. Valid JSON is read
+one piece at a time, so every key and value is checked as the file holds
+it, including nested objects, lists, and escaped field names. Reading it
+this way matters because `JSON.parse` keeps only the last of two keys with
+the same name. A secret under a repeated key is caught, even inside a list,
+such as `{"api_key": ["abc123"], "api_key": null}`, and an escaped key such as
 `pass\u0077ord` is decoded first. A list under a credential key, such as
 `{"api_key": ["abc123"]}`, is a match when any item is a literal value. An
 object under a credential key is allowed, so JSON Schema files still open.

@@ -7239,44 +7239,73 @@ function holdsCredential(name, bytes) {
 
 /** Checks decoded JSON key/value pairs or plain text without depending on its layout. */
 function structuredTextHoldsCredential(scanned) {
-    let json;
     try {
-        json = JSON.parse(scanned);
+        JSON.parse(scanned);
     } catch (error) {
         // Non-JSON files and malformed JSON still receive the text scan.
         return textHoldsCredential(scanned);
     }
-    // Each key and value as written, because JSON.parse keeps only the last of
-    // two keys with the same name, while the file still holds both values.
-    for (const pair of scanned.matchAll(/"((?:\\.|[^"\\])*)"\s*:\s*("(?:\\.|[^"\\])*"|-?\d[\d.eE+-]*)/g)) {
-        let key;
-        let pairValue;
-        try {
-            key = JSON.parse('"' + pair[1] + '"');
-            pairValue = JSON.parse(pair[2]);
-        } catch (error) {
-            continue;
-        }
-        if (CREDENTIAL_FIELD_PATTERN.test(key) && credentialValueIsLiteral(pairValue)) {
+    return jsonTextHoldsCredential(scanned);
+}
+
+/**
+ * Reads valid JSON text token by token, so every key and value is checked as
+ * the file holds it. JSON.parse keeps only the last of two keys with the same
+ * name, but the file still holds both values. A value inside a list belongs to
+ * the key the list sits under, such as "abc123" in {"api_key": ["abc123"]}. An
+ * object under a credential key is allowed, so JSON Schema files still open;
+ * its own keys are checked.
+ * @param {string} text Text that JSON.parse accepts.
+ * @returns {boolean} True when a credential key holds a literal value, a key or
+ *     string value holds a credential, or a value forms an authorization header.
+ */
+function jsonTextHoldsCredential(text) {
+    const tokens = /"((?:\\.|[^"\\])*)"|(-?\d[\d.eE+-]*|true|false|null)|([{}[\]:,])|\s+/g;
+    // One frame per open object or list: its kind and the key it sits under.
+    const frames = [{ kind: "list", key: "" }];
+    let pendingKey = "";
+    let lastString = null;
+    let match;
+    function valueHoldsCredential(key, value) {
+        if (CREDENTIAL_FIELD_PATTERN.test(key) && credentialValueIsLiteral(value)) {
             return true;
         }
+        return typeof value === "string" && (textHoldsCredential(value) || CREDENTIAL_HEADER_PATTERN.test(key + ": " + value));
     }
-    const values = [{ key: "", value: json }];
-    while (values.length > 0) {
-        const entry = values.pop();
-        const value = entry.value;
-        if (textHoldsCredential(entry.key) || (CREDENTIAL_FIELD_PATTERN.test(entry.key) && credentialValueIsLiteral(value))) {
-            return true;
-        }
-        // A list of values under a credential key, such as {"api_key": ["abc123"]}.
-        if (CREDENTIAL_FIELD_PATTERN.test(entry.key) && Array.isArray(value) && value.some(credentialValueIsLiteral)) {
-            return true;
-        }
-        if (typeof value === "string" && (textHoldsCredential(value) || CREDENTIAL_HEADER_PATTERN.test(entry.key + ": " + value))) {
-            return true;
-        }
-        if (value && typeof value === "object") {
-            Object.entries(value).forEach(function (pair) { values.push({ key: pair[0], value: pair[1] }); });
+    while ((match = tokens.exec(text)) !== null) {
+        const frame = frames[frames.length - 1];
+        const owner = frame.kind === "object" ? pendingKey : frame.key;
+        if (match[1] !== undefined) {
+            lastString = JSON.parse('"' + match[1] + '"');
+            // A string in an object waits for ":" to show whether it is a key.
+            if (frame.kind === "list" && valueHoldsCredential(owner, lastString)) {
+                return true;
+            }
+        } else if (match[2] !== undefined) {
+            if (valueHoldsCredential(owner, JSON.parse(match[2]))) {
+                return true;
+            }
+        } else if (match[3] === ":") {
+            pendingKey = lastString;
+            lastString = null;
+            if (textHoldsCredential(pendingKey)) {
+                return true;
+            }
+        } else if (match[3] === "," || match[3] === "}") {
+            if (frame.kind === "object" && lastString !== null && valueHoldsCredential(pendingKey, lastString)) {
+                return true;
+            }
+            lastString = null;
+            if (match[3] === "}") {
+                frames.pop();
+                pendingKey = frames[frames.length - 1].key;
+            }
+        } else if (match[3] === "{" || match[3] === "[") {
+            frames.push({ kind: match[3] === "{" ? "object" : "list", key: owner });
+            lastString = null;
+        } else if (match[3] === "]") {
+            frames.pop();
+            pendingKey = frames[frames.length - 1].key;
         }
     }
     return false;

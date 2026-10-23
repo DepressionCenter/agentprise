@@ -206,7 +206,7 @@ and files kept only in backups. Technical details are in
   these checks. A YAML value on the line below its key, such as `password:`
   followed by an indented value or list item, is checked too. In JSON, a
   secret under a repeated key and a list of literal values under a credential
-  key are matches. External XML entities are never loaded.
+  key are matches, including a list under a key that appears again later. External XML entities are never loaded.
 - A nested mapping under a credential key is not a secret, so API
   descriptions with `password:` followed by `type: string`, and JSON Schema
   objects under a credential key, still open. Their own keys are still
