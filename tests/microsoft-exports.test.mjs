@@ -305,3 +305,102 @@ describe("Microsoft native exports", () => {
     schema(json(await engine.zip.read(result.bytes), "manifest.json"), "teams/manifest-v1.29.schema.json");
   });
 });
+
+
+describe("Copilot Agent Builder skill uploads", () => {
+  const upload = (project) => engine.exports.copilotSkill(project, project.items[1]);
+  const notices = (project) => engine.tools.conversionReport(project, project.items[1], "copilotSkill");
+  test("writes the tenant-tested root layout without app metadata or source changes", async () => {
+    const project = build(simpleRaw());
+    const before = structuredClone(project);
+    const result = await upload(project);
+    const entries = await engine.zip.read(result.bytes);
+    assert.deepEqual([...entries.keys()].sort(), ["LICENSE.txt", "SKILL.md", "references/check.txt"]);
+    assert.equal(result.fileName, "record-finder.copilot-skill.zip");
+    const app = await write(project, "copilotSkills");
+    const appEntries = await engine.zip.read(app.bytes);
+    for (const [name, bytes] of entries) assert.deepEqual(bytes, appEntries.get("skills/record-finder/" + name));
+    assert.match(text(entries.get("references/check.txt")), /COPPER-FINCH/);
+    assert.match(result.setup, /Configure, then Skills, then Add/);
+    assert.match(result.setup, /Try it/);
+    assert.deepEqual(project, before);
+  });
+
+  test("requires a selected skill and respects Copilot exclusions", async () => {
+    const project = build(simpleRaw());
+    await assert.rejects(engine.exports.copilotSkill(project, project.items[0]), /Choose a skill/);
+    project.items[1].notFor = ["copilot"];
+    await assert.rejects(upload(project), /author marked/);
+  });
+
+  test("preserves imported license terms in a root upload", async () => {
+    const terms = encode("Synthetic license terms: retain this notice.\n");
+    const source = engine.zip.write([
+      { name: "SKILL.md", bytes: encode("---\nname: sample\ndescription: Reads a fictional marker.\n---\nRead the marker.\n") },
+      { name: "COPYING", bytes: terms }
+    ]);
+    const imported = await engine.imports.any("sample.zip", source);
+    const result = await engine.exports.copilotSkill(imported.project, imported.project.items[0]);
+    const entries = await engine.zip.read(result.bytes);
+    assert.deepEqual(entries.get("COPYING.txt"), terms);
+    assert.deepEqual(entries.get("LICENSE.txt"), terms);
+  });
+
+  test("reports tool setup and excluded scripts without installing actions", async () => {
+    const project = build();
+    const result = await upload(project);
+    const entries = await engine.zip.read(result.bytes);
+    assert.ok(![...entries.keys()].some((name) => /manifest|declarativeAgent|plugin-|scripts\//.test(name)));
+    assert.ok(result.report.some((entry) => entry.status === "requires-setup"));
+    assert.ok(result.report.some((entry) => entry.status === "unsupported"));
+    assert.match(result.setup, /does not create an assistant or install tool connections/);
+    assert.match(text(entries.get("SKILL.md")), /If none of them is available/);
+  });
+
+  test("blocks empty instructions and bodies of 20,000 characters", async () => {
+    const project = build(simpleRaw());
+    project.items[1].body = "";
+    await assert.rejects(upload(project));
+    project.items[1].body = "a".repeat(19999);
+    assert.ok(!notices(project).some((entry) => entry.status === "blocked"));
+    project.items[1].body += "a";
+    await assert.rejects(upload(project), /19,999/);
+  });
+
+  test("blocks unsafe, deep, and case-colliding resource paths", async () => {
+    for (const paths of [["../escape.txt"], ["CON.txt"], ["a/b/c/d.txt"], ["references/A.txt", "references/a.txt"], ["skill.md"]]) {
+      const project = build(simpleRaw());
+      project.items[1].files = paths.map((path) => ({ path, bytes: encode("synthetic") }));
+      await assert.rejects(upload(project), /unsafe|repeated|nested/);
+    }
+  });
+
+  test("allows up to 350 files including generated skill and license", async () => {
+    const project = build(simpleRaw());
+    project.items[1].files = Array.from({ length: 348 }, (_, n) => ({ path: "references/file-" + n + ".txt", bytes: encode("sample") }));
+    assert.ok(!notices(project).some((entry) => entry.status === "blocked"));
+    project.items[1].files.push({ path: "references/extra.txt", bytes: encode("sample") });
+    await assert.rejects(upload(project), /350 files/);
+  });
+
+  test("uses Agent Builder's 25 MB file limit rather than the app's 10 MB limit", async () => {
+    const project = build(simpleRaw());
+    project.items[1].files = [{ path: "references/large.txt", bytes: new Uint8Array(25 * 1024 * 1024) }];
+    assert.ok(!notices(project).some((entry) => entry.status === "blocked"));
+    project.items[1].files[0].bytes = new Uint8Array(25 * 1024 * 1024 + 1);
+    await assert.rejects(upload(project), /25 MB/);
+  });
+
+  test("counts generated files and ZIP overhead against the 50 MB limit", async () => {
+    const project = build(simpleRaw());
+    project.items[1].files = ["a.txt", "b.txt"].map((path) => ({ path, bytes: new Uint8Array(25 * 1024 * 1024) }));
+    await assert.rejects(upload(project), /50 MB/);
+    const small = build(simpleRaw());
+    small.items[1].files = [];
+    const base = await upload(small);
+    const generatedSize = base.entries.reduce((sum, entry) => sum + entry.bytes.length, 0);
+    project.items[1].files[1].bytes = new Uint8Array(25 * 1024 * 1024 - generatedSize);
+    assert.ok(!notices(project).some((entry) => entry.status === "blocked"));
+    await assert.rejects(upload(project), /complete Copilot skill ZIP exceeds 50 MB/);
+  });
+});

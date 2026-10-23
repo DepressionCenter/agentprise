@@ -42,7 +42,8 @@ maintainers", holds the technical details behind each file.
 | Claude (claude.ai, Cowork, or Claude Code), with every assistant, skill, and tool in the project | Claude plugin | One plugin (`.claude-plugin.zip`) |
 | ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw, or another tool that reads Agent Plugins, with every assistant, skill, and tool in the project | Plugin | One plugin (`.plugin.zip`) |
 | Nowhere yet, or you want to edit it later | Download Backup | The whole project as one `.agentprise.zip` |
-| A Copilot assistant in an organization with native skills enabled | More Microsoft downloads, then Copilot with skills | An app package with separate skill folders (`.zip`) |
+| A skill for an existing Copilot assistant | More Microsoft downloads, then Add a skill to Copilot | One skill with `SKILL.md` at the ZIP root (`.copilot-skill.zip`) |
+| A Copilot assistant in an organization with native skills enabled | More Microsoft downloads, then Copilot app with skills | An app package with separate skill folders (`.zip`) |
 | Copilot Cowork in Microsoft 365 | More Microsoft downloads, then Microsoft 365 plugin | The whole project as optional skills and supported tool connections (`.microsoft-plugin.zip`) |
 
 The first seven standard downloads are for one assistant or skill: the one named at the
@@ -53,7 +54,9 @@ every assistant, skill, and file in it. Drop it on the Workspace page any time
 to change the project or download it for another product.
 
 **More Microsoft downloads** is optional. Choose **Review** to see what changes
-and what needs setup before downloading. **Copilot with skills** includes the
+and what needs setup before downloading. **Add a skill to Copilot** uploads one
+selected skill to an existing assistant through Agent Builder.
+**Copilot app with skills** includes the
 selected assistant and its selected skills. **Microsoft 365 plugin** includes
 the whole project, turning assistants into optional skills for Copilot Cowork.
 Keep using **Copilot / Teams Apps** if your organization has not enabled native
@@ -1098,12 +1101,33 @@ files through `importProject`.
 
 ### Optional Microsoft exports
 
-These exports are built locally by `planMicrosoftPackage` and
-`writeMicrosoftPackage` in `index.html`. They use the existing project model,
+These exports are built locally by `planMicrosoftPackage`, `writeMicrosoftPackage`,
+`planCopilotSkill`, and `writeCopilotSkill` in `index.html`. They use the existing project model,
 Copilot tool choices, and **Products it works in** settings. No validator,
 command-line tool, sign-in, or network request is part of the browser export.
 
-#### Copilot with skills
+#### Add a skill to Copilot
+
+Select a skill in your project, then choose **Review** beside **Add a skill to
+Copilot**. The ZIP contains `SKILL.md` at its root, `LICENSE.txt`, and supported
+resources at their relative paths. It has no app manifest or assistant wrapper.
+In Agent Builder, open your assistant and choose **Configure**, **Skills**, then
+**Add**. Upload the ZIP and use **Try it** to test a request that needs the skill.
+
+The skill body must be under 20,000 characters after tool notes are added.
+Each file can be at most 25 MB; the complete ZIP can be at most 50 MB.
+Relative paths have at most three components. Copilot allows eight skills and
+350 files across an assistant's skills. Agentprise checks the selected skill's
+file count; check the combined count when adding it to an existing assistant.
+Scripts and unsupported resources are excluded with notices. Supported tool
+references remain instructions with separate setup steps. The upload does not
+install actions, connections, or permissions. Selecting an assistant blocks this
+choice and asks you to select a skill instead.
+
+See Microsoft's [Agent Builder skill upload guide](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/agent-builder-add-skills)
+and [native skill limits](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/declarative-agent-skills).
+
+#### Copilot app with skills
 
 The selected assistant stays an assistant. Its `uses` list selects the skills
 written to `skills/<skill-name>/SKILL.md`, with their descriptions and resource
@@ -1114,6 +1138,10 @@ This profile uses app manifest 1.28, declarative agent v1.9 with `agent_skills`,
 and API-plugin v2.4 for actions. The usual **Copilot / Teams Apps** download
 still uses v1.8 and adds skill steps to the assistant's instructions.
 Both profiles keep the assistant's app id so later packages can update it.
+Ask your admin to upload the native app package in the Microsoft 365 admin
+center, under **Copilot**, **Agents**, then **Upload custom agent**. This is an
+app package, not an Agent Builder skill ZIP or a Copilot Studio solution.
+See Microsoft's [custom agent upload guide](https://learn.microsoft.com/en-us/microsoft-365/copilot/agent-essentials/agent-lifecycle/agent-upload-agents).
 
 The native profile blocks more than eight skills, more than 350 skill files,
 and skill text of 20,000 characters or more after tool notes are added.
@@ -1200,7 +1228,16 @@ resolves the difference. Sources checked on 2026-10-22:
 [Toolkit skill setup](https://learn.microsoft.com/microsoft-365/copilot/extensibility/build-declarative-agents-add-custom-skills),
 and [Microsoft plugin package format](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development).
 
-For a tenant test, use only a synthetic assistant and a skill with a reference
+On 2026-10-22, the user reported uploading the synthetic `record-finder` skill
+through Agent Builder's **Configure**, **Skills**, **Add** route. The ZIP held
+root `SKILL.md`, `LICENSE.txt`, and `references/check.txt`. Asking for the sample
+marker returned `COPPER-FINCH`, the marker stored in that reference file. This
+confirms the reported skill upload and reference read. The test used a manually
+prepared ZIP; regression and browser checks verify that the skill download
+produces the same layout and file contents. It does not verify full app or
+Cowork plugin installation, tool sign-in, updates, or access by another user.
+
+For further tenant tests, use only a synthetic assistant and a skill with a reference
 file containing a made-up marker. Record the date, cloud, destination, upload
 route, and versions. Check installation, a request that triggers the skill,
 retrieval of the marker, save and reopen, an update to the same assistant,

@@ -609,7 +609,8 @@ borders.
 
 ### Optional Microsoft export checks
 
-The native-skill and Microsoft plugin exports run entirely in the browser.
+The Agent Builder skill, native-skill app, and Microsoft plugin exports run
+entirely in the browser.
 They add no runtime dependency or network call. Tests in
 `tests/microsoft-exports.test.mjs` check pinned schemas, resource bytes, paths,
 counts, sizes, source restrictions, and exclusions. The new profiles omit
@@ -617,17 +618,24 @@ scripts and unsupported tool routes. OAuth sign-in uses a placeholder
 registration id, never a credential. A plugin cannot silently widen a named
 tool list or discard an assistant's active source limits.
 
-The optional choices open a review page before download. Installation and
-actual skill invocation in Microsoft remain unverified. A tenant test must
-use synthetic data; see [Formats](formats.md#optional-microsoft-exports).
+The optional choices open a review page before download. On 2026-10-22, the
+user reported a successful synthetic skill upload through Agent Builder's
+**Configure**, **Skills**, **Add** route. Asking for the sample marker returned
+`COPPER-FINCH`, stored in `references/check.txt`. The test used a manually
+prepared root-level skill ZIP. The browser download was then checked against
+that ZIP: all filenames and file contents matched exactly. Full app and Cowork
+plugin installation, tool sign-in, updates, and access by another user remain
+unverified. See [Formats](formats.md#optional-microsoft-exports).
 These checks are not an assessment of a tenant's privacy or compliance.
 
-On 2026-10-22, the Windows suite passed all 354 tests, including imported license
-preservation and conflicting license names. In an isolated Chromium
-browser, both new Inspect tabs had zero axe 4.10.3 WCAG A/AA findings. Keyboard
-activation opened the optional choices and the review page. Both download
-buttons produced the expected ZIP layout. Screenshots at 320 CSS pixels and
-200 percent CSS zoom showed readable controls without horizontal page overflow.
+On 2026-10-22, the Windows suite passed all 363 tests, including imported license
+preservation, conflicting license names, and Agent Builder upload boundaries.
+In an isolated Chromium browser, all three Microsoft Inspect tabs had zero axe 4.10.3 WCAG A/AA
+findings in light and dark themes. Keyboard activation opened the optional
+choices and the review page; arrow keys moved between tabs. The download
+buttons produced the expected ZIP layouts. The skill upload blocks a selected
+assistant with an explanation and works after selecting a skill. Reflow checks
+at 320 CSS pixels and 200 percent CSS zoom found no horizontal page overflow.
 No page errors occurred. These checks do not replace desktop browser zoom or
 a screen reader pass; both still need a person to check them.
 

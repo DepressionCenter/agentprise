@@ -242,15 +242,22 @@ the **Plugin** download, which hold every assistant and skill in the project.
 
 ### Tools in the optional Microsoft downloads
 
-**Copilot with skills** connects supported tools as assistant actions, just
+**Add a skill to Copilot** adds one skill to an existing assistant through
+Agent Builder. It keeps supported connector and remote tool references as
+instructions with setup steps. It does not install connections or grant access.
+API actions, script routes, and web-search settings are excluded with notices.
+Ask your admin to set up any required tools and permissions separately.
+
+**Copilot app with skills** connects supported tools as assistant actions, just
 like the usual app package. **Microsoft 365 plugin** instead connects supported
 remote tool servers through the plugin's own connector settings. These are
 different Microsoft formats.
 
-Both choices open Inspect before downloading. Read the report, then select
-**Setup steps (not in the package)** in the file list. For an OAuth connection,
-ask your admin to register the sign-in and replace the placeholder id in the
-named package file. Do not paste a password or token into Agentprise.
+All three choices open Inspect before downloading. Read the report, then select
+**Setup steps (not in the package)** in the file list. For an OAuth action or
+plugin connector, ask your admin to register the sign-in and replace the
+placeholder id in the named package file. The standalone skill has no such
+registration file. Do not paste a password or token into Agentprise.
 
 The new exports leave out scripts. The Microsoft plugin also leaves out local
 servers, unsupported sign-in types, actions defined by an API description,
