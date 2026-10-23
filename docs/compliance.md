@@ -198,7 +198,8 @@ and files kept only in backups. Technical details are in
   checked, and a `value` key inside such an object counts as the credential's
   value, as in `{"admin_password": {"value": "abc123"}}`. YAML follows
   the same rule, as in `admin_password: {value: abc123}` or a `value:` line
-  indented below `admin_password:`.
+  indented below `admin_password:`. A list under that `value` key, such as
+  `value: [abc123]`, counts in both YAML and JSON.
 - Credential values have no minimum length. Numeric values, including zero,
   and quoted spaces are checked. Empty values and complete references to
   secrets stored elsewhere are allowed, such as `${API_KEY}`, `%API_KEY%`,
@@ -218,6 +219,9 @@ and files kept only in backups. Technical details are in
   PNG images, receive a scan of readable bytes. The second pass of that scan
   joins only runs of four or more readable characters, so single bytes in
   compressed data cannot form a false match and leave a large document out.
+  A third pass joins every readable byte and looks only for a credential
+  field name with a value, so a name split by single bytes, such as `api`
+  and `_key:`, is still caught.
   A file signature does not bypass credential checks. Compressed document
   contents are not inspected. These pattern checks can miss credentials, so
   review files from unknown sources before sharing.

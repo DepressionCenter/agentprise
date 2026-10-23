@@ -1213,6 +1213,10 @@ describe("unsafe and broken packages", () => {
       { name: "config/unsafe14.yaml", text: "parameters: {admin_password: {value: '" + SECRET + "'}}\n" },
       { name: "config/unsafe15.yaml", text: "admin_password:\n  value: " + SECRET + "\n" },
       { name: "config/unsafe16.yaml", text: "admin_password:\n  type: secureString\n  # set by the installer\n  value: \"" + SECRET + "\"\n" },
+      { name: "config/unsafe17.yaml", text: "admin_password:\n  value: [" + SECRET + "]\n" },
+      { name: "config/unsafe18.yaml", text: "admin_password: {value: ['${ADMIN_PASSWORD}', '" + SECRET + "']}\n" },
+      { name: "config/unsafe19.yaml", text: "admin_password:\n  value:\n    - " + SECRET + "\n" },
+      { name: "config/unsafe20.json", text: '{"admin_password": {"value": ["' + SECRET + '"]}}' },
     ];
     const safe = [
       { name: "config/safe0.yaml", text: "password:\n  type: string\n  format: password\n" },
@@ -1226,6 +1230,7 @@ describe("unsafe and broken packages", () => {
       { name: "config/safe8.json", text: '{"api_key": "${API_KEY}", "token": "{{ secrets.token }}", "password": {"type": "string"}}' },
       { name: "config/safe9.json", text: '{"api_key": ["${API_KEY}"], "password": "${PASSWORD}", "password": null}' },
       { name: "config/safe11.yaml", text: "admin_password: {value: '${ADMIN_PASSWORD}'}\nclient_secret:\n  value: ${CLIENT_SECRET}\n" },
+      { name: "config/safe13.yaml", text: "admin_password:\n  value: ['${ADMIN_PASSWORD}']\nclient_secret:\n  value:\n    - type: string\n" },
       { name: "config/safe12.yaml", text: "password:\n  type: object\n  description: Holds the value\n  properties:\n    value:\n      type: string\n" },
       { name: "config/safe10.json", text: '{"properties": {"password": {"type": "string", "format": "password", "description": "The account password"}}, "admin_password": {"value": "${ADMIN_PASSWORD}"}}' },
     ].map((file) => ({ name: file.name, bytes: encode(file.text) }));
@@ -1274,7 +1279,14 @@ describe("unsafe and broken packages", () => {
 
   test("binary signatures cannot bypass credential checks", async () => {
     const entries = mixedEntries();
-    const payloads = [encode("%PDF-1.7\npassword: " + SECRET), new Uint8Array([...encode("%PDF-1.7\npassword:"), 0xff, ...encode(" " + SECRET)]), encode("%PDF-1.7\n" + ("password: " + SECRET).split("").join("\u0000"))];
+    const payloads = [
+      encode("%PDF-1.7\npassword: " + SECRET),
+      new Uint8Array([...encode("%PDF-1.7\npassword:"), 0xff, ...encode(" " + SECRET)]),
+      encode("%PDF-1.7\n" + ("password: " + SECRET).split("").join("\u0000")),
+      // A field name split into short pieces by single bytes.
+      new Uint8Array([...encode("%PDF-1.7\n"), 0xff, ...encode("api"), 0xff, ...encode("_key: " + SECRET + "\n")]),
+      new Uint8Array([...encode("%PDF-1.7\npa"), 0xff, ...encode("ss"), 0xff, ...encode("word: " + SECRET + "\n")]),
+    ];
     payloads.forEach((bytes, index) => {
       for (const folder of ["", "config/", "skills/meeting-notes/"]) {
         entries.push({ name: folder + "fake" + index + ".pdf", bytes });

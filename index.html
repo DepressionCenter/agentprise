@@ -7231,10 +7231,18 @@ function holdsCredential(name, bytes) {
     const split = text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "\n");
     // In a binary file, join only readable runs of 4 or more characters, as the
     // strings tool does, so single bytes in compressed data cannot form a match.
-    const joined = packageFileIsBinary(name, bytes)
+    const binary = packageFileIsBinary(name, bytes);
+    const whole = text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "");
+    const joined = binary
         ? (text.replace(/\u0000/g, "").match(/[^\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]{4,}/g) || []).join("")
-        : text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "");
-    return structuredTextHoldsCredential(split) || (joined !== split && structuredTextHoldsCredential(joined));
+        : whole;
+    if (structuredTextHoldsCredential(split) || (joined !== split && structuredTextHoldsCredential(joined))) {
+        return true;
+    }
+    // A field name split by single bytes, such as "api" 0xFF "_key: abc123", needs
+    // every readable byte. Only the checks that need a credential field name run
+    // on that text, because random bytes rarely spell one.
+    return binary && whole !== joined && credentialFieldsHoldLiteral(whole);
 }
 
 /** Checks decoded JSON key/value pairs or plain text without depending on its layout. */
@@ -7303,7 +7311,9 @@ function jsonTextHoldsCredential(text) {
                 pendingKey = frames[frames.length - 1].key;
             }
         } else if (match[3] === "{" || match[3] === "[") {
-            frames.push({ kind: match[3] === "{" ? "object" : "list", key: owner });
+            // A list or object under a "value" key that wraps a credential belongs to that credential.
+            const wraps = frame.kind === "object" && /^value$/i.test(owner) && CREDENTIAL_FIELD_PATTERN.test(frame.key);
+            frames.push({ kind: match[3] === "{" ? "object" : "list", key: wraps ? frame.key : owner });
             lastString = null;
         } else if (match[3] === "]") {
             frames.pop();
@@ -7396,26 +7406,49 @@ function xmlHoldsCredential(text) {
 }
 
 /** True when text matches a credential pattern rather than a reference to a key. */
+/** A YAML scalar without its trailing comment and surrounding quotes. */
+function yamlScalar(value) {
+    return value.replace(/[ \t]+#.*$/, "").trim().replace(/^(["'])(.*)\1$/, "$2");
+}
+
+/**
+ * Whether a YAML value under a credential key holds a literal secret: a scalar
+ * such as "abc123", or a flow list with a scalar item, such as "[abc123]". A
+ * nested mapping such as "{type: string}" is not a value.
+ * @param {string} value The value as written, after the key's colon.
+ * @returns {boolean}
+ */
+function yamlValueIsLiteral(value) {
+    const scalar = yamlScalar(value);
+    if (scalar.charAt(0) === "{") {
+        return false;
+    }
+    if (scalar.charAt(0) === "[") {
+        const items = scalar.slice(1).replace(/\][^\]]*$/, "").match(/"(?:\\.|[^"\\])*"|'(?:''|[^'])*'|[^,\[\]{}]+/g) || [];
+        return items.some(function (item) { return credentialValueIsLiteral(yamlScalar(item)); });
+    }
+    return credentialValueIsLiteral(scalar);
+}
+
 /**
  * Whether a YAML mapping under a credential key wraps a literal secret in a
  * "value" key, as in "admin_password: {value: abc123}" or the same mapping
- * written on the indented lines below the key. Other mappings, such as
- * "{type: string}" in an API description, are not values.
+ * written on the indented lines below the key. The wrapped value can also be a
+ * list, such as "value: [abc123]" or list items on the lines below "value:".
+ * Other mappings, such as "{type: string}" in an API description, are not values.
  * @param {string} first The mapping as it starts: the flow text, or the first indented line.
  * @param {string} rest The text after the first indented line, for a block mapping; empty for flow.
  * @param {number} childIndent The indent of the mapping's keys in a block mapping.
  * @returns {boolean}
  */
 function yamlMappingWrapsLiteral(first, rest, childIndent) {
-    function scalar(value) {
-        return value.replace(/[ \t]+#.*$/, "").trim().replace(/^(["'])(.*)\1$/, "$2");
-    }
     if (first.charAt(0) === "{") {
-        const wrapped = /[{,]\s*["']?value["']?\s*:\s*("(?:\\.|[^"\\])*"|'(?:''|[^'])*'|[^,}\]]*)/i.exec(first);
-        return Boolean(wrapped) && wrapped[1].trim().charAt(0) !== "{" && credentialValueIsLiteral(scalar(wrapped[1]));
+        const wrapped = /[{,]\s*["']?value["']?\s*:\s*(\[[^\]]*\]|"(?:\\.|[^"\\])*"|'(?:''|[^'])*'|[^,}\]]*)/i.exec(first);
+        return Boolean(wrapped) && yamlValueIsLiteral(wrapped[1]);
     }
     const lines = [" ".repeat(childIndent) + first].concat(rest.split(/\r?\n/).slice(1));
-    for (const line of lines) {
+    for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
         if (/^[ \t]*(?:#.*)?$/.test(line)) {
             continue;
         }
@@ -7424,18 +7457,39 @@ function yamlMappingWrapsLiteral(first, rest, childIndent) {
             return false;
         }
         const pair = /^[ \t]*["']?([A-Za-z_][\w-]*)["']?[ \t]*:(?:[ \t]+(.*))?$/.exec(line);
-        if (pair && indent === childIndent && pair[1].toLowerCase() === "value" && pair[2] !== undefined) {
-            const value = scalar(pair[2]);
-            return value.charAt(0) !== "{" && value.charAt(0) !== "[" && credentialValueIsLiteral(value);
+        if (!pair || indent !== childIndent || pair[1].toLowerCase() !== "value") {
+            continue;
         }
+        if (pair[2] !== undefined && yamlScalar(pair[2]) !== "") {
+            return yamlValueIsLiteral(pair[2]);
+        }
+        // "value:" alone, with list items on the lines below it.
+        for (let next = index + 1; next < lines.length; next += 1) {
+            if (/^[ \t]*(?:#.*)?$/.test(lines[next])) {
+                continue;
+            }
+            const item = /^([ \t]*)-[ \t]+(.*)$/.exec(lines[next]);
+            if (!item || item[1].length < childIndent) {
+                return false;
+            }
+            if (!NESTED_BLOCK_MAPPING.test(item[2].trim()) && yamlValueIsLiteral(item[2])) {
+                return true;
+            }
+        }
+        return false;
     }
     return false;
 }
 
-function textHoldsCredential(text) {
-    if (CREDENTIAL_TEXT_PATTERN.test(text) || CREDENTIAL_HEADER_PATTERN.test(text) || xmlHoldsCredential(text)) {
-        return true;
-    }
+/**
+ * Whether a settings field with a credential name holds a literal value, in a
+ * YAML flow mapping, on the same line as its name, or on the indented line
+ * below it. These checks need the field name, so they are also safe to run on
+ * the readable bytes of a binary file joined together.
+ * @param {string} text Decoded text.
+ * @returns {boolean}
+ */
+function credentialFieldsHoldLiteral(text) {
     for (const match of text.matchAll(CREDENTIAL_FLOW_PATTERN)) {
         let value = match[2].trim();
         if (NESTED_FLOW_MAPPING.test(value)) {
@@ -7457,22 +7511,6 @@ function textHoldsCredential(text) {
         }
         if (credentialValueIsLiteral(value)) {
             return true;
-        }
-    }
-    // Each attempt starts only where a run of scheme characters starts, so a long
-    // run such as "a-a-a-..." is read once. The address starts at the first letter
-    // that begins the run or follows "+", ".", or "-", such as "https" in "--https".
-    for (const match of text.matchAll(/(?<![a-z0-9+.-])([a-z0-9+.-]+):\/\/[^\s"'<>\\]+/gi)) {
-        const schemeStart = /(?:^|[+.-])(?=[a-z])/i.exec(match[1]);
-        if (!schemeStart) {
-            continue;
-        }
-        try {
-            if (urlHasCredential(new URL(match[0].slice(schemeStart.index + schemeStart[0].length)))) {
-                return true;
-            }
-        } catch (error) {
-            // Malformed addresses still receive the text-pattern checks.
         }
     }
     const lineValue = Array.from(text.matchAll(CREDENTIAL_LINE_PATTERN)).some(function (match) {
@@ -7499,6 +7537,29 @@ function textHoldsCredential(text) {
         }
         return credentialValueIsLiteral(value.replace(/^(["'])(.*)\1$/, "$2"));
     });
+}
+
+function textHoldsCredential(text) {
+    if (CREDENTIAL_TEXT_PATTERN.test(text) || CREDENTIAL_HEADER_PATTERN.test(text) || xmlHoldsCredential(text)) {
+        return true;
+    }
+    // Each attempt starts only where a run of scheme characters starts, so a long
+    // run such as "a-a-a-..." is read once. The address starts at the first letter
+    // that begins the run or follows "+", ".", or "-", such as "https" in "--https".
+    for (const match of text.matchAll(/(?<![a-z0-9+.-])([a-z0-9+.-]+):\/\/[^\s"'<>\\]+/gi)) {
+        const schemeStart = /(?:^|[+.-])(?=[a-z])/i.exec(match[1]);
+        if (!schemeStart) {
+            continue;
+        }
+        try {
+            if (urlHasCredential(new URL(match[0].slice(schemeStart.index + schemeStart[0].length)))) {
+                return true;
+            }
+        } catch (error) {
+            // Malformed addresses still receive the text-pattern checks.
+        }
+    }
+    return credentialFieldsHoldLiteral(text);
 }
 
 /**

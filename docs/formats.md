@@ -1101,7 +1101,11 @@ a repair notice. An unreadable root manifest blocks the package. Known binary
 types, such as PDF, Office, and OneNote files and complete PNG images, receive
 a second scan of their readable bytes. That scan joins only runs of four or
 more readable characters, as the `strings` tool does, so single bytes in
-compressed data cannot form a match by chance. A format signature does not
+compressed data cannot form a match by chance. A third scan joins every
+readable byte and looks only for a credential field name followed by a value,
+such as `api_key:` split into `api` and `_key:` by a single byte
+(`credentialFieldsHoldLiteral`). Random bytes rarely spell a field name, so
+this scan does not leave large documents out by chance. A format signature does not
 exempt those bytes from credential checks. This does not inspect compressed
 document contents. Mislabeled text, such as a password stored in a fake PDF,
 is scanned before it can become a skill file or a backup-only file. Private
@@ -1133,7 +1137,10 @@ that is indented further, or the next list item (`CREDENTIAL_BLOCK_PATTERN`).
 When that value is a nested mapping, such as `type: string`, it is not a
 secret, unless the mapping has a `value` key with a literal value, as in
 `admin_password: {value: abc123}` or `value: abc123` on an indented line below
-`admin_password:` (`yamlMappingWrapsLiteral`).
+`admin_password:` (`yamlMappingWrapsLiteral`). A list under `value` counts
+too, such as `value: [abc123]` or list items on the lines below `value:`. In
+JSON, a list under such a `value` key, as in
+`{"admin_password": {"value": ["abc123"]}}`, is checked the same way.
 Blank lines and comment lines between them are skipped. A nested mapping is
 not a value, so API descriptions with `password:` followed by `type: string`,
 or with `password: {type: string}`, still open (`NESTED_BLOCK_MAPPING` and
