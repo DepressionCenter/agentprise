@@ -2,7 +2,7 @@
 // tests/formats.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-21
+// Last Modified: 2026-10-23
 // Summary: Tests for the format converters inside index.html: the Agent Skill
 //          ZIP and plain skill written from a project item, SKILL.md imports,
 //          the Microsoft .agent file, the Teams app package, copy-ready text,
@@ -141,7 +141,7 @@ describe("Microsoft .agent", () => {
     assert.deepEqual(agent.sharepointItems, [{ by: "id", ...file }, { by: "url", ...site }]);
     // The file grants no switch, so the only notice is the web-search one.
     assert.equal(notices.length, 1);
-    assert.ok(notices[0].includes("doesn't turn on web search"));
+    assert.ok(notices[0].includes("Web search is off in this file"));
     const doc = JSON.parse(engine.formats.msAgent.export(agent).text);
     const sharepoint = doc.customCopilotConfig.gptDefinition.capabilities.find((c) => c.name === "OneDriveAndSharePoint");
     assert.deepEqual(sharepoint, { name: "OneDriveAndSharePoint", items_by_sharepoint_ids: [file], items_by_url: [site] });
@@ -230,7 +230,7 @@ describe("Microsoft .agent", () => {
     assert.equal(agent.copilot.codeInterpreter, false);
     assert.equal(agent.copilot.preferMyFiles, true);
     assert.equal(agent.copilot.responseMode, "Auto");
-    assert.ok(notices.some((n) => n.includes("doesn't turn on web search")));
+    assert.ok(notices.some((n) => n.includes("Web search is off in this file")));
     // Writing it back lists only what the file granted, so nothing widens.
     const doc = JSON.parse(engine.formats.msAgent.export(agent).text);
     assert.deepEqual(doc.customCopilotConfig.gptDefinition.capabilities.map((c) => c.name), ["OneDriveAndSharePoint"]);

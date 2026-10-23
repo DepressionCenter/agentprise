@@ -74,12 +74,11 @@ listed under known gaps.
 - When storage is blocked or a save fails, editing and downloads keep working
   for the visit, and the sidebar says projects will not be kept after the page
   closes and asks the person to download a backup.
-- The app needs no deployment credentials or secret configuration. There is no
-  `.env` file or `.env.example`. Security tests use synthetic credential values
-  to verify that imports reject secrets before showing or saving them. Basic
-  authentication test headers are encoded from explicitly synthetic values at
-  test runtime, rather than stored as complete headers in source. These tests
-  make no authentication requests. Evidence: `tests/microsoft-package.test.mjs`.
+- The app needs no deployment credentials or secret configuration files.
+  Security tests use made-up credentials to check that imports reject secrets
+  before displaying or saving them. Basic authentication headers are created
+  only while tests run; complete headers are not stored in test source files.
+  The tests make no sign-in requests. Evidence: `tests/microsoft-package.test.mjs`.
 - Agent instructions are the creator's own text. The app never sends them
   anywhere or acts on them. Text inside an uploaded file that looks like
   instructions to the app or to an AI is treated as plain text.
@@ -158,187 +157,114 @@ listed under known gaps.
   `serversFromMcp` in `index.html`, and `tests/project.test.mjs` (Claude,
   Codex, and Agent Plugins imports; "unrecognized files keep safe paths and
   never hold programs").
-- Microsoft 365 app packages are read the same way. Each path the manifest
-  names for an assistant, action, API description, skill folder, or connector
-  file must be inside the package and survive `cleanArchivePath` unchanged,
-  or that part is left out with a notice. An OpenAPI description must also fit
-  the item-file limit of five path components; a deeper path is rejected
-  before creating its provider, with instructions to move the description
-  and update its reference. An API description on the web is
-  never fetched. A sign-in type the app can't write back leaves the action or
-  connector out instead of turning its sign-in off. Registration ids are not
-  kept: they are dropped from tools and servers and replaced with a
-  placeholder in kept files. Server addresses with a key or token are
-  dropped. The root manifest is scanned before any field is imported; a match
-  blocks the whole package, with no fallback to a skill import. Assistant
-  and action description files are checked as text before parsing, even with
-  a misleading binary extension. A match excludes that part and its source
-  file from the project and backup. Any text
-  file that would become a skill file, an API description,
-  an attached file, or a kept file is left out when `CREDENTIAL_TEXT_PATTERN`
-  or `CREDENTIAL_LINE_PATTERN` finds a key, token, or password in it, in a
-  query string, a JSON value, a bearer header, a YAML or settings line, or a
-  private key header. Unknown types, including `.env`, `.toml`, and `.pem`,
-  are scanned even when they contain zero bytes. UTF-16 byte-order marks
-  select the decoder; zero characters are removed, while other control
-  characters are tested both as separators and with those characters removed.
-  Invalid encodings and replacement characters cause exclusion for text.
-  Recognized binary types, including complete PNG images, receive a scan of
-  readable bytes; their signatures do not bypass credential checks. Compressed
-  document contents are not inspected. Notices name parts and files, never
-  the matched text. Kept files sit under `microsoft-package/` in the backup
-  and appear in no other download. This is a pattern check, so a key in an
-  unusual shape can still get through, and a person should still read a
-  package from an unknown source before sharing it. Evidence:
-  `readTeamsArchive`, `packagePath`, `holdsCredential`,
-  `withoutRegistrationIds`, `authFromCopilot`, and `packageServerAddress` in
-  `index.html`, and `tests/microsoft-package.test.mjs` ("unsafe references,
-  repeated paths, an unknown sign-in, and web-only descriptions are left out
-  with a notice each", "a key or token in an address or a kept file is never
-  kept or shown", and "a key in a skill file, an API description, or an
-  attached file leaves that file out", and "a key set on a YAML or settings
-  line leaves the file out, and a reference to a key does not", "a credential
-  in an assistant file leaves the assistant out of the project and backup",
-  and "unknown types require readable text while verified binary formats are
-  preserved", and "API descriptions at the item path limit import;
-  deeper ones are rejected with instructions", "credentials in root
-  manifest fields block the package without a skill fallback", and
-  "credentials in action descriptions exclude the action and its source
-  file", and "plaintext with a binary suffix is checked before attachments
-  or backup-only files are retained"). `npm test` on 2026-10-22 ran 332 tests,
-  and all passed.
-- An unlisted nested skill stays in the backup only, even when its parent
-  is listed. A listed descendant opens as a separate item. Files from a
-  rejected skill cannot be imported as files of its parent. Evidence: the
-  nested-skill tests in `tests/microsoft-package.test.mjs`.
-  Safe companion files from a rejected skill remain in the backup. Rejected
-  skill references retain the manifest and affected assistant descriptions.
-  Tests cover unsafe paths, missing folders, invalid types, and backup bytes.
-  A root skill cannot override a Microsoft manifest or become an assistant
-  attachment. Retained package paths keep their original depth and length
-  allowance without counting the fixed backup prefix; traversal and excess
-  depth or length remain refused. The same test file covers both rules and
-  their backup round trips.
-- Root files refused as attachments and items beyond the 20-item limit
-  retain their source files in the backup, subject to the credential and
-  executable-file checks. Notices explain what was not opened. The source
-  manifest and assistant descriptions are also retained when items exceed
-  the limit. Evidence: the refused-attachment and item-limit tests in
-  `tests/microsoft-package.test.mjs`, including backup round trips.
-- Unused package icons remain in backups. Invalid connector description
-  paths produce a notice and retain the source manifest without fetching
-  the path. The icon and connector-path tests in
-  `tests/microsoft-package.test.mjs` check backup round trips and reject
-  traversal, absolute paths, remote URLs, missing entries, and invalid types.
-  Duplicate connector IDs retain their source manifest while importing only
-  the first definition. A regression test verifies both original definitions
-  remain available after a backup round trip.
-- Actions beyond an assistant's 20-tool limit keep their source descriptions
-  and local API descriptions in the backup. Credential matches remain
-  excluded. The action-limit test covers remote tools, API descriptions,
-  actions shared between assistants, and credential exclusion through backups.
-  The manifest classification test confirms that unrelated web manifests
-  follow the skill importer; Microsoft manifests still receive the package
-  credential check. Both tests are in `tests/microsoft-package.test.mjs`.
-- A credential match in a package filename or folder blocks the package
-  without displaying the name. Tests cover text and binary files through
-  the package, plugin, and skill ZIP detection routes, and confirm that
-  error messages do not expose the synthetic key.
-- Connectors beyond the combined 10-server limit retain their source
-  manifest, and files beyond a listed skill's 50-file limit retain their
-  original package paths in the backup. Success notices count only imported
-  connectors. Boundary and backup tests in `tests/microsoft-package.test.mjs`
-  cover these rules, including credential and program exclusion for extra
-  skill files.
-- Credential references must match a complete allowed form. Settings with
-  literal fallbacks, substitutions, or appended values are not exempt from
-  the credential check. Tests confirm that matching values never reach
-  projects, notices, or backups, while plain variable references survive.
-  Additional tests reject credentials in unknown files containing NUL bytes
-  and UTF-16 text with or without a byte-order mark, while safe bytes survive.
-  URL checks reject user information and credential query names, including
-  `auth` and encoded query names. JSON escapes cannot hide those URLs.
-  Tests cover manifest rejection through all three detection routes and
-  credential exclusion from retained text and backup files.
-  Parsed JSON keys retain their value context, so namespaced fields such as
-  `X-API-Key` and `database_password` are checked regardless of text layout.
-  Tests cover nested objects, arrays, escaped keys, numeric passwords,
-  reference fallbacks, and allowed complete references through backups.
-  Credential literals have no minimum length. Tests exclude one-, two-, and
-  three-character passwords, numeric values including zero, and quoted spaces
-  from JSON, YAML, settings, and backups while preserving empty values and
-  complete external references.
-  Basic and Bearer authorization headers, including proxy headers and JSON
-  values, are excluded before files become attachments, skill files, or
-  backup-only files. Regression tests check imported and exported bytes.
-  Binary-signature tests cover fake PDF files, invalid-byte gaps, and NUL
-  obfuscation. XML tests cover elements, attributes, namespaces, CDATA,
-  character references, and allowed empty or external-reference values.
-  YAML flow-mapping tests cover nested and quoted fields, numeric values,
-  multiline values, and complete external references through backups.
-- Actions whose servers exceed the project limit retain their source files,
-  assistant descriptions, and manifest. An action keeps any remaining usable
-  provider; one with none is excluded. Missing or unsafe action paths retain
-  the assistant description and manifest for repair. Tests in
-  `tests/microsoft-package.test.mjs` cover shared actions, name collisions,
-  mixed providers, rejected paths, and backup round trips.
-- Local API references resolve from the action manifest's folder. Encoded
-  characters are decoded before validation, and parent references must stay
-  inside the package. Tests reject package escapes, remote and absolute
-  paths, backslashes, query strings, fragments, and malformed encodings.
-- Runtimes beyond an action's six-provider limit retain their definitions
-  and local descriptions with the action and assistant sources. Rejected
-  assistant references retain the package manifest. Tests cover boundaries,
-  shared actions, credential exclusion, and backup round trips.
-- API descriptions beyond an assistant's 50-file limit retain their bytes,
-  action sources, assistant description, and manifest in the backup. Tools
-  retain only providers with imported files. Tests cover both sides of the
-  limit and a shared action used by an assistant with room for all its files.
-  The same retention applies to invalid or unsupported file contents and
-  attachment-limit failures. Tests cover empty, binary, unknown, and program
-  files; programs remain excluded. A root attachment cannot replace an API
-  description at the same stored path. Conflicting backup names block the
-  package instead of dropping a source file. Malformed assistant files retain
-  their package manifest. Regression tests check these sources through backups.
-- OpenAPI runtimes without explicit operation names stay in the backup with
-  their action, API, assistant, and manifest sources. Function lists above
-  the 50-name limit also retain those sources. Tests cover omitted and
-  wildcard lists, both sides of the limit, shared actions, and backup bytes.
-  An explicit MCP tool list that normalizes to empty cannot become dynamic
-  discovery. Copilot export also rejects selections with no supported names.
-  Tests cover long names, invalid types, fallback prevention, and export
-  selections that retain only their supported names.
-- Inline API descriptions become uniquely named files beside their action
-  manifest and take precedence over URL references. Tests cover collisions,
-  shared actions, credential exclusion, backups, and Copilot exports.
-  Static MCP action descriptions retain their linked sources instead of
-  becoming dynamic tools. Valid connector tool lists retain the manifest
-  relationship. Both forms have backup round-trip tests.
-- Registration IDs in retained UTF-16 JSON and YAML are replaced while
-  preserving encoding and byte-order marks. Tests cover both byte orders,
-  files with and without marks, non-ASCII text, and backup round trips.
-  Fatal text decoding rejects malformed UTF-8 or UTF-16 before import.
-  Replacement characters also cause exclusion. Tests cover interrupted
-  credential assignments, control bytes, and supported binary preservation.
-- A plugin or Microsoft package cannot replace a skill's server settings
-  merely by using the same name. Different definitions get separate names;
-  assistant tool references follow the renamed package server. The same rule
-  applies between imported skills: each skill's tools use its own server.
-  Identical definitions reuse an existing numbered server. Tests import
-  eleven skills through Microsoft, plugin, and skill ZIP routes and confirm
-  that their two server definitions remain usable after a backup round trip.
-  Server limits apply after merging, so dropped names cannot be reassigned
-  during later merges. Skills whose tools lose a server retain their original
-  source files. Boundary tests cover ten, eleven, and twelve distinct servers.
-  Evidence:
-  `combineServers` in `index.html`, the three plugin collision tests in
-  `tests/project.test.mjs`, and the package server collision test in
-  `tests/microsoft-package.test.mjs`, including "listed skills with
-  conflicting server names keep their own endpoints and tool references".
-- Microsoft packages that would exceed the 50-file backup-only limit are
-  refused without returning a project. The count includes unsupported skill
-  files. Tests check both kinds of files below, at, and above the limit, and
-  verify retained bytes through backup round trips.
+#### Microsoft package imports
+
+Agentprise checks Microsoft 365 app packages before adding their contents to
+a project. The checks below cover file locations, credentials, tool settings,
+and files kept only in backups. Technical details are in
+[Opening a Microsoft 365 app package](formats.md#opening-a-microsoft-365-app-package).
+
+##### File locations and limits
+
+- References to assistants, actions, skills, and connectors must stay inside
+  the package. Invalid or missing references produce a notice. Agentprise
+  keeps the source descriptions needed to repair them, if those files pass
+  the security checks.
+- Local API descriptions are files that tell a tool how to call a service.
+  Their locations are resolved from the action file's folder. Agentprise
+  rejects references outside the package, absolute paths, web addresses,
+  backslashes, query strings, fragments, and invalid URL encoding. It never
+  fetches a description from the web. API descriptions can be at most four
+  folders deep, plus the filename.
+- A project opens at most 20 assistants and skills and 10 tool servers. Each
+  assistant opens at most 20 actions. Each action opens at most six connection
+  definitions, with at most 50 function names per definition. Each skill or
+  assistant can keep at most 50 files. API descriptions under `references/`
+  also count toward the assistant's 20-attachment limit.
+- Files and settings above those limits stay in the backup when they pass the
+  security checks. Notices explain how to split the package. A tool keeps only
+  connections with usable servers and files. Other assistants that share the
+  same action apply their own limits.
+- A backup can keep at most 50 files that the app cannot use. Agentprise
+  refuses packages that would exceed this limit or create conflicting backup
+  filenames. It does not return a partially preserved project.
+- Files kept under `microsoft-package/` retain the original package path limit
+  of eight components and 200 characters. The added backup folder does not
+  count toward those limits. Paths outside the package remain forbidden.
+
+##### Credential checks
+
+- A credential match in a filename, folder name, or root `manifest.json`
+  blocks the whole package, including attempts to open it as a plugin or skill
+  ZIP. Error messages never display the matched credential or unsafe name.
+- A match in an assistant, action, skill, attachment, or backup-only file
+  excludes that part and its source file. Checks run before parsing assistant
+  and action descriptions, even when their extensions suggest binary files.
+  Server addresses containing credentials are also excluded.
+- Checks cover passwords, keys, and tokens in URLs, JSON, YAML, settings lines,
+  XML, and Basic or Bearer authorization headers, including proxy headers.
+  Private key headers also count as matches. JSON escapes, XML character
+  references, namespaces, and nested or multiline YAML values do not bypass
+  these checks. External XML entities are never loaded.
+- Credential values have no minimum length. Numeric values, including zero,
+  and quoted spaces are checked. Empty values and complete references to
+  secrets stored elsewhere are allowed. References with fallback values,
+  substitutions, or added text are checked as possible credentials.
+- Text checks cover UTF-8 and UTF-16, with or without byte-order marks.
+  Zero characters are removed. Other control characters are checked both as
+  separators and after removal. Invalid encoding or replacement characters
+  cause exclusion. This also applies to unknown types such as `.env`, `.toml`,
+  and `.pem`.
+- Supported binary files, including complete PNG images, receive a scan of
+  readable bytes. A file signature does not bypass credential checks.
+  Compressed document contents are not inspected. These pattern checks can
+  miss credentials, so review files from unknown sources before sharing.
+- Microsoft sign-in registration identifiers are removed from imported tools
+  and servers. Saved JSON and YAML files use a replacement value, while keeping
+  their UTF-8 or UTF-16 encoding and byte-order marks. An admin must register
+  sign-in again for the destination organization. Unsupported sign-in methods
+  cause exclusion; Agentprise never changes them to no sign-in.
+
+##### Skills, tools, and saved source files
+
+- A nested skill opens only when the package lists it. An unlisted skill stays
+  in the backup. A listed child skill opens separately from its parent, and a
+  rejected skill's files cannot become its parent's files. Other files from
+  a rejected skill stay in the backup if they pass the security checks.
+- A root skill cannot override a Microsoft package description or become an
+  assistant attachment. Unused pictures, unsupported attachments, and other
+  files the app cannot use stay in the backup. Programs and credential matches
+  remain excluded.
+- A local API description takes precedence over a root attachment stored at
+  the same location. An inline API description takes precedence over a URL and
+  receives a unique filename beside its action. Shared actions reuse that file.
+- OpenAPI connections without explicit operation names stay in the backup.
+  Agentprise does not infer those names. A fixed tool-description list also
+  stays in the backup rather than becoming unrestricted tool discovery. A
+  named tool list that becomes empty after validation cannot enable discovery.
+  Copilot downloads reject lists with no supported names.
+- A connector with an invalid tool-list location can still open as a server.
+  The notice asks the author to repair the reference; the original package
+  description stays in the backup. Duplicate connector identifiers preserve
+  that description and use only the first definition.
+- A plugin, package, or skill cannot replace another skill's server settings
+  by using the same name. Different settings receive separate names, and tool
+  references follow the correct server. Identical settings share a name.
+  The server limit applies after combining them; a removed server's name
+  cannot later refer to a different address.
+- Microsoft package checks apply only after the file is identified as a
+  Microsoft package. Unrelated web manifests follow the skill importer.
+
+Evidence: `readTeamsArchive`, `packagePath`, `packageRelativePath`,
+`holdsCredential`, `withoutRegistrationIds`, `authFromCopilot`,
+`packageServerAddress`, and `combineServers` in `index.html`.
+`tests/microsoft-package.test.mjs` checks the limits, rejected inputs, notices,
+and saved bytes after downloading and reopening backups.
+`tests/project.test.mjs` also checks conflicting server names across plugin
+formats. On 2026-10-22, all 332 tests in the suite passed.
+
+#### Other file and input checks
+
 - Programs are refused everywhere a file can arrive: attached files, files in
   a skill folder, and unrecognized files. A file with a program signature, a
   program extension, or a program extension hidden before its last extension
@@ -611,41 +537,52 @@ borders.
   check is a short pattern list, not a review of the text, and a clean result
   does not mean the text holds no personal information.
 
-### Optional Microsoft export checks
+### Optional Microsoft download checks
 
-The Agent Builder skill, native-skill app, and Microsoft plugin exports run
-entirely in the browser.
-They add no runtime dependency or network call. Tests in
-`tests/microsoft-exports.test.mjs` check pinned schemas, resource bytes, paths,
-counts, sizes, source restrictions, and exclusions. The new profiles omit
-scripts and unsupported tool routes. OAuth sign-in uses a placeholder
-registration id, never a credential. A plugin cannot silently widen a named
-tool list or discard an assistant's active source limits.
+The three optional Microsoft downloads are built entirely in your browser.
+They add no software dependency or network request. Tests in
+`tests/microsoft-exports.test.mjs` check package formats, file contents and
+locations, count and size limits, source restrictions, and omitted content.
 
-The optional choices open a review page before download. On 2026-10-22, the
-user reported a successful synthetic skill upload through Agent Builder's
-**Configure**, **Skills**, **Add** route. Asking for the sample marker returned
-`COPPER-FINCH`, stored in `references/check.txt`. The test used a manually
-prepared root-level skill ZIP. The browser download was then checked against
-that ZIP: all filenames and file contents matched exactly. Full app and Cowork
-plugin installation, tool sign-in, updates, and access by another user remain
-unverified. See [Formats](formats.md#optional-microsoft-exports).
-These checks are not an assessment of a tenant's privacy or compliance.
+The downloads leave out scripts and unsupported tool connections. OAuth
+sign-in settings contain an instruction to register the connection, never a
+credential. A plugin cannot allow more tools than the selected list or remove
+limits on an assistant's sources without blocking the download.
+
+Each choice opens Inspect before downloading. On 2026-10-22, a tester reported
+uploading a sample skill through Agent Builder's **Configure**, **Skills**,
+**Add** route. The assistant answered a question with `COPPER-FINCH`, the text
+stored in `references/check.txt`. The test used a manually prepared skill ZIP.
+The browser download matched every filename and file's contents in that ZIP.
+
+Full app and Cowork plugin installation, tool sign-in, updates, and access by
+another user remain unverified. See
+[Optional Microsoft downloads](formats.md#optional-microsoft-exports).
+These checks do not assess an organization's privacy or compliance.
 
 On 2026-10-22, the Windows suite passed all 366 tests, including imported license
 preservation, conflicting license names, Agent Builder upload boundaries, and
 separate ownership of identically named assistant and skill files. Valid
 leading-hyphen resource names are retained; hidden and reserved names remain
-blocked. The two new pinned schemas retain their original hashes and include
-the publisher's MIT License in sibling notice files.
+blocked. The two Microsoft schema files retain their original hashes and have the
+publisher's MIT License in separate notice files beside them.
 In an isolated Chromium browser, all three Microsoft Inspect tabs had zero axe 4.10.3 WCAG A/AA
 findings in light and dark themes. Keyboard activation opened the optional
 choices and the review page; arrow keys moved between tabs. The download
-buttons produced the expected ZIP layouts. The skill upload blocks a selected
-assistant with an explanation and works after selecting a skill. Reflow checks
-at 320 CSS pixels and 200 percent CSS zoom found no horizontal page overflow.
-No page errors occurred. These checks do not replace desktop browser zoom or
-a screen reader pass; both still need a person to check them.
+buttons produced the expected ZIP layouts. Reflow checks at 320 CSS pixels and
+200 percent CSS zoom found no horizontal page overflow. No page errors occurred.
+
+Checks on 2026-10-22 also covered the **Copilot skill** selection behavior.
+Opening the choice from the editor or with keyboard tab navigation selected
+the first skill when an assistant was selected. An already selected skill
+stayed selected. Choosing an assistant in the dropdown showed a prompt and
+blocked downloading; a project with no skills showed instructions to add one.
+The skill ZIP downloaded successfully. The selected tab had a visible 3-pixel
+focus outline. All three Microsoft tabs had zero axe 4.10.3 WCAG A/AA findings
+in light and dark themes. All 366 Windows tests passed.
+
+These checks do not replace desktop browser zoom or a screen reader pass.
+Both still need a person to check them.
 
 ### Conclusion
 

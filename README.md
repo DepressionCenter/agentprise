@@ -3,7 +3,7 @@ This file is part of Agentprise™
 README.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-22
+Last Modified: 2026-10-23
 Summary: Provides an overview of the project, in Markdown format.
 Notes: See README file for documentation and full license information.
 
@@ -29,7 +29,9 @@ Agentprise makes AI agents and skills portable across Copilot, Gemini, Claude, a
 
 <a href="https://code.depressioncenter.org/agentprise/" target="_blank" rel="noopener"><img src="images/Repo-preview.png" alt="Agentprise with the Caveman sample loaded: the questions about the assistant on the left, and the preview with the download list on the right. Opens the live app in a new tab." width="912"></a>
 
-Describe your assistant once: what it is called, what it does, how it should behave, and a few questions people might ask it first. Agentprise then gives you the file each product wants: an app package for the Microsoft 365 Copilot app and Teams, a `.agent` file for Teams chats (a file type Microsoft retires after March 2027), a skill for Gemini and Claude, project instructions to paste into ChatGPT, or a plugin with the whole project for Claude, ChatGPT, and coding tools. It works in your web browser, needs no account, and sends nothing you type anywhere. You can also open a file you already have and move it to another product, or start from a ready-made assistant in the library.
+Describe your assistant once, then download it for the AI product you use. Agentprise creates app packages for Copilot and Teams, skills for Gemini and Claude, and text to paste into a ChatGPT project. Plugins include the whole project for Claude, ChatGPT, and coding tools. The Teams Chat download uses a `.agent` file, which Microsoft retires after March 2027.
+
+Agentprise works in your browser, needs no account, and sends nothing you type anywhere. Open a file you already have, move it to another product, or start with a sample from the Library.
 
 
 ## Quick Start Guide

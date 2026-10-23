@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/make-an-assistant-for-copilot.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-22
+Last Modified: 2026-10-23
 Summary: Step-by-step guide with screenshots: make a new assistant in Agentprise
          and add it to the Agents list in Microsoft 365 Copilot or Teams.
 Notes: See README file for documentation and full license information.
@@ -64,7 +64,7 @@ people will get.
 
 ![The editor with Team Helper filled in: the name, the description Answers questions about our team's processes and points to the right forms, short friendly instructions, and the first example questions. The preview on the right shows a blue square with the letter T, the name and description, and three example questions as buttons: Where do I find the travel form, Who approves time off, and What is our meeting schedule. The top of the Download card, headed For Team Helper, shows under the preview.](../../images/guides/editor-filled.png)
 
-### Step 3: Check that it is ready to travel
+### Step 3: Check the download
 
 Look at the **Download** card under the preview. While the name, the
 description, or the behavior is still empty, the card lists what is missing
@@ -148,28 +148,31 @@ Keep it somewhere safe.
 To change the assistant later, open it from **Your projects** on the Workspace
 page, or drop the backup on the Workspace start page. Make your changes, and
 download the app package again. Upload the new file in
-place of the old one. It keeps the same id, so Copilot treats it as an update
-rather than a second assistant.
+place of the old one. Copilot then updates the assistant you already shared.
 
 ### Add a skill to an existing Copilot assistant
 
-Your organization must enable skills in Copilot Agent Builder.
+Ask your admin to confirm that your organization allows skills in Copilot Agent Builder.
 
-1. In Agentprise, select a skill in your project.
+1. Open your project in Agentprise. If it has no skills, choose **Add a skill**
+   and fill in its name, description, and steps.
 2. In Download, expand **More Microsoft downloads**.
-3. Choose **Review** beside **Add a skill to Copilot**.
-4. Read the changes and setup steps, then download the ZIP.
+3. Choose **Review** beside **Copilot skill**.
+4. Inspect selects the first skill if you had an assistant selected. Use
+   **Part of the project** to choose a different skill. Read the changes and
+   setup steps, then download the ZIP.
 5. In Agent Builder, open your assistant. Choose **Configure**, **Skills**, then **Add**.
 6. Upload the ZIP. In **Try it**, ask a question that needs the skill's reference files.
 
-This adds one skill to the assistant you already have. It excludes scripts and
-does not install tool connections. Follow the setup steps for any tools it uses.
+The download adds one skill to your existing assistant. It leaves out scripts.
+If the skill uses tools, follow their setup steps before testing the skill.
+Uploading the skill does not connect those tools or grant access to them.
 See Microsoft's [skill upload guide](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/agent-builder-add-skills).
 
 ### Download a whole Copilot app with skills
 
-If your organization has enabled native Copilot skills, you can keep each
-skill separate from the assistant's instructions.
+This download creates an assistant with separate skills. Ask your admin to
+confirm that your organization has access to the Copilot skills preview.
 
 1. Add the skills to your project and select them under **Skills it can use**.
 2. In Download, expand **More Microsoft downloads**.
@@ -178,18 +181,20 @@ skill separate from the assistant's instructions.
 5. Ask your admin to upload the ZIP in the Microsoft 365 admin center under
    **Copilot**, **Agents**, then **Upload custom agent**.
 
-This choice allows up to eight skills and excludes script files. Copilot does
-not yet support combining native skills with attached assistant knowledge
-files. Move those files into a skill, or keep using **Copilot / Teams Apps**.
-The full app download still needs a tenant test. It is not an Agent Builder
-skill upload or a Copilot Studio solution. Use **Add a skill to Copilot** for
-the skill upload route above.
+This choice allows up to eight skills and leaves out scripts. Copilot cannot
+use these skills with files attached directly to the assistant. Move those
+files into a skill, or use **Copilot / Teams Apps**.
+
+Installation of the full app has not been tested in a Microsoft 365
+organization. Test it before sharing. Use the admin upload route above; Agent
+Builder accepts individual skill ZIPs, and Copilot Studio uses a different
+file type.
 
 To use the whole project as optional skills in Copilot Cowork, review the
 **Microsoft 365 plugin** choice instead. Ask your admin to install that package.
-It does not create an always-on assistant. See
-[optional Microsoft exports](../formats.md#optional-microsoft-exports) for
-limits and the tenant test checklist.
+Copilot uses these skills when a request needs them. See
+[optional Microsoft downloads](../formats.md#optional-microsoft-exports) for
+limits and checks to run before sharing.
 
 ### Conclusion
 
@@ -197,12 +202,12 @@ You now have an assistant in the Agents list, a package you can share, and a
 copy you can edit. The same description can go to other products too. See
 the guides for [Teams chats](add-an-assistant-to-a-teams-chat.md),
 [Gemini and Claude](move-an-assistant-to-gemini-or-claude.md), and
-[ChatGPT](copy-an-assistant-into-chatgpt.md). One note on the Teams Chat
-download: it is a `.agent` file, a file type Microsoft retires after March
-2027, and uploading it to Copilot Agent Builder only adds it as reading
-material. [When Microsoft retires this file](add-an-assistant-to-a-teams-chat.md#when-microsoft-retires-this-file)
-in the Teams chat guide says what to use instead, including how to build the
-assistant in Agent Builder by pasting your text.
+[ChatGPT](copy-an-assistant-into-chatgpt.md).
+
+Microsoft retires the Teams Chat `.agent` file after March 2027. Uploading that
+file to Copilot Agent Builder adds it as reference material. See
+[Retirement of .agent files](add-an-assistant-to-a-teams-chat.md#retirement-of-agent-files)
+for replacement options and instructions to copy your text into Agent Builder.
 
 ### Additional resources
 
@@ -212,6 +217,7 @@ assistant in Agent Builder by pasting your text.
 - [Copy an assistant into ChatGPT or Gemini Notebook](copy-an-assistant-into-chatgpt.md)
 - [Formats: which download goes where](../formats.md)
 - [Frequently asked questions](../faq.md)
+- [Upload a skill in Agent Builder](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/agent-builder-add-skills)
 - [Agents for Microsoft 365 Copilot](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agents-overview)
 
 [Back to project README](../../README.md)

@@ -2,7 +2,7 @@
 // tests/microsoft-exports.test.mjs
 // Author(s): First Last.
 // Created: 2026-10-22
-// Last Modified: 2026-10-22
+// Last Modified: 2026-10-23
 // Summary: Checks native Microsoft skill packages, connectors, restrictions,
 //          resource bytes, schema versions, and preservation of the source.
 // Notes: See README file for documentation and full license information.
@@ -119,7 +119,7 @@ describe("Microsoft native exports", () => {
     project.items[1].files.push({ path: "LICENSE", bytes: encode("First terms.\n") }, { path: "LICENSE.txt", bytes: encode("Other terms.\n") });
     const before = structuredClone(project);
     for (const profile of ["copilotSkills", "microsoftPlugin"]) {
-      blocks(project, /repeated/, profile);
+      blocks(project, /another file uses the same name/, profile);
       await assert.rejects(write(project, profile));
     }
     assert.deepEqual(project, before);
@@ -158,7 +158,7 @@ describe("Microsoft native exports", () => {
       mcpServerUrl: "https://mcp.example.org/mcp",
       authorization: { type: "OAuthPluginVault", referenceId: "replace-with-your-auth-registration-id" },
     });
-    assert.ok(result.report.some((entry) => /cannot enforce this tool list/.test(entry.note)));
+    assert.ok(result.report.some((entry) => /would allow tools outside your selected list/.test(entry.note)));
     assert.match(result.setup, /Register the sign-in/);
     assert.ok(!JSON.stringify(manifest).includes("reference_id"));
   });
@@ -191,8 +191,8 @@ describe("Microsoft native exports", () => {
     const project = build(simpleRaw());
     project.items[0].files.push({ path: "references/assistant.txt", bytes: encode("Synthetic knowledge.") });
     const before = structuredClone(project);
-    blocks(project, /cannot combine/);
-    await assert.rejects(write(project, "copilotSkills"), /cannot combine/);
+    blocks(project, /cannot use skills and files attached directly/);
+    await assert.rejects(write(project, "copilotSkills"), /cannot use skills and files attached directly/);
     assert.deepEqual(project, before);
   });
 
@@ -200,8 +200,8 @@ describe("Microsoft native exports", () => {
     const project = build();
     project.items[0].files.push({ path: "openapi/records.yaml", bytes: encode("Synthetic assistant knowledge, not an API description.") });
     const before = structuredClone(project);
-    blocks(project, /cannot combine/);
-    await assert.rejects(write(project, "copilotSkills"), /cannot combine/);
+    blocks(project, /cannot use skills and files attached directly/);
+    await assert.rejects(write(project, "copilotSkills"), /cannot use skills and files attached directly/);
     assert.deepEqual(project, before);
   });
 
@@ -230,20 +230,20 @@ describe("Microsoft native exports", () => {
   test("product exclusions remove skills and tools, and all-excluded plugins are blocked", async () => {
     const project = build();
     project.items[1].notFor = ["copilot"];
-    blocks(project, /No eligible skills/);
+    blocks(project, /No selected skills can be used/);
     const result = await write(project, "microsoftPlugin");
     const manifest = json(await engine.zip.read(result.bytes), "manifest.json");
     assert.equal(manifest.agentSkills.length, 1);
     assert.equal(manifest.agentConnectors, undefined);
     project.items[0].notFor = ["copilot"];
-    blocks(project, /No eligible skills/, "microsoftPlugin");
+    blocks(project, /No selected skills can be used/, "microsoftPlugin");
   });
 
   test("plugins cannot discard an assistant's active source limits", () => {
     const project = build(simpleRaw());
     project.items[0].copilot.webSearch = true;
     project.items[0].copilot.webSites = ["https://example.org"];
-    blocks(project, /source restrictions/, "microsoftPlugin");
+    blocks(project, /limits you set on the assistant/, "microsoftPlugin");
   });
 
   test("native skill count accepts eight and blocks nine", async () => {
@@ -304,13 +304,13 @@ describe("Microsoft native exports", () => {
       if (path.endsWith(" ")) {
         assert.ok(report(project).some((entry) => entry.status === "unsupported"));
       } else {
-        blocks(project, /unsafe, long, or deeply/);
+        blocks(project, /file name or folder location is not allowed/);
         await assert.rejects(write(project, "copilotSkills"));
       }
     }
     const project = build(simpleRaw());
     project.items[1].files.push({ path: "license.TXT", bytes: encode("Duplicate license.") }, { path: "LICENSE.txt", bytes: encode("License.") });
-    blocks(project, /repeated/);
+    blocks(project, /another file uses the same name/);
   });
 
   test("native body length is checked after tool composition", async () => {
@@ -326,7 +326,7 @@ describe("Microsoft native exports", () => {
     project.items[1].files = Array.from({ length: 19 }, (_, i) => ({ path: "references/file-" + i + ".txt", bytes: encode("Example.") }));
     await write(project, "microsoftPlugin");
     project.items[1].files.push({ path: "references/extra.txt", bytes: encode("Example.") });
-    blocks(project, /at most 20 resource files/, "microsoftPlugin");
+    blocks(project, /at most 20 reference files/, "microsoftPlugin");
     await write(project, "copilotSkills");
   });
 
@@ -421,7 +421,7 @@ describe("Copilot Agent Builder skill uploads", () => {
     for (const paths of [["../escape.txt"], ["CON.txt"], ["a/b/c/d.txt"], ["references/A.txt", "references/a.txt"], ["skill.md"]]) {
       const project = build(simpleRaw());
       project.items[1].files = paths.map((path) => ({ path, bytes: encode("synthetic") }));
-      await assert.rejects(upload(project), /unsafe|repeated|nested/);
+      await assert.rejects(upload(project), /file name or folder location is not allowed/);
     }
   });
 
