@@ -1293,7 +1293,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     </div>
                     <div class="store-search">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                        <label for="library-search" class="visually-hidden">Search the library by name, summary, or tag</label>
+                        <label for="library-search" class="visually-hidden">Search the library by name, summary, tag, or author</label>
                         <input type="text" id="library-search" placeholder="Search" autocomplete="off">
                     </div>
                 </div>
@@ -11361,6 +11361,13 @@ function matchesLibraryFilter(entry, filter) {
     return entry.tags.indexOf(filter) >= 0;
 }
 
+/** True when the lowercase query appears in the entry's name, summary, tags, kind, requirements, or author. Entries without an author match only on the other fields. */
+function libraryEntryMatchesQuery(entry, query) {
+    const author = entry.author || "";
+    const haystack = (entry.name + " " + entry.summary + " " + entry.tags.join(" ") + " " + LIBRARY_KINDS[entry.kind] + " " + entry.requires + " " + author).toLowerCase();
+    return haystack.indexOf(query) >= 0;
+}
+
 /** Rebuilds only when chips change, so focus stays put. */
 function renderLibraryFilters() {
     const row = $("library-filters");
@@ -11436,11 +11443,7 @@ async function renderLibrary() {
         if (!matchesLibraryFilter(entry, ui.libraryTag)) {
             return false;
         }
-        if (!query) {
-            return true;
-        }
-        const haystack = (entry.name + " " + entry.summary + " " + entry.tags.join(" ") + " " + LIBRARY_KINDS[entry.kind] + " " + entry.requires).toLowerCase();
-        return haystack.indexOf(query) >= 0;
+        return !query || libraryEntryMatchesQuery(entry, query);
     });
     clearChildren(list);
     $("library-clear").hidden = !query && !ui.libraryTag;
