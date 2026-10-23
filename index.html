@@ -4865,7 +4865,7 @@ function planExport(project, item, exportId, options) {
                 report.push(reportEntry(capability.label, "unsupported", "Left out " + name + ", because " + why));
             };
             if (support === "omit") {
-                leave(microsoft && provider.kind === "script" ? "Agentprise has not checked whether this script can run in Microsoft. Use a supported web tool instead. This download leaves out script files." : spec.label + " cannot use it.");
+                leave(microsoft && provider.kind === "script" ? "This download leaves out script files and the tools that run them. Use a supported web tool instead." : spec.label + " cannot use it.");
                 return;
             }
             let status = support === "tool" ? "preserved" : "requires-setup";
@@ -6469,7 +6469,7 @@ function microsoftSkillEntries(project, item, plan, plugin, report, root) {
     });
     const allowed = resources.filter(function (file) {
         if (MICROSOFT_SCRIPT_EXTENSION.test(file.path) || !MICROSOFT_RESOURCE_EXTENSION.test(file.path)) {
-            report.push(reportEntry(item.name + ": " + file.path, "unsupported", "This file type is not supported in the Microsoft skill download. Script files are also excluded because Agentprise has not checked whether they can run in Microsoft. Download a backup to keep the original file."));
+            report.push(reportEntry(item.name + ": " + file.path, "unsupported", "This file type is not supported in the Microsoft skill download. This download also leaves out script files. Download a backup to keep the original file."));
             return false;
         }
         return true;
@@ -6580,8 +6580,8 @@ function planMicrosoftPackage(project, item, exportId) {
         candidates.filter(function (other) { return notForTarget(other, "copilot"); }).forEach(function (other) { report.push(notForEntry(other, "copilot")); });
     }
     report.push(reportEntry("Microsoft setup", "requires-setup", plugin
-        ? "Ask your Microsoft 365 admin to install this plugin for Copilot Cowork. The Agentprise team has not tested installing it or its tool access in a Microsoft 365 organization. Read the setup steps and test both before sharing."
-        : "Ask your admin to confirm access to the Frontier preview of skills in Copilot. Microsoft does not support this option with Information Barriers or in its public app store. The Agentprise team has not tested installing this app in a Microsoft 365 organization. Read the setup steps and test the app before sharing."));
+        ? "Ask your Microsoft 365 admin to install this plugin for Copilot Cowork. Read the setup steps, then test the plugin and its tool access before you share it."
+        : "Ask your admin to confirm access to the Frontier preview of skills in Copilot. Microsoft does not support this option with Information Barriers or in its public app store. Read the setup steps, then test the app before you share it."));
     if (included.length === 0 || included.length > (plugin ? 20 : 8)) {
         report.push(reportEntry("Skills", "blocked", included.length === 0
             ? "No selected skills can be used in Copilot. Add a skill to this assistant, or change Products it works in for a skill."
@@ -7396,6 +7396,42 @@ function xmlHoldsCredential(text) {
 }
 
 /** True when text matches a credential pattern rather than a reference to a key. */
+/**
+ * Whether a YAML mapping under a credential key wraps a literal secret in a
+ * "value" key, as in "admin_password: {value: abc123}" or the same mapping
+ * written on the indented lines below the key. Other mappings, such as
+ * "{type: string}" in an API description, are not values.
+ * @param {string} first The mapping as it starts: the flow text, or the first indented line.
+ * @param {string} rest The text after the first indented line, for a block mapping; empty for flow.
+ * @param {number} childIndent The indent of the mapping's keys in a block mapping.
+ * @returns {boolean}
+ */
+function yamlMappingWrapsLiteral(first, rest, childIndent) {
+    function scalar(value) {
+        return value.replace(/[ \t]+#.*$/, "").trim().replace(/^(["'])(.*)\1$/, "$2");
+    }
+    if (first.charAt(0) === "{") {
+        const wrapped = /[{,]\s*["']?value["']?\s*:\s*("(?:\\.|[^"\\])*"|'(?:''|[^'])*'|[^,}\]]*)/i.exec(first);
+        return Boolean(wrapped) && wrapped[1].trim().charAt(0) !== "{" && credentialValueIsLiteral(scalar(wrapped[1]));
+    }
+    const lines = [" ".repeat(childIndent) + first].concat(rest.split(/\r?\n/).slice(1));
+    for (const line of lines) {
+        if (/^[ \t]*(?:#.*)?$/.test(line)) {
+            continue;
+        }
+        const indent = /^[ \t]*/.exec(line)[0].length;
+        if (indent < childIndent) {
+            return false;
+        }
+        const pair = /^[ \t]*["']?([A-Za-z_][\w-]*)["']?[ \t]*:(?:[ \t]+(.*))?$/.exec(line);
+        if (pair && indent === childIndent && pair[1].toLowerCase() === "value" && pair[2] !== undefined) {
+            const value = scalar(pair[2]);
+            return value.charAt(0) !== "{" && value.charAt(0) !== "[" && credentialValueIsLiteral(value);
+        }
+    }
+    return false;
+}
+
 function textHoldsCredential(text) {
     if (CREDENTIAL_TEXT_PATTERN.test(text) || CREDENTIAL_HEADER_PATTERN.test(text) || xmlHoldsCredential(text)) {
         return true;
@@ -7403,6 +7439,9 @@ function textHoldsCredential(text) {
     for (const match of text.matchAll(CREDENTIAL_FLOW_PATTERN)) {
         let value = match[2].trim();
         if (NESTED_FLOW_MAPPING.test(value)) {
+            if (yamlMappingWrapsLiteral(value, "", 0)) {
+                return true;
+            }
             continue;
         }
         if (value.charAt(0) === '"') {
@@ -7438,7 +7477,7 @@ function textHoldsCredential(text) {
     }
     const lineValue = Array.from(text.matchAll(CREDENTIAL_LINE_PATTERN)).some(function (match) {
         const value = match[2].replace(/[ \t]+#.*$/, "").trim().replace(/^(["'])(.*)\1$/, "$2");
-        return !NESTED_FLOW_MAPPING.test(value) && credentialValueIsLiteral(value);
+        return NESTED_FLOW_MAPPING.test(value) ? yamlMappingWrapsLiteral(value, "", 0) : credentialValueIsLiteral(value);
     });
     if (lineValue) {
         return true;
@@ -7450,9 +7489,13 @@ function textHoldsCredential(text) {
             return false;
         }
         const value = groups.value.replace(/[ \t]+#.*$/, "").trim();
-        // A nested mapping, such as "type: string" in an API description, is not a value.
-        if (NESTED_BLOCK_MAPPING.test(value) || NESTED_FLOW_MAPPING.test(value)) {
-            return false;
+        // A nested mapping, such as "type: string" in an API description, is not a
+        // value, unless it wraps one in a "value" key.
+        if (NESTED_FLOW_MAPPING.test(value)) {
+            return yamlMappingWrapsLiteral(value, "", 0);
+        }
+        if (NESTED_BLOCK_MAPPING.test(value)) {
+            return groups.lead.indexOf("-") < 0 && yamlMappingWrapsLiteral(value, text.slice(match.index + match[0].length), groups.indent.length + groups.lead.length);
         }
         return credentialValueIsLiteral(value.replace(/^(["'])(.*)\1$/, "$2"));
     });

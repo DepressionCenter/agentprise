@@ -274,7 +274,7 @@ Test each connection in Microsoft before you share the download. Agentprise
 never contacts a tool server to check it.
 
 See [optional Microsoft downloads](../formats.md#optional-microsoft-downloads)
-for the limits and the checks to run in your organization.
+for the limits of each download.
 
 ### What happens without the tool
 

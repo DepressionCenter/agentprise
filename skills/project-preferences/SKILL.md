@@ -84,11 +84,7 @@ npm test
 
 That runs `tests/check-syntax.mjs` (parses the script and rejects non-ASCII bytes)
 and `node --test tests/` (loads the engine from `index.html` and tests it).
-`tests/project.test.mjs` covers the project model, the backup round trip, the
-Agent Plugins manifests, and the plugin and skill importers;
-`tests/library.test.mjs` opens every Library backup and checks it against its
-catalog line. Serve
-the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
+Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
 `run-mac.command`, which opens `http://localhost:8010`.
 
 ### Project constraints

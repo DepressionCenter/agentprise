@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/design/tools-skills-plugins-design.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-10
-Last Modified: 2026-10-11
+Last Modified: 2026-10-23
 Summary: Design and work plan for extending Agentprise from instruction-only
          agents to projects that carry skills, reference knowledge, and
          external tools (MCP servers, OpenAPI plugins, scripts, connectors),
@@ -136,7 +136,7 @@ Google converts Gems into Gemini skills in place. People who want to move a
 Gem or a GPT before it retires copy its fields into the existing Create new
 form, and a how-to page says so. If a vendor lets a migrated plugin or skill be
 downloaded, the regular plugin and skill importers handle it with no special
-code (verification item V8). Retirement dates: custom GPTs December 11, 2026;
+code. Retirement dates: custom GPTs December 11, 2026;
 Gems November 2026 for personal accounts, March 2027 for Workspace, June 2027
 for education.
 
@@ -483,7 +483,7 @@ Existing importers stay. New ones:
 - Codex compatibility layout: `.codex-plugin/plugin.json` with a `skills` path.
 - Any zip containing one or more `SKILL.md` files, each becoming a skill item.
   This is also the path for a Gemini skill or a migrated ChatGPT plugin if the
-  vendor lets it be downloaded (D11, V8).
+  vendor lets it be downloaded (D11).
 
 Import rules: `plugin.json` extensions other than Agentprise's are kept as
 unrecognized; `mcp.json` servers become project servers; `hooks/`, `agents/`,
@@ -581,7 +581,7 @@ here; the file carries the full sentences.
 |---|---|---|---|---|---|---|
 | `pubmed.search` | false | connector PubMed, then script `scripts/pubmed.py search` | openapi `searchPubMed` | mcp server `pubmed` (user supplied) | script `scripts/pubmed.py search` | none |
 | `pubmed.metadata` | false | connector PubMed, then script `... summary` | openapi `getSummaries` | mcp server `pubmed` | script `... summary` | none |
-| `pubmed.abstracts` | false | connector PubMed, then script `... abstract` | openapi `getAbstracts` (see verification item V1) | mcp server `pubmed` | script `... abstract` | none |
+| `pubmed.abstracts` | false | connector PubMed, then script `... abstract` | openapi `getAbstracts` | mcp server `pubmed` | script `... abstract` | none |
 | `pubmed.browse` | false | none | websearch `https://pubmed.ncbi.nlm.nih.gov` | none | none | none |
 
 Fallback text for the first three says that no PubMed tool is connected, that
@@ -703,9 +703,9 @@ exists; the embedded and standalone copies of the skill are identical.
 Phase 4, exporters. Portable plugin, Claude plugin, Copilot actions from
 `openapi` and `mcp` providers with dynamic discovery by default, `WebSearch`
 sites from `websearch`, the renamed ChatGPT copy box. Acceptance: exports
-validate against the pinned schemas; the verification items below are carried
-out and their results recorded in `docs/formats.md` under the existing "vendor
-facts" and "open tests" headings.
+validate against the pinned schemas; the vendor facts the exporters rely on
+are recorded in `docs/formats.md` under Verified vendor facts, with their
+sources and dates.
 
 Phase 5, importers. Portable plugin, Claude plugin, Codex layout, and
 multi-skill zips. Acceptance: fixtures for each import; unknown files survive a
@@ -719,42 +719,13 @@ fields into Create new before those products retire (D11), the Help page, the
 README download list, and `docs/compliance.md` (imports execute nothing;
 schemas are pinned and offline).
 
-### Verification items
-
-These are facts the implementation depends on that were not tested in this
-project. Each is checked once during Phase 4 and the result is written into
-`docs/formats.md` with the date. They are vendor facts, not app features.
-
-- V1. Whether a Copilot API plugin can use an operation whose response is
-  `text/plain` (EFetch abstracts). If not, `pubmed.abstracts` on Copilot drops to
-  `none` and the fallback asks the person to paste abstracts.
-- V2. The current declarative agent manifest version to target, its
-  instruction character limit, and the plugin manifest fields for a remote MCP
-  runtime with dynamic discovery and with pinned tools.
-- V3. Whether the `.agent` schema used for Teams chat accepts `WebSearch`
-  sites.
-- V4. Whether ChatGPT accepts a plugin upload with only a root `plugin.json`,
-  or also wants `.codex-plugin/plugin.json`. D4 changes only if the upload is
-  rejected.
-- V5. Which components claude.ai loads from a plugin at the time of release,
-  and whether the Team workspace setting for Skills is on (plugins stop
-  syncing when it is off).
-- V6. Whether Gemini skills accept work and school accounts yet, which changes
-  the Gemini setup text.
-- V7. Whether a scoped `WebSearch` on `pubmed.ncbi.nlm.nih.gov` returns useful
-  results, so `pubmed.browse` is worth keeping.
-- V8. Whether ChatGPT lets a person download a migrated plugin as a folder or
-  zip, and whether Gemini lets a person download a skill. If yes, the how-to
-  page for moving a Gem or GPT points at the regular importer instead of the
-  Create new form.
-
 ### Constants and names to add
 
 - `PROJECT_SCHEMA_VERSION = 2`
 - `TARGET_KEYS = ["copilot", "claude", "chatgpt", "gemini", "cli", "*"]`
 - `PROVIDER_KINDS = ["connector", "mcp", "openapi", "script", "websearch", "none"]`
 - `REPORT_STATUSES = ["preserved", "transformed", "requires-setup", "unsupported", "blocked"]`
-- `COPILOT_INSTRUCTION_LIMIT` (value from V2)
+- `COPILOT_INSTRUCTION_LIMIT = 8000`
 - `COPILOT_WEBSEARCH_SITE_LIMIT = 4`
 - `AGENTPRISE_EXTENSION_KEY = "org.depressioncenter.agentprise"`
 - `STORAGE_DB = "agentprise-projects"`, `STORAGE_WORKSPACE_KEY = "agentprise-workspace-v2"`

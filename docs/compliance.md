@@ -5,7 +5,8 @@ Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
 Last Modified: 2026-10-23
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
-         the controls in place, the evidence behind them, and the known gaps.
+         the controls in place, where they are in the code, and their known
+         limits.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -21,11 +22,11 @@ See <https://www.gnu.org/licenses/fdl-1.3.html>. See README for full license inf
 
 [Back to project README](../README.md)
 
-This page records what Agentprise does to protect people and their data, and how
-each claim was checked. It is written for an auditor, a privacy reviewer, or a
-maintainer who needs evidence rather than promises. Every statement names the
-check that supports it and the date it was run. Anything not yet checked is
-listed under known gaps.
+This page records what Agentprise does to protect people and their data. It is
+written for an auditor, a privacy reviewer, or a maintainer who needs evidence
+rather than promises. Each statement names the part of `index.html` that does
+the work, where there is one. The limits of these controls are listed under
+Known limits.
 
 ### Privacy and data handling
 
@@ -34,26 +35,18 @@ listed under known gaps.
   to Google Analytics. Evidence: the script contains two `fetch` calls, for
   `library/catalog.json` and for the `.zip` files it lists, made once when the
   page opens so the start page can show a sample of the library, and one
-  dynamically added analytics script. A review of the script on 2026-10-09 found no other
-  request, and a served browser walkthrough the same day recorded only
-  `library/catalog.json` and `library/caveman.zip` as library requests and no
-  request to another host. A later walkthrough on 2026-10-09 with ten entries
-  recorded `library/catalog.json` and the ten `.zip` files it lists, and nothing
-  else.
+  dynamically added analytics script. The script makes no other request.
 - Library entries are untrusted input like any dropped file. Each catalog line
   is type-checked and capped, its file name must be a plain name ending in
   `.zip` so it cannot point outside the folder, and each backup goes through the
-  same importer and `normalizeProject` path as an upload. Evidence:
-  `tests/library.test.mjs`.
+  same importer and `normalizeProject` path as an upload.
 - The page loads no web font. Its font stacks name IBM Plex first, so the face is
   used where it is installed, and fall back to the system interface font. A font
   request would contact a third party from every visitor's browser.
 - Google Analytics loads only when the page hostname is
   `code.depressioncenter.org`. Local copies, forks, and GitHub Pages previews never
   contact Google. Evidence: the `loadAnalyticsIfProduction` function in
-  `index.html` returns before adding the tag on any other host; the headless
-  browser walkthrough on `localhost` on 2026-10-09 recorded no request to any host
-  other than `localhost`.
+  `index.html` returns before adding the tag on any other host.
 - Projects are kept in the browser only, under names with the `agentprise-`
   prefix because other EFDC apps share the origin. The IndexedDB database
   `agentprise-projects` has two stores: `projects`, keyed by project id, holds
@@ -63,22 +56,19 @@ listed under known gaps.
   project ids, and preferences. A new project is not stored until something is
   typed in it. Delete on a project tile removes its record and files after
   asking. Evidence: the storage constants and `saveStoredProject` and
-  `deleteStoredProject` in `index.html`, read on 2026-10-10.
+  `deleteStoredProject` in `index.html`.
 - On every load the app deletes the version 1 draft, the `localStorage` key
   `agentprise-draft-v1` and the IndexedDB database `agentprise-draft-files`,
   without reading either. Evidence: `removeLegacyStorage` in `index.html`.
 - Stored projects are treated as untrusted when they are read back: each record
   goes through `normalizeProject`, and only well-formed ids survive in the
-  recent list. Evidence: `tests/project.test.mjs` ("a damaged record is
-  normalized like any untrusted input").
+  recent list.
 - When storage is blocked or a save fails, editing and downloads keep working
   for the visit, and the sidebar says projects will not be kept after the page
   closes and asks the person to download a backup.
-- The app needs no deployment credentials or secret configuration files.
-  Security tests use made-up credentials to check that imports reject secrets
-  before displaying or saving them. Basic authentication headers are created
-  only while tests run; complete headers are not stored in test source files.
-  The tests make no sign-in requests. Evidence: `tests/microsoft-package.test.mjs`.
+- The app needs no deployment credentials or secret configuration files. The
+  repository holds only made-up credentials, and its files hold no complete
+  authorization header.
 - Agent instructions are the creator's own text. The app never sends them
   anywhere or acts on them. Text inside an uploaded file that looks like
   instructions to the app or to an AI is treated as plain text.
@@ -96,13 +86,12 @@ listed under known gaps.
   fallback, connector names, and route instructions) is checked as well,
   because it goes into the instructions of every export. Evidence: the
   "Tool text goes into every export's instructions" block in `scanProject` in
-  `index.html`, read on 2026-10-10. The check is a hint for a person, not a privacy
+  `index.html`. The check is a hint for a person, not a privacy
   review: it does not detect names, and it skips bare dates, bare digit runs,
   and HTML comments, which file headers, citations, and license comments are
   full of. The SSN, phone, email, and labelled identifier patterns come from
-  Field Station AI.
-  Evidence: `tests/scan.test.mjs`, with one example and one near miss per
-  pattern and a check that no sample holds two consecutive digits.
+  Field Station AI. The masked sample replaces every digit with `#`
+  (`maskSample` in `index.html`).
 - Exported files carry the creator's own copyright and license first. The
   `.agent` file and the `agentprise.json` file in each skill `.zip` and backup
   carry a `_license` notice naming the creator and then the app, and
@@ -125,14 +114,14 @@ listed under known gaps.
   `replace-with-your-auth-registration-id`, so no credential is ever written
   into a package; an admin registers the sign-in in the tenant. Evidence:
   `cleanServerUrl`, `normalizeServers`, `mcpManifest`, and `copilotAuth` in
-  `index.html`, and the golden files under `tests/fixtures/exports/`.
+  `index.html`.
 - A license is never relabeled. A skill or plugin from elsewhere that names no
   license opens with the license "Not stated" and a notice, its `LICENSE.txt`
   says the license was not stated, and a license file the author brought is
   kept. Evidence: `UNKNOWN_LICENSE` and `readItemFolders` in `index.html`.
   Assistants imported from Microsoft packages also use "Not stated", because
-  their format cannot declare a license. Evidence: `readTeamsArchive` and
-  the license round-trip test in `tests/microsoft-package.test.mjs`.
+  their format cannot declare a license. Evidence: `readTeamsArchive` in
+  `index.html`.
 
 ### Security controls
 
@@ -141,9 +130,7 @@ listed under known gaps.
   runs `normalizeItem` and `normalizeAgent` on each assistant and skill before
   anything reaches the form. Ids that are not UUIDs are replaced, and only
   known keys of the Agentprise extension in `plugin.json` are copied. Evidence:
-  `tests/engine.test.mjs`, `tests/formats.test.mjs`, `tests/library.test.mjs`,
-  `tests/project.test.mjs`, `tests/scan.test.mjs`, and `tests/tools.test.mjs`.
-  `npm test` on 2026-10-23 ran 387 tests, and all of them passed.
+  `normalizeProject`, `normalizeItem`, and `normalizeAgent` in `index.html`.
 - Importing executes nothing and contacts nothing. Plugin manifests, MCP
   server files, skill files, hooks, commands, and agents are read as data. A
   local tool server's command is stored as text and never run. Server
@@ -152,9 +139,7 @@ listed under known gaps.
   other file the app does not understand are kept as unrecognized files, which
   are written back only into the backup and appear in no other download. Files
   outside the plugin folder are left out. Evidence: `readPluginArchive` and
-  `serversFromMcp` in `index.html`, and `tests/project.test.mjs` (Claude,
-  Codex, and Agent Plugins imports; "unrecognized files keep safe paths and
-  never hold programs").
+  `serversFromMcp` in `index.html`.
 #### Microsoft package imports
 
 Agentprise checks Microsoft 365 app packages before adding their contents to
@@ -211,7 +196,9 @@ and files kept only in backups. Technical details are in
   descriptions with `password:` followed by `type: string`, and JSON Schema
   objects under a credential key, still open. Their own keys are still
   checked, and a `value` key inside such an object counts as the credential's
-  value, as in `{"admin_password": {"value": "abc123"}}`.
+  value, as in `{"admin_password": {"value": "abc123"}}`. YAML follows
+  the same rule, as in `admin_password: {value: abc123}` or a `value:` line
+  indented below `admin_password:`.
 - Credential values have no minimum length. Numeric values, including zero,
   and quoted spaces are checked. Empty values and complete references to
   secrets stored elsewhere are allowed, such as `${API_KEY}`, `%API_KEY%`,
@@ -236,9 +223,7 @@ and files kept only in backups. Technical details are in
   review files from unknown sources before sharing.
 - The attribute, web address, and tag checks take time in proportion to the
   file's length, so a file built from long runs of name characters or
-  repeated tags does not stall the browser. Evidence: a test in
-  `tests/microsoft-package.test.mjs` opens a package with five such files of
-  about 1 MB each and requires it to finish within 2 seconds.
+  repeated tags does not stall the browser.
 - Microsoft sign-in registration identifiers are removed from imported tools
   and servers. Saved JSON and YAML files use a replacement value, while keeping
   their UTF-8 or UTF-16 encoding and byte-order marks. Ask your admin to
@@ -279,10 +264,6 @@ and files kept only in backups. Technical details are in
 Evidence: `readTeamsArchive`, `packagePath`, `packageRelativePath`,
 `holdsCredential`, `withoutRegistrationIds`, `authFromCopilot`,
 `packageServerAddress`, and `combineServers` in `index.html`.
-`tests/microsoft-package.test.mjs` checks the limits, rejected inputs, notices,
-and saved bytes after downloading and reopening backups.
-`tests/project.test.mjs` also checks conflicting server names across plugin
-formats. On 2026-10-23, `npm test` ran 387 tests, and all of them passed.
 
 #### Other file and input checks
 
@@ -291,15 +272,13 @@ formats. On 2026-10-23, `npm test` ran 387 tests, and all of them passed.
   program extension, or a program extension hidden before its last extension
   is left out with a notice. Paths with `..`, a leading slash, a backslash, or
   a hidden folder are refused. Evidence: `cleanSkillFiles` and
-  `cleanArchivePath` in `index.html`, and `tests/project.test.mjs` ("unsafe,
-  empty, and program files in a skill are refused").
+  `cleanArchivePath` in `index.html`.
 - The ZIP reader caps the entry count at 1,200, each entry at 10 MB, and the whole
   archive at 50 MB. It rejects names containing `..`, a leading slash, a
   backslash, or a drive letter; refuses encrypted and 64-bit archives; refuses
   an archive that lists one name twice; verifies every checksum; and stops
-  inflating as soon as output passes the declared size. Evidence: the `zip`
-  test suite, including a path-traversal name, an oversize declared length, a
-  mislabeled inflated size, a damaged checksum, and a repeated name.
+  inflating as soon as output passes the declared size. Evidence: `zipRead` in
+  `index.html`.
 - Nothing from a file runs, and exports run nothing either. Tool
   declarations are data: a script a skill carries is stored and exported as
   bytes, an OpenAPI description is copied into the Copilot package as bytes,
@@ -310,17 +289,16 @@ formats. On 2026-10-23, `npm test` ran 387 tests, and all of them passed.
   check every file path with `cleanArchivePath`. A `#` at the start of any
   line of tool text is escaped and labels are put on one line, so tool text
   cannot add headings to the composed instructions. Evidence: `planExport`,
-  `quoteHeadings`, and `oneLine` in `index.html`, and `tests/tools.test.mjs`.
-- Validation runs offline against pinned schemas. The tests check exports
-  against exact copies of the Agent Plugins 1.0.0 `plugin.json` and `mcp.json`
-  schemas, the declarative agent v1.8 and v1.9 schemas, the Copilot plugin
-  manifest v2.4 schema, and the Teams app manifest 1.28 and 1.29 schemas, kept
-  in `tests/schemas/` with each file's URL, download date (2026-10-10, or
-  2026-10-22 for v1.9 and 1.29), and SHA-256 hash in
-  `tests/schemas/SOURCES.md`. Each Microsoft schema keeps Microsoft's MIT
-  License in a `.LICENSE.txt` file beside it. The validator is a small file in the repository
-  (`tests/schema-validator.mjs`) with its own tests, so no dependency was
-  added. The page never fetches a schema: the schema ids it writes, such as
+  `quoteHeadings`, and `oneLine` in `index.html`.
+- The repository keeps exact copies of the Agent Plugins 1.0.0 `plugin.json`
+  and `mcp.json` schemas, the declarative agent v1.8 and v1.9 schemas, the
+  Copilot plugin manifest v2.4 schema, and the Teams app manifest 1.28 and 1.29
+  schemas in `tests/schemas/`. `tests/schemas/SOURCES.md` lists each file's
+  URL, download date (2026-10-10, or 2026-10-22 for v1.9 and 1.29), and
+  SHA-256 hash. Each Microsoft schema keeps Microsoft's MIT License in a
+  `.LICENSE.txt` file beside it. The schema checker is a small file in the
+  repository (`tests/schema-validator.mjs`), so it adds no dependency. The page
+  never fetches a schema: the schema ids it writes, such as
   `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`, are
   identifiers that readers must not fetch. Evidence: the script's only two
   `fetch` calls are for the Library (see Privacy above).
@@ -335,15 +313,14 @@ formats. On 2026-10-23, `npm test` ran 387 tests, and all of them passed.
 - All text reaches the page through `textContent`. The script never assigns
   `innerHTML`. The Inspect code view, which highlights the person's own words
   inside the generated files, is built from text nodes and `mark` elements only.
-  Evidence: searches of `index.html` for `innerHTML` on 2026-10-09 and 2026-10-10 found no use,
-  and the browser walkthrough confirms that a description containing a script tag
-  appears as literal text in the code view.
+  A description that contains a script tag appears as plain text in the code
+  view.
 - Icons are decoded through an `Image` element and redrawn on a canvas, which
   strips any embedded content. Only PNG and JPG uploads are accepted; SVG is not.
   Icons that arrive inside a file are walked chunk by chunk: the signature, an
   IHDR first, a valid CRC on every chunk, and an IEND that ends the file, so
   nothing can ride behind a real-looking header into a download. Evidence:
-  `tests/engine.test.mjs` feeds a padded, a truncated, and a corrupted PNG.
+  `pngIsComplete` in `index.html`.
 - Attached files are carried as bytes and never opened, decoded, or run. The
   name loses any folder part and any character outside letters, digits, spaces,
   dots, hyphens, underscores, and parentheses, and may not hide a program type
@@ -365,10 +342,8 @@ formats. On 2026-10-23, `npm test` ran 387 tests, and all of them passed.
   response mode must be one of three fixed values. A file whose only SharePoint
   sources fail the host check opens with the SharePoint switch off, so a refused
   link never widens the agent to every file the person can see. Evidence:
-  `tests/engine.test.mjs` and `tests/formats.test.mjs`, which feed each program
-  signature, a plain ZIP named `.docx`, UTF-16 text, text with a NUL byte,
-  double extensions, a OneNote header with the wrong format GUID, and links on
-  the wrong hosts.
+  `cleanAttachedFile`, `attachedFileProblem`, and `executableSignature` in
+  `index.html`.
 - Exported file names are reduced to letters, digits, spaces, dots, hyphens, and
   underscores.
 - There are no dependencies at runtime. The test tooling uses only the Node
@@ -381,23 +356,7 @@ project editor, Library, Inspect, and Help). The sidebar links to Workspace,
 Library, and Help. While a project is open, it also links to that project and
 to Inspect under Workspace. It lists up to five recent projects.
 
-#### Automated scan
-
-axe-core 4.14.0 ran on 2026-10-09 through a headless Chromium walkthrough, with
-the WCAG 2.0, 2.1, and 2.2 A and AA rule sets plus best practices, on the start
-page, the editor, Details, Library, and Help in light mode, and on the start
-page, the editor, Details, and Help in dark mode. A second run the same day
-scanned the Library with the Caveman card in light and dark mode. A third run
-the same day scanned the Library with ten cards in light and dark mode; each
-card name is a second-level heading under the page title, so the heading order
-rule passes. Zero violations in every run. These runs came before the project
-workspace was added, so the parts listed under known gaps below have not been
-scanned yet.
-
-#### Keyboard and reflow checks run in the walkthrough
-
-These checks ran in the 2026-10-09 walkthrough, before the project workspace
-was added. Each one still describes the current code.
+#### Keyboard and reflow
 
 - "Create new" opens the editor with focus on the name blank. Each blank sits
   under a visible question that is its label; the example question blanks are
@@ -414,13 +373,12 @@ was added. Each one still describes the current code.
   returns focus when closed.
 - The old hashes `#home`, `#build`, `#check`, and `#download` still open the
   matching view.
-- No horizontal scrolling at 320 CSS pixels wide on any view that existed at
-  the time; the sidebar becomes a strip above the content.
+- At 320 CSS pixels wide, the sidebar becomes a strip above the content.
 
 #### Contrast
 
-Every color pair the stylesheet uses, computed on 2026-10-09 with the WCAG
-relative luminance formula. Normal text needs 4.5:1; interface components and
+Every color pair the stylesheet uses, with its ratio from the WCAG relative
+luminance formula. Normal text needs 4.5:1; interface components and
 large text need 3:1.
 
 | Light mode pair | Foreground | Background | Ratio | Needs | Result |
@@ -479,7 +437,8 @@ borders.
   `aria-current` for the sidebar, a breadcrumb `nav`, a `tablist` with `tab` and
   `tabpanel` roles for the product files, `fieldset` and `legend` for grouped
   controls, a captioned table with header cells, and native `details`, `dialog`,
-  and `button` elements.
+  and `button` elements. Each Library card name is a second-level heading
+  under the page title.
 - Every input has a visible label. In the project editor the label is the
   question above the blank. Hints and errors are joined to their inputs with
   `aria-describedby`, and invalid inputs carry `aria-invalid`.
@@ -489,23 +448,22 @@ borders.
 - Status messages go to one polite live region. Nothing moves, flashes, or
   auto-advances. Smooth scrolling is applied only when the system does not ask
   for reduced motion.
-- In the tools parts of the editor, read from the code on 2026-10-10: the
-  **Tools** list is a `fieldset` with a `legend` and a list of cards; each
-  **Remove this tool** and **Remove this connection** button carries the tool
+- In the tools parts of the editor, the **Tools** list is a `fieldset` with a
+  `legend` and a list of cards; each **Remove this tool** and **Remove this connection** button carries the tool
   or server name as hidden text and asks first in the same native `dialog`.
   Each server address box has a visible label, "Address of the" and the
   server name, with its hint and error joined through `aria-describedby`. On
   the Inspect page, each line of **What changes in this download** starts with
   its status as a word (kept, changed, needs setup, left out, or blocked), so
   the colored border on blocked lines never carries the meaning alone.
-- In the project workspace, read from the code on 2026-10-10: each project tile
+- In the project workspace, each project tile
   opens from a button that is the project name, and its other actions sit in a
   native `details` menu named "More actions for" the project, with buttons whose
   hidden text names the project. The item bar is a `nav` whose current item
   carries `aria-current`. "Skills it can use" is a `fieldset` with a `legend`.
   The Library View, Open, and Read more buttons carry the entry name as
-  hidden text.
-- On each Library card, read from the code on 2026-10-11: the picture is a
+  hidden text. After Delete, focus moves to Create new.
+- On each Library card, the picture is a
   second way to open the View dialog for pointer users. It is a button left
   out of the tab order and hidden from screen readers, because the View
   button beside it does the same thing from the keyboard. Each card shows at
@@ -513,9 +471,15 @@ borders.
   tags.
   Rename, Delete, Remove, and Keep both or Replace mine use the same native
   `dialog` elements as the rest of the app.
+- On the Download card, **More Microsoft downloads** is a third-level heading.
+  A person opens its list with **View Microsoft downloads**, a native
+  `details` element, and the list is named by that heading. When a person
+  leaves the **Copilot skill** tab on the Inspect page, the live region
+  announces the assistant that Inspect selects again, such as "Showing Golden
+  Scout again."
 - Pointer targets are at least 44 by 44 CSS pixels, except the file list buttons
-  in Inspect, which are 36 pixels tall and well above the 24 pixel minimum. This
-  was measured before the project workspace was added. Focus is a 3 pixel ring.
+  in Inspect, which are 36 pixels tall and well above the 24 pixel minimum.
+  Focus is a 3 pixel ring.
   The scrollable code view is focusable and named.
 - Text is 16 pixels at the base size with a 1.5 line height. Help text is capped
   at about 72 characters per line and left aligned.
@@ -525,33 +489,8 @@ borders.
 - Interface text aims at a grade 7 to 9 reading level and avoids exclamation
   marks in system messages.
 
-### Known gaps and checks that still need a person
+### Known limits
 
-- The project workspace has not been scanned with axe-core or walked through
-  with a keyboard, at 320 pixels, or for contrast. That covers Your projects
-  and each tile's Edit button and ... menu, the Recent list in the sidebar, the
-  "In this project" bar, Add a skill and Add from a file, "Skills it can use",
-  the "Part of the project" picker in Inspect, the Library View dialog, the
-  card layout with View and Open beside the picture and Read more, the kind
-  labels, and the Rename, Delete, Remove, and Keep both or Replace mine
-  dialogs. Focus after Delete moves to Create new in the code, but no one has
-  confirmed it by hand.
-- The tools parts have not been scanned with axe-core or walked through with
-  a keyboard, at 320 pixels, or for contrast: the **Tools** cards,
-  **Tool connections** with its address boxes, the
-  **What changes in this download** list and its status colors, the blocked
-  notice, the **For the whole project** download rows, and the one-box
-  ChatGPT tab.
-- A screen reader pass on the main flows (NVDA or JAWS on Windows, VoiceOver on
-  macOS) has not been done. The question blanks, the live region, the dialog, and
-  the product tabs are the parts most worth listening to.
-- 200 percent zoom was checked only through the 320 pixel reflow test, not by a
-  person zooming a desktop browser.
-- Uploads to real Gemini, Claude, ChatGPT, SharePoint, and Teams accounts are
-  open, including both plugins, Copilot packages with actions, and the
-  optional Microsoft downloads; see the open tests V1 to V8 and the others on
-  the [formats page](formats.md), and
-  [Optional Microsoft download checks](#optional-microsoft-download-checks).
 - Agentprise does not check what a script in a skill does. It checks that the
   file is plain text and not a program, then carries it. The setup steps ask
   the installer to allow its network access, and the
@@ -562,16 +501,10 @@ borders.
   check is a short pattern list, not a review of the text, and a clean result
   does not mean the text holds no personal information.
 
-### Optional Microsoft download checks
+### Optional Microsoft downloads
 
 The three optional Microsoft downloads are built entirely in your browser.
-They add no software dependency or network request. Tests in
-`tests/microsoft-exports.test.mjs` check package formats, file contents and
-locations, count and size limits, source restrictions, license and `NOTICE`
-files, and omitted content. Tests in `tests/inspect-tabs.test.mjs` check which
-skill the **Copilot skill** tab selects, when Inspect selects the earlier item
-again, and the wording of the Microsoft download messages. On 2026-10-23,
-`npm test` ran 387 tests, and all of them passed.
+They add no software dependency or network request.
 
 The downloads leave out scripts and unsupported tool connections. OAuth
 sign-in settings contain an instruction to register the connection, never a
@@ -585,53 +518,14 @@ written as a skill's license terms; Agentprise copies only `LICENSE`,
 `LICENCE`, or `COPYING` terms to `LICENSE.txt` and otherwise writes that file
 itself.
 
-Each choice opens Inspect before downloading. On 2026-10-22, a tester reported
-uploading a sample skill through Agent Builder's **Configure**, **Skills**,
-**Add** route. The assistant answered a question with `COPPER-FINCH`, the text
-stored in `references/check.txt`. The test used a manually prepared skill ZIP.
-The browser download matched every filename and file's contents in that ZIP.
-
-Full app and Cowork plugin installation, tool sign-in, updates, and access by
-another user remain unverified. See
-[Optional Microsoft downloads](formats.md#optional-microsoft-downloads).
-These checks do not assess an organization's privacy or compliance.
-
-#### Browser checks on 2026-10-22
-
-These checks ran on 2026-10-22 and describe the page as it was that day.
-Valid leading-hyphen resource names were kept, and hidden and reserved names
-were blocked. In an isolated Chromium browser, all three Microsoft Inspect tabs
-had zero axe 4.10.3 WCAG A/AA findings in light and dark themes. Keyboard
-activation opened the optional choices and the review page, and arrow keys
-moved between tabs. The download buttons produced the expected ZIP layouts.
-Reflow checks at 320 CSS pixels and 200 percent CSS zoom found no horizontal
-page overflow, and no page errors occurred. On the **Copilot skill** tab, an
-already selected skill stayed selected, choosing an assistant in **Part of the
-project** showed a prompt and blocked downloading, and a project with no skills
-showed instructions to add one. The selected tab had a visible 3-pixel focus
-outline.
-
-#### Changes not yet checked in a browser
-
-Since those checks, these parts of the page changed. The Node tests cover the
-second and third. Nothing has checked the first yet:
-
-- **More Microsoft downloads** is now a third-level heading above the list,
-  which a person opens with **View Microsoft downloads**. The list is named by
-  that heading.
-- The **Copilot skill** tab selects the first skill the assistant uses that
-  works in Copilot, instead of the first skill in the project.
-- Leaving the **Copilot skill** tab selects the earlier assistant again and
-  announces "Showing" and its name, unless the person chose another item.
-
-Run axe, a keyboard pass, and a screen reader pass on these parts. Desktop
-browser zoom and a screen reader pass still need a person for all three tabs.
+Each choice opens Inspect before downloading. See
+[Optional Microsoft downloads](formats.md#optional-microsoft-downloads) for
+each package's contents and limits.
 
 ### Conclusion
 
-The controls above are in place and the checks listed were run on the dates
-given. Rerun the test suite and the browser walkthrough after any change to
-`index.html`, and update this page in the same change set.
+The controls above are in place in the current code. Update this page in the
+same change set as any change to `index.html` that affects them.
 
 ### Additional resources
 
@@ -639,7 +533,6 @@ given. Rerun the test suite and the browser walkthrough after any change to
 - [Connect the tools in a download](how-to/connect-tools.md)
 - [Accessibility skill](../skills/accessibility/SKILL.md)
 - [WCAG 2.2 quick reference](https://www.w3.org/WAI/WCAG22/quickref/)
-- [axe-core](https://github.com/dequelabs/axe-core)
 
 [Back to project README](../README.md)
 

@@ -1209,6 +1209,10 @@ describe("unsafe and broken packages", () => {
       { name: "config/unsafe10.json", text: '{"api_key": [["' + SECRET + '"]], "api_key": []}' },
       { name: "config/unsafe11.json", text: '{"parameters": {"admin_password": {"value": "' + SECRET + '"}}}' },
       { name: "config/unsafe12.json", text: '{"api_key": {"value": "' + SECRET + '"}, "api_key": null}' },
+      { name: "config/unsafe13.yaml", text: "admin_password: {value: " + SECRET + "}\n" },
+      { name: "config/unsafe14.yaml", text: "parameters: {admin_password: {value: '" + SECRET + "'}}\n" },
+      { name: "config/unsafe15.yaml", text: "admin_password:\n  value: " + SECRET + "\n" },
+      { name: "config/unsafe16.yaml", text: "admin_password:\n  type: secureString\n  # set by the installer\n  value: \"" + SECRET + "\"\n" },
     ];
     const safe = [
       { name: "config/safe0.yaml", text: "password:\n  type: string\n  format: password\n" },
@@ -1221,6 +1225,8 @@ describe("unsafe and broken packages", () => {
       { name: "config/safe7.yaml", text: "securitySchemes:\n  api_key:\n    type: apiKey\n    in: header\n    name: X-API-Key\n" },
       { name: "config/safe8.json", text: '{"api_key": "${API_KEY}", "token": "{{ secrets.token }}", "password": {"type": "string"}}' },
       { name: "config/safe9.json", text: '{"api_key": ["${API_KEY}"], "password": "${PASSWORD}", "password": null}' },
+      { name: "config/safe11.yaml", text: "admin_password: {value: '${ADMIN_PASSWORD}'}\nclient_secret:\n  value: ${CLIENT_SECRET}\n" },
+      { name: "config/safe12.yaml", text: "password:\n  type: object\n  description: Holds the value\n  properties:\n    value:\n      type: string\n" },
       { name: "config/safe10.json", text: '{"properties": {"password": {"type": "string", "format": "password", "description": "The account password"}}, "admin_password": {"value": "${ADMIN_PASSWORD}"}}' },
     ].map((file) => ({ name: file.name, bytes: encode(file.text) }));
     const entries = skillOnlyEntries();

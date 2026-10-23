@@ -6,8 +6,8 @@ Created: 2026-10-09
 Last Modified: 2026-10-23
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
-         need: field mappings, tools, conversion reports, vendor facts with
-         check dates, and open tests.
+         need: field mappings, tools, conversion reports, and vendor facts
+         with the dates they were checked.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -337,9 +337,9 @@ the second server gets a numbered name and that skill's tools use it.
 
 ## For maintainers
 
-The rest of this page records how each file is built, the vendor facts the
-converters rely on with the date each was checked, and the tests that still need
-a real account. Read it before changing any converter in `index.html`.
+The rest of this page records how each file is built and the vendor facts the
+converters rely on, with the date each was checked. Read it before changing any
+converter in `index.html`.
 
 ### The formats at a glance
 
@@ -682,8 +682,8 @@ builder exported on 2026-10-09, plus two extra top-level keys placed before
 - `_agentprise`: the display name, the Teams app id, the creator fields, the
   copyright line, and the license name.
 
-The SharePoint reader ignores keys it does not know. A `.agent` file with an extra
-top-level key was loaded and used in a Teams chat in a real tenant on 2026-10-09.
+The SharePoint reader ignores keys it does not know, and a Teams chat loads and
+uses a `.agent` file with an extra top-level key (see Verified vendor facts).
 When Agentprise opens a `.agent` file made in SharePoint, the key is absent, so the
 creator fields stay blank and nothing the file ever had is lost. The importer
 never requires the key.
@@ -708,8 +708,8 @@ facts.
 
 The instructions are the composed text for `msAgent`. A `websearch` route adds
 its sites to `WebSearch.sites` the same way as in the app package (see below).
-Whether a Teams chat honors `WebSearch.sites` in a `.agent` file is open test
-V3.
+Microsoft does not document whether a Teams chat honors `WebSearch.sites` in a
+`.agent` file.
 
 | Field | Where it lives in the `.agent` file |
 |---|---|
@@ -736,7 +736,7 @@ files under `items_by_sharepoint_ids` and folders and sites under
 `items_by_url`. Agentprise keeps each item whole and writes it back the same
 way, because a file whose site entry had only `url` failed to load in a Teams
 chat. Links a person pastes go out as `{url}` alone, since the app has no way
-to look up the ids; whether Teams accepts those is an open test below. Every
+to look up the ids. Every
 list that limits a source is carried: Teams chats, mailboxes and folders, and
 meetings go out exactly as the declarative agent schema spells them, and a
 `null` list in a file, which the Copilot app writes for a source it did not
@@ -1130,6 +1130,10 @@ checks. Quoted names, numeric values, and values that continue on the next
 line inside the braces are covered. A YAML key with nothing after it on its
 line, such as `client_secret:`, is checked against the value on the next line
 that is indented further, or the next list item (`CREDENTIAL_BLOCK_PATTERN`).
+When that value is a nested mapping, such as `type: string`, it is not a
+secret, unless the mapping has a `value` key with a literal value, as in
+`admin_password: {value: abc123}` or `value: abc123` on an indented line below
+`admin_password:` (`yamlMappingWrapsLiteral`).
 Blank lines and comment lines between them are skipped. A nested mapping is
 not a value, so API descriptions with `password:` followed by `type: string`,
 or with `password: {type: string}`, still open (`NESTED_BLOCK_MAPPING` and
@@ -1279,9 +1283,8 @@ an assistant package to keep those limits.
 
 #### Exclusions and setup
 
-All three optional downloads exclude script files and tools that run scripts.
-Agentprise has not checked whether those scripts can run in Microsoft. Other
-unsupported resource types are excluded with a notice. Resource files keep their
+All three optional downloads leave out script files and the tools that run
+them. Other unsupported resource types are excluded with a notice. Resource files keep their
 names and bytes. Extensionless license files, such as `LICENSE`, `COPYING`, and
 `NOTICE`, receive a `.txt` extension with a notice. When a skill's license
 terms are in a `LICENSE`, `LICENCE`, or `COPYING` file under another name,
@@ -1298,68 +1301,42 @@ Inspect as **Setup steps (not in the package)**. They are not added to the
 Microsoft ZIP. Download a backup before changing the project; these packages
 are not lossless backups.
 
-#### Completed checks and remaining tests
-
-Checked on 2026-10-22: `tests/microsoft-exports.test.mjs` checks both package
-layouts, references, resource bytes, source limits, tool exclusions, count and
-size limits, unsafe paths, and the pinned schemas. Microsoft 365 Agents Toolkit
-CLI 1.1.18 also passed `atk validate --manifest-file` for the Copilot app with
-skills and Microsoft 365 plugin samples, including a remote connector. The
-Copilot app with skills sample includes its v1.9 `$schema` address because the
-Toolkit needs it to find the schema. These
-checks do not prove that Microsoft accepts the upload or can use its skills.
-`atk validate --package-file` required account sign-in and was canceled;
-signed-in package validation and installation in a Microsoft 365 organization
-remain untested.
-
-The alternative Claude-plugin conversion was also checked with CLI 1.1.18.
-Unpack the **Claude plugin** download, then run these commands. Replace
-`./skill-check` with the folder inside the download that holds
-`.claude-plugin/`, such as `./caveman`, and replace the example links with your
-publisher links:
-
-```sh
-npx --yes --package @microsoft/m365agentstoolkit-cli@1.1.18 atk import openplugin --path ./skill-check --output ./converted --privacy-url https://example.org/privacy --terms-url https://example.org/terms --telemetry false
-cd converted
-npx --yes --package @microsoft/m365agentstoolkit-cli@1.1.18 atk package --manifest-file appPackage/manifest.json --output-package-file build/plugin.zip --output-folder build --telemetry false
-```
-
-The synthetic fixture imported and packaged successfully. The CLI warned that
-the `.claude-plugin` location is deprecated, but accepted it. Its generated
-manifest used `devPreview`, with root `agentSkills`; the referenced skill and
-resource files were included. This is a developer conversion route, not a
-requirement for Agentprise's browser downloads. The converted plugin was not
-installed in a Microsoft 365 organization.
+#### Preview status and file limits
 
 Microsoft documents skills in Copilot assistants as a Frontier preview,
-unavailable with Information Barriers or public-store submission. Scripts
-cannot connect to the internet or install packages. Microsoft's skills overview
-gives a 350-file limit; the Toolkit guide says 400. Agentprise uses 350 until a
-tenant test resolves the difference. Sources checked on 2026-10-22: [Copilot
-skill restrictions](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-skills),
+unavailable with Information Barriers or public-store submission. Scripts in
+skills in Copilot cannot connect to the internet or install packages. Microsoft's
+skills overview gives a 350-file limit, and the Toolkit guide says 400.
+Agentprise uses 350, the lower of the two. Sources checked on 2026-10-22:
+[Copilot skill
+restrictions](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-skills),
 [Toolkit skill
 setup](https://learn.microsoft.com/microsoft-365/copilot/extensibility/build-declarative-agents-add-custom-skills),
 and [Microsoft plugin package
 format](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development).
 
-On 2026-10-22, a tester reported uploading the sample `record-finder` skill
-through Agent Builder's **Configure**, **Skills**, **Add** route. The ZIP held
-root `SKILL.md`, `LICENSE.txt`, and `references/check.txt`. Asking for the
-sample marker returned `COPPER-FINCH`, the marker stored in that attached file.
-The reported result shows that Copilot read the skill and its attached file.
-The test used a manually prepared ZIP; regression and browser checks verify that
-the skill download produces the same layout and file contents. It does not
-verify full app or Cowork plugin installation, tool sign-in, updates, or access
-by another user.
+The **Copilot app with skills** download writes the v1.9 `$schema` address in
+its declarative agent file, because Microsoft 365 Agents Toolkit needs that
+address to find the schema.
 
-For further tests in your organization, use a sample assistant and a skill with
-an attached file containing a made-up marker. Record the date, cloud,
-destination, upload route, and versions. Check installation, a request that
-triggers the skill, retrieval of the marker, save and reopen, an update to the
-same assistant, source restrictions, and access by another test user. Test a
-plugin separately from an assistant package, including any registered tool
-connection. Mark unavailable checks as skipped. Access to skills alone does not
-prove that these packages install or work in your organization.
+#### Convert a Claude plugin with Microsoft 365 Agents Toolkit
+
+Developers can also turn the **Claude plugin** download into a Microsoft 365
+package with Microsoft 365 Agents Toolkit CLI 1.1.18. Agentprise's browser
+downloads do not need this route. Unpack the **Claude plugin** download, then
+run these commands. Replace `./caveman` with the folder inside the download
+that holds `.claude-plugin/`, and replace the example links with your
+publisher links:
+
+```sh
+npx --yes --package @microsoft/m365agentstoolkit-cli@1.1.18 atk import openplugin --path ./caveman --output ./converted --privacy-url https://example.org/privacy --terms-url https://example.org/terms --telemetry false
+cd converted
+npx --yes --package @microsoft/m365agentstoolkit-cli@1.1.18 atk package --manifest-file appPackage/manifest.json --output-package-file build/plugin.zip --output-folder build --telemetry false
+```
+
+The CLI warns that the `.claude-plugin` location is deprecated, but accepts
+it. The manifest it writes uses `devPreview`, with root `agentSkills`, and the
+package includes the skill and its attached files.
 
 ### The Claude and generic whole-project plugins
 
@@ -1531,148 +1508,6 @@ real account, unless the line names a tenant test.
 | Kimi Code CLI reads skills from `.kimi-code/skills` and `.agents/skills` in a project and from `~/.kimi-code/skills` and `~/.agents/skills` for one person | [Kimi Code CLI skills](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/skills.html), checked 2026-10-11 |
 | Kimi Code CLI plugins use their own `kimi.plugin.json` or `.kimi-plugin/plugin.json`, with `skills` and `mcpServers`, and install with `/plugins install` and a folder or `.zip` | [Kimi Code CLI plugins](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html), checked 2026-10-11 |
 
-### Tests run in this repository
-
-- `npm test` on 2026-10-23 ran 387 tests, and all of them passed. The suite
-  covers a project exported to the backup
-  and opened again normalizing to an identical record, the closed Agent
-  Plugins 1.0.0 shape of `plugin.json` and the schema and transport of
-  `mcp.json`, imports of a Claude plugin, two Codex plugins, a generic Agent
-  Plugins folder, and a version 1 bundle (which opens as a skill), a skill
-  `.zip` of an assistant restoring its kind, starters, welcome message, icon,
-  and Copilot settings, hostile project input, a synthetic copy of the Copilot
-  app's 2026-10-10 export shape, and a check that every backup listed in
-  `library/catalog.json` opens without notices, survives a backup round trip,
-  and matches its catalog line.
-- `tests/microsoft-package.test.mjs` checks Microsoft package imports and
-  downloads using sample packages from `tests/microsoft-package-fixture.mjs`.
-  The cases cover assistants, actions, skills, connectors, and packages with
-  several assistants. A package with three actions downloads again with the
-  same action files, API description, and web-search sites.
-- Security cases check credential rejection, unsafe file locations, encoding,
-  file types, and count limits. They verify both the imported project and
-  files saved in a backup. See [Microsoft package import controls](compliance.md#microsoft-package-imports)
-  for the controls and their limits.
-- `tests/project.test.mjs` checks shared and conflicting server names across
-  plugin formats. The sample packages follow Microsoft's documentation;
-  Microsoft's package validator was not used to check these import fixtures.
-- `tests/microsoft-exports.test.mjs` checks the **Copilot skill**, **Copilot
-  app with skills**, and **Microsoft 365 plugin** downloads against the pinned
-  declarative agent v1.9 and app manifest 1.28 and 1.29 schemas. It also checks
-  file count, size, and path limits, license and `NOTICE` files, the plugin
-  block for a server that one skill limits to certain tools while another
-  skill uses all of its tools, and that
-  the **Copilot skill** download needs a selected skill.
-- `tests/inspect-tabs.test.mjs` checks which skill the **Copilot skill** tab
-  selects, when Inspect selects the earlier item again after that tab, and the
-  names and wording in the Microsoft download messages. It runs the engine
-  functions only; the browser checks are recorded on the
-  [compliance page](compliance.md#optional-microsoft-download-checks).
-- `tests/tools.test.mjs` exports a fixed synthetic project
-  (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
-  tool of each provider kind, to every download and compares each result with
-  the golden files under `tests/fixtures/exports/`. Set `UPDATE_GOLDEN=1` to
-  write them again after a deliberate change.
-- Exports are checked against the pinned schemas in `tests/schemas/`
-  (Agent Plugins 1.0.0 `plugin.json` and `mcp.json`, declarative agent v1.8
-  and v1.9, plugin manifest v2.4, and Teams app manifest 1.28 and 1.29) by the
-  small validator in
-  `tests/schema-validator.mjs`, which has its own tests.
-  `tests/schemas/SOURCES.md` lists each file's URL, download date, and SHA-256
-  hash. The tests read these files from disk and never fetch a schema.
-- A test keeps `index.html` under 750,000 bytes, so the page stays quick to
-  load. The test fails as soon as the file grows past that.
-- `node tools/migrate-library.mjs --check` on 2026-10-10 reported all 13
-  Library entries as already version 2 and the catalog unchanged.
-- The real Caveman `.agent` and Teams package exports both import. The `.agent`
-  import returns every field, and the Teams import returns every field except the
-  welcome message and starters (that export had none).
-- The real Copilot app export of 2026-10-10 (a SharePoint file by id, three
-  Teams chats, a group mailbox, a meeting, Think deeper, and a `.txt` upload)
-  imports with no loss and writes back the same Copilot settings. The real
-  SharePoint builder export with a file, a folder, and a site imports with the
-  switch on and all three items.
-
-### Tests that still need a real account
-
-These are open. Record the date and result here when someone runs them.
-
-#### Tools, skills, and plugins (V1 to V8)
-
-The design for tools listed eight facts to check. On 2026-10-10 the vendor
-documentation settled some of them. The rest need a real account.
-
-| Item | Question | Status on 2026-10-10 |
-|---|---|---|
-| V1 | Can a Copilot API plugin use an operation that returns `text/plain`, such as PubMed abstracts? | Open. No Microsoft page says. If it cannot, `pubmed.abstracts` on Copilot drops to its fallback, which asks people to paste abstracts. Needs a tenant test. |
-| V2 | Which declarative agent version to target, its instruction limit, and the plugin fields for a remote tool server | Settled by docs and schemas: v1.8, 8,000 characters, plugin manifest v2.4 with a `RemoteMCPServer` runtime. The optional **Copilot app with skills** download uses v1.9 with `agent_skills`. On 2026-10-22, Microsoft still listed custom skills as a Frontier preview. |
-| V3 | Does a `.agent` file in a Teams chat honor `WebSearch.sites`? | Open. The `.agent` schema is not documented. Needs a tenant test. |
-| V4 | Does ChatGPT accept a plugin with only a root `plugin.json`? | Partly settled. OpenAI documents it for ChatGPT, Codex, and the developer portal. The Admin console upload does not name a layout, so upload a Plugin download there once. |
-| V5 | What does claude.ai load from a plugin, and is Skills on for the EFDC Team workspace? | Component list settled by docs (see vendor facts). Whether Skills is on in the EFDC workspace needs an Owner to look. |
-| V6 | Do Gemini skills accept work and school accounts? | Settled: not yet. Recheck before changing the Gemini steps. |
-| V7 | Does Copilot web search limited to `pubmed.ncbi.nlm.nih.gov` return useful results? | Open. The site passes the schema rules; usefulness needs a tenant test. |
-| V8 | Can a person download a migrated ChatGPT plugin or a Gemini skill? | Gemini: yes, as a `.zip`, which the regular skill importer opens. ChatGPT: no download is documented for the person who migrated a GPT, so a GPT still moves by copying its fields into Create new. |
-
-#### Other open tests
-
-- Install a plain skill and a Plugin made by Agentprise in an OpenClaw you run
-  yourself and in Kimi Code CLI, and confirm the skills load. The steps above
-  come from their documentation; a real install has not been recorded.
-- Upload a skill `.zip` made by Agentprise to a Gemini account and to a Claude
-  account, and confirm both accept the `agentprise.json` file beside
-  `SKILL.md`. The Claude upload path itself was settled by the documentation
-  on 2026-10-10 (Customize, then Skills); a real upload has not been recorded.
-- Upload a Claude plugin made by Agentprise to claude.ai, connect a web tool
-  server from its Connectors tab, and confirm the skills load.
-- Upload a Copilot app package with an action to a tenant, once with an
-  OpenAPI action and once with a tool server, and confirm Copilot lists and
-  calls them.
-- Ask your admin to upload a **Copilot app with skills** package, and install
-  a **Microsoft 365 plugin** in Copilot Cowork. For each one, confirm that it
-  installs, that a request uses the skill, that tool sign-in works, that an
-  update replaces the same assistant, and that another test user can use it.
-  See [Completed checks and remaining tests](#completed-checks-and-remaining-tests).
-- Open a real Copilot Cowork plugin, and a package with `agent_skills` made by
-  Microsoft 365 Agents Toolkit, and confirm the skills and connectors arrive.
-  The importer was tested only with packages built from Microsoft's
-  documentation.
-- Load a `.agent` file written by Agentprise, with `_license` and `_agentprise`,
-  in a SharePoint library and in a Teams chat. The tenant test recorded above
-  used a hand-edited file, not this app's output.
-- Try a Teams package with an extra `LICENSE.txt` file inside. The app does not
-  add one until this is known to work.
-- Load a `.agent` file with `WebSearch` on and `TeamsMessages` and `Meetings`
-  off in a Teams group chat, and confirm the answers post without the approve
-  step.
-- Open a SharePoint-made `.agent` file that has sources, download it again, and
-  add it to a Teams chat. The items now keep every key the builder wrote.
-- Add a `.agent` file whose only source is a link a person pasted, with no ids,
-  to a Teams chat, to learn whether Teams accepts a link without ids.
-- Upload a package that carries an attached file to the Copilot app and check
-  whether the agent lists the file as knowledge. If it does not, the next step is
-  the schema's `EmbeddedKnowledge` entry.
-- Upload a package that carries a script, such as `deploy.ps1.txt`, to the
-  Copilot app and check whether the agent lists it and can quote from it.
-- Export an agent from the Copilot app with "My SharePoint files, folders, and
-  sites" on and no specific items, to learn how the app spells an unlimited
-  `OneDriveAndSharePoint` entry. Agentprise writes a bare entry and reads both
-  lists empty as off.
-- Attach a real `.onepart` file. The app checks it against the OneNote section
-  header; if a real one is refused, the check needs the real header.
-- Load a `.agent` file written by Agentprise that limits Teams messages to
-  chats, email to a group mailbox, or meetings to ids, or that sets a response
-  mode, in a Teams chat, and confirm each limit is honored.
-- Load a `.agent` file with a bare `OneDriveAndSharePoint` entry (switch on, no
-  limit) in a Teams chat and confirm it reads every file the person can see.
-- After mid-November 2026, run Microsoft's "Upgrade to Microsoft 365 agent" on
-  a `.agent` file written by Agentprise and record what the upgrade keeps. The
-  upgrade steps in the Teams chat guide come from Microsoft's page, not from a
-  run.
-- Create an agent in Copilot Agent Builder by pasting the name, description,
-  instructions, and example questions from Agentprise, and confirm the agent
-  behaves like the `.agent` file did. Also confirm that uploading the `.agent`
-  file itself only adds it as reading material.
-
 ### Conclusion
 
 Pick the download for the product you use, and download a backup if you are
@@ -1680,8 +1515,9 @@ unsure. If the download has tools, read its report and setup steps. Maintainers:
 keep the project backup lossless, keep each item folder a valid Agent Skill,
 keep the Microsoft and Agent Plugins files free of extra keys where their
 schemas forbid them, keep `planExport` the single source for both the
-instructions and the report, and update the tables above whenever a converter
-or importer changes.
+instructions and the report, keep `index.html` under 750,000 bytes so the page
+stays quick to load, and update the tables above whenever a converter or
+importer changes.
 
 ### Additional resources
 

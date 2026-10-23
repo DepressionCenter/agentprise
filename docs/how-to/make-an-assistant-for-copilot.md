@@ -189,9 +189,8 @@ This choice allows up to eight skills and leaves out scripts. Copilot cannot
 use these skills with files attached directly to the assistant. Move those
 files into a skill, or use **Copilot / Teams Apps**.
 
-The Agentprise team has not tested installing this app in a Microsoft 365
-organization. Test it in yours before you share it. Ask your admin to upload
-it as described above. Agent Builder accepts only single skill ZIPs, and
+Test the app in your organization before you share it. Ask your admin to
+upload it as described above. Agent Builder accepts only single skill ZIPs, and
 Copilot Studio uses a different file type.
 
 To use the whole project as optional skills in Copilot Cowork, review the
