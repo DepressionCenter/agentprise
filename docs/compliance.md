@@ -74,8 +74,12 @@ listed under known gaps.
 - When storage is blocked or a save fails, editing and downloads keep working
   for the visit, and the sidebar says projects will not be kept after the page
   closes and asks the person to download a backup.
-- No secrets, keys, tokens, or configuration files exist in this repository, so
-  there is no `.env` file and no `.env.example`.
+- The app needs no deployment credentials or secret configuration. There is no
+  `.env` file or `.env.example`. Security tests use synthetic credential values
+  to verify that imports reject secrets before showing or saving them. Basic
+  authentication test headers are encoded from explicitly synthetic values at
+  test runtime, rather than stored as complete headers in source. These tests
+  make no authentication requests. Evidence: `tests/microsoft-package.test.mjs`.
 - Agent instructions are the creator's own text. The app never sends them
   anywhere or acts on them. Text inside an uploaded file that looks like
   instructions to the app or to an AI is treated as plain text.
