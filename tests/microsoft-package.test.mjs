@@ -2,7 +2,7 @@
 // tests/microsoft-package.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-21
-// Last Modified: 2026-10-22
+// Last Modified: 2026-10-23
 // Summary: Opens Microsoft 365 app packages through the importer the app uses
 //          for dropped files: this app's own package with three actions, and
 //          synthetic packages with an assistant, skills only, connectors only,
@@ -35,6 +35,8 @@ const engine = loadEngine();
 await engine.ready;
 const encode = (text) => new TextEncoder().encode(text);
 const decode = (bytes) => new TextDecoder().decode(bytes);
+// Synthetic credentials exercise rejection without storing an encoded header.
+const SYNTHETIC_BASIC_TOKEN = Buffer.from("test:fake", "utf8").toString("base64");
 const KEPT_NOTE = "From a Microsoft 365 app package. Not interpreted by Agentprise.";
 
 /** Opens a package from entries, failing on an error. */
@@ -1201,7 +1203,7 @@ describe("unsafe and broken packages", () => {
 
   test("XML credential elements and attributes are excluded before attachment or backup", async () => {
     const entries = mixedEntries();
-    const unsafe = ["<password>" + SECRET + "</password>", "<config><s:database_password>" + SECRET + "</s:database_password></config>", "<password><![CDATA[" + SECRET + "]]></password>", '<connection password="' + SECRET + '"/>', '<add key="database_password" value="' + SECRET + '"/>', '<field name="pass&#119;ord" value="' + SECRET + '"/>', "<Authorization>Basic dXNlcjpwYXNz</Authorization>"];
+    const unsafe = ["<password>" + SECRET + "</password>", "<config><s:database_password>" + SECRET + "</s:database_password></config>", "<password><![CDATA[" + SECRET + "]]></password>", '<connection password="' + SECRET + '"/>', '<add key="database_password" value="' + SECRET + '"/>', '<field name="pass&#119;ord" value="' + SECRET + '"/>', "<Authorization>Basic " + SYNTHETIC_BASIC_TOKEN + "</Authorization>"];
     unsafe.forEach((text, index) => {
       for (const folder of ["", "config/", "skills/meeting-notes/"]) entries.push({ name: folder + "unsafe" + index + ".xml", bytes: encode(text) });
     });
@@ -1211,11 +1213,14 @@ describe("unsafe and broken packages", () => {
     const { project: again, backup } = await backupRoundTrip(project);
     for (const result of [project, again]) {
       assert.equal(everythingShown(result, []).includes(SECRET), false);
+      assert.equal(everythingShown(result, []).includes(SYNTHETIC_BASIC_TOKEN), false);
       assert.equal(result.items.some((item) => item.files.some((file) => file.path.includes("unsafe"))), false);
       assert.equal(result.unrecognized.some((file) => file.path.includes("unsafe")), false);
       assert.equal(result.unrecognized.filter((file) => file.path.includes("/safe")).length, safe.length);
     }
     assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.equal(everythingShown(project, notices).includes(SYNTHETIC_BASIC_TOKEN), false);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SYNTHETIC_BASIC_TOKEN)), false);
     assert.equal(backup.entries.some((entry) => entry.name.includes("unsafe")), false);
   });
 
@@ -1293,7 +1298,7 @@ describe("unsafe and broken packages", () => {
   });
 
   test("authorization headers never reach attachments, skill files, or backups", async () => {
-    const token = "dXNlcjpwYXNz";
+    const token = SYNTHETIC_BASIC_TOKEN;
     const values = ["Authorization: Basic " + token, '"Authorization": "Basic ' + token + '"', "proxy-authorization: basic " + token, "AUTHORIZATION=Basic " + token, "Authorization: Bearer short"];
     const entries = mixedEntries();
     values.forEach((text, index) => {
