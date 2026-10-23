@@ -628,9 +628,12 @@ plugin installation, tool sign-in, updates, and access by another user remain
 unverified. See [Formats](formats.md#optional-microsoft-exports).
 These checks are not an assessment of a tenant's privacy or compliance.
 
-On 2026-10-22, the Windows suite passed all 365 tests, including imported license
+On 2026-10-22, the Windows suite passed all 366 tests, including imported license
 preservation, conflicting license names, Agent Builder upload boundaries, and
-separate ownership of identically named assistant and skill files.
+separate ownership of identically named assistant and skill files. Valid
+leading-hyphen resource names are retained; hidden and reserved names remain
+blocked. The two new pinned schemas retain their original hashes and include
+the publisher's MIT License in sibling notice files.
 In an isolated Chromium browser, all three Microsoft Inspect tabs had zero axe 4.10.3 WCAG A/AA
 findings in light and dark themes. Keyboard activation opened the optional
 choices and the review page; arrow keys moved between tabs. The download

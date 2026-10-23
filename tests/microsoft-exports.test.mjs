@@ -277,6 +277,25 @@ describe("Microsoft native exports", () => {
     blocks(project, /at most 350 files/);
   });
 
+  test("Microsoft downloads preserve supported leading-hyphen resource paths", async () => {
+    const raw = simpleRaw();
+    raw.items[1].files = [
+      { path: "references/-template.md", bytes: encode("Synthetic template.") },
+      { path: "-references/example.txt", bytes: encode("Synthetic reference.") }
+    ];
+    const project = build(raw);
+    const before = structuredClone(project);
+    for (const profile of ["copilotSkill", "copilotSkills", "microsoftPlugin"]) {
+      const result = profile === "copilotSkill"
+        ? await engine.exports.copilotSkill(project, project.items[1])
+        : await write(project, profile);
+      const entries = await engine.zip.read(result.bytes);
+      const prefix = profile === "copilotSkill" ? "" : "skills/record-finder/";
+      for (const file of raw.items[1].files) assert.deepEqual(entries.get(prefix + file.path), file.bytes);
+    }
+    assert.deepEqual(project, before);
+  });
+
   test("unsafe paths, case collisions, and excessive native depth are blocked", async () => {
     for (const path of ["../escape.txt", "references/CON.txt", "references/.hidden.txt", "a/b/c/deep.txt", "references/trailing .txt "]) {
       const project = build(simpleRaw());

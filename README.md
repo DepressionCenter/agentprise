@@ -3,7 +3,7 @@ This file is part of Agentprise™
 README.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-21
+Last Modified: 2026-10-22
 Summary: Provides an overview of the project, in Markdown format.
 Notes: See README file for documentation and full license information.
 
@@ -90,6 +90,7 @@ If you need assistance identifying a contact person, email the Mobile Technologi
 #### This work is based in part on the following projects, libraries and/or studies:
 + [ZippyServe](https://github.com/DepressionCenter/ZippyServe), the Eisenberg Family Depression Center's portable web server, included in `bin/` with its run scripts so the app can run locally.
 + [Bootstrap Icons](https://icons.getbootstrap.com/) by The Bootstrap Authors, MIT License. A few of its icons are embedded in `index.html` as base64 for the buttons and links.
++ [Microsoft JSON schemas](https://github.com/microsoft/json-schemas), MIT License. The pinned declarative-agent v1.9 and app manifest v1.29 schemas have sibling `.LICENSE.txt` notices; see [schema sources and notices](tests/schemas/SOURCES.md).
 + [Mobile Tech Publication Search Starter Kit](https://teamdynamix.umich.edu/TDClient/210/DepressionCenter/KB/Article/12930/Mobile-Tech-Publication-Search-Starter-Kit) by Judy Smith, Informationist, Taubman Health Sciences Library, University of Michigan. Its PubMed search blocks are adapted in the PubMed Search skill in the Library (`references/mobile-tech-search-blocks.md`).
 
 

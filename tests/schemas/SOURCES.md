@@ -42,6 +42,20 @@ Files are stored byte for byte. The original files used `curl -sL`; the
 | `copilot/declarative-agent-v1.9.schema.json` | <https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.9/schema.json> | 2026-10-22 | `102abde77894ed0d30c5e097a1b17181a16527865fdcd2f824e2578799abd3a5` |
 | `teams/manifest-v1.29.schema.json` | <https://developer.microsoft.com/json-schemas/teams/v1.29/MicrosoftTeams.schema.json> | 2026-10-22 | `53e860fd650fd03fe587379d92af6c91374e791f041ce3f26c92d5e74aeafa0b` |
 
+## License notices
+
+The Microsoft schemas added on 2026-10-22 retain the publisher's MIT License.
+These sibling notices copy the [upstream license](https://github.com/microsoft/json-schemas/blob/main/LICENSE)
+without adding fields to the pinned JSON:
+
+- [Declarative-agent v1.9 notice](copilot/declarative-agent-v1.9.schema.json.LICENSE.txt)
+- [App manifest v1.29 notice](teams/manifest-v1.29.schema.json.LICENSE.txt)
+
+The upstream license blob is `21071075c24599ee98254f702bcfc504cdc275a6`.
+The app manifest matches the upstream file bytes. The declarative-agent schema
+has the same parsed structure as the upstream file; its downloaded formatting
+is preserved. The schema hashes above remain unchanged.
+
 ## Updating a schema
 
 1. Download the new version to this folder under a new name that includes the
@@ -49,6 +63,8 @@ Files are stored byte for byte. The original files used `curl -sL`; the
 2. Do not edit the downloaded bytes.
 3. Add a row to the table above with the URL, the download date, and the
    SHA-256 hash (`sha256sum <file>`).
-4. Point the tests at the new file and run `npm test`.
+4. Preserve the publisher's license in a sibling `<filename>.LICENSE.txt` file
+   and record it here and in the README credits.
+5. Point the tests at the new file and run `npm test`.
 
 [← Back to README](../../README.md)

@@ -1145,7 +1145,8 @@ See Microsoft's [custom agent upload guide](https://learn.microsoft.com/en-us/mi
 
 The native profile blocks more than eight skills, more than 350 skill files,
 and skill text of 20,000 characters or more after tool notes are added.
-Relative resource paths have at most three components. The complete ZIP must
+Relative resource paths have at most three components. Leading hyphens are
+allowed in file and folder names; hidden and Windows reserved names are blocked. The complete ZIP must
 fit within 10 MB. It blocks attached assistant knowledge files; move them into
 a skill or use the usual download. API descriptions registered as actions are
 not counted as attached knowledge. That exemption matches both the owning

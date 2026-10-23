@@ -6474,7 +6474,7 @@ function microsoftSkillEntries(project, item, plan, plugin, report, root) {
     entries.forEach(function (entry) {
         const parts = entry.name.split("/");
         const unsafe = parts.some(function (part) {
-            return !/^[A-Za-z0-9_!][A-Za-z0-9_!. -]*$/.test(part) || /[. ]$/.test(part) || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part);
+            return !/^[A-Za-z0-9_!-][A-Za-z0-9_!. -]*$/.test(part) || /[. ]$/.test(part) || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part);
         });
         const key = entry.name.toLowerCase();
         if (unsafe || seen.has(key) || (!plugin && parts.length > 3) || (prefix + entry.name).length > 256) {
