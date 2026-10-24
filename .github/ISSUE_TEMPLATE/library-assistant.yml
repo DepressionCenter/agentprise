@@ -2,7 +2,7 @@
 # .github/ISSUE_TEMPLATE/library-assistant.yml
 # Author(s): Gabriel Mongefranco.
 # Created: 2026-10-09
-# Last Modified: 2026-10-09
+# Last Modified: 2026-10-24
 # Summary: GitHub issue form for sending an assistant to the Agentprise Library,
 #          either as a new entry or to replace one that is already listed.
 # Notes: See README file for documentation and full license information.
@@ -29,7 +29,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for sharing your assistant. In Agentprise, choose **Keep a copy I can edit later** to get the `.zip` file, then fill in the form below. Someone will look it over and reply here.
+        Thanks for sharing your assistant. In Agentprise, choose **Download Backup** to save your assistant as a `.agentprise.zip` file, then fill in the form below. Someone will look it over and reply here.
 
   - type: dropdown
     id: kind
@@ -63,8 +63,8 @@ body:
     id: file
     attributes:
       label: Attach the file
-      description: Drag the `.zip` file from **Keep a copy I can edit later** into this box, or click to pick it. If you are replacing an assistant, you can also say what changed.
-      placeholder: Drop the .zip file here.
+      description: Drag the `.agentprise.zip` file that **Download Backup** saved into this box, or click to pick it. If you are replacing an assistant, you can also say what changed.
+      placeholder: Drop the .agentprise.zip file here.
     validations:
       required: true
 
