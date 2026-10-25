@@ -3,7 +3,7 @@ This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-23
+Last Modified: 2026-10-25
 Summary: The whole Agentprise web app in one file. Lets a person describe an AI
          assistant once, then download it as a skill for Gemini and Claude, a
          Copilot app package, a Teams Chat file, a plugin, copy-ready text for
@@ -7547,8 +7547,13 @@ function credentialFieldsHoldLiteral(text) {
         }
     }
     const lineValue = Array.from(text.matchAll(CREDENTIAL_LINE_PATTERN)).some(function (match) {
-        const value = match[2].replace(/[ \t]+#.*$/, "").trim().replace(/^(["'])(.*)\1$/, "$2");
-        return NESTED_FLOW_MAPPING.test(value) ? yamlMappingWrapsLiteral(value, "", 0) : credentialValueIsLiteral(value);
+        const value = match[2].replace(/[ \t]+#.*$/, "").trim();
+        // A quoted value is a scalar even when it looks like a mapping, as in
+        // "{phrase: abc123}", so the quotes are checked before they are removed.
+        if (NESTED_FLOW_MAPPING.test(value)) {
+            return yamlMappingWrapsLiteral(value, "", 0);
+        }
+        return credentialValueIsLiteral(value.replace(/^(["'])(.*)\1$/, "$2"));
     });
     if (lineValue) {
         return true;

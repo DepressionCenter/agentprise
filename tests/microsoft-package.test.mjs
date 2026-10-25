@@ -2,7 +2,7 @@
 // tests/microsoft-package.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-21
-// Last Modified: 2026-10-23
+// Last Modified: 2026-10-25
 // Summary: Opens Microsoft 365 app packages through the importer the app uses
 //          for dropped files: this app's own package with three actions, and
 //          synthetic packages with an assistant, skills only, connectors only,
@@ -1220,6 +1220,8 @@ describe("unsafe and broken packages", () => {
       { name: "config/unsafe21.yaml", text: "api_key:\n  - ${API_KEY}\n  - " + SECRET + "\n" },
       { name: "config/unsafe22.yaml", text: "api_key:\n- ${API_KEY}\n# second key\n- '" + SECRET + "'\nother: value\n" },
       { name: "config/unsafe23.yaml", text: "password:\n  - type: string\n    format: password\n  - " + SECRET + "\n" },
+      { name: "config/unsafe24.yaml", text: 'admin_password: "{phrase: ' + SECRET + '}"\n' },
+      { name: "config/unsafe25.yaml", text: "auth: {admin_password: '{phrase: " + SECRET + "}'}\n" },
     ];
     const safe = [
       { name: "config/safe0.yaml", text: "password:\n  type: string\n  format: password\n" },
