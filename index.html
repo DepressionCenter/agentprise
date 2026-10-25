@@ -7241,9 +7241,10 @@ function holdsCredential(name, bytes) {
         return true;
     }
     // A field name split by single bytes, such as "api" 0xFF "_key: abc123", needs
-    // every readable byte. Only the checks that need a credential field name or a
-    // key marker run on that text, because random bytes rarely spell one.
-    return binary && whole !== joined && (PRIVATE_KEY_MARKER.test(whole) || CREDENTIAL_HEADER_PATTERN.test(whole) || credentialFieldsHoldLiteral(whole));
+    // every readable byte. Only the checks that need a credential field name, a
+    // key marker, or a web address run on that text, because random bytes rarely
+    // spell one.
+    return binary && whole !== joined && (PRIVATE_KEY_MARKER.test(whole) || CREDENTIAL_HEADER_PATTERN.test(whole) || urlsHoldCredential(whole) || credentialFieldsHoldLiteral(whole));
 }
 
 /** Checks decoded JSON key/value pairs or plain text without depending on its layout. */
@@ -7521,6 +7522,69 @@ function yamlBlockListHoldsLiteral(first, rest, itemIndent) {
 }
 
 /**
+ * The complete YAML flow mapping that starts at a position in the text, with
+ * nested braces, brackets, and quoted text kept together. An unclosed mapping
+ * runs to the end of its line.
+ * @param {string} text The text that holds the mapping.
+ * @param {number} start The index of the opening brace.
+ * @returns {string}
+ */
+function yamlFlowMapping(text, start) {
+    let depth = 0;
+    let quote = "";
+    for (let index = start; index < text.length; index += 1) {
+        const character = text.charAt(index);
+        if (quote) {
+            if (character === "\\" && quote === '"') {
+                index += 1;
+            } else if (character === quote) {
+                quote = "";
+            }
+            continue;
+        }
+        if (character === '"' || character === "'") {
+            quote = character;
+        } else if (character === "{" || character === "[") {
+            depth += 1;
+        } else if (character === "}" || character === "]") {
+            depth -= 1;
+            if (depth === 0) {
+                return text.slice(start, index + 1);
+            }
+        } else if (character === "\n" || character === "\r") {
+            break;
+        }
+    }
+    return text.slice(start).split(/\r?\n/)[0];
+}
+
+/**
+ * Whether a web address in the text carries a user name, password, or a key in
+ * its query, such as "https://user:abc123@example.org/".
+ * @param {string} text Decoded text.
+ * @returns {boolean}
+ */
+function urlsHoldCredential(text) {
+    // Each attempt starts only where a run of scheme characters starts, so a long
+    // run such as "a-a-a-..." is read once. The address starts at the first letter
+    // that begins the run or follows "+", ".", or "-", such as "https" in "--https".
+    for (const match of text.matchAll(/(?<![a-z0-9+.-])([a-z0-9+.-]+):\/\/[^\s"'<>\\]+/gi)) {
+        const schemeStart = /(?:^|[+.-])(?=[a-z])/i.exec(match[1]);
+        if (!schemeStart) {
+            continue;
+        }
+        try {
+            if (urlHasCredential(new URL(match[0].slice(schemeStart.index + schemeStart[0].length)))) {
+                return true;
+            }
+        } catch (error) {
+            // Malformed addresses still receive the text-pattern checks.
+        }
+    }
+    return false;
+}
+
+/**
  * Whether a settings field with a credential name holds a literal value, in a
  * YAML flow mapping, on the same line as its name, or on the indented line
  * below it. These checks need the field name, so they are also safe to run on
@@ -7532,7 +7596,10 @@ function credentialFieldsHoldLiteral(text) {
     for (const match of text.matchAll(CREDENTIAL_FLOW_PATTERN)) {
         let value = match[2].trim();
         if (NESTED_FLOW_MAPPING.test(value)) {
-            if (yamlMappingWrapsLiteral(value, "", 0)) {
+            // The pattern stops at the first comma, so the whole mapping is read
+            // from the text, as in "{type: secureString, value: abc123}".
+            const start = match.index + match[0].length - match[2].length + match[2].indexOf("{");
+            if (yamlMappingWrapsLiteral(yamlFlowMapping(text, start), "", 0)) {
                 return true;
             }
             continue;
@@ -7591,23 +7658,7 @@ function textHoldsCredential(text) {
     if (CREDENTIAL_TEXT_PATTERN.test(text) || CREDENTIAL_HEADER_PATTERN.test(text) || xmlHoldsCredential(text)) {
         return true;
     }
-    // Each attempt starts only where a run of scheme characters starts, so a long
-    // run such as "a-a-a-..." is read once. The address starts at the first letter
-    // that begins the run or follows "+", ".", or "-", such as "https" in "--https".
-    for (const match of text.matchAll(/(?<![a-z0-9+.-])([a-z0-9+.-]+):\/\/[^\s"'<>\\]+/gi)) {
-        const schemeStart = /(?:^|[+.-])(?=[a-z])/i.exec(match[1]);
-        if (!schemeStart) {
-            continue;
-        }
-        try {
-            if (urlHasCredential(new URL(match[0].slice(schemeStart.index + schemeStart[0].length)))) {
-                return true;
-            }
-        } catch (error) {
-            // Malformed addresses still receive the text-pattern checks.
-        }
-    }
-    return credentialFieldsHoldLiteral(text);
+    return urlsHoldCredential(text) || credentialFieldsHoldLiteral(text);
 }
 
 /**

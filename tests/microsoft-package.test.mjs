@@ -1225,6 +1225,8 @@ describe("unsafe and broken packages", () => {
       { name: "config/unsafe26.yaml", text: 'admin_password: {value: "{phrase: ' + SECRET + '}"}\n' },
       { name: "config/unsafe27.yaml", text: "admin_password:\n  value: '{phrase: " + SECRET + "}'\n" },
       { name: "config/unsafe28.yaml", text: 'admin_password:\n  value: ["{phrase: ' + SECRET + '}"]\n' },
+      { name: "config/unsafe29.yaml", text: "parameters: {admin_password: {type: secureString, value: " + SECRET + "}}\n" },
+      { name: "config/unsafe30.yaml", text: "parameters: {admin_password: {metadata: {hint: 'a, b'}, value: \"" + SECRET + "\"}, other: 1}\n" },
     ];
     const safe = [
       { name: "config/safe0.yaml", text: "password:\n  type: string\n  format: password\n" },
@@ -1242,6 +1244,7 @@ describe("unsafe and broken packages", () => {
       { name: "config/safe14.yaml", text: "api_key:\n  - ${API_KEY}\n  - '{{ secrets.backup_key }}'\nnames:\n  - first\n  - second\n" },
       { name: "config/safe12.yaml", text: "password:\n  type: object\n  description: Holds the value\n  properties:\n    value:\n      type: string\n" },
       { name: "config/safe10.json", text: '{"properties": {"password": {"type": "string", "format": "password", "description": "The account password"}}, "admin_password": {"value": "${ADMIN_PASSWORD}"}}' },
+      { name: "config/safe15.yaml", text: "parameters: {admin_password: {type: secureString, description: 'Set at install, kept in the vault'}, region: {value: west}}\n" },
     ].map((file) => ({ name: file.name, bytes: encode(file.text) }));
     const entries = skillOnlyEntries();
     unsafe.forEach((file) => entries.push({ name: file.name, bytes: encode(file.text) }));
@@ -1298,6 +1301,8 @@ describe("unsafe and broken packages", () => {
       // A private key marker split into short pieces by single bytes.
       new Uint8Array([...encode("%PDF-1.7\n-----"), 0xff, ...encode("BE"), 0xff, ...encode("GIN RSA PRIVATE KEY-----\n" + SECRET + "\n")]),
       new Uint8Array([...encode("%PDF-1.7\nAuthori"), 0xff, ...encode("zation: Bearer " + SECRET + "\n")]),
+      // A web address with a password, its scheme split into short pieces by single bytes.
+      new Uint8Array([...encode("%PDF-1.7\n"), 0xff, ...encode("ht"), 0xff, ...encode("tps"), 0xff, ...encode("://user:" + SECRET + "@example.org/\n")]),
     ];
     payloads.forEach((bytes, index) => {
       for (const folder of ["", "config/", "skills/meeting-notes/"]) {
