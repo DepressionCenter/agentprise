@@ -7105,7 +7105,8 @@ const COPILOT_AUTH_KINDS = Object.freeze({ None: "none", OAuthPluginVault: "oaut
 
 // Text that looks like a key, token, or password in a file the import would
 // otherwise keep for the backup.
-const CREDENTIAL_TEXT_PATTERN = /[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]+"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
+const PRIVATE_KEY_MARKER = /-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
+const CREDENTIAL_TEXT_PATTERN = new RegExp(String.raw`[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]+"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|` + PRIVATE_KEY_MARKER.source, "i");
 
 const CREDENTIAL_HEADER_PATTERN = /\b(?:proxy-)?authorization["']?[ \t]*[:=][ \t]*["']?(?:basic|bearer)[ \t]+[A-Za-z0-9._~+\/=-]+/i;
 
@@ -7240,9 +7241,9 @@ function holdsCredential(name, bytes) {
         return true;
     }
     // A field name split by single bytes, such as "api" 0xFF "_key: abc123", needs
-    // every readable byte. Only the checks that need a credential field name run
-    // on that text, because random bytes rarely spell one.
-    return binary && whole !== joined && credentialFieldsHoldLiteral(whole);
+    // every readable byte. Only the checks that need a credential field name or a
+    // key marker run on that text, because random bytes rarely spell one.
+    return binary && whole !== joined && (PRIVATE_KEY_MARKER.test(whole) || CREDENTIAL_HEADER_PATTERN.test(whole) || credentialFieldsHoldLiteral(whole));
 }
 
 /** Checks decoded JSON key/value pairs or plain text without depending on its layout. */
@@ -7420,6 +7421,11 @@ function yamlScalar(value) {
  */
 function yamlValueIsLiteral(value) {
     const scalar = yamlScalar(value);
+    // A quoted value is a scalar even when it looks like a mapping, as in
+    // "{phrase: abc123}", so the quotes are read before they are removed.
+    if (/^(["']).*\1$/.test(value.replace(/[ \t]+#.*$/, "").trim())) {
+        return credentialValueIsLiteral(scalar);
+    }
     if (scalar.charAt(0) === "{") {
         return false;
     }

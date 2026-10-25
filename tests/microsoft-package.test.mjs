@@ -1222,6 +1222,9 @@ describe("unsafe and broken packages", () => {
       { name: "config/unsafe23.yaml", text: "password:\n  - type: string\n    format: password\n  - " + SECRET + "\n" },
       { name: "config/unsafe24.yaml", text: 'admin_password: "{phrase: ' + SECRET + '}"\n' },
       { name: "config/unsafe25.yaml", text: "auth: {admin_password: '{phrase: " + SECRET + "}'}\n" },
+      { name: "config/unsafe26.yaml", text: 'admin_password: {value: "{phrase: ' + SECRET + '}"}\n' },
+      { name: "config/unsafe27.yaml", text: "admin_password:\n  value: '{phrase: " + SECRET + "}'\n" },
+      { name: "config/unsafe28.yaml", text: 'admin_password:\n  value: ["{phrase: ' + SECRET + '}"]\n' },
     ];
     const safe = [
       { name: "config/safe0.yaml", text: "password:\n  type: string\n  format: password\n" },
@@ -1292,6 +1295,9 @@ describe("unsafe and broken packages", () => {
       // A field name split into short pieces by single bytes.
       new Uint8Array([...encode("%PDF-1.7\n"), 0xff, ...encode("api"), 0xff, ...encode("_key: " + SECRET + "\n")]),
       new Uint8Array([...encode("%PDF-1.7\npa"), 0xff, ...encode("ss"), 0xff, ...encode("word: " + SECRET + "\n")]),
+      // A private key marker split into short pieces by single bytes.
+      new Uint8Array([...encode("%PDF-1.7\n-----"), 0xff, ...encode("BE"), 0xff, ...encode("GIN RSA PRIVATE KEY-----\n" + SECRET + "\n")]),
+      new Uint8Array([...encode("%PDF-1.7\nAuthori"), 0xff, ...encode("zation: Bearer " + SECRET + "\n")]),
     ];
     payloads.forEach((bytes, index) => {
       for (const folder of ["", "config/", "skills/meeting-notes/"]) {
