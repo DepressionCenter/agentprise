@@ -2,7 +2,7 @@
 // tests/microsoft-package.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-21
-// Last Modified: 2026-10-23
+// Last Modified: 2026-10-25
 // Summary: Opens Microsoft 365 app packages through the importer the app uses
 //          for dropped files: this app's own package with three actions, and
 //          synthetic packages with an assistant, skills only, connectors only,
@@ -152,13 +152,25 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     }
   });
 
+  test("a function name listed twice imports the action without a limits notice", async () => {
+    const baseline = await openPackage(agentOnlyEntries());
+    const entries = agentOnlyEntries();
+    const records = entries.find((entry) => entry.name === "agents/plugins/records.json");
+    records.bytes = encode(JSON.stringify(openApiPlugin("records", "../apis/records.yaml", ["searchRecords", "searchRecords", "getRecord"])));
+    const { project, notices } = await openPackage(entries);
+    assert.ok(!notices.some((notice) => notice.includes("exceed this app's limits")), JSON.stringify(notices));
+    const providers = project.items[0].capabilities.flatMap((capability) => Object.values(capability.providers).flat());
+    assert.ok(providers.some((provider) => provider.kind === "openapi" && JSON.stringify(provider.operations) === JSON.stringify(["searchRecords", "getRecord"])), JSON.stringify(providers));
+    assert.deepEqual(unrecognizedPaths(project), unrecognizedPaths(baseline.project));
+  });
+
   test("duplicate connector IDs retain all definitions in the source manifest", async () => {
     const connectors = ["first", "second"].map((name) => ({ id: "records", toolSource: { remoteMcpServer: { mcpServerUrl: "https://" + name + ".example.org/mcp" } } }));
     const source = { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ agentConnectors: connectors }))) };
     const { project, notices } = await openPackage([source]);
     assert.equal(project.servers.records.url, "https://first.example.org/mcp");
     assert.equal(Object.keys(project.servers).length, 1);
-    assert.ok(notices.some((notice) => notice.includes("same id as another connector")));
+    assert.ok(notices.some((notice) => notice.includes("same \"id\" value as another connector")));
     const { project: again } = await backupRoundTrip(project);
     for (const result of [project, again]) {
       assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/manifest.json").bytes, source.bytes);
@@ -1182,9 +1194,116 @@ describe("unsafe and broken packages", () => {
     assert.equal(backup.entries.some((entry) => entry.name.includes("/unsafe")), false);
   });
 
+  test("YAML block values and JSON lists or repeated keys cannot hide credentials, while schemas and references stay", async () => {
+    const unsafe = [
+      { name: "config/unsafe0.yaml", text: "auth:\n  client_secret:\n    " + SECRET + "\n" },
+      { name: "config/unsafe1.yaml", text: "api_key:\n  - " + SECRET + "\n" },
+      { name: "config/unsafe2.yaml", text: "api_key:\n- " + SECRET + "\n" },
+      { name: "config/unsafe3.yaml", text: "password: # set below\r\n\r\n  # comment line\r\n  " + SECRET + "\r\n" },
+      { name: "config/unsafe4.yaml", text: "password: [" + SECRET + "]\n" },
+      { name: "config/unsafe5.json", text: '{"api_key": ["' + SECRET + '"]}' },
+      { name: "config/unsafe6.json", text: '{"password": "' + SECRET + '", "password": null}' },
+      { name: "config/unsafe7.json", text: '{"settings": {"pass\\u0077ord": "' + SECRET + '", "password": "${PASSWORD}"}}' },
+      { name: "config/unsafe8.json", text: '{"api_key":["' + SECRET + '"],"api_key":null}' },
+      { name: "config/unsafe9.json", text: '{"url": "https://user:' + SECRET + '@example.org/", "url": null}' },
+      { name: "config/unsafe10.json", text: '{"api_key": [["' + SECRET + '"]], "api_key": []}' },
+      { name: "config/unsafe11.json", text: '{"parameters": {"admin_password": {"value": "' + SECRET + '"}}}' },
+      { name: "config/unsafe12.json", text: '{"api_key": {"value": "' + SECRET + '"}, "api_key": null}' },
+      { name: "config/unsafe13.yaml", text: "admin_password: {value: " + SECRET + "}\n" },
+      { name: "config/unsafe14.yaml", text: "parameters: {admin_password: {value: '" + SECRET + "'}}\n" },
+      { name: "config/unsafe15.yaml", text: "admin_password:\n  value: " + SECRET + "\n" },
+      { name: "config/unsafe16.yaml", text: "admin_password:\n  type: secureString\n  # set by the installer\n  value: \"" + SECRET + "\"\n" },
+      { name: "config/unsafe17.yaml", text: "admin_password:\n  value: [" + SECRET + "]\n" },
+      { name: "config/unsafe18.yaml", text: "admin_password: {value: ['${ADMIN_PASSWORD}', '" + SECRET + "']}\n" },
+      { name: "config/unsafe19.yaml", text: "admin_password:\n  value:\n    - " + SECRET + "\n" },
+      { name: "config/unsafe20.json", text: '{"admin_password": {"value": ["' + SECRET + '"]}}' },
+      { name: "config/unsafe21.yaml", text: "api_key:\n  - ${API_KEY}\n  - " + SECRET + "\n" },
+      { name: "config/unsafe22.yaml", text: "api_key:\n- ${API_KEY}\n# second key\n- '" + SECRET + "'\nother: value\n" },
+      { name: "config/unsafe23.yaml", text: "password:\n  - type: string\n    format: password\n  - " + SECRET + "\n" },
+      { name: "config/unsafe24.yaml", text: 'admin_password: "{phrase: ' + SECRET + '}"\n' },
+      { name: "config/unsafe25.yaml", text: "auth: {admin_password: '{phrase: " + SECRET + "}'}\n" },
+      { name: "config/unsafe26.yaml", text: 'admin_password: {value: "{phrase: ' + SECRET + '}"}\n' },
+      { name: "config/unsafe27.yaml", text: "admin_password:\n  value: '{phrase: " + SECRET + "}'\n" },
+      { name: "config/unsafe28.yaml", text: 'admin_password:\n  value: ["{phrase: ' + SECRET + '}"]\n' },
+      { name: "config/unsafe29.yaml", text: "parameters: {admin_password: {type: secureString, value: " + SECRET + "}}\n" },
+      { name: "config/unsafe30.yaml", text: "parameters: {admin_password: {metadata: {hint: 'a, b'}, value: \"" + SECRET + "\"}, other: 1}\n" },
+    ];
+    const safe = [
+      { name: "config/safe0.yaml", text: "password:\n  type: string\n  format: password\n" },
+      { name: "config/safe1.yaml", text: "properties: {password: {type: string, format: password}}\n" },
+      { name: "config/safe2.yaml", text: "properties:\n  password: {type: string}\n" },
+      { name: "config/safe3.yaml", text: "schema: {properties: {token: {type: string}}}\n" },
+      { name: "config/safe4.yaml", text: "password:\n  - type: string\n" },
+      { name: "config/safe5.yaml", text: "password:\n  '${PASSWORD}'\n" },
+      { name: "config/safe6.yaml", text: "- password:\n- other item\n" },
+      { name: "config/safe7.yaml", text: "securitySchemes:\n  api_key:\n    type: apiKey\n    in: header\n    name: X-API-Key\n" },
+      { name: "config/safe8.json", text: '{"api_key": "${API_KEY}", "token": "{{ secrets.token }}", "password": {"type": "string"}}' },
+      { name: "config/safe9.json", text: '{"api_key": ["${API_KEY}"], "password": "${PASSWORD}", "password": null}' },
+      { name: "config/safe11.yaml", text: "admin_password: {value: '${ADMIN_PASSWORD}'}\nclient_secret:\n  value: ${CLIENT_SECRET}\n" },
+      { name: "config/safe13.yaml", text: "admin_password:\n  value: ['${ADMIN_PASSWORD}']\nclient_secret:\n  value:\n    - type: string\n" },
+      { name: "config/safe14.yaml", text: "api_key:\n  - ${API_KEY}\n  - '{{ secrets.backup_key }}'\nnames:\n  - first\n  - second\n" },
+      { name: "config/safe12.yaml", text: "password:\n  type: object\n  description: Holds the value\n  properties:\n    value:\n      type: string\n" },
+      { name: "config/safe10.json", text: '{"properties": {"password": {"type": "string", "format": "password", "description": "The account password"}}, "admin_password": {"value": "${ADMIN_PASSWORD}"}}' },
+      { name: "config/safe15.yaml", text: "parameters: {admin_password: {type: secureString, description: 'Set at install, kept in the vault'}, region: {value: west}}\n" },
+    ].map((file) => ({ name: file.name, bytes: encode(file.text) }));
+    const entries = skillOnlyEntries();
+    unsafe.forEach((file) => entries.push({ name: file.name, bytes: encode(file.text) }));
+    entries.push(...safe);
+    const { project, notices } = await openPackage(entries);
+    const { project: again, backup } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.deepEqual(result.unrecognized.filter((entry) => entry.path.includes("/unsafe")).map((entry) => entry.path), []);
+      for (const source of safe) {
+        assert.deepEqual(result.unrecognized.find((entry) => entry.path === "microsoft-package/" + source.name)?.bytes, source.bytes, source.name);
+      }
+    }
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+  });
+
+  test("a large binary file is kept when only unrelated bytes would spell a credential", async () => {
+    // Fixed-seed filler so the file is the same on every run.
+    let seed = 12345;
+    const filler = new Uint8Array(2 * 1024 * 1024);
+    for (let index = 0; index < filler.length; index++) {
+      seed ^= seed << 13; seed >>>= 0; seed ^= seed >>> 17; seed ^= seed << 5; seed >>>= 0;
+      filler[index] = seed & 0xff;
+    }
+    // "?", "key=", and "xy" are separated by bytes that are not text, as in compressed data.
+    const bytes = new Uint8Array([...encode("%PDF-1.7\n"), 0xff, 0x3f, 0xff, ...encode("key="), 0xff, ...encode("xy"), 0xff, ...filler]);
+    const entries = skillOnlyEntries();
+    entries.push({ name: "config/large.pdf", bytes });
+    const { project } = await openPackage(entries);
+    assert.deepEqual(project.unrecognized.find((entry) => entry.path === "microsoft-package/config/large.pdf")?.bytes, bytes);
+  });
+
+  test("long runs of tag or name characters are checked quickly", async () => {
+    const texts = ["<a ".repeat(400000), "a-".repeat(400000), "x" + "<password>".repeat(150000), "<password>".repeat(150000) + "</password>", "x--https".repeat(150000)];
+    const entries = skillOnlyEntries();
+    texts.forEach((text, index) => entries.push({ name: "config/long" + index + ".txt", bytes: encode(text) }));
+    const started = Date.now();
+    const { project } = await openPackage(entries);
+    // Generous limit. A scan that rereads the rest of the text for each "<" or word takes minutes on these inputs.
+    assert.ok(Date.now() - started < 5000, "Opening took " + (Date.now() - started) + " ms");
+    assert.ok(project.unrecognized.some((entry) => entry.path === "microsoft-package/config/long0.txt"));
+    assert.ok(project.unrecognized.some((entry) => entry.path === "microsoft-package/config/long1.txt"));
+  });
+
   test("binary signatures cannot bypass credential checks", async () => {
     const entries = mixedEntries();
-    const payloads = [encode("%PDF-1.7\npassword: " + SECRET), new Uint8Array([...encode("%PDF-1.7\npassword:"), 0xff, ...encode(" " + SECRET)]), encode("%PDF-1.7\n" + ("password: " + SECRET).split("").join("\u0000"))];
+    const payloads = [
+      encode("%PDF-1.7\npassword: " + SECRET),
+      new Uint8Array([...encode("%PDF-1.7\npassword:"), 0xff, ...encode(" " + SECRET)]),
+      encode("%PDF-1.7\n" + ("password: " + SECRET).split("").join("\u0000")),
+      // A field name split into short pieces by single bytes.
+      new Uint8Array([...encode("%PDF-1.7\n"), 0xff, ...encode("api"), 0xff, ...encode("_key: " + SECRET + "\n")]),
+      new Uint8Array([...encode("%PDF-1.7\npa"), 0xff, ...encode("ss"), 0xff, ...encode("word: " + SECRET + "\n")]),
+      // A private key marker split into short pieces by single bytes.
+      new Uint8Array([...encode("%PDF-1.7\n-----"), 0xff, ...encode("BE"), 0xff, ...encode("GIN RSA PRIVATE KEY-----\n" + SECRET + "\n")]),
+      new Uint8Array([...encode("%PDF-1.7\nAuthori"), 0xff, ...encode("zation: Bearer " + SECRET + "\n")]),
+      // A web address with a password, its scheme split into short pieces by single bytes.
+      new Uint8Array([...encode("%PDF-1.7\n"), 0xff, ...encode("ht"), 0xff, ...encode("tps"), 0xff, ...encode("://user:" + SECRET + "@example.org/\n")]),
+    ];
     payloads.forEach((bytes, index) => {
       for (const folder of ["", "config/", "skills/meeting-notes/"]) {
         entries.push({ name: folder + "fake" + index + ".pdf", bytes });
@@ -1584,8 +1703,8 @@ describe("unsafe and broken packages", () => {
     has("The action \"webspec\" needs an API description from the web");
     has("A skill in the manifest points at the folder skills/missing, which has no SKILL.md");
     assert.equal(notices.filter((n) => n.includes("an unsafe or empty folder")).length, 3);
-    has("The connector \"Leaky again\" has the same id as another connector");
-    has("A connector has no identifier in manifest.json");
+    has("The connector \"Leaky again\" has the same \"id\" value as another connector");
+    has("A connector in manifest.json has no \"id\" value");
     has("Left out 1 program file.");
     // The unknown sign-in is refused rather than written back as no sign-in.
     assert.equal(project.items[0].capabilities.some((c) => c.id === "action.vault"), false);

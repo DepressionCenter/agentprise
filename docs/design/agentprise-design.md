@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/design/agentprise-design.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-10
+Last Modified: 2026-10-23
 Summary: Short design specification of Agentprise as implemented on main
          on October 10, 2026, covering its architecture, data, workflows,
          supported formats, and known limits.
@@ -132,22 +132,15 @@ miss sensitive content and lets the user proceed after confirmation.
 
 The interface targets Web Content Accessibility Guidelines (WCAG) 2.2 AA.
 It includes labeled controls, keyboard navigation, visible focus, status
-announcements, light and dark themes, and narrow-screen layouts. Existing
-browser checks are recorded in the compliance page and pull requests; a full
-screen-reader pass remains open.
+announcements, light and dark themes, and narrow-screen layouts.
 
-### Verification and known limits
+### Tests and known limits
 
 `npm test` runs syntax and ASCII checks plus Node's built-in test runner.
-Tests cover the model, converters, hostile inputs, sharing patterns, and Library
-bundles. PR #21 reports 105 passing tests, but its new source controls still
-need a browser and accessibility pass.
 
-Real-account checks remain for several generated formats, attached knowledge,
-scoped Copilot sources, unlimited SharePoint access, and actual `.onepart`
-files. The formats page records those gaps. Preserving a setting in a file
-does not prove that a destination product honors it. This specification makes
-no privacy, security, or accessibility certification claim.
+A destination product can ignore a setting that a file keeps. This
+specification makes no privacy, security, or accessibility certification
+claim.
 
 ### Sources and further detail
 

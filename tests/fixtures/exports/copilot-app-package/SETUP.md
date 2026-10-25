@@ -17,7 +17,7 @@ Until you connect it, the assistant does what it can and tells people it couldn'
 
 ## Register the sign-in for Pinned tools server
 
-This action needs a sign-in or key that your Microsoft 365 admin registers, for example in the Teams Developer Portal. Ask them to register it, then open plugin-pinned.json inside the app package and replace replace-with-your-auth-registration-id with the id they give you.
+This action needs a sign-in or key that your Microsoft 365 admin registers, for example in the Teams Developer Portal. Ask them to register it, then open plugin-pinned.json inside the app package and replace replace-with-your-auth-registration-id with the registration ID they give you.
 
 ## Allow custom apps in Microsoft 365
 

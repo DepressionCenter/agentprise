@@ -6,8 +6,8 @@ Created: 2026-10-09
 Last Modified: 2026-10-23
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
-         need: field mappings, tools, conversion reports, vendor facts with
-         check dates, and open tests.
+         need: field mappings, tools, conversion reports, and vendor facts
+         with the dates they were checked.
 Notes: See README file for documentation and full license information.
 
 Copyright © 2026 The Regents of the University of Michigan
@@ -43,29 +43,30 @@ maintainers", holds the technical details behind each file.
 | ChatGPT, Codex, GitHub Copilot, Cursor, OpenClaw, or another tool that reads Agent Plugins, with every assistant, skill, and tool in the project | Plugin | One plugin (`.plugin.zip`) |
 | Nowhere yet, or you want to edit it later | Download Backup | The whole project as one `.agentprise.zip` |
 | A skill for an existing Copilot assistant | More Microsoft downloads, then Copilot skill | One skill with `SKILL.md` at the ZIP root (`.copilot-skill.zip`) |
-| A Copilot assistant in an organization with native skills enabled | More Microsoft downloads, then Copilot app with skills | An app package with separate skill folders (`.zip`) |
+| A Copilot assistant in an organization where your admin turned on skills | More Microsoft downloads, then Copilot app with skills | An app package with separate skill folders (`.zip`) |
 | Copilot Cowork in Microsoft 365 | More Microsoft downloads, then Microsoft 365 plugin | The whole project as optional skills and supported tool connections (`.microsoft-plugin.zip`) |
 
 The first seven standard downloads use the assistant or skill named at the
 top of the Download card. The two plugins under **For the whole project**
 include every assistant and skill, with the
-tools they use. The backup is the complete copy of the whole project, with
-every assistant, skill, and file in it. Drop it on the Workspace page any time
+tools they use. The backup holds the whole project, with every assistant,
+skill, and file in it. Drop it on the Workspace page any time
 to change the project or download it for another product.
 
-**More Microsoft downloads** is optional. Choose **Review** to see what changes
-and what needs setup before downloading. **Copilot skill** uploads one
-selected skill to an existing assistant through Agent Builder.
-**Copilot app with skills** includes the
-selected assistant and its selected skills. **Microsoft 365 plugin** includes
-the whole project, turning assistants into optional skills for Copilot Cowork.
-Use **Copilot / Teams Apps** if your organization has not enabled skills.
-Agentprise creates all three optional downloads in your browser. It does not
-run tools or contact Microsoft.
+**More Microsoft downloads** is optional. Choose **View Microsoft downloads**
+to see its three choices, then choose **Review** to see what changes and what
+needs setup before you download. **Copilot skill** gives you one skill to add
+to an assistant you already have in Copilot, through Agent Builder.
+**Copilot app with skills** includes the selected assistant and the skills it
+uses. **Microsoft 365 plugin** includes the whole project for Copilot Cowork,
+and each assistant becomes a skill there. If your organization has not turned
+on skills in Copilot, use **Copilot / Teams Apps**. Agentprise makes all three
+downloads in your browser. It does not run tools or contact Microsoft.
 
 The backup is meant for Agentprise, so use a skill or plugin download when you
 want to upload to a product. The plain skill drops the welcome message, the
-starters, the picture, and the Copilot settings, so it is not a backup either.
+example questions, the picture, and the Copilot settings, so it is not a
+backup either.
 
 ### Content included in each download
 
@@ -76,10 +77,11 @@ assistants and skills, your organization, and the version number. The Gemini
 skill also leaves out Word, Excel, PowerPoint, and OneNote files, because
 Gemini skills do not accept them. The `.agent` file keeps everything about one
 assistant except attached files, which it has no place for. The app package
-cannot carry two things, and the app tells you so before you download it:
+leaves out two things, and the app tells you so before you download it:
 
 - The welcome message. Copilot has no place for it in an app package.
-- Your copyright line and license name. The package's files reject extra fields.
+- Your copyright line and license name. The package's files have no place for
+  them.
 
 The ChatGPT download is one box of project instructions to paste. Gemini
 Notebook gets the name, description, instructions, and example questions,
@@ -98,8 +100,8 @@ product.
 
 Settings that only Microsoft 365 Copilot understands, such as what Copilot may
 use, the lists that limit each source, the response mode, and attached files,
-travel in every download that has room for them but are ignored by the other
-products. Each source has its own list: web sites under Web search (up to
+are included in every download that has room for them, and the other products
+ignore them. Each source has its own list: web sites under Web search (up to
 four), SharePoint and OneDrive links under SharePoint and OneDrive (up to 20),
 links to teams, channels, group chats, or meeting chats under Teams messages
 (up to five), and shared or group mailbox addresses under Email (up to 25).
@@ -113,7 +115,7 @@ Attached files can be Word, PowerPoint, Excel, PDF, OneNote (`.one` and
 `.py`, `.sql`, `.md`, `.csv`, and `.json`. The app reads the first bytes of
 every file and refuses anything that does not match its name, so a program
 renamed to `.pdf` never gets in. Copilot accepts only the document types,
-`.onepart`, and `.txt` as uploads, so the app package carries a script as
+`.onepart`, and `.txt` as uploads, so the app package includes a script as
 plain text under its own name plus `.txt`, for example `deploy.ps1.txt`, and
 leaves out a `.one` file with a warning. The skill `.zip` and the backup keep
 every file under its real name.
@@ -123,17 +125,23 @@ every file under its real name.
 Some products have skills but no separate place for an assistant, and some
 have the opposite. Agentprise changes the item to fit, and the report says so.
 
-- In the Claude and Gemini skills, the plain skill, and both plugins, an
-  assistant becomes a skill whose description starts with "Persona:".
-- In the Copilot app package, the Teams Chat file, the ChatGPT project
-  instructions, and the Gemini Notebook file, a skill becomes an always-on
-  assistant, and its steps become the instructions.
+- In the Claude and Gemini skills, the plain skill, the **Claude plugin**, the
+  **Plugin** download, and the **Microsoft 365 plugin**, an assistant becomes
+  a skill whose description starts with "Persona:". The Microsoft 365 plugin
+  also leaves out each assistant's welcome message, example questions,
+  picture, and source settings.
+- The **Copilot skill** and **Copilot app with skills** downloads keep skills
+  separate from the assistant. Copilot uses each skill only when a question
+  needs it.
+- In the **Copilot / Teams Apps** app package, the Teams Chat file, the
+  ChatGPT project instructions, and the Gemini Notebook file, a skill becomes
+  an always-on assistant, and its steps become the instructions.
 - When an assistant uses skills, those same four downloads add each skill's
   steps to the assistant's instructions under a heading such as
   "Skill: Meeting notes". When the steps do not fit in Copilot's limit of
-  8,000 characters, the app package carries them as an attached file instead.
-  The Teams Chat file cannot carry files, so a skill that does not fit is left
-  out there, with its tools.
+  8,000 characters, the app package includes them as an attached file instead.
+  The Teams Chat file cannot include files, so a skill that does not fit is
+  left out there, with its tools.
 - A skill ZIP holds only one item. When an assistant uses skills, download each
   skill too, or use a plugin, which holds them all.
 
@@ -155,18 +163,18 @@ mention the tool, and you connect it in the product yourself.
 | Connector | Named only | Named only | Named only | Named only | Named only | Named only |
 | Tool server | Written in as an action, for servers on the web | Left out | Named only | Named only | Written in, for servers on the web | Written in, for servers on the web or the computer |
 | Action from a web service description | Written in as an action | Left out | Named only | Named only | Left out | Left out |
-| Script in the skill | Left out | Left out | Left out | Travels with the skill | Travels with the skill | Travels with the skill |
+| Script in the skill | Left out | Left out | Left out | Included in the skill | Included in the skill | Included in the skill |
 | Web search on a few sites | Written in as Copilot web search | Written in as Copilot web search | Named only | Named only | Named only | Named only |
 
 Gemini skills cannot run a script that reaches the internet, so a script that
-does travels in the Gemini skill but works only elsewhere. Every download
+does is included in the Gemini skill but works only elsewhere. Every download
 also writes a section into the instructions called **Tools available in this
 setup**. It lists each tool, the ways to reach it, what to do when none works,
 and a rule: "Only report a search, lookup, or retrieval as completed when a
 tool returned results in this conversation." When that section does not fit in
-Copilot's limit, each tool gets one line, and the app package carries the full
+Copilot's limit, each tool gets one line, and the app package includes the full
 notes as an attached file called `tool-notes.md.txt`. The Teams Chat file
-cannot carry files, so it keeps only the one-line notes.
+cannot include files, so it keeps only the one-line notes.
 
 To finish connecting the tools after you download, see
 [Connect the tools in a download](how-to/connect-tools.md).
@@ -208,9 +216,10 @@ to any files you linked. Microsoft retires `.agent` files after March 2027, and
 files already in use keep answering until then.
 [Retirement of .agent files](how-to/add-an-assistant-to-a-teams-chat.md#retirement-of-agent-files)
 says what to use instead. Agentprise keeps opening `.agent` files after that
-date, so you can always recover what a file holds. Do not upload the file to
-Copilot Agent Builder: files uploaded there become reading material for a new
-agent, not its settings.
+date, so you can always recover what a file holds. Uploading the file to
+Copilot Agent Builder adds it as reference material and does not set up an
+assistant. To rebuild the assistant there, see
+[Create the assistant in Copilot Agent Builder](how-to/add-an-assistant-to-a-teams-chat.md#create-the-assistant-in-copilot-agent-builder).
 
 **Skill (.zip).** In Gemini, open Settings, then Skills, then Upload, and pick
 the `.zip` file. Gemini skills work with personal Google accounts for now, not
@@ -260,8 +269,8 @@ If a download holds a `SETUP.md` file, follow its steps too.
 
 Agentprise opens any of its own downloads, plus files made elsewhere:
 
-- A `.agent` file exported from SharePoint.
-- A `.zip` exported from the Microsoft 365 Copilot app, or another Microsoft
+- A `.agent` file downloaded from SharePoint.
+- A `.zip` downloaded from the Microsoft 365 Copilot app, or another Microsoft
   365 app package with assistants, skills, or connectors, such as a Copilot
   Cowork plugin.
 - Any Agent Skill `.zip` or `SKILL.md` file. A `.zip` with several skills
@@ -284,9 +293,9 @@ skill has no record of what was added, so it opens with that text in place.
 A Microsoft 365 app package opens like this:
 
 - Each assistant in it becomes an assistant in the project. Its supported actions become
-  tools. These must connect to a web server or use an API description file
-  included in the package. Agentprise includes them when you download the
-  Copilot app package again.
+  tools. These must connect to a tool server on the web, or use a file in the
+  package that describes a web service (an API description). Agentprise
+  includes them when you download the Copilot app package again.
 - Skills the package lists become skills. When an assistant lists a skill, it
   uses that skill in the project too.
 - Connectors become tool servers for the whole project, under **More
@@ -299,20 +308,21 @@ A Microsoft 365 app package opens like this:
 - Anything else, such as a local plugin or a skill folder the package doesn't
   list, is kept in the backup only, in a folder called `microsoft-package`. A
   message lists each part that was left out and why.
-- A file that looks like it holds a password, key, or token is left out, and
-  so is a server address with a key in it.
-- An assistant whose file appears to contain a key is left out. Ask the package author to
-  remove the secret, then open the corrected package.
-- If the package's `manifest.json` appears to contain a key, the whole
-  package is refused. Ask the package author to remove the secret, then open the package again.
-  A key in an action's description file leaves that action out too.
+- Agentprise leaves out any file that looks like it holds a password, key, or
+  token, and any server address with a key in it.
+- Agentprise leaves out an assistant whose file seems to hold a key. Ask the
+  package author to remove the key, then open the corrected package.
+- If the package's main settings file (`manifest.json`) seems to hold a key,
+  Agentprise does not open the package. Ask the package author to remove the
+  key, then open the package again. If an action's description file holds a
+  key, Agentprise leaves that action out too.
 - Assistants open with the license "Not stated", because the package has no
   place to declare one. This also applies to packages made by Agentprise.
 - When an assistant came from an Agentprise download, its instructions still
   end with the old **Tools available in this setup** list. A message reminds
   you to delete it, because the next download writes the list again.
 
-Plugins sometimes carry hooks, commands, agents folders, or other files
+Plugins sometimes include hooks, commands, agents folders, or other files
 Agentprise does not understand. The app keeps them with the project and writes
 them back only into the backup. It never reads or runs them, and it never
 keeps a program. A skill or plugin that names no license opens with the
@@ -327,9 +337,9 @@ the second server gets a numbered name and that skill's tools use it.
 
 ## For maintainers
 
-The rest of this page records how each file is built, the vendor facts the
-converters rely on with the date each was checked, and the tests that still need
-a real account. Read it before changing any converter in `index.html`.
+The rest of this page records how each file is built and the vendor facts the
+converters rely on, with the date each was checked. Read it before changing any
+converter in `index.html`.
 
 ### The formats at a glance
 
@@ -344,22 +354,30 @@ a real account. Read it before changing any converter in `index.html`.
 | Microsoft `.agent` | `.agent` | Yes | Yes | All but attached files | SharePoint libraries and Teams chats |
 | Teams app package, or another Microsoft 365 app package | `.zip` | Yes, as a project with its assistants, actions, skills, and connectors | Yes, one assistant per package | No (see below) | The Microsoft 365 Copilot app and Copilot Cowork |
 | Copy-ready text | none, or `.md` | No | Copy buttons and a `.md` download | Not applicable | ChatGPT projects and Gemini Notebook |
+| Copilot skill | `.copilot-skill.zip` | Yes, as a skill | Yes, one skill | No: scripts and some tools are left out | Adding one skill to an assistant in Copilot Agent Builder |
+| Copilot app with skills | `.zip` | Yes, as a project | Yes, one assistant and the skills it uses | No: scripts are left out, and the assistant cannot have attached files | Organizations that turned on skills in Copilot |
+| Microsoft 365 plugin | `.microsoft-plugin.zip` | Yes, assistants open as skills | Yes, the whole project | No: assistants become skills, and scripts and some tools are left out | Copilot Cowork |
 
 The Gemini skill and the Claude skill share one folder layout, but each is
 composed for its own product, so their instructions and reports can differ.
 The Gemini skill also leaves out Office and OneNote files. The backup holds
-the whole project, and so do the plugin downloads. The native Copilot package
-also includes the selected assistant's skills. Other downloads hold one
-item. In the app, the baseline Teams app package is labeled "Copilot / Teams Apps" and
-the `.agent` file is labeled "Teams Chat".
+the whole project, and so do the plugin downloads, including the Microsoft 365
+plugin. The Copilot app with skills also includes the selected assistant's
+skills. Other downloads hold one item. In the app, the Copilot app package is
+labeled "Copilot / Teams Apps" and the `.agent` file is labeled "Teams Chat".
+The last three rows are the optional downloads under **More Microsoft
+downloads**; see [Optional Microsoft downloads](#optional-microsoft-downloads).
 
 Every one-item download is named after the item, such as `Caveman.zip`,
 `Caveman.skill.zip`, `Caveman.agent`, and `Caveman.md`. The app package adds
 "Copilot app" to its name, as in `Caveman Copilot app.zip`, so the `.zip`
 downloads never overwrite each other. Inside the skill `.zip`, the folder keeps
 the skill name. The whole-project files are named after the project in skill
-name form: `caveman.agentprise.zip`, `caveman.claude-plugin.zip`, and
-`caveman.plugin.zip`.
+name form: `caveman.agentprise.zip`, `caveman.claude-plugin.zip`,
+`caveman.plugin.zip`, and `caveman.microsoft-plugin.zip`. The Copilot skill
+is named after the skill, such as `caveman.copilot-skill.zip`, and the Copilot
+app with skills after the assistant, such as `Caveman Copilot app with
+skills.zip`.
 
 ### The project backup
 
@@ -664,8 +682,8 @@ builder exported on 2026-10-09, plus two extra top-level keys placed before
 - `_agentprise`: the display name, the Teams app id, the creator fields, the
   copyright line, and the license name.
 
-The SharePoint reader ignores keys it does not know. A `.agent` file with an extra
-top-level key was loaded and used in a Teams chat in a real tenant on 2026-10-09.
+The SharePoint reader ignores keys it does not know, and a Teams chat loads and
+uses a `.agent` file with an extra top-level key (see Verified vendor facts).
 When Agentprise opens a `.agent` file made in SharePoint, the key is absent, so the
 creator fields stay blank and nothing the file ever had is lost. The importer
 never requires the key.
@@ -690,8 +708,8 @@ facts.
 
 The instructions are the composed text for `msAgent`. A `websearch` route adds
 its sites to `WebSearch.sites` the same way as in the app package (see below).
-Whether a Teams chat honors `WebSearch.sites` in a `.agent` file is open test
-V3.
+Microsoft does not document whether a Teams chat honors `WebSearch.sites` in a
+`.agent` file.
 
 | Field | Where it lives in the `.agent` file |
 |---|---|
@@ -718,7 +736,7 @@ files under `items_by_sharepoint_ids` and folders and sites under
 `items_by_url`. Agentprise keeps each item whole and writes it back the same
 way, because a file whose site entry had only `url` failed to load in a Teams
 chat. Links a person pastes go out as `{url}` alone, since the app has no way
-to look up the ids; whether Teams accepts those is an open test below. Every
+to look up the ids. Every
 list that limits a source is carried: Teams chats, mailboxes and folders, and
 meetings go out exactly as the declarative agent schema spells them, and a
 `null` list in a file, which the Copilot app writes for a source it did not
@@ -836,9 +854,10 @@ without widening it (`mergeWebSearchSites`): whole-web search stays whole-web,
 web search that was off turns on for the tools' sites only, and a site list
 grows only up to four, past which the export is blocked.
 
-The package stays on declarative agent v1.8. Version 1.9 adds `agent_skills`,
-which would let Copilot load skills as folders instead of inlined text, but on
-2026-10-10 it was a Frontier preview with no reference page.
+The **Copilot / Teams Apps** package uses declarative agent v1.8 and adds
+skill steps to the assistant's instructions. The optional **Copilot app with
+skills** download uses v1.9 with `agent_skills`, so Copilot loads each skill
+from its own folder. See [Copilot app with skills](#copilot-app-with-skills).
 
 #### Opening a Microsoft 365 app package
 
@@ -927,7 +946,9 @@ assistant, and manifest sources. Credential and program checks still apply.
 
 Each provider keeps at most 50 valid function names. When names are refused
 or exceed that limit, the complete action and local API descriptions stay
-in the backup with the assistant and manifest sources. An OpenAPI runtime
+in the backup with the assistant and manifest sources. A name listed twice
+is kept once and is not a refused name, so it does not keep the action in
+the backup. An OpenAPI runtime
 without explicit operation names stays in the backup only. Agentprise does
 not infer operations from the API description. Add names to `functions` or
 `run_for_functions` in the action file to import that runtime.
@@ -937,8 +958,10 @@ export applies the same rule when none of a tool's names can be written.
 
 Root files that cannot be attached because of their contents, name, or the
 20-file attachment limit stay in the backup when they pass those checks.
-Each refused attachment gets a notice. Empty files and files with invalid
-document contents are preserved for you to inspect.
+Each refused attachment gets a notice. Empty files stay in the backup for
+you to check. So do files whose contents don't match their type but are
+readable text. Agentprise leaves out a file it can't read as text or as its
+file type, and a notice names it.
 An API description takes precedence over a root attachment with the same
 stored path; the root attachment stays in the backup.
 
@@ -956,7 +979,7 @@ reference, and the source manifest stays in the backup.
 | Root files of accepted types | Attached files of every assistant | With two or more assistants, each gets a copy and a notice |
 | `actions[]` with an `OpenApi` runtime | A tool (`action.<namespace>`) with an `openapi` provider under `*`; the description is copied to the assistant's files at its package path | A local file or inline `api_description` is required. A web address is never fetched |
 | `actions[]` with a `RemoteMCPServer` runtime | A tool with an `mcp` provider, and a project server named after the `namespace` | A credential match excludes the action. A static `mcp_tool_description` keeps the runtime in the backup only. Otherwise, `cleanServerUrl` checks its address |
-| `run_for_functions`, or `functions[].name` when it is `["*"]` | The provider's `operations` or `tools`, and the server's `tools` | At most 50 valid names. Refused names retain the source files. An OpenAPI runtime without explicit names stays in the backup only |
+| `run_for_functions`, or `functions[].name` when `run_for_functions` is missing, empty, or contains `*` | The provider's `operations` or `tools`, and the server's `tools` | At most 50 valid names. Refused names retain the source files. An OpenAPI runtime without explicit names stays in the backup only |
 | Runtime `auth.type` | `None`, `OAuthPluginVault`, `ApiKeyPluginVault`, and `DynamicClientRegistration` (kept as `oauth`) | Any other type leaves the runtime out, so a sign-in is never written back as none. `reference_id` is not kept |
 | `agent_skills[].folder` and root `agentSkills[].folder` | Skill items, read by `readItemFolders`; an assistant's own list becomes its `uses`, matched by folder after `normalizeProject` numbers repeated skill names | A folder named by both is read once. A folder without `SKILL.md` is left out |
 | Root `agentConnectors[]` with `toolSource.remoteMcpServer` | A project server named after the connector `id`, with `displayName` as its label | No `authorization` means `oauth`, since Microsoft registers a client itself. A repeated `id` is read once. Other tool sources are left out, and the manifest is kept |
@@ -1023,7 +1046,7 @@ A plugin manifest with a runtime the app can't read, an assistant file that
 isn't JSON, a connector's tool description file, a skill folder the manifest
 doesn't list, and every other file the importer did not use are kept as
 unrecognized files under `microsoft-package/` with the note "From a Microsoft
-365 app package." The folder prevents a saved `SKILL.md` or `plugin.json` from being treated as
+365 app package. Not interpreted by Agentprise." The folder prevents a saved `SKILL.md` or `plugin.json` from being treated as
 part of the backup structure when it opens again. Every text file the
 importer would keep, whether as a skill file, an API description, an attached
 file, or a kept file, first goes through `holdsCredential`, which looks for a
@@ -1031,8 +1054,10 @@ key, token, or password in a query string, a JSON value, or a bearer header
 (`CREDENTIAL_TEXT_PATTERN`), and on a YAML or settings line such as
 `client_secret: abc123` or `export EXAMPLE_API_KEY=abc123`
 (`CREDENTIAL_LINE_PATTERN`). A line whose value names a key kept elsewhere,
-such as `${CLIENT_SECRET}`, or says only `true` or `false`, is not a match
-(`CREDENTIAL_REFERENCE_VALUE`). A match leaves the file out, and the notice names
+such as `${CLIENT_SECRET}`, `%CLIENT_SECRET%`, `{{ secrets.token }}`,
+`<EXAMPLE_API_KEY>`, the YAML alias `*secret`, or the YAML anchor `&secret`,
+is not a match. Neither is a line whose value is only `true`, `false`, `yes`,
+`no`, `null`, or `none` (`CREDENTIAL_REFERENCE_VALUE`). A match leaves the file out, and the notice names
 only the file. A skill whose `SKILL.md` matches is not imported as a skill, and an
 action whose API description matches is left out. In a kept JSON or YAML
 file, `withoutRegistrationIds` replaces each `reference_id` and `referenceId`
@@ -1065,34 +1090,73 @@ Assistant and action description files are checked before their values are
 imported, regardless of their filename extension. A match leaves that part
 out, and its file is excluded from the backup. `holdsCredential` also checks
 unknown file types, such as `.env`, `.toml`, and `.pem`, even when they contain
-zero bytes. It decodes UTF-16 files with a byte-order mark and removes zero
-bytes from decoded text before scanning. Other control bytes are checked both
-as separators and with those bytes removed, so neither form can hide a field.
+zero bytes. It decodes UTF-16 files with a byte-order mark, and UTF-16 files
+without one when the first two characters are common Western characters, such
+as `{` or `#` (`packageTextEncoding`). Other text without the mark is read as
+UTF-8. It removes zero bytes from decoded text before scanning. Other control
+bytes are checked both as separators and with those bytes removed, so neither
+form can hide a field.
 Files with invalid text encoding or replacement characters are excluded with
 a repair notice. An unreadable root manifest blocks the package. Known binary
-types, including complete PNG images, receive a scan of their readable bytes.
-A format signature does not exempt those bytes from credential checks.
-This does not inspect compressed document contents. Mislabeled text, such as a
-password stored in a fake PDF, is scanned before it can become a skill file
-or a backup-only file. Private
+types, such as PDF, Office, and OneNote files and complete PNG images, receive
+a second scan of their readable bytes. That scan joins only runs of four or
+more readable characters, as the `strings` tool does, so single bytes in
+compressed data cannot form a match by chance. A third scan joins every
+readable byte and looks only for a credential field name followed by a value,
+such as `api_key:` split into `api` and `_key:` by a single byte
+(`credentialFieldsHoldLiteral`). Random bytes rarely spell a field name, so
+this scan does not leave large documents out by chance. A format signature does not
+exempt those bytes from credential checks. This does not inspect compressed
+document contents. Mislabeled text, such as a password stored in a fake PDF,
+is scanned before it can become a skill file or a backup-only file. Private
 key headers, including `BEGIN PRIVATE KEY` and `BEGIN RSA PRIVATE KEY`, count
 as matches. This heuristic does not detect every credential or encoding.
 URL user names and passwords also count as matches, as do `auth` query
-parameters. Query names are decoded before checking. Valid JSON is scanned
-as parsed keys and values, including nested objects, arrays, and escaped
-field names. Names such as `X-API-Key` and `database_password` use the same
+parameters. Query names are decoded before checking. Valid JSON is read
+one piece at a time, so every key and value is checked as the file holds
+it, including nested objects, lists, and escaped field names. Reading it
+this way matters because `JSON.parse` keeps only the last of two keys with
+the same name. A secret under a repeated key is caught, even inside a list,
+such as `{"api_key": ["abc123"], "api_key": null}`, and an escaped key such as
+`pass\u0077ord` is decoded first. A list under a credential key, such as
+`{"api_key": ["abc123"]}`, is a match when any item is a literal value. An
+object under a credential key is allowed, so JSON Schema files still open,
+but its `value` key counts as the credential's value, as in a settings file
+such as `{"admin_password": {"value": "abc123"}}`.
+Names such as `X-API-Key` and `database_password` use the same
 credential-name rules as settings files. Complete variable references remain
 allowed; literal values and references with fallbacks remain excluded.
 Literal passwords and numeric values have no minimum length. Empty values
 remain allowed, but a quoted space is a literal value.
 Malformed JSON receives the text scan.
 YAML flow mappings, such as `database: {password: ...}`, also receive field
-checks. Quoted names, nested mappings, numeric values, and multiline values
-are covered. Empty values and complete external references remain allowed.
+checks. Quoted names, numeric values, and values that continue on the next
+line inside the braces are covered. A YAML key with nothing after it on its
+line, such as `client_secret:`, is checked against the value on the next line
+that is indented further, or against every item of the list below it
+(`CREDENTIAL_BLOCK_PATTERN` and `yamlBlockListHoldsLiteral`). A list that
+starts with a reference such as `${API_KEY}` and has a literal later is a match.
+When that value is a nested mapping, such as `type: string`, it is not a
+secret, unless the mapping has a `value` key with a literal value, as in
+`admin_password: {value: abc123}` or `value: abc123` on an indented line below
+`admin_password:` (`yamlMappingWrapsLiteral`). A list under `value` counts
+too, such as `value: [abc123]` or list items on the lines below `value:`. In
+JSON, a list under such a `value` key, as in
+`{"admin_password": {"value": ["abc123"]}}`, is checked the same way.
+Blank lines and comment lines between them are skipped. A nested mapping is
+not a value, so API descriptions with `password:` followed by `type: string`,
+or with `password: {type: string}`, still open (`NESTED_BLOCK_MAPPING` and
+`NESTED_FLOW_MAPPING`). Values such as `password: [abc]` and
+`password: {abc}` are still matches. In a list, `- password:` followed by
+`- other` at the same indent is two items, not a key and its value. Empty
+values and complete external references remain allowed.
 XML-style credential elements and attributes are checked too, including
 namespace prefixes and `name` or `key` fields paired with a `value` attribute.
 Standard character references are decoded for that check; external entities
 are never loaded. Empty fields and complete external references remain allowed.
+The attribute, web address, and tag scans take time in proportion to the
+file's length, so a long run of name characters or repeated opening tags
+cannot stall the browser.
 
 ##### Licenses and repeated downloads
 
@@ -1111,25 +1175,43 @@ skill text stays in the instructions for the same reason.
 only the first assistant, without actions or skills. The app itself opens
 files through `importProject`.
 
-### Optional Microsoft exports
+### Optional Microsoft downloads
 
 The three optional Microsoft downloads use the same project and product settings
-as other downloads. Agentprise builds them in your browser without calling an
+as other downloads. They are listed on the Download card under **More Microsoft
+downloads**, which opens with **View Microsoft downloads**. Each one has a
+**Review** button that opens its tab on the Inspect page instead of
+downloading: **Copilot skill**, **Copilot app with skills**, and **Microsoft
+365 plugin**. Agentprise builds them in your browser without calling an
 external validator, command-line tool, or Microsoft service. The implementation
 is in `planMicrosoftPackage`, `writeMicrosoftPackage`, `planCopilotSkill`, and
-`writeCopilotSkill` in `index.html`.
+`writeCopilotSkill` in `index.html`. When one of them is blocked, the error
+starts with the download's name, such as "The Copilot app with skills can't be
+made yet."
 
 #### Copilot skill
 
-Choose **Review** beside **Copilot skill**. Inspect keeps a selected skill, or
-selects the first skill if an assistant was selected. Use **Part of the project**
-to choose another skill. If the project has no skills, return to the editor
-and choose **Add a skill**.
+Choose **Review** beside **Copilot skill**. If a skill is selected, Inspect
+keeps it. If an assistant is selected, Inspect selects a skill for you
+(`skillForCopilotTab`): the first skill the assistant uses that works in
+Copilot, then any other skill in the project that works in Copilot, then the
+first skill, so the report can say why it is blocked. A note under **Part of
+the project** names the selected skill. Use **Part of the project** to choose
+another skill. If the project has no skills, the note asks you to return to
+the editor and choose **Add a skill**.
+
+When you leave the **Copilot skill** tab for another tab, Inspect selects the
+assistant again and announces its name, such as "Showing Golden Scout
+again." It does this only while the skill it picked is still selected. If you chose another
+item in **Part of the project** while on the tab, that item stays selected.
+`itemForProductTab` makes this choice, and adding a skill, merging a project,
+or opening another project clears it.
 
 The ZIP contains `SKILL.md` at its root, `LICENSE.txt`, and supported files at
 their relative locations. It has no app manifest or assistant definition.
-In Agent Builder, open your assistant and choose **Configure**, **Skills**,
-then **Add**. Upload the ZIP and use **Try it** to test a request that needs the skill.
+In Copilot Agent Builder, open your assistant and choose **Configure**,
+**Skills**, then **Add**. Upload the ZIP and use **Try it** to test a request
+that needs the skill.
 
 The skill body must be under 20,000 characters after tool notes are added. Each
 file can be at most 25 MB; the complete ZIP can be at most 50 MB. Relative paths
@@ -1138,142 +1220,132 @@ an assistant's skills. Agentprise checks the selected skill's file count; check
 the combined count when adding it to an existing assistant. Scripts and
 unsupported resources are excluded with notices. Supported tool references
 remain instructions with separate setup steps. The upload does not install
-actions, connections, or permissions. If you select an assistant in the dropdown, the download is blocked and a
-message asks you to select a skill.
+actions, connections, or permissions. If you choose an assistant in **Part of
+the project**, Agentprise blocks the download and asks you to choose a skill.
 
 See Microsoft's [Agent Builder skill upload
 guide](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/agent-builder-add-skills)
-and [native skill
+and [skill
 limits](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/declarative-agent-skills).
 
 #### Copilot app with skills
 
 The selected assistant stays an assistant. Its `uses` list selects the skills
-written to `skills/<skill-name>/SKILL.md`, with their descriptions and resource
+written to `skills/<skill-name>/SKILL.md`, with their descriptions and attached
 files. Its own instructions stay separate from skill steps. If you select a
 skill, the download creates an assistant with instructions to use that skill.
+When a selected skill has a problem, the report and the error list it once.
 
 This download uses app manifest 1.28, declarative agent v1.9 with
 `agent_skills`, and API-plugin v2.4 for actions. The usual **Copilot / Teams
 Apps** download still uses v1.8 and adds skill steps to the assistant's
 instructions. Both downloads keep the assistant's app id so later uploads update
-the same assistant. Ask your admin to upload the native app package in the
-Microsoft 365 admin center, under **Copilot**, **Agents**, then **Upload custom
-agent**. This is an app package, not an Agent Builder skill ZIP or a Copilot
-Studio solution. See Microsoft's [custom agent upload
+the same assistant. Ask your admin to upload the **Copilot app with skills**
+package in the Microsoft 365 admin center, under **Copilot**, **Agents**, then
+**Upload custom agent**. It is not for Agent Builder or Copilot Studio. See
+Microsoft's [custom agent upload
 guide](https://learn.microsoft.com/en-us/microsoft-365/copilot/agent-essentials/agent-lifecycle/agent-upload-agents).
 
 The download blocks more than eight skills, more than 350 skill files, and skill
 text of 20,000 characters or more after tool notes are added. Relative resource
 paths have at most three components. Leading hyphens are allowed in file and
 folder names; hidden and Windows reserved names are blocked. The complete ZIP
-must fit within 10 MB. It blocks attached assistant knowledge files; move them
-into a skill or use the usual download. API descriptions registered as actions
-are not counted as attached knowledge. That exemption matches both the owning
-item and the file path, so a skill action cannot hide an assistant attachment
-with the same name.
+must fit within 10 MB. It blocks files attached to the assistant; attach them
+to a skill instead, or use the usual download. API descriptions registered as
+actions are not counted as attached files. That exemption matches both the
+owning item and the file path, so a skill action cannot hide an assistant
+attachment with the same name.
 
 #### Microsoft 365 plugin
 
 This download uses app manifest 1.29 with root `agentSkills` and, when needed,
 `agentConnectors`. It includes eligible project items as skills, with an
 assistant's description prefixed by `Persona:`. It has no declarative-agent
-file. The project id identifies the plugin across exports. The selected item's
+file. The project id identifies the plugin across downloads. The selected item's
 picture supplies the package icons.
 
-Remote connectors must use HTTPS Streamable HTTP and either no authentication or
-OAuth. OAuth exports contain a registration placeholder that an admin must
-replace. Local servers, SSE servers, API-key servers, OpenAPI action providers,
-and scoped web-search providers are left out with notices. A connector with a
-restricted tool list is also left out: dynamic discovery would broaden that
-list, and the project has no complete tool-description schema to export.
-Manifest 1.29 permits URL-only connectors, so no tool-description file is
-invented. The usual app download uses manifest 1.28.
+Remote connectors must use HTTPS Streamable HTTP and either no sign-in or
+OAuth. For an OAuth connector, the download includes a registration
+placeholder. Ask your admin to register the sign-in and replace the
+placeholder. Local servers, SSE servers, API-key servers, OpenAPI action
+providers, and scoped web-search providers are left out with notices. A
+connector with a restricted tool list is also left out: dynamic discovery would
+broaden that list, and the project has no complete tool-description schema to
+write. Manifest 1.29 permits URL-only connectors, so no tool-description file
+is invented. The usual app download uses manifest 1.28.
 
-Each plugin has at most 20 skills. Each skill has at most 20 companion files,
-including its license. Each companion is at most 5 MB, and their total is at
-most 10 MB. The complete package is also capped at 10 MB. Unsafe, duplicate, and
-overlong paths block the download. The download is blocked if the plugin cannot
-enforce the assistant's active source restrictions. Use an assistant package to
-preserve those restrictions.
+A plugin connects each server once and gives every skill all of its tools.
+When one skill limits a server to certain tools and another skill uses the
+whole server, Agentprise blocks the download. The report line is titled with
+the server's label and reads, for example: "Record Finder limits the Example
+search server to certain tools, but Golden Scout uses all of its tools. A
+plugin gives every skill all of the server's tools. Use a server with only the
+allowed tools, or choose Copilot / Teams Apps." Several names are joined as
+"A and B" or "A, B, and C" (`namesInSentence`).
+
+Each plugin has at most 20 skills. Each skill has at most 20 attached files,
+including its license. Each attached file is at most 5 MB, and their total is
+at most 10 MB. The complete package is also capped at 10 MB. Unsafe,
+duplicate, and overlong paths block the download. Agentprise blocks the
+download if the plugin cannot keep the limits on the assistant's sources. Use
+an assistant package to keep those limits.
 
 #### Exclusions and setup
 
-All three optional downloads exclude script files and tools that run scripts.
-Agentprise has not checked whether those scripts can run in Microsoft. Other
-unsupported resource types are excluded with a notice. Resource files keep their
+All three optional downloads leave out script files and the tools that run
+them. Other unsupported resource types are excluded with a notice. Resource files keep their
 names and bytes. Extensionless license files, such as `LICENSE`, `COPYING`, and
-`NOTICE`, receive a `.txt` extension with a notice. When needed, the original
-license bytes are also copied to `LICENSE.txt` so the skill's license link
-works. A conflicting filename blocks the download instead of overwriting either
-file. The original project and its backup keep the original names and excluded
-files.
+`NOTICE`, receive a `.txt` extension with a notice. When a skill's license
+terms are in a `LICENSE`, `LICENCE`, or `COPYING` file under another name,
+those bytes are also copied to `LICENSE.txt` so the skill's license link works.
+A `NOTICE` file is attribution, not license terms, so it is never copied to
+`LICENSE.txt`. It stays as `NOTICE.txt`, and Agentprise writes `LICENSE.txt`
+itself, as it does for other downloads. A conflicting filename blocks the
+download instead of overwriting either file. The original project and its
+backup keep the original names and excluded files.
 
-Items marked as not for Copilot are excluded. The download is blocked if none of
-the selected skills can be used in Copilot. Setup instructions appear on Inspect
-as **Setup steps (not in the package)**. They are not added to the Microsoft
-ZIP. Download a backup before changing the project; these packages are not
-lossless backups.
+Agentprise leaves out items marked as not for Copilot, and blocks the download
+if Copilot can use none of the selected skills. Setup instructions appear on
+Inspect as **Setup steps (not in the package)**. They are not added to the
+Microsoft ZIP. Download a backup before changing the project; these packages
+are not lossless backups.
 
-#### Completed checks and remaining tests
+#### Preview status and file limits
 
-Checked on 2026-10-22: the new Windows tests exercise both package layouts,
-references, resource bytes, source limits, tool exclusions, count and size
-limits, hostile paths, and the pinned schemas. Microsoft 365 Agents Toolkit CLI
-1.1.18 also passed `atk validate --manifest-file` for the native assistant and
-plugin fixtures, including a remote connector. The native agent includes its
-v1.9 `$schema` address because the Toolkit needs it to find the schema. These
-checks do not prove that Microsoft accepts the upload or can use its skills.
-`atk validate --package-file` required account sign-in and was canceled;
-signed-in package validation and installation in a Microsoft 365 organization
-remain untested.
-
-The alternative Claude-plugin conversion was also checked with CLI 1.1.18.
-Unpack the **Claude plugin** download, then run this command against its inner
-folder. Replace the example links with your publisher links:
-
-```sh
-npx --yes --package @microsoft/m365agentstoolkit-cli@1.1.18 atk import openplugin --path ./skill-check --output ./converted --privacy-url https://example.org/privacy --terms-url https://example.org/terms --telemetry false
-cd converted
-npx --yes --package @microsoft/m365agentstoolkit-cli@1.1.18 atk package --manifest-file appPackage/manifest.json --output-package-file build/plugin.zip --output-folder build --telemetry false
-```
-
-The synthetic fixture imported and packaged successfully. The CLI warned that
-the `.claude-plugin` location is deprecated, but accepted it. Its generated
-manifest used `devPreview`, with root `agentSkills`; the referenced skill and
-resource files were included. This is a developer conversion route, not a
-requirement for Agentprise's browser downloads. The converted plugin was not
-installed in a Microsoft 365 organization.
-
-Microsoft documents native assistant skills as a Frontier preview, unavailable
-with Information Barriers or public-store submission. Scripts cannot use the
-network or install dependencies. The native-skills overview gives a 350-file
-limit; the Toolkit guide says 400. Agentprise uses 350 until a tenant test
-resolves the difference. Sources checked on 2026-10-22: [native skill
+Microsoft documents skills in Copilot assistants as a Frontier preview,
+unavailable with Information Barriers or public-store submission. Scripts in
+skills in Copilot cannot connect to the internet or install packages. Microsoft's
+skills overview gives a 350-file limit, and the Toolkit guide says 400.
+Agentprise uses 350, the lower of the two. Sources checked on 2026-10-22:
+[Copilot skill
 restrictions](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-skills),
 [Toolkit skill
 setup](https://learn.microsoft.com/microsoft-365/copilot/extensibility/build-declarative-agents-add-custom-skills),
 and [Microsoft plugin package
 format](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development).
 
-On 2026-10-22, a tester reported uploading the sample `record-finder` skill
-through Agent Builder's **Configure**, **Skills**, **Add** route. The ZIP held
-root `SKILL.md`, `LICENSE.txt`, and `references/check.txt`. Asking for the
-sample marker returned `COPPER-FINCH`, the marker stored in that reference file.
-The reported result shows that Copilot read the skill and its reference file.
-The test used a manually prepared ZIP; regression and browser checks verify that
-the skill download produces the same layout and file contents. It does not
-verify full app or Cowork plugin installation, tool sign-in, updates, or access
-by another user.
+The **Copilot app with skills** download writes the v1.9 `$schema` address in
+its declarative agent file, because Microsoft 365 Agents Toolkit needs that
+address to find the schema.
 
-For further tests in your organization, use a sample assistant and a skill with
-a reference file containing a made-up marker. Record the date, cloud,
-destination, upload route, and versions. Check installation, a request that
-triggers the skill, retrieval of the marker, save and reopen, an update to the
-same assistant, source restrictions, and access by another test user. Test a
-plugin separately from an assistant package, including any registered tool
-connection. Mark unavailable checks as skipped. Access to skills alone does not
-prove that these packages install or work in your organization.
+#### Convert a Claude plugin with Microsoft 365 Agents Toolkit
+
+Developers can also turn the **Claude plugin** download into a Microsoft 365
+package with Microsoft 365 Agents Toolkit CLI 1.1.18. Agentprise's browser
+downloads do not need this route. Unpack the **Claude plugin** download, then
+run these commands. Replace `./caveman` with the folder inside the download
+that holds `.claude-plugin/`, and replace the example links with your
+publisher links:
+
+```sh
+npx --yes --package @microsoft/m365agentstoolkit-cli@1.1.18 atk import openplugin --path ./caveman --output ./converted --privacy-url https://example.org/privacy --terms-url https://example.org/terms --telemetry false
+cd converted
+npx --yes --package @microsoft/m365agentstoolkit-cli@1.1.18 atk package --manifest-file appPackage/manifest.json --output-package-file build/plugin.zip --output-folder build --telemetry false
+```
+
+The CLI warns that the `.claude-plugin` location is deprecated, but accepts
+it. The manifest it writes uses `devPreview`, with root `agentSkills`, and the
+package includes the skill and its attached files.
 
 ### The Claude and generic whole-project plugins
 
@@ -1445,132 +1517,6 @@ real account, unless the line names a tenant test.
 | Kimi Code CLI reads skills from `.kimi-code/skills` and `.agents/skills` in a project and from `~/.kimi-code/skills` and `~/.agents/skills` for one person | [Kimi Code CLI skills](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/skills.html), checked 2026-10-11 |
 | Kimi Code CLI plugins use their own `kimi.plugin.json` or `.kimi-plugin/plugin.json`, with `skills` and `mcpServers`, and install with `/plugins install` and a folder or `.zip` | [Kimi Code CLI plugins](https://www.kimi.com/code/docs/en/kimi-code-cli/customization/plugins.html), checked 2026-10-11 |
 
-### Tests run in this repository
-
-- `npm test` on 2026-10-10 ran 220 tests, and 219 passed. The one failure was
-  a content check on the Library entry `pubmed-search.zip`, which must refuse
-  legal and medical advice. The suite covers a project exported to the backup
-  and opened again normalizing to an identical record, the closed Agent
-  Plugins 1.0.0 shape of `plugin.json` and the schema and transport of
-  `mcp.json`, imports of a Claude plugin, two Codex plugins, a generic Agent
-  Plugins folder, and a version 1 bundle (which opens as a skill), a skill
-  `.zip` of an assistant restoring its kind, starters, welcome message, icon,
-  and Copilot settings, hostile project input, a synthetic copy of the Copilot
-  app's 2026-10-10 export shape, and a check that every backup listed in
-  `library/catalog.json` opens without notices, survives a backup round trip,
-  and matches its catalog line.
-- `tests/microsoft-package.test.mjs` checks Microsoft package imports and
-  downloads using sample packages from `tests/microsoft-package-fixture.mjs`.
-  The cases cover assistants, actions, skills, connectors, and packages with
-  several assistants. A package with three actions downloads again with the
-  same action files, API description, and web-search sites.
-- Security cases check credential rejection, unsafe file locations, encoding,
-  file types, and count limits. They verify both the imported project and
-  files saved in a backup. See [Microsoft package import controls](compliance.md#microsoft-package-imports)
-  for the controls and their limits.
-- `tests/project.test.mjs` checks shared and conflicting server names across
-  plugin formats. The sample packages follow Microsoft's documentation;
-  Microsoft's package validator was not used to check these import fixtures.
-  On 2026-10-22, all 332 tests in the suite passed.
-- `tests/tools.test.mjs` exports a fixed synthetic project
-  (`tests/tools-fixture.mjs`), with an assistant that uses a skill that has one
-  tool of each provider kind, to every download and compares each result with
-  the golden files under `tests/fixtures/exports/`. Set `UPDATE_GOLDEN=1` to
-  write them again after a deliberate change.
-- Exports are checked against the pinned schemas in `tests/schemas/`
-  (Agent Plugins 1.0.0 `plugin.json` and `mcp.json`, declarative agent v1.8,
-  plugin manifest v2.4, and Teams manifest 1.28) by the small validator in
-  `tests/schema-validator.mjs`, which has its own tests.
-  `tests/schemas/SOURCES.md` lists each file's URL, download date, and SHA-256
-  hash. The tests read these files from disk and never fetch a schema.
-- A test keeps `index.html` under 750,000 bytes, so the page stays quick to
-  load. The test fails as soon as the file grows past that.
-- `node tools/migrate-library.mjs --check` on 2026-10-10 reported all 13
-  Library entries as already version 2 and the catalog unchanged.
-- The real Caveman `.agent` and Teams package exports both import. The `.agent`
-  import returns every field, and the Teams import returns every field except the
-  welcome message and starters (that export had none).
-- The real Copilot app export of 2026-10-10 (a SharePoint file by id, three
-  Teams chats, a group mailbox, a meeting, Think deeper, and a `.txt` upload)
-  imports with no loss and writes back the same Copilot settings. The real
-  SharePoint builder export with a file, a folder, and a site imports with the
-  switch on and all three items.
-
-### Tests that still need a real account
-
-These are open. Record the date and result here when someone runs them.
-
-#### Tools, skills, and plugins (V1 to V8)
-
-The design for tools listed eight facts to check. On 2026-10-10 the vendor
-documentation settled some of them. The rest need a real account.
-
-| Item | Question | Status on 2026-10-10 |
-|---|---|---|
-| V1 | Can a Copilot API plugin use an operation that returns `text/plain`, such as PubMed abstracts? | Open. No Microsoft page says. If it cannot, `pubmed.abstracts` on Copilot drops to its fallback, which asks people to paste abstracts. Needs a tenant test. |
-| V2 | Which declarative agent version to target, its instruction limit, and the plugin fields for a remote tool server | Settled by docs and schemas: v1.8, 8,000 characters, plugin manifest v2.4 with a `RemoteMCPServer` runtime. Version 1.9 with `agent_skills` is a preview only; whether to move to it is a follow-up. |
-| V3 | Does a `.agent` file in a Teams chat honor `WebSearch.sites`? | Open. The `.agent` schema is not documented. Needs a tenant test. |
-| V4 | Does ChatGPT accept a plugin with only a root `plugin.json`? | Partly settled. OpenAI documents it for ChatGPT, Codex, and the developer portal. The Admin console upload does not name a layout, so upload a Plugin download there once. |
-| V5 | What does claude.ai load from a plugin, and is Skills on for the EFDC Team workspace? | Component list settled by docs (see vendor facts). Whether Skills is on in the EFDC workspace needs an Owner to look. |
-| V6 | Do Gemini skills accept work and school accounts? | Settled: not yet. Recheck before changing the Gemini steps. |
-| V7 | Does Copilot web search limited to `pubmed.ncbi.nlm.nih.gov` return useful results? | Open. The site passes the schema rules; usefulness needs a tenant test. |
-| V8 | Can a person download a migrated ChatGPT plugin or a Gemini skill? | Gemini: yes, as a `.zip`, which the regular skill importer opens. ChatGPT: no download is documented for the person who migrated a GPT, so a GPT still moves by copying its fields into Create new. |
-
-#### Other open tests
-
-- Install a plain skill and a Plugin made by Agentprise in an OpenClaw you run
-  yourself and in Kimi Code CLI, and confirm the skills load. The steps above
-  come from their documentation; a real install has not been recorded.
-- Upload a skill `.zip` made by Agentprise to a Gemini account and to a Claude
-  account, and confirm both accept the `agentprise.json` file beside
-  `SKILL.md`. The Claude upload path itself was settled by the documentation
-  on 2026-10-10 (Customize, then Skills); a real upload has not been recorded.
-- Upload a Claude plugin made by Agentprise to claude.ai, connect a web tool
-  server from its Connectors tab, and confirm the skills load.
-- Upload a Copilot app package with an action to a tenant, once with an
-  OpenAPI action and once with a tool server, and confirm Copilot lists and
-  calls them.
-- Open a real Copilot Cowork plugin, and a package with `agent_skills` made by
-  Microsoft 365 Agents Toolkit, and confirm the skills and connectors arrive.
-  The importer was tested only with packages built from Microsoft's
-  documentation.
-- Load a `.agent` file written by Agentprise, with `_license` and `_agentprise`,
-  in a SharePoint library and in a Teams chat. The tenant test recorded above
-  used a hand-edited file, not this app's output.
-- Try a Teams package with an extra `LICENSE.txt` file inside. The app does not
-  add one until this is known to work.
-- Load a `.agent` file with `WebSearch` on and `TeamsMessages` and `Meetings`
-  off in a Teams group chat, and confirm the answers post without the approve
-  step.
-- Open a SharePoint-made `.agent` file that has sources, download it again, and
-  add it to a Teams chat. The items now keep every key the builder wrote.
-- Add a `.agent` file whose only source is a link a person pasted, with no ids,
-  to a Teams chat, to learn whether Teams accepts a link without ids.
-- Upload a package that carries an attached file to the Copilot app and check
-  whether the agent lists the file as knowledge. If it does not, the next step is
-  the schema's `EmbeddedKnowledge` entry.
-- Upload a package that carries a script, such as `deploy.ps1.txt`, to the
-  Copilot app and check whether the agent lists it and can quote from it.
-- Export an agent from the Copilot app with "My SharePoint files, folders, and
-  sites" on and no specific items, to learn how the app spells an unlimited
-  `OneDriveAndSharePoint` entry. Agentprise writes a bare entry and reads both
-  lists empty as off.
-- Attach a real `.onepart` file. The app checks it against the OneNote section
-  header; if a real one is refused, the check needs the real header.
-- Load a `.agent` file written by Agentprise that limits Teams messages to
-  chats, email to a group mailbox, or meetings to ids, or that sets a response
-  mode, in a Teams chat, and confirm each limit is honored.
-- Load a `.agent` file with a bare `OneDriveAndSharePoint` entry (switch on, no
-  limit) in a Teams chat and confirm it reads every file the person can see.
-- After mid-November 2026, run Microsoft's "Upgrade to Microsoft 365 agent" on
-  a `.agent` file written by Agentprise and record what the upgrade keeps. The
-  upgrade steps in the Teams chat guide come from Microsoft's page, not from a
-  run.
-- Create an agent in Copilot Agent Builder by pasting the name, description,
-  instructions, and example questions from Agentprise, and confirm the agent
-  behaves like the `.agent` file did. Also confirm that uploading the `.agent`
-  file itself only adds it as reading material.
-
 ### Conclusion
 
 Pick the download for the product you use, and download a backup if you are
@@ -1578,14 +1524,15 @@ unsure. If the download has tools, read its report and setup steps. Maintainers:
 keep the project backup lossless, keep each item folder a valid Agent Skill,
 keep the Microsoft and Agent Plugins files free of extra keys where their
 schemas forbid them, keep `planExport` the single source for both the
-instructions and the report, and update the tables above whenever a converter
-or importer changes.
+instructions and the report, keep `index.html` under 750,000 bytes so the page
+stays quick to load, and update the tables above whenever a converter or
+importer changes.
 
 ### Additional resources
 
 - [Agentprise, the live app](https://code.depressioncenter.org/agentprise/)
 - [Connect the tools in a download](how-to/connect-tools.md)
-- [Native Copilot skill restrictions](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-skills)
+- [Copilot skill restrictions](https://learn.microsoft.com/microsoft-365/copilot/extensibility/declarative-agent-skills)
 - [Toolkit skill setup](https://learn.microsoft.com/microsoft-365/copilot/extensibility/build-declarative-agents-add-custom-skills)
 - [Microsoft plugin package format](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-plugin-development)
 - [Move a Gem or a custom GPT into Agentprise](how-to/move-a-gem-or-gpt.md)

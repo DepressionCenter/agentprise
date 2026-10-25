@@ -3,7 +3,7 @@ This file is part of Agentprise
 tests/schemas/SOURCES.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-10
-Last Modified: 2026-10-22
+Last Modified: 2026-10-23
 Summary: Where each pinned JSON Schema in this folder came from, when it was
          downloaded, and its SHA-256 hash.
 Notes: See README file for documentation and full license information.
@@ -44,14 +44,20 @@ Files are stored byte for byte. The original files used `curl -sL`; the
 
 ## License notices
 
-The Microsoft schemas added on 2026-10-22 retain the publisher's MIT License.
-These sibling notices copy the [upstream license](https://github.com/microsoft/json-schemas/blob/main/LICENSE)
+Each pinned Microsoft schema keeps the publisher's MIT License. These sibling
+notices copy the [upstream license](https://github.com/microsoft/json-schemas/blob/main/LICENSE)
 without adding fields to the pinned JSON:
 
-- [Declarative-agent v1.9 notice](copilot/declarative-agent-v1.9.schema.json.LICENSE.txt)
+- [Declarative agent v1.8 notice](copilot/declarative-agent-v1.8.schema.json.LICENSE.txt)
+- [Declarative agent v1.9 notice](copilot/declarative-agent-v1.9.schema.json.LICENSE.txt)
+- [Copilot plugin v2.4 notice](copilot/plugin-v2.4.schema.json.LICENSE.txt)
+- [App manifest v1.28 notice](teams/manifest-v1.28.schema.json.LICENSE.txt)
 - [App manifest v1.29 notice](teams/manifest-v1.29.schema.json.LICENSE.txt)
 
-The upstream license blob is `21071075c24599ee98254f702bcfc504cdc275a6`.
+The upstream license blob is `21071075c24599ee98254f702bcfc504cdc275a6`. The
+v1.9 and v1.29 notices match it byte for byte. The v1.8, v2.4, and v1.28
+notices start with three lines that name the schema file they apply to,
+followed by the same license text.
 The app manifest matches the upstream file bytes. The declarative-agent schema
 has the same parsed structure as the upstream file; its downloaded formatting
 is preserved. The schema hashes above remain unchanged.
