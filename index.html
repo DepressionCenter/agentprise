@@ -975,7 +975,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                             </div>
                             <div class="prompt-group">
                                 <label for="s-instructions" class="prompt">How should it behave?</label>
-                                <textarea id="s-instructions" class="blank blank-wide" rows="2" maxlength="8000" placeholder="Be friendly and brief. Explain steps in order. Say when you are not sure, and point to the source you used."></textarea>
+                                <textarea id="s-instructions" class="blank blank-wide" rows="2" maxlength="8000" aria-describedby="s-instructions-counter" placeholder="Be friendly and brief. Explain steps in order. Say when you are not sure, and point to the source you used."></textarea>
+                                <p class="counter" id="s-instructions-counter">0 of 8,000 characters</p>
                                 <button type="button" class="link-button instructions-template">Help me write this</button>
                             </div>
                             <div class="prompt-group" id="starters-group">
@@ -10368,7 +10369,10 @@ function updateDerived() {
     }
     const limit = item.kind === "agent" ? LIMITS.instructions : LIMITS.skillBody;
     setText($("d-skill-name"), item.skillName);
-    setText($("d-instructions-counter"), itemBody(item).length.toLocaleString() + " of " + limit.toLocaleString() + " characters");
+    // The visible editor and the details form show the same count. The count is read with its text box,
+    // not announced on every keystroke.
+    const count = itemBody(item).length.toLocaleString() + " of " + limit.toLocaleString() + " characters";
+    ["s-instructions-counter", "d-instructions-counter"].forEach(function (id) { setText($(id), count); });
     $("icon-preview").src = item.kind === "agent" ? iconPreviewUri(item) : "";
     sizeNameBlank();
     autosize($("s-instructions"));
