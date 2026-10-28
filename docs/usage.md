@@ -311,7 +311,7 @@ Files made elsewhere may need changes before you can use them:
 ### Start from the Library
 
 1. Choose **Library** on the left, or **Use a sample** on the start page.
-2. Search by name, summary, kind, or tag if the list is long. The row of
+2. Search by name, summary, kind, tag, or author if the list is long. The row of
    buttons under the search box narrows the list. **Assistant**, **Skill**, and
    **Assistant with skills** show one kind of entry. The buttons after them
    show one tag. Choose **All** or

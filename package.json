@@ -7,7 +7,7 @@
   "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {
-    "test": "node tests/check-syntax.mjs && node --test tests/"
+    "test": "node tests/check-syntax.mjs && node --test \"tests/*.test.mjs\""
   },
   "engines": {
     "node": ">=20"

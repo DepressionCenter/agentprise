@@ -52,7 +52,7 @@ The Library page shows one card for each entry.
 ### Step 2: Find one and look inside
 
 When the list is long, type in the search box to narrow it by name, summary,
-kind, or tag. You can also choose **Assistant**, **Skill**, or
+kind, tag, or author. You can also choose **Assistant**, **Skill**, or
 **Assistant with skills** to show only that kind of entry. The buttons after
 them show only one tag. **All** or **Show all** brings everything
 back.
