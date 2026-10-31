@@ -11352,7 +11352,8 @@ function renderProductBlocked() {
         link.addEventListener("click", function (event) {
             event.preventDefault();
             event.stopPropagation();
-            $(DETAILS_FIELDS[problem.field]).focus();
+            showView("project", false);
+            $(WORKSPACE_FIELDS[problem.field]).focus();
         });
         list.appendChild(el("li", {}, [link]));
     });
