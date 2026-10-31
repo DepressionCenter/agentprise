@@ -1305,6 +1305,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <div class="store-count">
                         <p id="library-status" class="store-status" role="status"></p>
                         <button type="button" class="link-button" id="library-clear" hidden>Show all</button>
+                        <button type="button" class="link-button" id="library-retry" hidden>Try again</button>
                     </div>
                 </div>
                 <ul class="store-grid" id="library-list"></ul>
@@ -11853,6 +11854,9 @@ function ensureLibrary() {
             ui.catalogOk = Boolean(fetched);
             if (fetched) {
                 await loadLibraryEntries(ui.catalog);
+            } else {
+                // Forget the failed attempt so the next call (Try again or a later visit) requests the catalog again.
+                libraryLoading = null;
             }
         })();
     }
@@ -11862,16 +11866,21 @@ function ensureLibrary() {
 async function renderLibrary() {
     const list = $("library-list");
     const status = $("library-status");
+    const retry = $("library-retry");
     if (!libraryLoading) {
         setText(status, "Loading the library...");
     }
+    retry.disabled = true;
     await ensureLibrary();
+    retry.disabled = false;
     if (!ui.catalogOk) {
         setText(status, libraryAvailable()
-            ? "The library could not be loaded. Try again later."
+            ? "The library could not be loaded. Choose Try again to request it again."
             : "The Library needs the app to run from a web address. Use the online version at " + APP_SITE_URL + " or start the included server.");
+        retry.hidden = !libraryAvailable();
         return;
     }
+    retry.hidden = true;
     renderLibraryFilters();
     const query = $("library-search").value.trim().toLowerCase();
     const matches = ui.catalog.filter(function (entry) {
@@ -12011,6 +12020,7 @@ async function initApp() {
     setupDialogs();
     setupProjectMenus();
     $("library-search").addEventListener("input", function () { renderLibrary(); });
+    $("library-retry").addEventListener("click", function () { renderLibrary(); });
     $("library-clear").addEventListener("click", function () {
         $("library-search").value = "";
         ui.libraryTag = "";
