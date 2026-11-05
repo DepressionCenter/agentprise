@@ -11870,6 +11870,8 @@ async function renderLibrary() {
     if (!libraryLoading) {
         setText(status, "Loading the library...");
     }
+    // A disabled button loses focus, so remember focus here and put it back after the request.
+    const retryHadFocus = document.activeElement === retry;
     retry.disabled = true;
     await ensureLibrary();
     retry.disabled = false;
@@ -11878,9 +11880,16 @@ async function renderLibrary() {
             ? "The library could not be loaded. Choose Try again to request it again."
             : "The Library needs the app to run from a web address. Use the online version at " + APP_SITE_URL + " or start the included server.");
         retry.hidden = !libraryAvailable();
+        if (retryHadFocus) {
+            retry.focus();
+        }
         return;
     }
     retry.hidden = true;
+    if (retryHadFocus) {
+        // The button is hidden after a successful load, so focus moves to the search box, as with Show all.
+        $("library-search").focus();
+    }
     renderLibraryFilters();
     const query = $("library-search").value.trim().toLowerCase();
     const matches = ui.catalog.filter(function (entry) {
