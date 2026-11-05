@@ -48,6 +48,17 @@ You can't change the main project directly, so you work in your own copy.
 
 If you don't have Git yet, get it from [git-scm.com](https://git-scm.com/downloads).
 
+The first time you use Git on a computer, tell it the name and email address
+to put on your changes. Anyone can see them on GitHub. To keep your own email
+address private, use the no-reply address GitHub gives you. Find it on GitHub
+under **Settings**, then **Emails**. Then run these two commands with your own
+details:
+
+```
+git config --global user.name "Your Name"
+git config --global user.email "12345678+YOUR-NAME@users.noreply.github.com"
+```
+
 ### Step 2: Read the project rules
 
 Two files explain how the project likes things done. Read them before you
@@ -152,10 +163,25 @@ A maintainer reads your change and may ask questions or suggest edits. To
 make an edit, change the file, then commit and push again on the same branch.
 The pull request updates on its own.
 
+### Start your next change
+
+Your copy still has the branch from your last change, and the main project
+may have changed since then. Update your copy before you start again:
+
+1. Open your fork on GitHub and choose **Sync fork**, then **Update branch**.
+2. In a terminal, from the `agentprise` folder, run:
+
+   ```
+   git switch main
+   git pull
+   ```
+
+Then start again at Step 3 with a new branch name.
+
 ### Conclusion
 
 Those are all the steps: fork, clone, branch, change, test, commit, and pull
-request. After your first one, the next change only needs Steps 3 to 7.
+request. For your next change, update your copy, then start again at Step 3.
 
 ### Additional resources
 
