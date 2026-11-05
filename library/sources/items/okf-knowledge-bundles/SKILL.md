@@ -24,13 +24,13 @@ A reader must be able to open the citation and land on the original page that ho
 
 The bundle can be in many places: a folder on disk, a code repository, a SharePoint site or OneDrive folder, or files attached to the conversation. Use whatever file search and file reading you have in this product. If you cannot open the files at all, say so and ask the person to share the bundle folder or the files they want you to use.
 
-Treat the folder that holds the bundle's `index.md` as the **bundle root**. Search only that root and its subfolders, and do not mix concepts from different bundles in one answer unless the person asks you to.
+Treat the bundle folder the person points you to as the **bundle root**. If they do not name one, use the top folder that holds the bundle's Markdown files, such as a folder named `okf`. Search only that root and its subfolders, and do not mix concepts from different bundles in one answer unless the person asks you to.
 
 ## Recognize an OKF bundle
 
 - The path contains a folder named `okf`, for example `.../my-compendium/okf/...`.
-- A root `index.md` has `okf_version` in its frontmatter and lists the concepts, grouped by source.
-- An optional root `log.md` holds dated build entries.
+- An `index.md` file may list the concepts in its folder, grouped by source. Index files are optional and can be in any folder. The one in the bundle root may declare `okf_version`.
+- An optional `log.md`, in any folder, holds dated build entries.
 - Subfolders are named for each source collection, for example `depression-center-deep-blue-documents-collections/`.
 - Concept files have a slug and a short hash in their names, for example `ambulatory-assessment-methodologies-for-food-related-0c1ce4e9.md`.
 
@@ -81,17 +81,18 @@ More rules:
 - **GitHub:** cite the `blob/...` URL as given, not the repository's main page.
 - **One claim, many concepts:** cite each original resource you actually used, and only those.
 - **Duplicates:** if two concepts share the same original URL, cite it once.
+- **Footnotes:** a footnote in the body may point to one entry under `sources`. For the claim it supports, cite that entry's `resource` URL.
 
 ## Workflow
 
-1. **Orient.** Open `index.md`. It can be very long (thousands of lines), so do not read it all. Search it for words from the question, or find the heading for the right source collection.
+1. **Orient.** If the bundle has `index.md` files, open the one in the bundle root and any in folders that fit the question. An index can be very long (thousands of lines), so do not read it all. Search it for words from the question, or find the heading for the right source collection. If there is no index, go straight to step 2.
 2. **Search more widely.** Also search the whole bundle root by content, with a separate search for each distinct idea in the question.
 3. **Narrow.** Follow index entries (relative links to `.md` files) to candidate concepts. Use `title`, `description`, `tags`, and `keywords` to judge which ones fit before you read the body text. Only follow links that stay inside the bundle root. The index only helps you find concepts; it is never evidence or a source.
-4. **Read.** Open the best concept files. Take facts from the body text under the `##` sections. If a file listed in `index.md` will not open, search the bundle root for it before you call it unavailable.
+4. **Read.** Open the best concept files. Read the whole body, which may use any headings or none. If a file listed in an index will not open, search the bundle root for it before you call it unavailable.
 5. **Resolve.** For every concept you use, find its citation URL with the order above.
 6. **Answer.** Write the answer in your own words. Put the original URLs inline as Markdown links, such as `[Ambulatory Assessment Methodologies...](https://deepblue.lib.umich.edu/items/639fc3dc-...)`.
 7. **List sources.** End with a Sources list that holds **only original resource URLs**: no `.md` file names and no links to the OKF folder.
-8. **Freshness.** When timing matters, give the build date from `generated.at`, or the date in `index.md`. The original may have changed since then.
+8. **Freshness.** When timing matters, give the build date from `generated.at`, or the newest date in `log.md`. The original may have changed since then.
 
 Some products add their own reference to the `.md` file they read. When that happens, still put the original URL in the answer text and in the Sources list, and never present the `.md` reference as the source.
 
