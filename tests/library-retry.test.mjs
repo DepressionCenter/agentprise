@@ -33,24 +33,47 @@ const page = readFileSync(join(repoRoot, "index.html"), "utf8");
 // Markers are the start of ensureLibrary and the start of renderLibrary.
 const LOADER_START = "let libraryLoading = null;";
 const LOADER_END = "async function renderLibrary()";
+const RENDER_START = "async function renderLibrary()";
+const RENDER_END = "\nfunction stripTile(entry)";
 
-describe("library retry markup", () => {
-  test("has a hidden Try again button beside the Library status", () => {
-    assert.match(
-      page,
-      /<button[^>]*id="library-retry"[^>]*hidden[^>]*>\s*Try again\s*<\/button>/,
-      "Library Try again button is missing from index.html"
-    );
-  });
+function loadRenderLibrary(sandbox) {
+  const renderStart = page.indexOf(RENDER_START);
+  const renderEnd = page.indexOf(RENDER_END, renderStart);
+  assert.ok(renderStart !== -1 && renderEnd > renderStart, "Could not find renderLibrary in index.html");
+  vm.runInNewContext(page.slice(renderStart, renderEnd) + "\nresult = renderLibrary;", sandbox);
+  return sandbox.result;
+}
 
-  test("wires the Try again button to renderLibrary", () => {
-    assert.match(
-      page,
-      /\$\("library-retry"\)\.addEventListener\("click", function \(\) \{ renderLibrary\(\); \}\);/,
-      "Try again button click handler is missing"
-    );
-  });
-});
+function renderLibrarySandbox(catalogOk) {
+  const document = { activeElement: null };
+  const retry = { disabled: false, hidden: true, focus() { document.activeElement = this; } };
+  const heading = { focus() { document.activeElement = this; } };
+  const search = { value: "", focus() { document.activeElement = this; } };
+  const elements = {
+    "library-list": { appendChild() {} },
+    "library-status": { textContent: "" },
+    "library-retry": retry,
+    "library-heading": heading,
+    "library-search": search,
+    "library-clear": { hidden: false },
+  };
+  document.activeElement = retry;
+  const sandbox = {
+    document,
+    ui: { catalog: [], catalogOk },
+    libraryLoading: null,
+    $: (id) => elements[id],
+    setText: (element, text) => { element.textContent = text; },
+    ensureLibrary: async () => {},
+    libraryAvailable: () => true,
+    renderLibraryFilters() {},
+    matchesLibraryFilter: () => true,
+    libraryEntryMatchesQuery: () => true,
+    clearChildren() {},
+    storeCard: (entry) => entry,
+  };
+  return { sandbox, elements, renderLibrary: loadRenderLibrary(sandbox) };
+}
 
 describe("library catalog retry", () => {
   test("a call after a failed load requests the catalog again and loads it", async () => {
@@ -106,5 +129,21 @@ describe("library catalog retry", () => {
     await Promise.all([first, second]);
 
     assert.equal(catalogRequests, 1, "overlapping calls should send one request, got " + catalogRequests);
+  });
+
+  test("restores focus to Try again when the catalog load fails", async () => {
+    const { sandbox, elements, renderLibrary } = renderLibrarySandbox(false);
+    await renderLibrary();
+
+    assert.equal(elements["library-retry"].hidden, false);
+    assert.equal(sandbox.document.activeElement, elements["library-retry"]);
+  });
+
+  test("moves focus to the Library heading when the retry succeeds", async () => {
+    const { sandbox, elements, renderLibrary } = renderLibrarySandbox(true);
+    await renderLibrary();
+
+    assert.equal(elements["library-retry"].hidden, true);
+    assert.equal(sandbox.document.activeElement, elements["library-heading"]);
   });
 });

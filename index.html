@@ -11887,8 +11887,8 @@ async function renderLibrary() {
     }
     retry.hidden = true;
     if (retryHadFocus) {
-        // The button is hidden after a successful load, so focus moves to the search box, as with Show all.
-        $("library-search").focus();
+        // The button is hidden after a successful load, so return focus to the Library heading.
+        $("library-heading").focus();
     }
     renderLibraryFilters();
     const query = $("library-search").value.trim().toLowerCase();
