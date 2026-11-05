@@ -11348,7 +11348,7 @@ function renderProductBlocked() {
     box.hidden = blocking.length === 0;
     const labels = KIND_WORDS[currentItem().kind].readiness;
     blocking.forEach(function (problem) {
-        const link = el("a", { href: "#details", text: labels[problem.field] || problem.message });
+        const link = el("a", { href: "#project", text: labels[problem.field] || problem.message });
         link.addEventListener("click", function (event) {
             event.preventDefault();
             event.stopPropagation();
