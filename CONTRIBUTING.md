@@ -101,7 +101,7 @@ you can also open `index.html` directly from the folder.
 ### Step 5: Run the tests
 
 The tests are small programs that check the app still works. They need
-Node.js version 20 or later. If you don't have it, get it from
+Node.js version 22 or later. If you don't have it, get it from
 [nodejs.org](https://nodejs.org/).
 
 In a terminal, from the `agentprise` folder, run:
