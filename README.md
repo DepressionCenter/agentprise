@@ -3,7 +3,7 @@ This file is part of Agentprise™
 README.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-23
+Last Modified: 2026-11-05
 Summary: Provides an overview of the project, in Markdown format.
 Notes: See README file for documentation and full license information.
 
@@ -49,6 +49,7 @@ Agentprise works in your browser, needs no account, and sends nothing you type a
 ## Documentation
 + **Complete documentation:** See the [`/docs`](./docs) folder in this repository for a walkthrough of the app, step-by-step guides with screenshots, the questions people ask, which download goes where, how to add an assistant to the Library, how your work stays private, and the technical details.
 + **Overview for researchers and developers:** Visit the [Health Research Resource Library](https://michmed.org/efdc-kb) for a high-level summary, key features, and important assumptions.
++ **Contributing:** Read the [guide to making your first contribution](CONTRIBUTING.md) to fix a typo or make another small change and ask the maintainers to review it.
 
 
 

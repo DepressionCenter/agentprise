@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/README.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-23
+Last Modified: 2026-11-05
 Summary: Index of the Agentprise documentation: one linked line per page, with
          who each page is for.
 Notes: See README file for documentation and full license information.
@@ -82,6 +82,9 @@ every Agentprise screen you will see along the way.
 
 ### For developers
 
+- [Making your first contribution](../CONTRIBUTING.md): how to copy the
+  repository, make a change, run the tests, and ask the maintainers to review
+  it, written for someone who has never used Git before.
 - [Current design specification](design/agentprise-design.md): a short baseline
   of the implemented tool as of October 10, 2026.
 - [Design: tools, skills, and plugins](design/tools-skills-plugins-design.md):
