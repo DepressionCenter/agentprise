@@ -1,0 +1,23 @@
+{
+  "_license": "Copyright (C) 2026 Gabriel Mongefranco. Licensed under GPL-3.0-or-later. Made with Agentprise, free software under the GNU GPL v3.0 or later: https://github.com/DepressionCenter/agentprise",
+  "schemaVersion": 2,
+  "kind": "skill",
+  "id": "eda9ff44-9f85-473a-9a81-5ec1e0573116",
+  "name": "OKF Knowledge Bundles",
+  "appId": "",
+  "license": "",
+  "capabilities": [],
+  "copyright": "Copyright (C) 2026 Gabriel Mongefranco",
+  "creator": {
+    "name": "Gabriel Mongefranco",
+    "url": "https://gabriel.mongefranco.com",
+    "privacy": "https://gabriel.mongefranco.com/privacy",
+    "terms": "https://gabriel.mongefranco.com/terms"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "type": "md"
+    }
+  ]
+}
