@@ -567,7 +567,9 @@ A project server (`servers` in the project record) has `label`, `transport`
 address only when it is https with no user name, password, or fragment, and
 no query parameter named like a key, token, secret, password, auth value, or
 signature, even with words in front, such as `client_secret` or
-`subscription-key`. The editor's **Address of the** box uses the same check.
+`subscription-key`. The editor's **Address of the** box uses the same check. An argument that
+holds a password, key, or token, such as `postgresql://admin:abc123@db.example.org`
+or the value after `--token`, is replaced with `replace-with-your-value`.
 
 `PROVIDER_SUPPORT` decides what each export does with each kind: `tool` writes
 it into the download, `text` names it in the instructions for the installer to

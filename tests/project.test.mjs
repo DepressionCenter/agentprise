@@ -623,6 +623,44 @@ describe("imports of plugins and skills made elsewhere", () => {
     }
   });
 
+  test("a local tool server argument that holds a credential is replaced, and no download keeps it", async () => {
+    const PASSWORD = "EXAMPLE_PASSWORD_123";
+    const TOKEN = "EXAMPLE_TOKEN_123";
+    const bytes = makeDeflatedZip([
+      { name: "example/.claude-plugin/plugin.json", bytes: encode(JSON.stringify({ name: "example" })) },
+      { name: "example/.mcp.json", bytes: encode(JSON.stringify({ mcpServers: {
+        pg: { command: "npx", args: ["-y", "@modelcontextprotocol/server-postgres", "postgresql://admin:" + PASSWORD + "@db.example.org/prod"] },
+        remote: { command: "npx", args: ["mcp-remote", "https://mcp.example.org/sse", "--header", "Authorization: Bearer " + TOKEN] },
+        options: { command: "example-tool", args: ["--token", TOKEN, "--api-key=" + TOKEN, "--client-secret", "${CLIENT_SECRET}", "--verbose"] },
+        settings: { command: "docker", args: ["run", "-e", "SUBSCRIPTION_KEY=" + TOKEN, "--header", "Authorization: token " + TOKEN, "--no-auth", "serve"] },
+        plain: { command: "npx", args: ["-y", "example-tool"] },
+      } })) },
+      { name: "example/skills/lookup/SKILL.md", bytes: encode(skillMd) },
+    ]);
+    const { project, notices } = await engine.imports.any("example.zip", bytes);
+    assert.deepEqual(project.servers.pg.args, ["-y", "@modelcontextprotocol/server-postgres", "replace-with-your-value"]);
+    assert.deepEqual(project.servers.remote.args, ["mcp-remote", "https://mcp.example.org/sse", "--header", "replace-with-your-value"]);
+    assert.deepEqual(project.servers.options.args, ["--token", "replace-with-your-value", "--api-key=replace-with-your-value", "--client-secret", "${CLIENT_SECRET}", "--verbose"]);
+    assert.deepEqual(project.servers.settings.args, ["run", "-e", "SUBSCRIPTION_KEY=replace-with-your-value", "--header", "replace-with-your-value", "--no-auth", "serve"]);
+    assert.deepEqual(project.servers.plain.args, ["-y", "example-tool"]);
+    assert.ok(notices.includes("The tool server \"pg\" had a password, key, or token in its arguments, so Agentprise replaced 1 argument with replace-with-your-value. Put the real value back where you install it."));
+    assert.ok(notices.includes("The tool server \"options\" had a password, key, or token in its arguments, so Agentprise replaced 2 arguments with replace-with-your-value. Put the real value back where you install it."));
+    assert.equal(notices.some((n) => n.includes("\"plain\" had a password")), false);
+    // A value already replaced is not reported again when the project opens later.
+    const again = engine.project.normalize(JSON.parse(JSON.stringify(engine.project.record(project))));
+    assert.deepEqual(again.project.servers, project.servers);
+    assert.equal(again.notices.some((n) => n.includes("had a password, key, or token")), false);
+
+    // A skill that uses every server puts them in each plugin's mcp.json and the skill's agentprise.json.
+    project.items[0].capabilities = ["pg", "remote", "options", "settings"].map((server) => ({ id: server, providers: { "*": [{ kind: "mcp", server }] } }));
+    const downloads = [await engine.exports.portablePlugin(project), await engine.exports.claudePlugin(project), await engine.exports.backup(project)];
+    for (const written of downloads) {
+      const text = written.entries.map((entry) => decode(entry.bytes)).join("\n");
+      assert.ok(text.includes("replace-with-your-value"), written.fileName);
+      assert.equal(text.includes(PASSWORD) || text.includes(TOKEN), false, written.fileName);
+    }
+  });
+
   test("a Claude plugin: servers from .mcp.json, skills as items, hooks kept with a notice", async () => {
     const bytes = makeDeflatedZip([
       { name: "my-plugin/.claude-plugin/plugin.json", bytes: encode(JSON.stringify({ name: "my-plugin", version: "0.3.0", description: "A Claude plugin", author: { name: "Someone", url: "https://example.org" }, license: "MIT" })) },

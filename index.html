@@ -2866,10 +2866,15 @@ function normalizeServers(value, notices, limit = LIMITS.servers) {
             const command = typeof entry.command === "string" ? entry.command.trim() : "";
             // One program name, or a ./ path inside the plugin.
             server.command = /^(\.\/)?[A-Za-z0-9._@-]+(\/[A-Za-z0-9._@-]+)*$/.test(command) && command.length <= 200 && command.split("/").indexOf("..") < 0 ? command : "";
-            server.args = (Array.isArray(entry.args) ? entry.args : []).filter(function (arg) { return typeof arg === "string"; })
+            const args = (Array.isArray(entry.args) ? entry.args : []).filter(function (arg) { return typeof arg === "string"; })
                 .map(function (arg) { return arg.slice(0, LIMITS.serverArgText); }).slice(0, LIMITS.serverArgs);
+            const cleaned = serverArgsWithoutCredentials(args);
+            server.args = cleaned.args;
             if (command && !server.command) {
                 notices.push("The command of the tool server \"" + name + "\" was removed because it was not one program name.");
+            }
+            if (cleaned.replaced > 0) {
+                notices.push("The tool server \"" + name + "\" had a password, key, or token in its arguments, so Agentprise replaced " + (cleaned.replaced === 1 ? "1 argument" : cleaned.replaced + " arguments") + " with " + SERVER_ARG_PLACEHOLDER + ". Put the real value back where you install it.");
             }
         }
         servers[name] = server;
@@ -2881,6 +2886,58 @@ function normalizeServers(value, notices, limit = LIMITS.servers) {
 // "key", "client_secret", "auth_token", "x-api-key", or "subscription-key".
 const CREDENTIAL_QUERY_NAME_SOURCE = "(?:[a-z0-9]+[_-])*(?:api[_-]?key|apikey|key|token|secret|password|passwd|pwd|auth|sig|signature)";
 const CREDENTIAL_QUERY_NAME = new RegExp("^" + CREDENTIAL_QUERY_NAME_SOURCE + "$", "i");
+
+// Written in place of a local tool server argument that holds a credential,
+// since every person who installs a download receives the arguments.
+const SERVER_ARG_PLACEHOLDER = "replace-with-your-value";
+
+// A command-line option that names a credential, such as "--token",
+// "--api-key", or "--client-secret=abc123". The value is in the second group
+// when it follows "=", and otherwise in the next argument.
+const CREDENTIAL_OPTION_PATTERN = new RegExp("^--?(?!no[_-])(" + CREDENTIAL_QUERY_NAME_SOURCE + ")(?:=([^]*))?$", "i");
+// A setting given as one argument, such as "SUBSCRIPTION_KEY=abc123" after
+// "-e", or a header of any scheme, such as "Authorization: token abc123".
+const CREDENTIAL_ASSIGNMENT_PATTERN = new RegExp("^(?:" + CREDENTIAL_QUERY_NAME_SOURCE + ")=([^]*)$", "i");
+const AUTHORIZATION_ARG_PATTERN = /^\s*(?:proxy-)?authorization\s*[:=]\s*\S/i;
+
+/**
+ * A local tool server's arguments with each one that holds a password, key, or
+ * token replaced by SERVER_ARG_PLACEHOLDER. An argument counts when the text
+ * checks find a credential in it, such as "postgresql://admin:abc123@db.example.org"
+ * or "Authorization: Bearer abc123", or when it is the value of an option that
+ * names one, such as "--token abc123" or "--api-key=abc123", or sets one, such
+ * as "SUBSCRIPTION_KEY=abc123". A value that names a key kept elsewhere, such
+ * as "${API_KEY}", and a value already replaced, are kept.
+ * @param {string[]} args
+ * @returns {{args: string[], replaced: number}}
+ */
+function serverArgsWithoutCredentials(args) {
+    let replaced = 0;
+    const cleaned = args.map(function (arg, index) {
+        if (arg === SERVER_ARG_PLACEHOLDER) {
+            return arg;
+        }
+        const option = CREDENTIAL_OPTION_PATTERN.exec(arg) || CREDENTIAL_ASSIGNMENT_PATTERN.exec(arg);
+        // The value after "=" is the last group of either pattern.
+        const value = option ? option[option.length - 1] : undefined;
+        if (value === SERVER_ARG_PLACEHOLDER) {
+            return arg;
+        }
+        const previous = index > 0 ? CREDENTIAL_OPTION_PATTERN.exec(args[index - 1]) : null;
+        let holdsCredential = textHoldsCredential(arg) || AUTHORIZATION_ARG_PATTERN.test(arg);
+        if (value !== undefined) {
+            holdsCredential = holdsCredential || credentialValueIsLiteral(value);
+        } else if (previous && previous[2] === undefined && arg.charAt(0) !== "-") {
+            holdsCredential = holdsCredential || credentialValueIsLiteral(arg);
+        }
+        if (!holdsCredential) {
+            return arg;
+        }
+        replaced += 1;
+        return value !== undefined ? arg.slice(0, arg.length - value.length) + SERVER_ARG_PLACEHOLDER : SERVER_ARG_PLACEHOLDER;
+    });
+    return { args: cleaned, replaced: replaced };
+}
 
 /** Whether a parsed URL has user information or a credential query parameter. */
 function urlHasCredential(url) {
