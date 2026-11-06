@@ -104,7 +104,10 @@ Known limits.
 - Tool server addresses never keep credentials. `cleanServerUrl` keeps an
   address only when it is https and has no user name, password, or `#`
   fragment, and no query parameter named like a key, token, secret, password,
-  auth value, or signature. The editor's **Address of the** box and every
+  auth value, or signature. Names with words in front count too, such as
+  `client_secret`, `auth_token`, `x-api-key`, or `subscription-key`. The
+  credential check on files in a Microsoft 365 app package looks for the same
+  names in web addresses. The editor's **Address of the** box and every
   import use the same check, and an address that fails it is removed with a
   notice. Exported `mcp.json` and `.mcp.json` files hold only a server's type
   and address, or its command and arguments, never `headers` or `env`; a

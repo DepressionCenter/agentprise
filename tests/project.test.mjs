@@ -338,7 +338,7 @@ describe("normalizeProject with hostile input", () => {
     // An address must be https and may not carry a user name, password, or # part, since everyone who installs the export receives it.
     for (const name of ["plain", "secret", "fragment"]) {
       assert.equal(project.servers[name].url, "", name);
-      assert.ok(notices.includes("The address of the tool server \"" + name + "\" was removed. It must start with https:// and hold no user name, password, or # part."), name);
+      assert.ok(notices.includes("The address of the tool server \"" + name + "\" was removed. It must start with https:// and hold no user name, password, key, or # part."), name);
     }
     // A command is one program name or a path inside the plugin, never one that climbs out of it.
     assert.equal(project.servers.bundled.command, "./bin/server");
@@ -602,6 +602,26 @@ describe("imports of plugins and skills made elsewhere", () => {
   }
 
   const skillMd = "---\nname: lookup\ndescription: Looks things up.\n---\n\nSearch first.\n";
+
+  test("a tool server address whose key name has words in front is removed, and ordinary queries are kept", async () => {
+    const SECRET = "EXAMPLE_TOKEN_123";
+    for (const name of ["client_secret", "subscription-key", "auth_token", "refresh_token", "private_token", "x-api-key"]) {
+      const bytes = makeDeflatedZip([
+        { name: "my-plugin/.claude-plugin/plugin.json", bytes: encode(JSON.stringify({ name: "my-plugin", version: "1.0.0" })) },
+        { name: "my-plugin/.mcp.json", bytes: encode(JSON.stringify({ mcpServers: { docs: { type: "http", url: "https://mcp.example.org/mcp?" + name + "=" + SECRET } } })) },
+        { name: "my-plugin/skills/lookup/SKILL.md", bytes: encode(skillMd) },
+      ]);
+      const { project, notices } = await engine.imports.any("my-plugin.zip", bytes);
+      assert.equal(project.servers.docs.url, "", name);
+      assert.ok(notices.includes("The address of the tool server \"docs\" was removed. It must start with https:// and hold no user name, password, key, or # part."), name);
+      const backup = await engine.exports.backup(project);
+      assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false, name);
+    }
+    for (const query of ["page=2", "keyword=help", "monkey=1", "sort=key"]) {
+      const project = engine.project.normalize({ name: "Example", servers: { docs: { transport: "http", url: "https://mcp.example.org/mcp?" + query } }, items: [] }).project;
+      assert.equal(project.servers.docs.url, "https://mcp.example.org/mcp?" + query, query);
+    }
+  });
 
   test("a Claude plugin: servers from .mcp.json, skills as items, hooks kept with a notice", async () => {
     const bytes = makeDeflatedZip([

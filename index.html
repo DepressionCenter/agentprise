@@ -2860,7 +2860,7 @@ function normalizeServers(value, notices, limit = LIMITS.servers) {
             const url = asText(entry.url, LIMITS.sharepointLinkText, "server address", notices);
             server.url = cleanServerUrl(url);
             if (url && !server.url) {
-                notices.push("The address of the tool server \"" + name + "\" was removed. It must start with https:// and hold no user name, password, or # part.");
+                notices.push("The address of the tool server \"" + name + "\" was removed. It must start with https:// and hold no user name, password, key, or # part.");
             }
         } else {
             const command = typeof entry.command === "string" ? entry.command.trim() : "";
@@ -2877,7 +2877,10 @@ function normalizeServers(value, notices, limit = LIMITS.servers) {
     return servers;
 }
 
-const CREDENTIAL_QUERY_NAME = /^(api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)$/i;
+// A query name that holds a credential, with or without words in front, such as
+// "key", "client_secret", "auth_token", "x-api-key", or "subscription-key".
+const CREDENTIAL_QUERY_NAME_SOURCE = "(?:[a-z0-9]+[_-])*(?:api[_-]?key|apikey|key|token|secret|password|passwd|pwd|auth|sig|signature)";
+const CREDENTIAL_QUERY_NAME = new RegExp("^" + CREDENTIAL_QUERY_NAME_SOURCE + "$", "i");
 
 /** Whether a parsed URL has user information or a credential query parameter. */
 function urlHasCredential(url) {
@@ -7108,7 +7111,7 @@ const COPILOT_AUTH_KINDS = Object.freeze({ None: "none", OAuthPluginVault: "oaut
 // Text that looks like a key, token, or password in a file the import would
 // otherwise keep for the backup.
 const PRIVATE_KEY_MARKER = /-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
-const CREDENTIAL_TEXT_PATTERN = new RegExp(String.raw`[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]+"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|` + PRIVATE_KEY_MARKER.source, "i");
+const CREDENTIAL_TEXT_PATTERN = new RegExp("[?&]" + CREDENTIAL_QUERY_NAME_SOURCE + String.raw`=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]+"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|` + PRIVATE_KEY_MARKER.source, "i");
 
 const CREDENTIAL_HEADER_PATTERN = /\b(?:proxy-)?authorization["']?[ \t]*[:=][ \t]*["']?(?:basic|bearer)[ \t]+[A-Za-z0-9._~+\/=-]+/i;
 
@@ -10917,7 +10920,7 @@ function renderServers() {
             input.addEventListener("input", function () {
                 const value = input.value.trim();
                 const clean = cleanServerUrl(value);
-                showFieldError(id, value && !clean ? "Use an https address with no user name, password, or # part." : "");
+                showFieldError(id, value && !clean ? "Use an https address with no user name, password, key, or # part." : "");
                 server.url = clean;
                 updateDerived();
                 scheduleSave();
