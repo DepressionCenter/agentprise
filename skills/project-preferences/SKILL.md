@@ -183,7 +183,12 @@ Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   preferences}`. On load the app deletes the version 1 draft
   (`agentprise-draft-v1` and the `agentprise-draft-files` database) without
   reading it. Stored records are normalized like any file. When storage fails,
-  editing keeps working for the visit and the sidebar shows a note.
+  editing keeps working for the visit and the sidebar shows a note. A save
+  writes only when the stored record's `modified` still matches the one the
+  tab last loaded or saved (`ui.storedModified`), checked in the same
+  transaction, and tabs announce saves and deletes on the `BroadcastChannel`
+  `agentprise-projects`. A tab that loses that check stops saving the project
+  and asks the person to reload.
 - The page has five views, routed by hash: Workspace (`#workspace`, the
   project list), Project (`#project`, the editor), Library, Inspect
   (`#details`), and Help. The project editor asks plain questions with blanks

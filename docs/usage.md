@@ -106,7 +106,11 @@ tile for the other actions:
    shows three of them at random, because most products show only a few at a
    time.
 
-Your work is saved in the browser as you type. The buttons under **Download**
+Your work is saved in the browser as you type. If the same project is open in
+two tabs, each tab keeps working on its own copy. Once you save changes in one
+tab, the other tab stops saving and says so, so it can't erase them. To keep
+what you changed in that tab, download a backup from it. Then reload it to see
+the latest version. The buttons under **Download**
 stay off until the name, the description, and the behavior are filled in. The
 card tells you what is still missing, and each item is a link that takes you
 to that blank.

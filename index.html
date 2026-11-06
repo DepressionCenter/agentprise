@@ -8945,6 +8945,10 @@ globalThis.Agentprise = {
 const STORAGE_DB = "agentprise-projects";
 const STORAGE_DB_VERSION = 1;
 const STORAGE_WORKSPACE_KEY = "agentprise-workspace-v2";
+// Tabs of the app tell each other when they save or delete a project, so a tab
+// with an older copy can warn before the person types in it.
+const STORAGE_CHANNEL = "agentprise-projects";
+const STALE_TAB_MESSAGE = "This project was changed or deleted in another tab, so this tab stopped saving it. To keep the changes made here, download a backup. Then reload this page to see the latest version.";
 // Version 1 storage, removed unread on first load.
 const LEGACY_DRAFT_KEY = "agentprise-draft-v1";
 const LEGACY_FILES_DB = "agentprise-draft-files";
@@ -9097,6 +9101,14 @@ const ui = {
     showAllProjects: false,
     memoryProjects: new Map(),
     savedRecord: "",
+    // The modified time of the stored copy this tab last loaded or saved, ""
+    // while this tab has not stored the project, and whether a save may
+    // replace a stored copy this tab never loaded, as "Replace mine" does.
+    storedModified: "",
+    replaceStored: false,
+    // Set once another tab changed or deleted the open project; saving stops.
+    staleTab: false,
+    channel: null,
     view: "workspace",
     starterBlanks: [],
     previewOrder: [],
@@ -9536,39 +9548,100 @@ const savedBytes = new Map();
 /**
  * Saves the record and changed files, dropping files no longer held. An empty
  * project is not saved, so an untouched new one leaves no trace.
+ * @param {object} project
+ * @param {string} [expected] the stored copy's modified time this save may
+ *   replace, or "" when nothing may be stored yet. When the stored copy
+ *   differs, as after a save in another tab, nothing is written or deleted.
+ *   Left out, the save replaces whatever is stored.
+ * @returns {Promise<boolean|null>} false when the stored copy did not match
+ *   expected, null when storage failed and the project is kept for this visit only
  */
-async function saveStoredProject(project) {
+async function saveStoredProject(project, expected) {
+    // Taken now, because a later save can change the project before this transaction writes.
+    const record = projectRecord(project);
     const payloads = projectPayloads(project);
+    let matched = true;
     try {
         await withStores(["projects", "files"], "readwrite", function (transaction) {
-            transaction.objectStore("projects").put(projectRecord(project));
+            const projects = transaction.objectStore("projects");
             const files = transaction.objectStore("files");
-            const wanted = {};
-            payloads.forEach(function (payload) {
-                wanted[project.id + "/" + payload.key] = payload;
-            });
-            const request = files.getAllKeys(projectFileRange(project.id));
-            request.onsuccess = function () {
-                const stored = {};
-                request.result.forEach(function (key) {
-                    stored[key] = true;
-                    if (!wanted[key]) {
-                        files.delete(key);
-                    }
+            const write = function () {
+                projects.put(record);
+                const wanted = {};
+                payloads.forEach(function (payload) {
+                    wanted[project.id + "/" + payload.key] = payload;
                 });
-                Object.keys(wanted).forEach(function (key) {
-                    const payload = wanted[key];
-                    if (!stored[key] || savedBytes.get(key) !== payload.bytes) {
-                        files.put({ blob: new Blob([payload.bytes]), type: fileTypeOf(payload.key) }, key);
-                        savedBytes.set(key, payload.bytes);
-                    }
-                });
+                const request = files.getAllKeys(projectFileRange(project.id));
+                request.onsuccess = function () {
+                    const stored = {};
+                    request.result.forEach(function (key) {
+                        stored[key] = true;
+                        if (!wanted[key]) {
+                            files.delete(key);
+                        }
+                    });
+                    Object.keys(wanted).forEach(function (key) {
+                        const payload = wanted[key];
+                        if (!stored[key] || savedBytes.get(key) !== payload.bytes) {
+                            files.put({ blob: new Blob([payload.bytes]), type: fileTypeOf(payload.key) }, key);
+                            savedBytes.set(key, payload.bytes);
+                        }
+                    });
+                };
+            };
+            if (expected === undefined) {
+                write();
+                return;
+            }
+            // Read inside the same transaction, so no other tab can save in between.
+            const current = projects.get(project.id);
+            current.onsuccess = function () {
+                const storedModified = isPlainObject(current.result) && typeof current.result.modified === "string" ? current.result.modified : "";
+                matched = storedModified === expected;
+                if (matched) {
+                    write();
+                }
             };
         });
         ui.memoryProjects.delete(project.id);
     } catch (error) {
         storageBlocked();
         ui.memoryProjects.set(project.id, project);
+        return null;
+    }
+    if (matched) {
+        tellOtherTabs(project.id, record.modified);
+    }
+    return matched;
+}
+
+/** Tells the app's other tabs that a project was saved, or deleted when modified is "". */
+function tellOtherTabs(id, modified) {
+    if (ui.channel) {
+        ui.channel.postMessage({ id: id, modified: modified });
+    }
+}
+
+/** Listens for saves in the app's other tabs, where the browser allows it. */
+function listenToOtherTabs() {
+    if (typeof BroadcastChannel !== "function") {
+        return;
+    }
+    ui.channel = new BroadcastChannel(STORAGE_CHANNEL);
+    ui.channel.addEventListener("message", function (event) {
+        const data = isPlainObject(event.data) ? event.data : {};
+        if (ui.project && data.id === ui.project.id && data.modified !== ui.storedModified) {
+            markTabStale();
+        }
+    });
+}
+
+/** Stops saving the open project and says why, once. */
+function markTabStale() {
+    clearTimeout(ui.saveTimer);
+    if (!ui.staleTab) {
+        ui.staleTab = true;
+        announce(STALE_TAB_MESSAGE, true);
     }
 }
 
@@ -9579,6 +9652,7 @@ async function deleteStoredProject(id) {
             transaction.objectStore("projects").delete(id);
             transaction.objectStore("files").delete(projectFileRange(id));
         });
+        tellOtherTabs(id, "");
     } catch (error) {
         storageBlocked();
     }
@@ -9622,9 +9696,30 @@ async function saveNow() {
     if (fingerprint === ui.savedRecord && !payloadsChanged(project)) {
         return;
     }
+    if (ui.staleTab) {
+        // Says it again if a later message replaced it.
+        if ($("status").textContent !== STALE_TAB_MESSAGE) {
+            announce(STALE_TAB_MESSAGE, true);
+        }
+        return;
+    }
+    const expected = ui.replaceStored ? undefined : ui.storedModified;
     project.modified = new Date().toISOString();
     ui.savedRecord = fingerprint;
-    await saveStoredProject(project);
+    // A second save can start before this one ends; it expects what this one writes.
+    ui.storedModified = project.modified;
+    ui.replaceStored = false;
+    const saved = await saveStoredProject(project, expected);
+    if (saved === false) {
+        ui.savedRecord = "";
+        markTabStale();
+        return;
+    }
+    if (saved === null) {
+        // Nothing reached storage, so the stored copy is still the one this tab expected.
+        ui.storedModified = expected === undefined ? ui.storedModified : expected;
+        ui.replaceStored = expected === undefined;
+    }
     rememberOpened(project.id);
     await refreshProjectList();
 }
@@ -9648,6 +9743,12 @@ function setProject(project, itemId) {
     ui.itemId = itemId && findItem(project, itemId) ? itemId : (project.items[0] ? project.items[0].id : "");
     ui.skillTabSwap = null;
     ui.savedRecord = "";
+    ui.storedModified = "";
+    ui.replaceStored = false;
+    if (ui.staleTab && $("status").textContent === STALE_TAB_MESSAGE) {
+        announce("");
+    }
+    ui.staleTab = false;
     ui.previewOrder = [];
     ui.product = ui.product || "backup";
     if (projectHasContent(project)) {
@@ -9669,6 +9770,7 @@ async function openProject(id, moveFocus) {
     }
     setProject(result.project);
     ui.savedRecord = recordFingerprint(result.project);
+    ui.storedModified = result.project.modified;
     projectPayloads(result.project).forEach(function (payload) { savedBytes.set(result.project.id + "/" + payload.key, payload.bytes); });
     if (result.notices.length > 0) {
         announce("A few saved settings had to be changed to open this project. " + result.notices.join(" "));
@@ -9694,9 +9796,12 @@ function startNewProject() {
  * @param {string} message announced once open
  */
 async function addProjectToWorkspace(project, message) {
+    // Another tab may have stored this project since this tab last looked.
+    await refreshProjectList();
     const existing = ui.projects.find(function (summary) { return summary.id === project.id; });
-    const finish = async function (chosen) {
+    const finish = async function (chosen, replace) {
         setProject(chosen);
+        ui.replaceStored = replace === true;
         await saveNow();
         showView("project", true);
         announce(message);
@@ -9711,7 +9816,7 @@ async function addProjectToWorkspace(project, message) {
         "Keep both",
         "Cancel",
         function () { finish(duplicateProject(project, project.name + " (copy)")); },
-        { label: "Replace mine", action: function () { finish(project); } }
+        { label: "Replace mine", action: function () { finish(project, true); } }
     );
 }
 
@@ -9879,15 +9984,23 @@ async function renameProject(id, name) {
         await saveNow();
         renderBreadcrumb();
         renderProjectNav();
+        if (ui.staleTab) {
+            return;
+        }
     } else {
         const result = await loadStoredProject(id);
         if (!result) {
             return;
         }
+        const loaded = result.project.modified;
         result.project.name = clean;
         result.project.modified = new Date().toISOString();
-        await saveStoredProject(result.project);
+        const saved = await saveStoredProject(result.project, ui.memoryProjects.has(id) ? undefined : loaded);
         await refreshProjectList();
+        if (saved === false) {
+            announce("The project changed in another tab while you renamed it, so the name didn't change. Rename it again.", true);
+            return;
+        }
     }
     announce("Renamed the project to " + clean + ".");
 }
@@ -12258,6 +12371,7 @@ async function initApp() {
     window.addEventListener("pagehide", function () { saveNow(); });
 
     removeLegacyStorage();
+    listenToOtherTabs();
     await refreshProjectList();
     const view = viewFromHash(location.hash);
     const prefs = readWorkspacePrefs();

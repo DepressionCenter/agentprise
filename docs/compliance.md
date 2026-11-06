@@ -60,6 +60,17 @@ Known limits.
   its record and files after asking. Evidence: the storage constants,
   `payloadsChanged`, `saveNow`, `saveStoredProject`, and `deleteStoredProject`
   in `index.html`.
+- A tab never overwrites a newer copy of a project saved in another tab. Each
+  save reads the stored copy in the same database transaction and writes
+  nothing, and deletes no file, when its modified time differs from the one
+  the tab last loaded or saved. Tabs also tell each other about each save and
+  delete through a `BroadcastChannel` named `agentprise-projects`, so an older
+  tab can stop sooner. The older tab stops saving, and its status message
+  says the project was changed or deleted in another tab. It tells the person
+  to download a backup to keep the changes made there, then reload the page. Choosing **Replace mine** when opening a file is the
+  one save that replaces a stored copy the tab never loaded. Evidence:
+  `saveStoredProject`, `listenToOtherTabs`, and `markTabStale` in
+  `index.html`.
 - On every load the app deletes the version 1 draft, the `localStorage` key
   `agentprise-draft-v1` and the IndexedDB database `agentprise-draft-files`,
   without reading either. Evidence: `removeLegacyStorage` in `index.html`.
