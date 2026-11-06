@@ -2,7 +2,7 @@
 // tests/tools.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-23
+// Last Modified: 2026-11-05
 // Summary: Tests for the tools stage: exports checked against the pinned vendor
 //          schemas, golden export files for every provider kind on every
 //          target, composed instructions, the conversion report, the setup
@@ -300,7 +300,8 @@ describe("composeInstructions", () => {
     assert.equal(COMPLETION_RULE, "Only report a search, lookup, or retrieval as completed when a tool returned results in this conversation.");
     assert.equal(text.split(TOOLS_SECTION).length, 2, "one tools section");
     const headings = text.split("\n").filter((line) => line.startsWith("### "));
-    assert.deepEqual(headings, skill.capabilities.map((capability) => "### " + capability.label));
+    // The list of scripts comes first, then one heading per capability.
+    assert.deepEqual(headings, ["### Scripts in this skill"].concat(skill.capabilities.map((capability) => "### " + capability.label)));
   });
 
   test("providers appear in the order the target lists them", () => {
@@ -309,7 +310,39 @@ describe("composeInstructions", () => {
       capabilities: [{ id: "a", label: "Lookup", fallback: "No lookup.", providers: { claude: [{ kind: "script", path: "scripts/run.py", runtime: "python3", instructions: "Script second? No, first." }, { kind: "connector", name: "Example", instructions: "Connector second." }] } }],
     });
     const text = composeInstructions(project, project.items[0], "claude");
-    assert.ok(text.includes("Use the first of these that is available in this conversation:\n1. The script scripts/run.py. Script second? No, first.\n2. The Example connector. Connector second.\nIf none of them is available: No lookup."));
+    assert.ok(text.includes("Use the first of these that is available in this conversation:\n1. The script scripts/run.py. Script second? No, first.\n   Run it from the skill folder:\n   ```bash\n   python3 scripts/run.py\n   ```\n2. The Example connector. Connector second.\nIf none of them is available: No lookup."));
+  });
+
+  test("a script tool gets a run command unless its instructions give one, and every script is listed once", () => {
+    const project = skillProject({
+      files: [{ path: "scripts/run.py", bytes: encode("print(1)\n") }, { path: "scripts/my report.rb", bytes: encode("puts 1\n") }, { path: "scripts/plain", bytes: encode("echo 1\n") }],
+      capabilities: [
+        { id: "a", label: "Lookup", fallback: "No lookup.", providers: { claude: [{ kind: "script", path: "scripts/run.py", runtime: "python3", instructions: "Run python3 scripts/run.py --id <id>." }] } },
+        { id: "b", label: "Report", fallback: "No report.", providers: { claude: [{ kind: "script", path: "scripts/my report.rb", runtime: "ruby" }, { kind: "script", path: "scripts/run.py", runtime: "python3" }] } },
+        { id: "c", label: "Plain", fallback: "No plain.", providers: { claude: [{ kind: "script", path: "scripts/plain", instructions: "Run it with sh." }] } },
+      ],
+    });
+    const text = composeInstructions(project, project.items[0], "claude");
+    assert.ok(text.includes("### Scripts in this skill\n- scripts/run.py: Lookup; Report.\n- scripts/my report.rb: Report.\n- scripts/plain: Plain.\n\n### Lookup\n"));
+    // The instructions already give the command, so none is added.
+    assert.ok(text.includes("1. The script scripts/run.py. Run python3 scripts/run.py --id <id>.\nIf none"));
+    assert.ok(text.includes("1. The script scripts/my report.rb.\n   Run it from the skill folder:\n   ```bash\n   ruby \"scripts/my report.rb\"\n   ```\n2. The script scripts/run.py.\n   Run it from the skill folder:\n   ```bash\n   python3 scripts/run.py\n   ```\n"));
+    // With no runtime there is no command to write.
+    assert.ok(text.includes("1. The script scripts/plain. Run it with sh.\nIf none"));
+    // A product that can't run scripts gets neither the list nor the commands.
+    const copied = composeInstructions(project, project.items[0], "chatgpt");
+    assert.equal(copied.includes("Scripts in this skill") || copied.includes("```bash"), false);
+  });
+
+  test("the setup guide names the hosts a script calls, not those in its comments", () => {
+    const script = "# License: https://www.gnu.org/licenses/\n// See https://docs.example.org/guide\nBASE = \"https://api.example.org/v1\"\nfetch(\"https://data.example.org/x\")  # https://ignored.example.org is in code, so it counts\n  --url https://cli.example.org/v2\n";
+    const project = skillProject({
+      files: [{ path: "scripts/run.py", bytes: encode(script) }],
+      capabilities: [{ id: "a", label: "Lookup", fallback: "No lookup.", providers: { "*": [{ kind: "script", path: "scripts/run.py", runtime: "python3" }] } }],
+    });
+    const guide = engine.tools.writeSetupGuide(project, project.items, "claude");
+    assert.ok(guide.includes("network access to api.example.org, data.example.org, ignored.example.org, cli.example.org."), guide);
+    assert.equal(guide.includes("gnu.org") || guide.includes("docs.example.org"), false);
   });
 
   test("a capability with no provider, or only \"none\", gets its fallback text alone", () => {

@@ -607,6 +607,13 @@ report always agree. The composed text is, in order:
    ends with "Only report a search, lookup, or retrieval as completed when a
    tool returned results in this conversation."
 
+When a download includes a script that a tool runs, the tools section starts
+with `### Scripts in this skill`, which lists each script's path and the tools
+that use it. A script route that names a runtime also gets the command that
+runs it, in a fenced `bash` block, such as `python3 scripts/report.py`. The
+command is left out when the route's instructions already give it
+(`scriptCommand`).
+
 Tool labels are put on one line, and a `#` at the start of any line of tool
 text is escaped, so tool text cannot add headings of its own. For an export
 without skills, the tools of used skills are listed too.
@@ -675,8 +682,9 @@ Inspect page shows it as "Setup steps (not in the package)". Sections:
   admin registers it, for example in the Teams Developer Portal, and the
   installer replaces `replace-with-your-auth-registration-id`.
 - **Let the script reach the internet**, naming up to five https hosts found
-  in the script (`hostsInText`), with Claude, Gemini, and coding-agent
-  wording.
+  in the script's code (`hostsInText`), with Claude, Gemini, and coding-agent
+  wording. Comment lines are skipped, so an address in a license header, such
+  as `https://www.gnu.org/licenses/`, is not listed.
 - **Allow custom apps in Microsoft 365**, when the app package has actions.
 
 ### The Microsoft `.agent` file

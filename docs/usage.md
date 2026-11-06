@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/usage.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-23
+Last Modified: 2026-11-05
 Summary: How to use Agentprise, job by job: keep your projects, create an
          assistant, add skills, check its tools, open a file you have, start
          from the Library, download it for each product or as a plugin, read
@@ -202,7 +202,9 @@ skill.
   letter of the name on a blue square.
 - **What it needs to work** (skills only). One or two sentences about the
   tools, products, or access the skill needs, such as "Live search needs the
-  PubMed connector." It can be up to 500 characters.
+  PubMed connector." It can be up to 500 characters. When a tool runs a script
+  and this box is empty, a hint under it reminds you to say what the script
+  needs, such as Python 3 and the sites it connects to.
 - **Products it works in.** Every product starts checked. Uncheck a product
   where the assistant or skill won't work, such as one that needs a plugin
   only Claude has. Its downloads for that product turn off, and each one shows

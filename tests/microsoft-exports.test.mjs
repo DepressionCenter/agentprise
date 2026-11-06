@@ -2,7 +2,7 @@
 // tests/microsoft-exports.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-22
-// Last Modified: 2026-10-23
+// Last Modified: 2026-11-05
 // Summary: Checks native Microsoft skill packages, connectors, restrictions,
 //          resource bytes, schema versions, and preservation of the source.
 // Notes: See README file for documentation and full license information.
@@ -459,6 +459,15 @@ describe("Copilot Agent Builder skill uploads", () => {
     assert.match(result.setup, /does not create an assistant or set up tool connections/);
     assert.match(result.setup, /leaves out script files/);
     assert.match(text(entries.get("SKILL.md")), /If none of them is available/);
+  });
+
+  test("the report says when the steps still mention a script the download leaves out", () => {
+    const project = build();
+    const item = project.items.find((candidate) => candidate.files.some((file) => file.path === "scripts/lookup.py"));
+    const scriptNote = () => engine.tools.conversionReport(project, item, "copilotSkill").find((entry) => entry.component === item.name + ": scripts/lookup.py").note;
+    assert.equal(scriptNote().includes("The steps still mention"), false);
+    item.body += "\n\nRun scripts/lookup.py when you can.";
+    assert.match(scriptNote(), /The steps still mention scripts\/lookup\.py, so edit them, or tell the assistant what to do without it, before you share this download\.$/);
   });
 
   test("blocks empty instructions and bodies of 20,000 characters", async () => {

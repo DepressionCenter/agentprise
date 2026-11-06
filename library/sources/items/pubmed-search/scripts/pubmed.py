@@ -2,7 +2,7 @@
 # pubmed-search/scripts/pubmed.py
 # Author(s): Gabriel Mongefranco.
 # Created: 2026-10-10
-# Last Modified: 2026-10-10
+# Last Modified: 2026-11-05
 # Summary: Command-line helper that searches PubMed and fetches summaries and
 #          abstracts through the NCBI E-utilities API, printing one JSON object.
 # Notes: See README file for documentation and full license information.
@@ -34,7 +34,9 @@ Environment:
     NCBI_API_KEY  Optional. An NCBI API key, which raises the rate limit.
 
 Output:
-    Exactly one JSON object on stdout. Errors go to stderr with a non-zero exit code.
+    Exactly one JSON object on stdout. Errors go to stderr with one of these exit
+    codes: 2 bad arguments, 3 NCBI_EMAIL missing or invalid, 4 network failure,
+    5 unexpected response from PubMed.
 
 Side effects:
     Network requests to eutils.ncbi.nlm.nih.gov only. No caching and no files written.
@@ -58,6 +60,7 @@ DATABASE = "pubmed"
 DEFAULT_RETMAX = 20
 MAX_RETMAX = 100  # Skill policy, well under NCBI's own 10,000-record ceiling
 MAX_IDS_PER_CALL = 20  # Skill policy; NCBI asks for POST only above about 200 ids
+MAX_IDS = 100  # Skill policy; abstracts are not shortened, so this caps the output size
 MIN_SECONDS_BETWEEN_CALLS = 0.35  # NCBI allows 3 requests per second without a key
 TIMEOUT_SECONDS = 30
 SORT_CHOICES = ("relevance", "pub_date", "Author", "JournalName")
@@ -90,7 +93,7 @@ def parse_pmids(raw_ids):
         List of PMID strings, in the order given, without duplicates.
 
     Raises:
-        PubMedError: if the list is empty or any id is not all digits.
+        PubMedError: if the list is empty, longer than MAX_IDS, or any id is not all digits.
     """
     pmids = []
     for part in raw_ids.split(","):
@@ -103,6 +106,8 @@ def parse_pmids(raw_ids):
             pmids.append(pmid)
     if not pmids:
         raise PubMedError("Give at least one PMID with --ids.", EXIT_USAGE)
+    if len(pmids) > MAX_IDS:
+        raise PubMedError(f"Give at most {MAX_IDS} PMIDs with --ids; got {len(pmids)}. Split the list and run the command again.", EXIT_USAGE)
     return pmids
 
 
@@ -306,9 +311,33 @@ def run_abstract(pmids):
 
 ### Command Line ###
 
+HELP_EPILOG = f"""examples:
+  python3 pubmed.py search --query '"smart ring*"[tw] AND sleep[mh]' --retmax 20
+  python3 pubmed.py summary --ids 12345678,23456789
+  python3 pubmed.py abstract --ids 12345678,23456789
+
+settings:
+  NCBI_EMAIL    required: contact address of whoever deploys this skill
+  NCBI_API_KEY  optional: raises NCBI's rate limit
+
+output:
+  one JSON object on stdout; errors go to stderr
+
+exit codes:
+  {EXIT_USAGE}  bad arguments, such as an empty query or more than {MAX_IDS} PMIDs
+  {EXIT_CONFIG}  NCBI_EMAIL is missing or not one email address
+  {EXIT_NETWORK}  PubMed could not be reached, timed out, or returned an HTTP error
+  {EXIT_RESPONSE}  PubMed sent a response this script can't read
+"""
+
+
 def build_parser():
     """Build the argument parser for the three subcommands."""
-    parser = argparse.ArgumentParser(description="Search PubMed through NCBI E-utilities.")
+    parser = argparse.ArgumentParser(
+        description="Search PubMed through NCBI E-utilities.",
+        epilog=HELP_EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     commands = parser.add_subparsers(dest="command", required=True)
 
     search = commands.add_parser("search", help="Run a PubMed query and list PMIDs.")
@@ -318,10 +347,10 @@ def build_parser():
     search.add_argument("--sort", default="relevance", choices=SORT_CHOICES, help="Sort order.")
 
     summary = commands.add_parser("summary", help="Get title, authors, journal, and date.")
-    summary.add_argument("--ids", required=True, help="Comma-separated PMIDs.")
+    summary.add_argument("--ids", required=True, help=f"Comma-separated PMIDs, at most {MAX_IDS}.")
 
     abstract = commands.add_parser("abstract", help="Get abstract text.")
-    abstract.add_argument("--ids", required=True, help="Comma-separated PMIDs.")
+    abstract.add_argument("--ids", required=True, help=f"Comma-separated PMIDs, at most {MAX_IDS}.")
     return parser
 
 

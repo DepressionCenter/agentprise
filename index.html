@@ -1019,6 +1019,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <div class="field" id="compatibility-wrap" hidden>
                                             <label for="f-compatibility">What it needs to work</label>
                                             <p class="hint" id="f-compatibility-hint">Optional. One or two sentences about the tools, products, or access the skill needs, such as "Live search needs the PubMed connector." Up to 500 characters.</p>
+                                            <p class="hint" id="f-compatibility-script" hidden>This skill runs a script, so say what it needs, such as "Needs Python 3 and network access to example.org in coding tools."</p>
                                             <textarea id="f-compatibility" maxlength="500" rows="2" aria-describedby="f-compatibility-hint"></textarea>
                                         </div>
                                         <fieldset class="field" id="products-wrap">
@@ -4938,6 +4939,8 @@ function planExport(project, item, exportId, options) {
     const actionKeys = Object.create(null);
     const paragraphs = [];
     const summaries = [];
+    // Each script a usable tool runs, with the labels of the tools that use it.
+    const scripts = [];
     capabilities.forEach(function (link) {
         const capability = link.capability;
         const usable = [];
@@ -5101,6 +5104,21 @@ function planExport(project, item, exportId, options) {
             usable.forEach(function (provider, index) {
                 const name = providerName(project, provider);
                 lines.push((index + 1) + ". " + name.charAt(0).toUpperCase() + name.slice(1) + "." + (provider.instructions ? " " + quoteHeadings(provider.instructions) : ""));
+                if (provider.kind !== "script") {
+                    return;
+                }
+                const command = scriptCommand(provider);
+                if (command) {
+                    // Indented three spaces, so the block stays inside the numbered item.
+                    lines.push("   Run it from the skill folder:", "   ```bash", "   " + command, "   ```");
+                }
+                const where = provider.path + (link.owner.id === item.id ? "" : " in the skill " + link.owner.name);
+                const entry = scripts.find(function (other) { return other.where === where; });
+                if (!entry) {
+                    scripts.push({ where: where, labels: [label] });
+                } else if (entry.labels.indexOf(label) < 0) {
+                    entry.labels.push(label);
+                }
             });
             lines.push("If none of them is available: " + quoteHeadings(fallback));
         } else {
@@ -5109,6 +5127,9 @@ function planExport(project, item, exportId, options) {
         paragraphs.push(lines.join("\n"));
         summaries.push("- " + label + ": " + (usable.length > 0 ? "use " + usable.map(function (provider) { return providerName(project, provider); }).join(", or ") + ". If none is available: " : "") + oneLine(fallback.split(/(?<=\.)\s/)[0]));
     });
+    if (scripts.length > 0) {
+        paragraphs.unshift("### Scripts in this skill\n" + scripts.map(function (entry) { return "- " + entry.where + ": " + entry.labels.join("; ") + "."; }).join("\n"));
+    }
     const toolsSection = paragraphs.length > 0 ? "## " + TOOLS_HEADING + "\n\n" + paragraphs.join("\n\n") + "\n\n" + COMPLETION_RULE : "";
 
     // ### Fit everything within the product's limit ###
@@ -5170,6 +5191,31 @@ function planExport(project, item, exportId, options) {
 /** One line, so a label never starts its own heading. */
 function oneLine(text) {
     return String(text).replace(/\s+/g, " ").trim();
+}
+
+/** Whether any of an item's tools runs a script the item carries. */
+function itemRunsScript(item) {
+    return item.capabilities.some(function (capability) {
+        return Object.keys(capability.providers).some(function (key) {
+            return capability.providers[key].some(function (provider) { return provider.kind === "script"; });
+        });
+    });
+}
+
+/**
+ * The command that runs a script tool, such as "python3 scripts/report.py",
+ * when the tool names a runtime and its instructions don't already give that
+ * command. A path with a space or parenthesis is quoted.
+ * @param {object} provider a script provider
+ * @returns {string} the command, or ""
+ */
+function scriptCommand(provider) {
+    if (!provider.runtime) {
+        return "";
+    }
+    const path = /[ ()]/.test(provider.path) ? "\"" + provider.path + "\"" : provider.path;
+    const command = provider.runtime + " " + path;
+    return (provider.instructions || "").indexOf(command) >= 0 ? "" : command;
 }
 
 /** Escapes a leading #, so tool text can't add headings. */
@@ -5368,18 +5414,24 @@ function widenedSources(item) {
     return lost;
 }
 
-/** https hosts a text file names, so setup says what a script calls. */
+// A comment line in a script, such as "# License: https://www.gnu.org/licenses/"
+// or "// See https://example.org/docs". Addresses there are not ones the script
+// calls. "--" is left out, since it also starts options such as "--url".
+const SCRIPT_COMMENT_LINE = /^\s*(?:#|\/\/|\/\*|\*|;|::|%|<!--|rem\b)/i;
+
+/** https hosts a script's code names, outside comment lines, so setup says what it calls. */
 function hostsInText(bytes) {
     const hosts = [];
-    const text = fromBytes(bytes.subarray(0, LIMITS.scanFileBytes));
+    const lines = fromBytes(bytes.subarray(0, LIMITS.scanFileBytes)).split(/\r?\n/);
     const pattern = /https:\/\/([a-z0-9.-]+\.[a-z]{2,})/gi;
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
-        const host = match[1].toLowerCase();
-        if (hosts.indexOf(host) < 0 && hosts.length < 5) {
-            hosts.push(host);
+    lines.filter(function (line) { return !SCRIPT_COMMENT_LINE.test(line); }).forEach(function (line) {
+        for (const match of line.matchAll(pattern)) {
+            const host = match[1].toLowerCase();
+            if (hosts.indexOf(host) < 0 && hosts.length < 5) {
+                hosts.push(host);
+            }
         }
-    }
+    });
     return hosts;
 }
 
@@ -6569,9 +6621,11 @@ function microsoftSkillEntries(project, item, plan, plugin, report, root) {
         }
         return file;
     });
+    const steps = item.kind === "skill" ? item.body : item.instructions;
     const allowed = resources.filter(function (file) {
         if (MICROSOFT_SCRIPT_EXTENSION.test(file.path) || !MICROSOFT_RESOURCE_EXTENSION.test(file.path)) {
-            report.push(reportEntry(item.name + ": " + file.path, "unsupported", "This file type is not supported in the Microsoft skill download. This download also leaves out script files. Download a backup to keep the original file."));
+            const mentioned = steps.indexOf(file.path) >= 0 ? " The steps still mention " + file.path + ", so edit them, or tell the assistant what to do without it, before you share this download." : "";
+            report.push(reportEntry(item.name + ": " + file.path, "unsupported", "This file type is not supported in the Microsoft skill download. This download also leaves out script files. Download a backup to keep the original file." + mentioned));
             return false;
         }
         return true;
@@ -10486,6 +10540,10 @@ function updateDerived() {
     const count = itemBody(item).length.toLocaleString() + " of " + limit.toLocaleString() + " characters";
     ["s-instructions-counter", "d-instructions-counter"].forEach(function (id) { setText($(id), count); });
     $("icon-preview").src = item.kind === "agent" ? iconPreviewUri(item) : "";
+    // A hidden hint named in aria-describedby is still read, so the link is set only while it shows.
+    const scriptHint = item.kind === "skill" && !item.compatibility.trim() && itemRunsScript(item);
+    $("f-compatibility-script").hidden = !scriptHint;
+    $("f-compatibility").setAttribute("aria-describedby", scriptHint ? "f-compatibility-hint f-compatibility-script" : "f-compatibility-hint");
     sizeNameBlank();
     autosize($("s-instructions"));
     const result = validateItem(project, item);
