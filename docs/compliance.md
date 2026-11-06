@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/compliance.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-23
+Last Modified: 2026-11-05
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
          the controls in place, where they are in the code, and their known
          limits.
@@ -220,9 +220,11 @@ and files kept only in backups. Technical details are in
   PNG images, receive a scan of readable bytes. The second pass of that scan
   joins only runs of four or more readable characters, so single bytes in
   compressed data cannot form a false match and leave a large document out.
-  A third pass joins every readable byte and looks only for a credential
-  field name with a value, so a name split by single bytes, such as `api`
-  and `_key:`, is still caught.
+  A third pass joins every readable byte and runs only the checks that need a
+  name to match: an authorization header, a private key marker, an XML element
+  or attribute, a web address, or a credential field name with a value. So a name
+  split by single bytes, such as `api` and `_key:` or `<pass`, `wo`, and `rd>`,
+  is still caught.
   A file signature does not bypass credential checks. Compressed document
   contents are not inspected. These pattern checks can miss credentials, so
   review files from unknown sources before sharing.

@@ -8,7 +8,7 @@ This file is part of Agentprise
 skills/project-preferences/SKILL.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-23
+Last Modified: 2026-11-05
 Summary: Project-specific preferences for Agentprise: the single-file build, the
          project backup format, workspace storage, the download cards, and how
          to test.
@@ -76,7 +76,7 @@ served by GitHub Pages from the root of the main branch.
 
 ### Setup and verification
 
-No installation is needed. Node 20 or later runs the tests:
+No installation is needed. Node 22 or later runs the tests:
 
 ```
 npm test

@@ -3,7 +3,7 @@ This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-25
+Last Modified: 2026-11-05
 Summary: The whole Agentprise web app in one file. Lets a person describe an AI
          assistant once, then download it as a skill for Gemini and Claude, a
          Copilot app package, a Teams Chat file, a plugin, copy-ready text for
@@ -7242,11 +7242,12 @@ function holdsCredential(name, bytes) {
     if (structuredTextHoldsCredential(split) || (joined !== split && structuredTextHoldsCredential(joined))) {
         return true;
     }
-    // A field name split by single bytes, such as "api" 0xFF "_key: abc123", needs
-    // every readable byte. Only the checks that need a credential field name, a
-    // key marker, or a web address run on that text, because random bytes rarely
-    // spell one.
-    return binary && whole !== joined && (PRIVATE_KEY_MARKER.test(whole) || CREDENTIAL_HEADER_PATTERN.test(whole) || urlsHoldCredential(whole) || credentialFieldsHoldLiteral(whole));
+    // A name split by single bytes, such as "api" 0xFF "_key: abc123" or
+    // "<pass" 0xFF "wo" 0xFF "rd>", needs every readable byte. Only the checks
+    // that need a name to match (a header, a key marker, an XML element or
+    // attribute, a web address, or a settings field) run on that text, because
+    // random bytes rarely spell one.
+    return binary && whole !== joined && namedTextHoldsCredential(whole);
 }
 
 /** Checks decoded JSON key/value pairs or plain text without depending on its layout. */
@@ -7409,7 +7410,6 @@ function xmlHoldsCredential(text) {
     return false;
 }
 
-/** True when text matches a credential pattern rather than a reference to a key. */
 /** A YAML scalar without its trailing comment and surrounding quotes. */
 function yamlScalar(value) {
     return value.replace(/[ \t]+#.*$/, "").trim().replace(/^(["'])(.*)\1$/, "$2");
@@ -7656,11 +7656,21 @@ function credentialFieldsHoldLiteral(text) {
     });
 }
 
+/**
+ * The credential checks that need a name to match: a header, a key marker, an
+ * XML element or attribute, a web address, or a settings field. Short patterns
+ * such as "?key=xy" are left out, so these checks are also safe on the readable
+ * bytes of a binary file joined together.
+ * @param {string} text Decoded text.
+ * @returns {boolean}
+ */
+function namedTextHoldsCredential(text) {
+    return CREDENTIAL_HEADER_PATTERN.test(text) || PRIVATE_KEY_MARKER.test(text) || xmlHoldsCredential(text) || urlsHoldCredential(text) || credentialFieldsHoldLiteral(text);
+}
+
+/** True when text matches a credential pattern rather than a reference to a key. */
 function textHoldsCredential(text) {
-    if (CREDENTIAL_TEXT_PATTERN.test(text) || CREDENTIAL_HEADER_PATTERN.test(text) || xmlHoldsCredential(text)) {
-        return true;
-    }
-    return urlsHoldCredential(text) || credentialFieldsHoldLiteral(text);
+    return CREDENTIAL_TEXT_PATTERN.test(text) || namedTextHoldsCredential(text);
 }
 
 /**
@@ -11349,7 +11359,7 @@ function renderProductBlocked() {
     box.hidden = blocking.length === 0;
     const labels = KIND_WORDS[currentItem().kind].readiness;
     blocking.forEach(function (problem) {
-        const link = el("a", { href: "#details", text: labels[problem.field] || problem.message });
+        const link = el("a", { href: "#project", text: labels[problem.field] || problem.message });
         link.addEventListener("click", function (event) {
             event.preventDefault();
             event.stopPropagation();

@@ -248,6 +248,22 @@
       ],
       "author": "Gabriel Mongefranco",
       "license": "GPL-3.0-or-later"
+    },
+    {
+      "file": "okf-knowledge-bundles.zip",
+      "name": "OKF Knowledge Bundles",
+      "summary": "Search an Open Knowledge Format (OKF) bundle, such as one Extractium builds from websites, knowledge bases, and videos, and answer with links to the original pages, never the bundle's own files. Use when someone asks a question that a folder of OKF Markdown files can answer, such as a folder named okf or one with an index.md file.",
+      "kind": "skill",
+      "capabilities": [],
+      "tags": [
+        "knowledge",
+        "okf",
+        "extractium",
+        "citations",
+        "skill"
+      ],
+      "author": "Gabriel Mongefranco",
+      "license": "GPL-3.0-or-later"
     }
   ]
 }

@@ -10,6 +10,6 @@
     "test": "node tests/check-syntax.mjs && node --test \"tests/*.test.mjs\""
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   }
 }

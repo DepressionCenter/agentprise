@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/formats.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-23
+Last Modified: 2026-11-05
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
          need: field mappings, tools, conversion reports, and vendor facts
@@ -1102,10 +1102,13 @@ types, such as PDF, Office, and OneNote files and complete PNG images, receive
 a second scan of their readable bytes. That scan joins only runs of four or
 more readable characters, as the `strings` tool does, so single bytes in
 compressed data cannot form a match by chance. A third scan joins every
-readable byte and looks only for a credential field name followed by a value,
-such as `api_key:` split into `api` and `_key:` by a single byte
-(`credentialFieldsHoldLiteral`). Random bytes rarely spell a field name, so
-this scan does not leave large documents out by chance. A format signature does not
+readable byte and runs only the checks that need a name to match
+(`namedTextHoldsCredential`): an authorization header, a private key marker,
+an XML element or attribute, a web address, or a credential field name
+followed by a value. Examples are `api_key:` split into `api` and `_key:` by a
+single byte, and `<password>` split into `<pass`, `wo`, and `rd>`. Random bytes
+rarely spell a name, so this scan does not leave large documents out by
+chance. A format signature does not
 exempt those bytes from credential checks. This does not inspect compressed
 document contents. Mislabeled text, such as a password stored in a fake PDF,
 is scanned before it can become a skill file or a backup-only file. Private

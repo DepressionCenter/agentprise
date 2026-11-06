@@ -2,7 +2,7 @@
 // tests/microsoft-package.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-21
-// Last Modified: 2026-10-25
+// Last Modified: 2026-11-05
 // Summary: Opens Microsoft 365 app packages through the importer the app uses
 //          for dropped files: this app's own package with three actions, and
 //          synthetic packages with an assistant, skills only, connectors only,
@@ -1303,6 +1303,8 @@ describe("unsafe and broken packages", () => {
       new Uint8Array([...encode("%PDF-1.7\nAuthori"), 0xff, ...encode("zation: Bearer " + SECRET + "\n")]),
       // A web address with a password, its scheme split into short pieces by single bytes.
       new Uint8Array([...encode("%PDF-1.7\n"), 0xff, ...encode("ht"), 0xff, ...encode("tps"), 0xff, ...encode("://user:" + SECRET + "@example.org/\n")]),
+      // An XML element name split into short pieces by single bytes.
+      new Uint8Array([...encode("%PDF-1.7\n<pass"), 0xff, ...encode("wo"), 0xff, ...encode("rd>" + SECRET + "</password>\n")]),
     ];
     payloads.forEach((bytes, index) => {
       for (const folder of ["", "config/", "skills/meeting-notes/"]) {
