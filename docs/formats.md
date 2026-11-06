@@ -441,9 +441,14 @@ caveman/
 
 A skill brought in from elsewhere keeps its own `LICENSE.txt` and `README.md`,
 and keeps its other files in their own folders, such as `scripts/`, when they
-are types the app accepts for attachments. Any other file in the folder that is
-not a program is kept as an unrecognized file, which only the backup writes
-back. The plain skill
+are types the app accepts for attachments. A plain UTF-8 text file in
+`scripts/` is kept whatever its type, such as `scripts/report.rb` or
+`scripts/run`, because the skill's steps tell the assistant to run it. Any
+other file in the folder that is not a program is kept as an unrecognized
+file, which only the backup writes back. Opening the file shows a notice that
+names each one, and each download's conversion report lists the ones it
+leaves out. Both also say when the skill's steps still mention the file. The
+plain skill
 (`.skill.zip`) is the same folder without `agentprise.json` or `icon.png`, and
 its `SKILL.md` carries only the standard fields.
 

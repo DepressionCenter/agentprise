@@ -158,7 +158,10 @@ Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   accepts only document types, carries only the names in
   `COPILOT_FILE_EXTENSIONS` otherwise, and leaves any other type out with a
   warning. The skill download and the backup keep every file under its real
-  name.
+  name. In a skill folder from elsewhere, a UTF-8 text file under `scripts/` is
+  kept whatever its type (`isTextScript`), and any other file of a type the app
+  doesn't accept stays in the backup only, with a notice on opening and a line
+  in each download's conversion report (`backupOnlyFiles`).
 - Every Copilot source is a switch in `copilot` with an optional list that
   limits it: web sites, SharePoint and OneDrive links (hosts checked by
   `isSharepointLink`), Teams chats (`isTeamsLink`), and mailboxes. Meetings,

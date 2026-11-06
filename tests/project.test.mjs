@@ -118,7 +118,8 @@ function richRaw() {
 
 function richProject() {
   const result = engine.project.normalize(richRaw());
-  assert.deepEqual(result.notices, []);
+  // The picture in the skill folder is not a type a skill file can be, so only the backup keeps it.
+  assert.deepEqual(result.notices, ["Kept 1 file in the backup only, because Agentprise doesn't accept it as a skill file: skills/data-tools/photo.png. Other downloads leave it out."]);
   return result.project;
 }
 
@@ -136,7 +137,7 @@ describe("backup round trip", () => {
     assert.equal(engine.detectFormat(backup.fileName, backup.bytes), "plugin");
     const back = await reopen(backup);
     assert.equal(back.format, "plugin");
-    assert.deepEqual(back.notices, ["The plugin has 1 hook, command, or agent file. Agentprise keeps it in the backup but never reads or runs it."]);
+    assert.deepEqual(back.notices, ["The plugin has 1 hook, command, or agent file. Agentprise keeps it in the backup but never reads or runs it.", "Kept 1 file in the backup only, because Agentprise doesn't accept it as a skill file: skills/data-tools/photo.png. Other downloads leave it out."]);
     assert.deepEqual(engine.project.record(back.project), record);
     assert.deepEqual(payloadBytes(back.project), payloadBytes(project));
     // A second trip changes nothing either.
@@ -603,6 +604,38 @@ describe("imports of plugins and skills made elsewhere", () => {
 
   const skillMd = "---\nname: lookup\ndescription: Looks things up.\n---\n\nSearch first.\n";
 
+  test("plain-text scripts of any type are kept, and other skill files are named when only the backup keeps them", async () => {
+    const steps = "---\nname: report\ndescription: Makes a report.\n---\n\nRun scripts/report.rb, then scripts/run, then scripts/legacy.pl.\n";
+    const bytes = makeDeflatedZip([
+      { name: "report/SKILL.md", bytes: encode(steps) },
+      { name: "report/scripts/report.rb", bytes: encode("puts 'report'\n") },
+      { name: "report/scripts/run", bytes: encode("#!/bin/sh\necho run\n") },
+      { name: "report/scripts/helper.py", bytes: encode("print('help')\n") },
+      // Latin-1 text is not UTF-8, so it can't be a skill file.
+      { name: "report/scripts/legacy.pl", bytes: new Uint8Array([0x70, 0x72, 0x69, 0x6e, 0x74, 0x20, 0xe9, 0x0a]) },
+      { name: "report/data/table.sav", bytes: encode("EXAMPLE_ROW_1\n") },
+      // A Windows program saved under a script's name is still refused.
+      { name: "report/scripts/setup", bytes: new Uint8Array([0x4d, 0x5a, 0x90, 0x00]) },
+    ]);
+    const { project, notices } = await engine.imports.any("report.zip", bytes);
+    const item = project.items[0];
+    assert.deepEqual(item.files.map((f) => f.path).sort(), ["scripts/helper.py", "scripts/report.rb", "scripts/run"]);
+    assert.deepEqual(project.unrecognized.map((u) => u.path), ["skills/report/scripts/legacy.pl", "skills/report/data/table.sav"]);
+    assert.ok(notices.includes("Left out 1 file from a skill: scripts/setup (it is a Windows program)."));
+    assert.ok(notices.includes("Kept 2 files in the backup only, because Agentprise doesn't accept them as skill files: skills/report/scripts/legacy.pl, skills/report/data/table.sav. Other downloads leave them out. The steps still tell the assistant to use scripts/legacy.pl, so change the steps or replace that file before you share a download."));
+    for (const exportId of ["claude", "gemini", "skill"]) {
+      const written = exportId === "skill" ? await engine.exports.plainSkill(project, item) : await engine.exports.skillZip(project, item, exportId);
+      const names = written.entries.map((entry) => entry.name);
+      assert.ok(names.includes("report/scripts/report.rb") && names.includes("report/scripts/run"), exportId);
+      assert.equal(names.some((name) => name.endsWith("legacy.pl") || name.endsWith("table.sav")), false, exportId);
+      const report = written.report.filter((entry) => entry.status === "unsupported");
+      assert.deepEqual(report.map((entry) => [entry.component, entry.note]), [
+        ["scripts/legacy.pl", "Left out, because Agentprise doesn't accept it as a skill file. The backup keeps it. The steps still tell the assistant to use it, so change the steps or replace the file before you share this download."],
+        ["data/table.sav", "Left out, because Agentprise doesn't accept it as a skill file. The backup keeps it."],
+      ], exportId);
+    }
+  });
+
   test("a tool server address whose key name has words in front is removed, and ordinary queries are kept", async () => {
     const SECRET = "EXAMPLE_TOKEN_123";
     for (const name of ["client_secret", "subscription-key", "auth_token", "refresh_token", "private_token", "x-api-key"]) {
@@ -758,7 +791,7 @@ describe("imports of plugins and skills made elsewhere", () => {
     ]);
     assert.equal(engine.detectFormat("caveman.zip", bytes), "skillZip");
     const { project, notices } = await engine.imports.any("caveman.zip", bytes);
-    assert.deepEqual(notices, []);
+    assert.deepEqual(notices, ["Kept 1 file in the backup only, because Agentprise doesn't accept it as a skill file: skills/caveman/assets/icon.png. Other downloads leave it out."]);
     assert.equal(project.items.length, 1);
     const item = project.items[0];
     assert.equal(item.kind, "skill");
@@ -918,7 +951,7 @@ describe("project helpers", () => {
     assert.equal(instructions, engine.tools.composeInstructions(project, skill, "msAgent"));
     assert.ok(instructions.startsWith(skill.body + "\n\n## " + engine.tools.TOOLS_HEADING + "\n"));
     assert.ok(instructions.endsWith(engine.tools.COMPLETION_RULE));
-    assert.deepEqual(ms.report.map((e) => [e.component, e.status]), [["Data Tools", "transformed"], ["Record lookup", "requires-setup"], ["Attached files", "unsupported"]]);
+    assert.deepEqual(ms.report.map((e) => [e.component, e.status]), [["Data Tools", "transformed"], ["Record lookup", "requires-setup"], ["Attached files", "unsupported"], ["photo.png", "unsupported"]]);
     const copy = engine.exports.copyText(project, skill, "chatgpt");
     assert.ok(copy.markdown.startsWith("# Data Tools\n"));
     assert.equal(copy.instructions, engine.tools.composeInstructions(project, skill, "chatgpt"));

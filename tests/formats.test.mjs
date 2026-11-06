@@ -473,7 +473,7 @@ describe("Agent Skill ZIP", () => {
       assert.equal(engine.detectFormat("helper.zip", bytes), "skillZip");
       const { project, error, notices } = await engine.imports.any("helper.zip", bytes);
       assert.equal(error, undefined);
-      assert.deepEqual(notices, [NO_LICENSE_NOTICE]);
+      assert.deepEqual(notices, [NO_LICENSE_NOTICE, "Kept 1 file in the backup only, because Agentprise doesn't accept it as a skill file: skills/helper/assets/icon.png. Other downloads leave it out."]);
       assert.equal(project.license, "Not stated");
       const item = project.items[0];
       assert.equal(item.kind, "skill");

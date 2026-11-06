@@ -2659,9 +2659,25 @@ function cleanArchivePath(value, options) {
     return path.length <= LIMITS.itemPath ? path : "";
 }
 
+// A skill's scripts folder. A plain-text file there is kept whatever its type,
+// such as scripts/report.rb or scripts/run, because the skill's steps tell the
+// assistant to run it.
+const SCRIPTS_FOLDER = "scripts/";
+
 /**
- * Accepted types become item files; other non-programs are leftovers for the
- * backup only; programs are refused.
+ * Whether a skill file is a plain-text script of a type outside FILE_TYPES.
+ * Callers refuse programs first, by signature and by name.
+ * @param {string} path the file's path inside the skill folder
+ * @param {Uint8Array} bytes
+ * @returns {boolean}
+ */
+function isTextScript(path, bytes) {
+    return path.indexOf(SCRIPTS_FOLDER) === 0 && !fileKind(path) && isUtf8Text(bytes);
+}
+
+/**
+ * Accepted types and plain-text scripts become item files; other non-programs
+ * are leftovers for the backup only; programs are refused.
  * @param {*} list [{path, bytes}], untrusted
  * @param {string[]} notices one line per refusal
  * @returns {{files: Array<{path: string, bytes: Uint8Array}>, leftovers: Array<{path: string, bytes: Uint8Array}>, overflow: Array<object>}} overflow holds the original entries beyond the file-count limit
@@ -2698,7 +2714,7 @@ function cleanSkillFiles(list, notices) {
         seen[path.toLowerCase()] = true;
         // A top-level license or readme stays even when not UTF-8, so the notice survives.
         const ownNotice = path.indexOf("/") < 0 && (LICENSE_FILE_PATTERN.test(path) || /^README(\.(md|txt))?$/i.test(path));
-        const problem = ownNotice ? "" : attachedFileProblem(pathLeaf(path), entry.bytes);
+        const problem = ownNotice || isTextScript(path, entry.bytes) ? "" : attachedFileProblem(pathLeaf(path), entry.bytes);
         if (problem) {
             leftovers.push({ path: path, bytes: copyBytes(entry.bytes) });
             return;
@@ -3128,6 +3144,7 @@ function normalizeProject(input) {
     const seenIds = Object.create(null);
     const seenNames = Object.create(null);
     const leftovers = [];
+    const mentioned = [];
     rawItems.forEach(function (raw) {
         const result = normalizeItem(raw, notices);
         const item = result.item;
@@ -3146,8 +3163,15 @@ function normalizeProject(input) {
         project.items.push(item);
         result.leftovers.forEach(function (entry) {
             leftovers.push({ path: "skills/" + skillName + "/" + entry.path, note: UNRECOGNIZED_NOTE, bytes: entry.bytes });
+            if ((item.kind === "skill" ? item.body : item.instructions).indexOf(entry.path) >= 0) {
+                mentioned.push(entry.path);
+            }
         });
     });
+    if (leftovers.length > 0) {
+        const one = leftovers.length === 1;
+        notices.push("Kept " + countOf(leftovers.length, "file", "files") + " in the backup only, because Agentprise doesn't accept " + (one ? "it as a skill file" : "them as skill files") + ": " + listNames(leftovers.map(function (entry) { return entry.path; })) + ". Other downloads leave " + (one ? "it" : "them") + " out." + (mentioned.length > 0 ? " The steps still tell the assistant to use " + listNames(mentioned) + ", so change the steps or replace " + (mentioned.length === 1 ? "that file" : "those files") + " before you share a download." : ""));
+    }
 
     const skillNames = project.items.filter(function (item) { return item.kind === "skill"; }).map(function (item) { return item.skillName; });
     project.items.forEach(function (item) {
@@ -5296,7 +5320,23 @@ function formatReport(project, item, exportId, named) {
     if ((exportId === "chatgpt" || exportId === "notebook") && item.files.length > 0) {
         report.push(reportEntry("Attached files", "requires-setup", "Copied text can't include files. Add them to the " + (exportId === "chatgpt" ? "ChatGPT project" : "notebook") + " yourself."));
     }
+    backupOnlyFiles(project, item).forEach(function (path) {
+        const steps = item.kind === "skill" ? item.body : item.instructions;
+        report.push(reportEntry(path, "unsupported", "Left out, because Agentprise doesn't accept it as a skill file. The backup keeps it." + (steps.indexOf(path) >= 0 ? " The steps still tell the assistant to use it, so change the steps or replace the file before you share this download." : "")));
+    });
     return report;
+}
+
+/**
+ * Paths inside an item's folder of the files kept for the backup only, such as
+ * "data/example-table.sav".
+ * @param {object} project
+ * @param {object} item
+ * @returns {string[]}
+ */
+function backupOnlyFiles(project, item) {
+    const folder = "skills/" + item.skillName + "/";
+    return project.unrecognized.filter(function (entry) { return entry.path.indexOf(folder) === 0; }).map(function (entry) { return entry.path.slice(folder.length); });
 }
 
 /**

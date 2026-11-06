@@ -148,9 +148,13 @@ Known limits.
   `headers`, `env`, and `cwd` settings are dropped on import with a notice,
   because they can hold secrets. Hooks, commands, agents folders, and every
   other file the app does not understand are kept as unrecognized files, which
-  are written back only into the backup and appear in no other download. Files
-  outside the plugin folder are left out. Evidence: `readPluginArchive` and
-  `serversFromMcp` in `index.html`.
+  are written back only into the backup and appear in no other download. A
+  notice names each such file inside a skill folder, and each download's
+  conversion report lists the ones it leaves out. A plain UTF-8 text file in a
+  skill's `scripts/` folder is kept as a skill file whatever its type, after
+  the same program checks as every other file. Files outside the plugin folder
+  are left out. Evidence: `readPluginArchive`, `serversFromMcp`,
+  `cleanSkillFiles`, `isTextScript`, and `backupOnlyFiles` in `index.html`.
 #### Microsoft package imports
 
 Agentprise checks Microsoft 365 app packages before adding their contents to
