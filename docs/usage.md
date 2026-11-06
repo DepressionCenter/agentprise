@@ -146,6 +146,11 @@ button under **In this project**. You can also open it, open
 The **X** and the button appear only when the project holds two or more
 things, because a project always keeps at least one.
 
+Some files in a skill made elsewhere are kept only in the backup, such as a
+data file like `data/example-table.sav`. Removing the skill removes those
+files too, and the question before you remove it says how many there are.
+Renaming the skill moves them to the skill's new folder in the backup.
+
 ### Tools
 
 Some assistants and skills use tools, such as a search of PubMed. A tool lets

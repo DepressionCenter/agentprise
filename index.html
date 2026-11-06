@@ -3503,6 +3503,33 @@ function mergeProjects(target, source) {
     return { project: result.project, notices: result.notices, added: added.map(function (item) { return item.id; }).filter(function (id) { return kept.indexOf(id) >= 0; }) };
 }
 
+/**
+ * Moves the files kept for the backup only in one item's folder to another
+ * folder, as when the item is renamed, or takes them out of the project when
+ * there is no new folder, as when the item is removed. A file already at a
+ * moved file's new path is replaced. Changes project.unrecognized in place.
+ * @param {object} project
+ * @param {string} oldSkillName the item's folder name before the change
+ * @param {string} newSkillName the folder name after a rename, or "" to remove
+ * @returns {number} how many files moved or were taken out
+ */
+function moveBackupOnlyFiles(project, oldSkillName, newSkillName) {
+    const folder = "skills/" + oldSkillName + "/";
+    const inFolder = project.unrecognized.filter(function (entry) { return entry.path.indexOf(folder) === 0; });
+    if (inFolder.length === 0 || oldSkillName === newSkillName) {
+        return 0;
+    }
+    const rest = project.unrecognized.filter(function (entry) { return entry.path.indexOf(folder) !== 0; });
+    if (!newSkillName) {
+        project.unrecognized = rest;
+        return inFolder.length;
+    }
+    const moved = inFolder.map(function (entry) { return Object.assign({}, entry, { path: "skills/" + newSkillName + "/" + entry.path.slice(folder.length) }); });
+    const paths = moved.map(function (entry) { return entry.path; });
+    project.unrecognized = rest.filter(function (entry) { return paths.indexOf(entry.path) < 0; }).concat(moved);
+    return moved.length;
+}
+
 /** A file and folder name from the project name. */
 function projectSlug(project) {
     return toSkillName(project.name || (project.items[0] && project.items[0].name) || "project");
@@ -8865,6 +8892,7 @@ globalThis.Agentprise = {
         duplicate: duplicateProject,
         merge: mergeProjects,
         uniqueSkillName: uniqueSkillName,
+        moveBackupOnlyFiles: moveBackupOnlyFiles,
         agentView: agentView,
         validateItem: validateItem,
         usedSkills: usedSkills,
@@ -10195,6 +10223,7 @@ function renameItem(item, value) {
     const oldSkillName = item.skillName;
     item.name = value;
     item.skillName = uniqueSkillName(toSkillName(value || item.kind), takenSkillNames(item));
+    moveBackupOnlyFiles(project, oldSkillName, item.skillName);
     if (item.kind === "skill" && oldSkillName !== item.skillName) {
         project.items.forEach(function (other) {
             if (other.kind === "agent") {
@@ -10229,11 +10258,14 @@ function removeItem(item) {
         return;
     }
     const label = itemLabel(item);
+    const kept = backupOnlyFiles(ui.project, item).length;
+    const keptNote = kept === 0 ? "" : " This also removes " + (kept === 1 ? "1 file that was" : kept + " files that were") + " kept only in the backup.";
     const message = item.kind === "skill"
-        ? "This takes the skill out of the project. Any assistant using it will stop using it. If you might want it back later, download a backup first."
-        : "This takes the assistant out of the project. If you might want it back later, download a backup first.";
+        ? "This takes the skill out of the project. Any assistant using it will stop using it." + keptNote + " If you might want it back later, download a backup first."
+        : "This takes the assistant out of the project." + keptNote + " If you might want it back later, download a backup first.";
     openConfirm("Remove " + label + "?", message, "Remove", "Cancel", function () {
         const wasCurrent = currentItem() === item;
+        moveBackupOnlyFiles(ui.project, item.skillName, "");
         ui.project.items = ui.project.items.filter(function (other) { return other !== item; });
         ui.project.items.forEach(function (other) {
             if (other.kind === "agent") {

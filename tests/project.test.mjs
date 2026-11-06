@@ -2,7 +2,7 @@
 // tests/project.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-21
+// Last Modified: 2026-11-05
 // Summary: Tests for the version 2 project model inside index.html: the backup
 //          round trip, normalization of hostile input, the Agent Plugins
 //          manifests, duplicate and merge, the stored record and payloads, and
@@ -565,6 +565,55 @@ describe("stored record and payloads", () => {
     assert.match(back.project.items[0].id, UUID);
     assert.deepEqual(back.project.items[0].files, []);
     assert.equal(engine.project.fromRecord(null, new Map()).project.items.length, 0);
+  });
+});
+
+describe("files kept only in the backup follow their skill", () => {
+  /** Two skills from elsewhere; survey-helper brings two files a skill file can't be. */
+  async function surveyProject() {
+    const bytes = makeDeflatedZip([
+      { name: "survey-helper/SKILL.md", bytes: encode("---\nname: survey-helper\ndescription: Helps with surveys.\n---\n\nSummarize the survey.\n") },
+      { name: "survey-helper/data/example-table.sav", bytes: encode("EXAMPLE_ROW_1\n") },
+      { name: "survey-helper/assets/logo.png", bytes: makePng(4, 4) },
+      { name: "other-skill/SKILL.md", bytes: encode("---\nname: other-skill\ndescription: Does other things.\n---\n\nDo other things.\n") },
+    ]);
+    const { project } = await engine.imports.any("surveys.zip", bytes);
+    assert.deepEqual(project.unrecognized.map((u) => u.path), ["skills/survey-helper/data/example-table.sav", "skills/survey-helper/assets/logo.png"]);
+    return project;
+  }
+  const backupNames = async (project) => (await engine.exports.backup(project)).entries.map((entry) => entry.name).filter((name) => name.includes("/skills/"));
+
+  test("removing a skill takes its files out, so a new skill with its name starts clean", async () => {
+    const project = await surveyProject();
+    const skill = project.items.find((item) => item.skillName === "survey-helper");
+    assert.equal(engine.project.moveBackupOnlyFiles(project, skill.skillName, ""), 2);
+    project.items = project.items.filter((item) => item !== skill);
+    assert.deepEqual(project.unrecognized, []);
+    assert.equal((await backupNames(project)).some((name) => name.includes("survey-helper")), false);
+    // Another skill or an assistant with nothing kept for the backup has nothing to take out.
+    assert.equal(engine.project.moveBackupOnlyFiles(project, "other-skill", ""), 0);
+  });
+
+  test("renaming a skill moves its files to the new folder, and files outside skill folders stay", async () => {
+    const project = await surveyProject();
+    project.unrecognized.push({ path: "LICENSE", note: "Not interpreted by Agentprise.", bytes: encode("Example terms\n") });
+    const skill = project.items.find((item) => item.skillName === "survey-helper");
+    assert.equal(engine.project.moveBackupOnlyFiles(project, "survey-helper", "survey-summary"), 2);
+    skill.skillName = "survey-summary";
+    assert.deepEqual(project.unrecognized.map((u) => u.path).sort(), ["LICENSE", "skills/survey-summary/assets/logo.png", "skills/survey-summary/data/example-table.sav"]);
+    const names = await backupNames(project);
+    assert.ok(names.some((name) => name.endsWith("skills/survey-summary/data/example-table.sav")));
+    assert.equal(names.some((name) => name.includes("skills/survey-helper/")), false);
+  });
+
+  test("a file already at the new folder is replaced, never written twice", () => {
+    const project = engine.project.normalize({ name: "Example", items: [{ kind: "skill", name: "Old", body: "Steps." }] }).project;
+    project.unrecognized = [
+      { path: "skills/old/data/a.sav", note: "", bytes: encode("new") },
+      { path: "skills/new/data/a.sav", note: "", bytes: encode("stale") },
+    ];
+    engine.project.moveBackupOnlyFiles(project, "old", "new");
+    assert.deepEqual(project.unrecognized.map((u) => [u.path, decode(u.bytes)]), [["skills/new/data/a.sav", "new"]]);
   });
 });
 
