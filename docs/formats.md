@@ -441,9 +441,14 @@ caveman/
 
 A skill brought in from elsewhere keeps its own `LICENSE.txt` and `README.md`,
 and keeps its other files in their own folders, such as `scripts/`, when they
-are types the app accepts for attachments. Any other file in the folder that is
-not a program is kept as an unrecognized file, which only the backup writes
-back. The plain skill
+are types the app accepts for attachments. A plain UTF-8 text file in
+`scripts/` is kept whatever its type, such as `scripts/report.rb` or
+`scripts/run`, because the skill's steps tell the assistant to run it. Any
+other file in the folder that is not a program is kept as an unrecognized
+file, which only the backup writes back. Opening the file shows a notice that
+names each one, and each download's conversion report lists the ones it
+leaves out. Both also say when the skill's steps still mention the file. The
+plain skill
 (`.skill.zip`) is the same folder without `agentprise.json` or `icon.png`, and
 its `SKILL.md` carries only the standard fields.
 
@@ -565,8 +570,11 @@ A project server (`servers` in the project record) has `label`, `transport`
 `apikey`), and `tools`. A web server has a `url`; a local one has a `command`
 (a program name or a relative path, never one with `..`) and `args`. `cleanServerUrl` keeps an
 address only when it is https with no user name, password, or fragment, and
-no query parameter named like a key, token, secret, password, or signature.
-The editor's **Address of the** box uses the same check.
+no query parameter named like a key, token, secret, password, auth value, or
+signature, even with words in front, such as `client_secret` or
+`subscription-key`. The editor's **Address of the** box uses the same check. An argument that
+holds a password, key, or token, such as `postgresql://admin:abc123@db.example.org`
+or the value after `--token`, is replaced with `replace-with-your-value`.
 
 `PROVIDER_SUPPORT` decides what each export does with each kind: `tool` writes
 it into the download, `text` names it in the instructions for the installer to
@@ -598,6 +606,13 @@ report always agree. The composed text is, in order:
    fallback. A tool with no usable route gets only its fallback. The section
    ends with "Only report a search, lookup, or retrieval as completed when a
    tool returned results in this conversation."
+
+When a download includes a script that a tool runs, the tools section starts
+with `### Scripts in this skill`, which lists each script's path and the tools
+that use it. A script route that names a runtime also gets the command that
+runs it, in a fenced `bash` block, such as `python3 scripts/report.py`. The
+command is left out when the route's instructions already give it
+(`scriptCommand`).
 
 Tool labels are put on one line, and a `#` at the start of any line of tool
 text is escaped, so tool text cannot add headings of its own. For an export
@@ -667,8 +682,9 @@ Inspect page shows it as "Setup steps (not in the package)". Sections:
   admin registers it, for example in the Teams Developer Portal, and the
   installer replaces `replace-with-your-auth-registration-id`.
 - **Let the script reach the internet**, naming up to five https hosts found
-  in the script (`hostsInText`), with Claude, Gemini, and coding-agent
-  wording.
+  in the script's code (`hostsInText`), with Claude, Gemini, and coding-agent
+  wording. Comment lines are skipped, so an address in a license header, such
+  as `https://www.gnu.org/licenses/`, is not listed.
 - **Allow custom apps in Microsoft 365**, when the app package has actions.
 
 ### The Microsoft `.agent` file

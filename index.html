@@ -250,7 +250,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         .topbar-links a:hover, .topbar-links a:focus-visible { color: var(--accent-text); background: var(--nav-active); border-color: var(--border-soft); }
         .topbar-links .bi { width: 20px; height: 20px; margin: 0; }
         main { width: 100%; max-width: 1100px; padding: 36px 40px 48px; }
-        .status-bar:empty { display: none; }
+        /* The status area stays on the page while empty, so screen readers know the live region before a message arrives. With no paragraph it takes no space. */
         .status-bar p {
             margin: 0 0 1.25rem;
             padding: 10px 14px;
@@ -1019,6 +1019,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                         <div class="field" id="compatibility-wrap" hidden>
                                             <label for="f-compatibility">What it needs to work</label>
                                             <p class="hint" id="f-compatibility-hint">Optional. One or two sentences about the tools, products, or access the skill needs, such as "Live search needs the PubMed connector." Up to 500 characters.</p>
+                                            <p class="hint" id="f-compatibility-script" hidden>This skill runs a script, so say what it needs, such as "Needs Python 3 and network access to example.org in coding tools."</p>
                                             <textarea id="f-compatibility" maxlength="500" rows="2" aria-describedby="f-compatibility-hint"></textarea>
                                         </div>
                                         <fieldset class="field" id="products-wrap">
@@ -2659,9 +2660,25 @@ function cleanArchivePath(value, options) {
     return path.length <= LIMITS.itemPath ? path : "";
 }
 
+// A skill's scripts folder. A plain-text file there is kept whatever its type,
+// such as scripts/report.rb or scripts/run, because the skill's steps tell the
+// assistant to run it.
+const SCRIPTS_FOLDER = "scripts/";
+
 /**
- * Accepted types become item files; other non-programs are leftovers for the
- * backup only; programs are refused.
+ * Whether a skill file is a plain-text script of a type outside FILE_TYPES.
+ * Callers refuse programs first, by signature and by name.
+ * @param {string} path the file's path inside the skill folder
+ * @param {Uint8Array} bytes
+ * @returns {boolean}
+ */
+function isTextScript(path, bytes) {
+    return path.indexOf(SCRIPTS_FOLDER) === 0 && !fileKind(path) && isUtf8Text(bytes);
+}
+
+/**
+ * Accepted types and plain-text scripts become item files; other non-programs
+ * are leftovers for the backup only; programs are refused.
  * @param {*} list [{path, bytes}], untrusted
  * @param {string[]} notices one line per refusal
  * @returns {{files: Array<{path: string, bytes: Uint8Array}>, leftovers: Array<{path: string, bytes: Uint8Array}>, overflow: Array<object>}} overflow holds the original entries beyond the file-count limit
@@ -2698,7 +2715,7 @@ function cleanSkillFiles(list, notices) {
         seen[path.toLowerCase()] = true;
         // A top-level license or readme stays even when not UTF-8, so the notice survives.
         const ownNotice = path.indexOf("/") < 0 && (LICENSE_FILE_PATTERN.test(path) || /^README(\.(md|txt))?$/i.test(path));
-        const problem = ownNotice ? "" : attachedFileProblem(pathLeaf(path), entry.bytes);
+        const problem = ownNotice || isTextScript(path, entry.bytes) ? "" : attachedFileProblem(pathLeaf(path), entry.bytes);
         if (problem) {
             leftovers.push({ path: path, bytes: copyBytes(entry.bytes) });
             return;
@@ -2860,16 +2877,21 @@ function normalizeServers(value, notices, limit = LIMITS.servers) {
             const url = asText(entry.url, LIMITS.sharepointLinkText, "server address", notices);
             server.url = cleanServerUrl(url);
             if (url && !server.url) {
-                notices.push("The address of the tool server \"" + name + "\" was removed. It must start with https:// and hold no user name, password, or # part.");
+                notices.push("The address of the tool server \"" + name + "\" was removed. It must start with https:// and hold no user name, password, key, or # part.");
             }
         } else {
             const command = typeof entry.command === "string" ? entry.command.trim() : "";
             // One program name, or a ./ path inside the plugin.
             server.command = /^(\.\/)?[A-Za-z0-9._@-]+(\/[A-Za-z0-9._@-]+)*$/.test(command) && command.length <= 200 && command.split("/").indexOf("..") < 0 ? command : "";
-            server.args = (Array.isArray(entry.args) ? entry.args : []).filter(function (arg) { return typeof arg === "string"; })
+            const args = (Array.isArray(entry.args) ? entry.args : []).filter(function (arg) { return typeof arg === "string"; })
                 .map(function (arg) { return arg.slice(0, LIMITS.serverArgText); }).slice(0, LIMITS.serverArgs);
+            const cleaned = serverArgsWithoutCredentials(args);
+            server.args = cleaned.args;
             if (command && !server.command) {
                 notices.push("The command of the tool server \"" + name + "\" was removed because it was not one program name.");
+            }
+            if (cleaned.replaced > 0) {
+                notices.push("The tool server \"" + name + "\" had a password, key, or token in its arguments, so Agentprise replaced " + (cleaned.replaced === 1 ? "1 argument" : cleaned.replaced + " arguments") + " with " + SERVER_ARG_PLACEHOLDER + ". Put the real value back where you install it.");
             }
         }
         servers[name] = server;
@@ -2877,7 +2899,62 @@ function normalizeServers(value, notices, limit = LIMITS.servers) {
     return servers;
 }
 
-const CREDENTIAL_QUERY_NAME = /^(api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)$/i;
+// A query name that holds a credential, with or without words in front, such as
+// "key", "client_secret", "auth_token", "x-api-key", or "subscription-key".
+const CREDENTIAL_QUERY_NAME_SOURCE = "(?:[a-z0-9]+[_-])*(?:api[_-]?key|apikey|key|token|secret|password|passwd|pwd|auth|sig|signature)";
+const CREDENTIAL_QUERY_NAME = new RegExp("^" + CREDENTIAL_QUERY_NAME_SOURCE + "$", "i");
+
+// Written in place of a local tool server argument that holds a credential,
+// since every person who installs a download receives the arguments.
+const SERVER_ARG_PLACEHOLDER = "replace-with-your-value";
+
+// A command-line option that names a credential, such as "--token",
+// "--api-key", or "--client-secret=abc123". The value is in the second group
+// when it follows "=", and otherwise in the next argument.
+const CREDENTIAL_OPTION_PATTERN = new RegExp("^--?(?!no[_-])(" + CREDENTIAL_QUERY_NAME_SOURCE + ")(?:=([^]*))?$", "i");
+// A setting given as one argument, such as "SUBSCRIPTION_KEY=abc123" after
+// "-e", or a header of any scheme, such as "Authorization: token abc123".
+const CREDENTIAL_ASSIGNMENT_PATTERN = new RegExp("^(?:" + CREDENTIAL_QUERY_NAME_SOURCE + ")=([^]*)$", "i");
+const AUTHORIZATION_ARG_PATTERN = /^\s*(?:proxy-)?authorization\s*[:=]\s*\S/i;
+
+/**
+ * A local tool server's arguments with each one that holds a password, key, or
+ * token replaced by SERVER_ARG_PLACEHOLDER. An argument counts when the text
+ * checks find a credential in it, such as "postgresql://admin:abc123@db.example.org"
+ * or "Authorization: Bearer abc123", or when it is the value of an option that
+ * names one, such as "--token abc123" or "--api-key=abc123", or sets one, such
+ * as "SUBSCRIPTION_KEY=abc123". A value that names a key kept elsewhere, such
+ * as "${API_KEY}", and a value already replaced, are kept.
+ * @param {string[]} args
+ * @returns {{args: string[], replaced: number}}
+ */
+function serverArgsWithoutCredentials(args) {
+    let replaced = 0;
+    const cleaned = args.map(function (arg, index) {
+        if (arg === SERVER_ARG_PLACEHOLDER) {
+            return arg;
+        }
+        const option = CREDENTIAL_OPTION_PATTERN.exec(arg) || CREDENTIAL_ASSIGNMENT_PATTERN.exec(arg);
+        // The value after "=" is the last group of either pattern.
+        const value = option ? option[option.length - 1] : undefined;
+        if (value === SERVER_ARG_PLACEHOLDER) {
+            return arg;
+        }
+        const previous = index > 0 ? CREDENTIAL_OPTION_PATTERN.exec(args[index - 1]) : null;
+        let holdsCredential = textHoldsCredential(arg) || AUTHORIZATION_ARG_PATTERN.test(arg);
+        if (value !== undefined) {
+            holdsCredential = holdsCredential || credentialValueIsLiteral(value);
+        } else if (previous && previous[2] === undefined && arg.charAt(0) !== "-") {
+            holdsCredential = holdsCredential || credentialValueIsLiteral(arg);
+        }
+        if (!holdsCredential) {
+            return arg;
+        }
+        replaced += 1;
+        return value !== undefined ? arg.slice(0, arg.length - value.length) + SERVER_ARG_PLACEHOLDER : SERVER_ARG_PLACEHOLDER;
+    });
+    return { args: cleaned, replaced: replaced };
+}
 
 /** Whether a parsed URL has user information or a credential query parameter. */
 function urlHasCredential(url) {
@@ -3068,6 +3145,7 @@ function normalizeProject(input) {
     const seenIds = Object.create(null);
     const seenNames = Object.create(null);
     const leftovers = [];
+    const mentioned = [];
     rawItems.forEach(function (raw) {
         const result = normalizeItem(raw, notices);
         const item = result.item;
@@ -3086,8 +3164,15 @@ function normalizeProject(input) {
         project.items.push(item);
         result.leftovers.forEach(function (entry) {
             leftovers.push({ path: "skills/" + skillName + "/" + entry.path, note: UNRECOGNIZED_NOTE, bytes: entry.bytes });
+            if ((item.kind === "skill" ? item.body : item.instructions).indexOf(entry.path) >= 0) {
+                mentioned.push(entry.path);
+            }
         });
     });
+    if (leftovers.length > 0) {
+        const one = leftovers.length === 1;
+        notices.push("Kept " + countOf(leftovers.length, "file", "files") + " in the backup only, because Agentprise doesn't accept " + (one ? "it as a skill file" : "them as skill files") + ": " + listNames(leftovers.map(function (entry) { return entry.path; })) + ". Other downloads leave " + (one ? "it" : "them") + " out." + (mentioned.length > 0 ? " The steps still tell the assistant to use " + listNames(mentioned) + ", so change the steps or replace " + (mentioned.length === 1 ? "that file" : "those files") + " before you share a download." : ""));
+    }
 
     const skillNames = project.items.filter(function (item) { return item.kind === "skill"; }).map(function (item) { return item.skillName; });
     project.items.forEach(function (item) {
@@ -3416,6 +3501,33 @@ function mergeProjects(target, source) {
     const result = normalizeProject(raw);
     const kept = result.project.items.map(function (item) { return item.id; });
     return { project: result.project, notices: result.notices, added: added.map(function (item) { return item.id; }).filter(function (id) { return kept.indexOf(id) >= 0; }) };
+}
+
+/**
+ * Moves the files kept for the backup only in one item's folder to another
+ * folder, as when the item is renamed, or takes them out of the project when
+ * there is no new folder, as when the item is removed. A file already at a
+ * moved file's new path is replaced. Changes project.unrecognized in place.
+ * @param {object} project
+ * @param {string} oldSkillName the item's folder name before the change
+ * @param {string} newSkillName the folder name after a rename, or "" to remove
+ * @returns {number} how many files moved or were taken out
+ */
+function moveBackupOnlyFiles(project, oldSkillName, newSkillName) {
+    const folder = "skills/" + oldSkillName + "/";
+    const inFolder = project.unrecognized.filter(function (entry) { return entry.path.indexOf(folder) === 0; });
+    if (inFolder.length === 0 || oldSkillName === newSkillName) {
+        return 0;
+    }
+    const rest = project.unrecognized.filter(function (entry) { return entry.path.indexOf(folder) !== 0; });
+    if (!newSkillName) {
+        project.unrecognized = rest;
+        return inFolder.length;
+    }
+    const moved = inFolder.map(function (entry) { return Object.assign({}, entry, { path: "skills/" + newSkillName + "/" + entry.path.slice(folder.length) }); });
+    const paths = moved.map(function (entry) { return entry.path; });
+    project.unrecognized = rest.filter(function (entry) { return paths.indexOf(entry.path) < 0; }).concat(moved);
+    return moved.length;
 }
 
 /** A file and folder name from the project name. */
@@ -4854,6 +4966,8 @@ function planExport(project, item, exportId, options) {
     const actionKeys = Object.create(null);
     const paragraphs = [];
     const summaries = [];
+    // Each script a usable tool runs, with the labels of the tools that use it.
+    const scripts = [];
     capabilities.forEach(function (link) {
         const capability = link.capability;
         const usable = [];
@@ -5017,6 +5131,21 @@ function planExport(project, item, exportId, options) {
             usable.forEach(function (provider, index) {
                 const name = providerName(project, provider);
                 lines.push((index + 1) + ". " + name.charAt(0).toUpperCase() + name.slice(1) + "." + (provider.instructions ? " " + quoteHeadings(provider.instructions) : ""));
+                if (provider.kind !== "script") {
+                    return;
+                }
+                const command = scriptCommand(provider);
+                if (command) {
+                    // Indented three spaces, so the block stays inside the numbered item.
+                    lines.push("   Run it from the skill folder:", "   ```bash", "   " + command, "   ```");
+                }
+                const where = provider.path + (link.owner.id === item.id ? "" : " in the skill " + link.owner.name);
+                const entry = scripts.find(function (other) { return other.where === where; });
+                if (!entry) {
+                    scripts.push({ where: where, labels: [label] });
+                } else if (entry.labels.indexOf(label) < 0) {
+                    entry.labels.push(label);
+                }
             });
             lines.push("If none of them is available: " + quoteHeadings(fallback));
         } else {
@@ -5025,6 +5154,9 @@ function planExport(project, item, exportId, options) {
         paragraphs.push(lines.join("\n"));
         summaries.push("- " + label + ": " + (usable.length > 0 ? "use " + usable.map(function (provider) { return providerName(project, provider); }).join(", or ") + ". If none is available: " : "") + oneLine(fallback.split(/(?<=\.)\s/)[0]));
     });
+    if (scripts.length > 0) {
+        paragraphs.unshift("### Scripts in this skill\n" + scripts.map(function (entry) { return "- " + entry.where + ": " + entry.labels.join("; ") + "."; }).join("\n"));
+    }
     const toolsSection = paragraphs.length > 0 ? "## " + TOOLS_HEADING + "\n\n" + paragraphs.join("\n\n") + "\n\n" + COMPLETION_RULE : "";
 
     // ### Fit everything within the product's limit ###
@@ -5086,6 +5218,31 @@ function planExport(project, item, exportId, options) {
 /** One line, so a label never starts its own heading. */
 function oneLine(text) {
     return String(text).replace(/\s+/g, " ").trim();
+}
+
+/** Whether any of an item's tools runs a script the item carries. */
+function itemRunsScript(item) {
+    return item.capabilities.some(function (capability) {
+        return Object.keys(capability.providers).some(function (key) {
+            return capability.providers[key].some(function (provider) { return provider.kind === "script"; });
+        });
+    });
+}
+
+/**
+ * The command that runs a script tool, such as "python3 scripts/report.py",
+ * when the tool names a runtime and its instructions don't already give that
+ * command. A path with a space or parenthesis is quoted.
+ * @param {object} provider a script provider
+ * @returns {string} the command, or ""
+ */
+function scriptCommand(provider) {
+    if (!provider.runtime) {
+        return "";
+    }
+    const path = /[ ()]/.test(provider.path) ? "\"" + provider.path + "\"" : provider.path;
+    const command = provider.runtime + " " + path;
+    return (provider.instructions || "").indexOf(command) >= 0 ? "" : command;
 }
 
 /** Escapes a leading #, so tool text can't add headings. */
@@ -5236,7 +5393,23 @@ function formatReport(project, item, exportId, named) {
     if ((exportId === "chatgpt" || exportId === "notebook") && item.files.length > 0) {
         report.push(reportEntry("Attached files", "requires-setup", "Copied text can't include files. Add them to the " + (exportId === "chatgpt" ? "ChatGPT project" : "notebook") + " yourself."));
     }
+    backupOnlyFiles(project, item).forEach(function (path) {
+        const steps = item.kind === "skill" ? item.body : item.instructions;
+        report.push(reportEntry(path, "unsupported", "Left out, because Agentprise doesn't accept it as a skill file. The backup keeps it." + (steps.indexOf(path) >= 0 ? " The steps still tell the assistant to use it, so change the steps or replace the file before you share this download." : "")));
+    });
     return report;
+}
+
+/**
+ * Paths inside an item's folder of the files kept for the backup only, such as
+ * "data/example-table.sav".
+ * @param {object} project
+ * @param {object} item
+ * @returns {string[]}
+ */
+function backupOnlyFiles(project, item) {
+    const folder = "skills/" + item.skillName + "/";
+    return project.unrecognized.filter(function (entry) { return entry.path.indexOf(folder) === 0; }).map(function (entry) { return entry.path.slice(folder.length); });
 }
 
 /**
@@ -5268,18 +5441,24 @@ function widenedSources(item) {
     return lost;
 }
 
-/** https hosts a text file names, so setup says what a script calls. */
+// A comment line in a script, such as "# License: https://www.gnu.org/licenses/"
+// or "// See https://example.org/docs". Addresses there are not ones the script
+// calls. "--" is left out, since it also starts options such as "--url".
+const SCRIPT_COMMENT_LINE = /^\s*(?:#|\/\/|\/\*|\*|;|::|%|<!--|rem\b)/i;
+
+/** https hosts a script's code names, outside comment lines, so setup says what it calls. */
 function hostsInText(bytes) {
     const hosts = [];
-    const text = fromBytes(bytes.subarray(0, LIMITS.scanFileBytes));
+    const lines = fromBytes(bytes.subarray(0, LIMITS.scanFileBytes)).split(/\r?\n/);
     const pattern = /https:\/\/([a-z0-9.-]+\.[a-z]{2,})/gi;
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
-        const host = match[1].toLowerCase();
-        if (hosts.indexOf(host) < 0 && hosts.length < 5) {
-            hosts.push(host);
+    lines.filter(function (line) { return !SCRIPT_COMMENT_LINE.test(line); }).forEach(function (line) {
+        for (const match of line.matchAll(pattern)) {
+            const host = match[1].toLowerCase();
+            if (hosts.indexOf(host) < 0 && hosts.length < 5) {
+                hosts.push(host);
+            }
         }
-    }
+    });
     return hosts;
 }
 
@@ -6469,9 +6648,11 @@ function microsoftSkillEntries(project, item, plan, plugin, report, root) {
         }
         return file;
     });
+    const steps = item.kind === "skill" ? item.body : item.instructions;
     const allowed = resources.filter(function (file) {
         if (MICROSOFT_SCRIPT_EXTENSION.test(file.path) || !MICROSOFT_RESOURCE_EXTENSION.test(file.path)) {
-            report.push(reportEntry(item.name + ": " + file.path, "unsupported", "This file type is not supported in the Microsoft skill download. This download also leaves out script files. Download a backup to keep the original file."));
+            const mentioned = steps.indexOf(file.path) >= 0 ? " The steps still mention " + file.path + ", so edit them, or tell the assistant what to do without it, before you share this download." : "";
+            report.push(reportEntry(item.name + ": " + file.path, "unsupported", "This file type is not supported in the Microsoft skill download. This download also leaves out script files. Download a backup to keep the original file." + mentioned));
             return false;
         }
         return true;
@@ -7108,7 +7289,7 @@ const COPILOT_AUTH_KINDS = Object.freeze({ None: "none", OAuthPluginVault: "oaut
 // Text that looks like a key, token, or password in a file the import would
 // otherwise keep for the backup.
 const PRIVATE_KEY_MARKER = /-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
-const CREDENTIAL_TEXT_PATTERN = new RegExp(String.raw`[?&](api[_-]?key|key|token|access[_-]?token|secret|password|pwd|auth|sig|signature)=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]+"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|` + PRIVATE_KEY_MARKER.source, "i");
+const CREDENTIAL_TEXT_PATTERN = new RegExp("[?&]" + CREDENTIAL_QUERY_NAME_SOURCE + String.raw`=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]+"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|` + PRIVATE_KEY_MARKER.source, "i");
 
 const CREDENTIAL_HEADER_PATTERN = /\b(?:proxy-)?authorization["']?[ \t]*[:=][ \t]*["']?(?:basic|bearer)[ \t]+[A-Za-z0-9._~+\/=-]+/i;
 
@@ -8711,6 +8892,7 @@ globalThis.Agentprise = {
         duplicate: duplicateProject,
         merge: mergeProjects,
         uniqueSkillName: uniqueSkillName,
+        moveBackupOnlyFiles: moveBackupOnlyFiles,
         agentView: agentView,
         validateItem: validateItem,
         usedSkills: usedSkills,
@@ -8763,6 +8945,10 @@ globalThis.Agentprise = {
 const STORAGE_DB = "agentprise-projects";
 const STORAGE_DB_VERSION = 1;
 const STORAGE_WORKSPACE_KEY = "agentprise-workspace-v2";
+// Tabs of the app tell each other when they save or delete a project, so a tab
+// with an older copy can warn before the person types in it.
+const STORAGE_CHANNEL = "agentprise-projects";
+const STALE_TAB_MESSAGE = "This project was changed or deleted in another tab, so this tab stopped saving it. To keep the changes made here, download a backup. Then reload this page to see the latest version.";
 // Version 1 storage, removed unread on first load.
 const LEGACY_DRAFT_KEY = "agentprise-draft-v1";
 const LEGACY_FILES_DB = "agentprise-draft-files";
@@ -8915,6 +9101,14 @@ const ui = {
     showAllProjects: false,
     memoryProjects: new Map(),
     savedRecord: "",
+    // The modified time of the stored copy this tab last loaded or saved, ""
+    // while this tab has not stored the project, and whether a save may
+    // replace a stored copy this tab never loaded, as "Replace mine" does.
+    storedModified: "",
+    replaceStored: false,
+    // Set once another tab changed or deleted the open project; saving stops.
+    staleTab: false,
+    channel: null,
     view: "workspace",
     starterBlanks: [],
     previewOrder: [],
@@ -9354,39 +9548,100 @@ const savedBytes = new Map();
 /**
  * Saves the record and changed files, dropping files no longer held. An empty
  * project is not saved, so an untouched new one leaves no trace.
+ * @param {object} project
+ * @param {string} [expected] the stored copy's modified time this save may
+ *   replace, or "" when nothing may be stored yet. When the stored copy
+ *   differs, as after a save in another tab, nothing is written or deleted.
+ *   Left out, the save replaces whatever is stored.
+ * @returns {Promise<boolean|null>} false when the stored copy did not match
+ *   expected, null when storage failed and the project is kept for this visit only
  */
-async function saveStoredProject(project) {
+async function saveStoredProject(project, expected) {
+    // Taken now, because a later save can change the project before this transaction writes.
+    const record = projectRecord(project);
     const payloads = projectPayloads(project);
+    let matched = true;
     try {
         await withStores(["projects", "files"], "readwrite", function (transaction) {
-            transaction.objectStore("projects").put(projectRecord(project));
+            const projects = transaction.objectStore("projects");
             const files = transaction.objectStore("files");
-            const wanted = {};
-            payloads.forEach(function (payload) {
-                wanted[project.id + "/" + payload.key] = payload;
-            });
-            const request = files.getAllKeys(projectFileRange(project.id));
-            request.onsuccess = function () {
-                const stored = {};
-                request.result.forEach(function (key) {
-                    stored[key] = true;
-                    if (!wanted[key]) {
-                        files.delete(key);
-                    }
+            const write = function () {
+                projects.put(record);
+                const wanted = {};
+                payloads.forEach(function (payload) {
+                    wanted[project.id + "/" + payload.key] = payload;
                 });
-                Object.keys(wanted).forEach(function (key) {
-                    const payload = wanted[key];
-                    if (!stored[key] || savedBytes.get(key) !== payload.bytes) {
-                        files.put({ blob: new Blob([payload.bytes]), type: fileTypeOf(payload.key) }, key);
-                        savedBytes.set(key, payload.bytes);
-                    }
-                });
+                const request = files.getAllKeys(projectFileRange(project.id));
+                request.onsuccess = function () {
+                    const stored = {};
+                    request.result.forEach(function (key) {
+                        stored[key] = true;
+                        if (!wanted[key]) {
+                            files.delete(key);
+                        }
+                    });
+                    Object.keys(wanted).forEach(function (key) {
+                        const payload = wanted[key];
+                        if (!stored[key] || savedBytes.get(key) !== payload.bytes) {
+                            files.put({ blob: new Blob([payload.bytes]), type: fileTypeOf(payload.key) }, key);
+                            savedBytes.set(key, payload.bytes);
+                        }
+                    });
+                };
+            };
+            if (expected === undefined) {
+                write();
+                return;
+            }
+            // Read inside the same transaction, so no other tab can save in between.
+            const current = projects.get(project.id);
+            current.onsuccess = function () {
+                const storedModified = isPlainObject(current.result) && typeof current.result.modified === "string" ? current.result.modified : "";
+                matched = storedModified === expected;
+                if (matched) {
+                    write();
+                }
             };
         });
         ui.memoryProjects.delete(project.id);
     } catch (error) {
         storageBlocked();
         ui.memoryProjects.set(project.id, project);
+        return null;
+    }
+    if (matched) {
+        tellOtherTabs(project.id, record.modified);
+    }
+    return matched;
+}
+
+/** Tells the app's other tabs that a project was saved, or deleted when modified is "". */
+function tellOtherTabs(id, modified) {
+    if (ui.channel) {
+        ui.channel.postMessage({ id: id, modified: modified });
+    }
+}
+
+/** Listens for saves in the app's other tabs, where the browser allows it. */
+function listenToOtherTabs() {
+    if (typeof BroadcastChannel !== "function") {
+        return;
+    }
+    ui.channel = new BroadcastChannel(STORAGE_CHANNEL);
+    ui.channel.addEventListener("message", function (event) {
+        const data = isPlainObject(event.data) ? event.data : {};
+        if (ui.project && data.id === ui.project.id && data.modified !== ui.storedModified) {
+            markTabStale();
+        }
+    });
+}
+
+/** Stops saving the open project and says why, once. */
+function markTabStale() {
+    clearTimeout(ui.saveTimer);
+    if (!ui.staleTab) {
+        ui.staleTab = true;
+        announce(STALE_TAB_MESSAGE, true);
     }
 }
 
@@ -9397,6 +9652,7 @@ async function deleteStoredProject(id) {
             transaction.objectStore("projects").delete(id);
             transaction.objectStore("files").delete(projectFileRange(id));
         });
+        tellOtherTabs(id, "");
     } catch (error) {
         storageBlocked();
     }
@@ -9420,6 +9676,15 @@ function recordFingerprint(project) {
     return JSON.stringify(record);
 }
 
+/**
+ * Whether a picture or file holds bytes this tab hasn't saved. The record
+ * keeps only a file's path, type, and size, so a new picture in place of an
+ * old one, or a new file with the same name and size, leaves it unchanged.
+ */
+function payloadsChanged(project) {
+    return projectPayloads(project).some(function (payload) { return savedBytes.get(project.id + "/" + payload.key) !== payload.bytes; });
+}
+
 /** Stamps the time when something changed. */
 async function saveNow() {
     clearTimeout(ui.saveTimer);
@@ -9428,12 +9693,33 @@ async function saveNow() {
         return;
     }
     const fingerprint = recordFingerprint(project);
-    if (fingerprint === ui.savedRecord) {
+    if (fingerprint === ui.savedRecord && !payloadsChanged(project)) {
         return;
     }
+    if (ui.staleTab) {
+        // Says it again if a later message replaced it.
+        if ($("status").textContent !== STALE_TAB_MESSAGE) {
+            announce(STALE_TAB_MESSAGE, true);
+        }
+        return;
+    }
+    const expected = ui.replaceStored ? undefined : ui.storedModified;
     project.modified = new Date().toISOString();
     ui.savedRecord = fingerprint;
-    await saveStoredProject(project);
+    // A second save can start before this one ends; it expects what this one writes.
+    ui.storedModified = project.modified;
+    ui.replaceStored = false;
+    const saved = await saveStoredProject(project, expected);
+    if (saved === false) {
+        ui.savedRecord = "";
+        markTabStale();
+        return;
+    }
+    if (saved === null) {
+        // Nothing reached storage, so the stored copy is still the one this tab expected.
+        ui.storedModified = expected === undefined ? ui.storedModified : expected;
+        ui.replaceStored = expected === undefined;
+    }
     rememberOpened(project.id);
     await refreshProjectList();
 }
@@ -9457,6 +9743,12 @@ function setProject(project, itemId) {
     ui.itemId = itemId && findItem(project, itemId) ? itemId : (project.items[0] ? project.items[0].id : "");
     ui.skillTabSwap = null;
     ui.savedRecord = "";
+    ui.storedModified = "";
+    ui.replaceStored = false;
+    if (ui.staleTab && $("status").textContent === STALE_TAB_MESSAGE) {
+        announce("");
+    }
+    ui.staleTab = false;
     ui.previewOrder = [];
     ui.product = ui.product || "backup";
     if (projectHasContent(project)) {
@@ -9478,6 +9770,7 @@ async function openProject(id, moveFocus) {
     }
     setProject(result.project);
     ui.savedRecord = recordFingerprint(result.project);
+    ui.storedModified = result.project.modified;
     projectPayloads(result.project).forEach(function (payload) { savedBytes.set(result.project.id + "/" + payload.key, payload.bytes); });
     if (result.notices.length > 0) {
         announce("A few saved settings had to be changed to open this project. " + result.notices.join(" "));
@@ -9503,9 +9796,12 @@ function startNewProject() {
  * @param {string} message announced once open
  */
 async function addProjectToWorkspace(project, message) {
+    // Another tab may have stored this project since this tab last looked.
+    await refreshProjectList();
     const existing = ui.projects.find(function (summary) { return summary.id === project.id; });
-    const finish = async function (chosen) {
+    const finish = async function (chosen, replace) {
         setProject(chosen);
+        ui.replaceStored = replace === true;
         await saveNow();
         showView("project", true);
         announce(message);
@@ -9520,7 +9816,7 @@ async function addProjectToWorkspace(project, message) {
         "Keep both",
         "Cancel",
         function () { finish(duplicateProject(project, project.name + " (copy)")); },
-        { label: "Replace mine", action: function () { finish(project); } }
+        { label: "Replace mine", action: function () { finish(project, true); } }
     );
 }
 
@@ -9688,15 +9984,23 @@ async function renameProject(id, name) {
         await saveNow();
         renderBreadcrumb();
         renderProjectNav();
+        if (ui.staleTab) {
+            return;
+        }
     } else {
         const result = await loadStoredProject(id);
         if (!result) {
             return;
         }
+        const loaded = result.project.modified;
         result.project.name = clean;
         result.project.modified = new Date().toISOString();
-        await saveStoredProject(result.project);
+        const saved = await saveStoredProject(result.project, ui.memoryProjects.has(id) ? undefined : loaded);
         await refreshProjectList();
+        if (saved === false) {
+            announce("The project changed in another tab while you renamed it, so the name didn't change. Rename it again.", true);
+            return;
+        }
     }
     announce("Renamed the project to " + clean + ".");
 }
@@ -10041,6 +10345,7 @@ function renameItem(item, value) {
     const oldSkillName = item.skillName;
     item.name = value;
     item.skillName = uniqueSkillName(toSkillName(value || item.kind), takenSkillNames(item));
+    moveBackupOnlyFiles(project, oldSkillName, item.skillName);
     if (item.kind === "skill" && oldSkillName !== item.skillName) {
         project.items.forEach(function (other) {
             if (other.kind === "agent") {
@@ -10075,11 +10380,14 @@ function removeItem(item) {
         return;
     }
     const label = itemLabel(item);
+    const kept = backupOnlyFiles(ui.project, item).length;
+    const keptNote = kept === 0 ? "" : " This also removes " + (kept === 1 ? "1 file that was" : kept + " files that were") + " kept only in the backup.";
     const message = item.kind === "skill"
-        ? "This takes the skill out of the project. Any assistant using it will stop using it. If you might want it back later, download a backup first."
-        : "This takes the assistant out of the project. If you might want it back later, download a backup first.";
+        ? "This takes the skill out of the project. Any assistant using it will stop using it." + keptNote + " If you might want it back later, download a backup first."
+        : "This takes the assistant out of the project." + keptNote + " If you might want it back later, download a backup first.";
     openConfirm("Remove " + label + "?", message, "Remove", "Cancel", function () {
         const wasCurrent = currentItem() === item;
+        moveBackupOnlyFiles(ui.project, item.skillName, "");
         ui.project.items = ui.project.items.filter(function (other) { return other !== item; });
         ui.project.items.forEach(function (other) {
             if (other.kind === "agent") {
@@ -10386,6 +10694,10 @@ function updateDerived() {
     const count = itemBody(item).length.toLocaleString() + " of " + limit.toLocaleString() + " characters";
     ["s-instructions-counter", "d-instructions-counter"].forEach(function (id) { setText($(id), count); });
     $("icon-preview").src = item.kind === "agent" ? iconPreviewUri(item) : "";
+    // A hidden hint named in aria-describedby is still read, so the link is set only while it shows.
+    const scriptHint = item.kind === "skill" && !item.compatibility.trim() && itemRunsScript(item);
+    $("f-compatibility-script").hidden = !scriptHint;
+    $("f-compatibility").setAttribute("aria-describedby", scriptHint ? "f-compatibility-hint f-compatibility-script" : "f-compatibility-hint");
     sizeNameBlank();
     autosize($("s-instructions"));
     const result = validateItem(project, item);
@@ -10917,7 +11229,7 @@ function renderServers() {
             input.addEventListener("input", function () {
                 const value = input.value.trim();
                 const clean = cleanServerUrl(value);
-                showFieldError(id, value && !clean ? "Use an https address with no user name, password, or # part." : "");
+                showFieldError(id, value && !clean ? "Use an https address with no user name, password, key, or # part." : "");
                 server.url = clean;
                 updateDerived();
                 scheduleSave();
@@ -12059,6 +12371,7 @@ async function initApp() {
     window.addEventListener("pagehide", function () { saveNow(); });
 
     removeLegacyStorage();
+    listenToOtherTabs();
     await refreshProjectList();
     const view = viewFromHash(location.hash);
     const prefs = readWorkspacePrefs();

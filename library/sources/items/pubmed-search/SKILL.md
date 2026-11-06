@@ -189,7 +189,7 @@ The "Tools available in this setup" section, when present, lists the PubMed rout
   - `python3 scripts/pubmed.py search --query '<query>' --retmax 20`
   - `python3 scripts/pubmed.py summary --ids 12345678,23456789`
   - `python3 scripts/pubmed.py abstract --ids 12345678,23456789`
-  Each prints one JSON object. If it exits with an error, read the message, and fall back to query preparation if the network call failed.
+  Each prints one JSON object. Give at most 100 PMIDs per command. If it exits with an error, read the message, and fall back to query preparation if the network call failed. Exit codes: 2 bad arguments, 3 `NCBI_EMAIL` missing or invalid, 4 network failure, 5 unexpected response from PubMed. `python3 scripts/pubmed.py --help` shows the same details.
 - **The bundled API plugin** `openapi/pubmed-eutils.yaml` (for example in Microsoft 365 Copilot): operations `searchPubMed`, `getSummaries`, and `getAbstracts`.
 - **An MCP server named "pubmed"** that the person or their organization supplies (for example in ChatGPT).
 
