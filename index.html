@@ -250,7 +250,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         .topbar-links a:hover, .topbar-links a:focus-visible { color: var(--accent-text); background: var(--nav-active); border-color: var(--border-soft); }
         .topbar-links .bi { width: 20px; height: 20px; margin: 0; }
         main { width: 100%; max-width: 1100px; padding: 36px 40px 48px; }
-        .status-bar:empty { display: none; }
+        /* The status area stays on the page while empty, so screen readers know the live region before a message arrives. With no paragraph it takes no space. */
         .status-bar p {
             margin: 0 0 1.25rem;
             padding: 10px 14px;

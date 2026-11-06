@@ -455,9 +455,10 @@ borders.
 - Required fields that are still empty are listed as links beside the download
   buttons, and each link moves focus to the field. The download buttons are
   disabled until the list is empty.
-- Status messages go to one polite live region. Nothing moves, flashes, or
-  auto-advances. Smooth scrolling is applied only when the system does not ask
-  for reduced motion.
+- Status messages go to one polite live region. The region stays on the page
+  while it is empty, so screen readers read each message when it appears.
+  Nothing moves, flashes, or auto-advances. Smooth scrolling is applied only
+  when the system does not ask for reduced motion.
 - In the tools parts of the editor, the **Tools** list is a `fieldset` with a
   `legend` and a list of cards; each **Remove this tool** and **Remove this connection** button carries the tool
   or server name as hidden text and asks first in the same native `dialog`.
