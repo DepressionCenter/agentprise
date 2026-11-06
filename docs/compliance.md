@@ -54,9 +54,12 @@ Known limits.
   holds pictures and attached files. The `localStorage` key
   `agentprise-workspace-v2` holds only the last opened project id, the recent
   project ids, and preferences. A new project is not stored until something is
-  typed in it. Delete on a project tile removes its record and files after
-  asking. Evidence: the storage constants and `saveStoredProject` and
-  `deleteStoredProject` in `index.html`.
+  typed in it. A save rewrites only the pictures and files whose contents
+  changed, and replacing one, such as choosing a new picture, always saves,
+  even when its name and size stay the same. Delete on a project tile removes
+  its record and files after asking. Evidence: the storage constants,
+  `payloadsChanged`, `saveNow`, `saveStoredProject`, and `deleteStoredProject`
+  in `index.html`.
 - On every load the app deletes the version 1 draft, the `localStorage` key
   `agentprise-draft-v1` and the IndexedDB database `agentprise-draft-files`,
   without reading either. Evidence: `removeLegacyStorage` in `index.html`.
@@ -154,9 +157,10 @@ Known limits.
   skill removes the files kept for it in the backup, and renaming one moves
   them to its new folder. A plain UTF-8 text file in a skill's `scripts/`
   folder is kept as a skill file whatever its type, after the same program
-  checks as every other file. Files outside the plugin folder are left out. Evidence: `readPluginArchive`, `serversFromMcp`,
-  `cleanSkillFiles`, `isTextScript`, `backupOnlyFiles`, and
-  `moveBackupOnlyFiles` in `index.html`.
+  checks as every other file. Files outside the plugin folder are left out.
+  Evidence: `readPluginArchive`, `serversFromMcp`, `cleanSkillFiles`,
+  `isTextScript`, `backupOnlyFiles`, and `moveBackupOnlyFiles` in
+  `index.html`.
 #### Microsoft package imports
 
 Agentprise checks Microsoft 365 app packages before adding their contents to

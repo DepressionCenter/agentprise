@@ -9602,6 +9602,15 @@ function recordFingerprint(project) {
     return JSON.stringify(record);
 }
 
+/**
+ * Whether a picture or file holds bytes this tab hasn't saved. The record
+ * keeps only a file's path, type, and size, so a new picture in place of an
+ * old one, or a new file with the same name and size, leaves it unchanged.
+ */
+function payloadsChanged(project) {
+    return projectPayloads(project).some(function (payload) { return savedBytes.get(project.id + "/" + payload.key) !== payload.bytes; });
+}
+
 /** Stamps the time when something changed. */
 async function saveNow() {
     clearTimeout(ui.saveTimer);
@@ -9610,7 +9619,7 @@ async function saveNow() {
         return;
     }
     const fingerprint = recordFingerprint(project);
-    if (fingerprint === ui.savedRecord) {
+    if (fingerprint === ui.savedRecord && !payloadsChanged(project)) {
         return;
     }
     project.modified = new Date().toISOString();
