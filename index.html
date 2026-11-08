@@ -3532,8 +3532,9 @@ function moveBackupOnlyFiles(project, oldSkillName, newSkillName) {
         return inFolder.length;
     }
     const moved = inFolder.map(function (entry) { return Object.assign({}, entry, { path: "skills/" + newSkillName + "/" + entry.path.slice(folder.length) }); });
-    const paths = moved.map(function (entry) { return entry.path; });
-    project.unrecognized = rest.filter(function (entry) { return paths.indexOf(entry.path) < 0; }).concat(moved);
+    // Paths are compared without case, as normalizeProject and the backup writer compare them.
+    const paths = moved.map(function (entry) { return entry.path.toLowerCase(); });
+    project.unrecognized = rest.filter(function (entry) { return paths.indexOf(entry.path.toLowerCase()) < 0; }).concat(moved);
     return moved.length;
 }
 

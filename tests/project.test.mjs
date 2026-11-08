@@ -610,7 +610,8 @@ describe("files kept only in the backup follow their skill", () => {
     const project = engine.project.normalize({ name: "Example", items: [{ kind: "skill", name: "Old", body: "Steps." }] }).project;
     project.unrecognized = [
       { path: "skills/old/data/a.sav", note: "", bytes: encode("new") },
-      { path: "skills/new/data/a.sav", note: "", bytes: encode("stale") },
+      // The stale copy differs only in case, which counts as the same path in a backup.
+      { path: "skills/new/data/A.sav", note: "", bytes: encode("stale") },
     ];
     engine.project.moveBackupOnlyFiles(project, "old", "new");
     assert.deepEqual(project.unrecognized.map((u) => [u.path, decode(u.bytes)]), [["skills/new/data/a.sav", "new"]]);
