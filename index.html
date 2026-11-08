@@ -5400,11 +5400,21 @@ function formatReport(project, item, exportId, named) {
     if ((exportId === "chatgpt" || exportId === "notebook") && item.files.length > 0) {
         report.push(reportEntry("Attached files", "requires-setup", "Copied text can't include files. Add them to the " + (exportId === "chatgpt" ? "ChatGPT project" : "notebook") + " yourself."));
     }
-    backupOnlyFiles(project, item).forEach(function (path) {
-        const steps = item.kind === "skill" ? item.body : item.instructions;
-        report.push(reportEntry(path, "unsupported", "Left out, because Agentprise doesn't accept it as a skill file. The backup keeps it." + (steps.indexOf(path) >= 0 ? " The steps still tell the assistant to use it, so change the steps or replace the file before you share this download." : "")));
+    return report.concat(backupOnlyReport(project, item));
+}
+
+/**
+ * One report entry for each file kept for the backup only in an item's folder,
+ * which every other download leaves out.
+ * @param {object} project
+ * @param {object} item
+ * @returns {Array<{component: string, status: string, note: string}>}
+ */
+function backupOnlyReport(project, item) {
+    const steps = item.kind === "skill" ? item.body : item.instructions;
+    return backupOnlyFiles(project, item).map(function (path) {
+        return reportEntry(path, "unsupported", "Left out, because Agentprise doesn't accept it as a skill file. The backup keeps it." + (steps.indexOf(path) >= 0 ? " The steps still tell the assistant to use it, so change the steps or replace the file before you share this download." : ""));
     });
-    return report;
 }
 
 /**
@@ -6789,6 +6799,10 @@ function planMicrosoftPackage(project, item, exportId) {
         if (plugin || other.id !== item.id) {
             plan.report.forEach(function (entry) { report.push(reportEntry(other.name + ": " + entry.component, entry.status, entry.note)); });
             validateItem(project, other).problems.forEach(function (problem) { report.push(reportEntry(other.name, "blocked", problem.message)); });
+        }
+        // The selected item's own files are already in the report above.
+        if (other.id !== item.id) {
+            backupOnlyReport(project, other).forEach(function (entry) { report.push(reportEntry(other.name + ": " + entry.component, entry.status, entry.note)); });
         }
         if (plugin && other.kind === "agent") {
             const c = other.copilot;

@@ -470,6 +470,18 @@ describe("Copilot Agent Builder skill uploads", () => {
     assert.match(scriptNote(), /The steps still mention scripts\/lookup\.py, so edit them, or tell the assistant what to do without it, before you share this download\.$/);
   });
 
+  test("the report names the backup-only files of every skill the download includes, once each", () => {
+    const project = build();
+    const agent = project.items.find((candidate) => candidate.kind === "agent" && candidate.uses.length > 0);
+    const skill = project.items.find((candidate) => candidate.skillName === agent.uses[0]);
+    project.unrecognized.push({ path: "skills/" + skill.skillName + "/data/table.sav", note: "", bytes: new TextEncoder().encode("EXAMPLE_ROW_1\n") });
+    const named = (selected, profile) => engine.tools.conversionReport(project, selected, profile).filter((entry) => entry.component.endsWith("data/table.sav"));
+    for (const profile of ["copilotSkills", "microsoftPlugin"]) {
+      assert.deepEqual(named(agent, profile).map((entry) => entry.component), [skill.name + ": data/table.sav"], profile);
+    }
+    assert.equal(named(skill, "microsoftPlugin").length, 1, "the selected skill's file is listed once");
+  });
+
   test("blocks empty instructions and bodies of 20,000 characters", async () => {
     const project = build(simpleRaw());
     project.items[1].body = "";
