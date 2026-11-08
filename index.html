@@ -9131,6 +9131,11 @@ const ui = {
     // Set once another tab changed or deleted the open project; saving stops.
     staleTab: false,
     channel: null,
+    // The save in progress, so the next one waits for it.
+    saving: null,
+    // For each project kept in memory after a failed save, what storage still
+    // holds: {modified, replace}, read when the project opens again.
+    memoryStored: new Map(),
     view: "workspace",
     starterBlanks: [],
     previewOrder: [],
@@ -9626,9 +9631,14 @@ async function saveStoredProject(project, expected) {
             };
         });
         ui.memoryProjects.delete(project.id);
+        ui.memoryStored.delete(project.id);
     } catch (error) {
         storageBlocked();
         ui.memoryProjects.set(project.id, project);
+        // The first failure records what storage still holds; later ones expect the same.
+        if (!ui.memoryStored.has(project.id)) {
+            ui.memoryStored.set(project.id, expected === undefined ? { modified: "", replace: true } : { modified: expected, replace: false });
+        }
         return null;
     }
     if (matched) {
@@ -9710,6 +9720,10 @@ function payloadsChanged(project) {
 /** Stamps the time when something changed. */
 async function saveNow() {
     clearTimeout(ui.saveTimer);
+    // One save at a time, so each one expects what the one before it stored.
+    while (ui.saving) {
+        await ui.saving;
+    }
     const project = ui.project;
     if (!projectHasContent(project)) {
         return;
@@ -9728,19 +9742,30 @@ async function saveNow() {
     const expected = ui.replaceStored ? undefined : ui.storedModified;
     project.modified = new Date().toISOString();
     ui.savedRecord = fingerprint;
-    // A second save can start before this one ends; it expects what this one writes.
-    ui.storedModified = project.modified;
-    ui.replaceStored = false;
-    const saved = await saveStoredProject(project, expected);
+    let saved;
+    try {
+        ui.saving = saveStoredProject(project, expected);
+        saved = await ui.saving;
+    } finally {
+        ui.saving = null;
+    }
+    if (ui.project !== project) {
+        // Another project opened during the save, so this result is not about it.
+        if (saved === false) {
+            announce("The last changes to " + (project.name || "the project you left") + " weren't saved, because it was changed or deleted in another tab. Open it to see the latest version.", true);
+        }
+        await refreshProjectList();
+        return;
+    }
     if (saved === false) {
         ui.savedRecord = "";
         markTabStale();
         return;
     }
-    if (saved === null) {
-        // Nothing reached storage, so the stored copy is still the one this tab expected.
-        ui.storedModified = expected === undefined ? ui.storedModified : expected;
-        ui.replaceStored = expected === undefined;
+    // After a failed save, nothing reached storage, so the next save expects the same copy.
+    if (saved === true) {
+        ui.storedModified = project.modified;
+        ui.replaceStored = false;
     }
     rememberOpened(project.id);
     await refreshProjectList();
@@ -9779,6 +9804,8 @@ function setProject(project, itemId) {
 }
 
 async function openProject(id, moveFocus) {
+    // A project kept in memory after a failed save is newer than what storage holds.
+    const memory = ui.memoryProjects.has(id) ? ui.memoryStored.get(id) : null;
     let result = null;
     try {
         result = await loadStoredProject(id);
@@ -9792,7 +9819,8 @@ async function openProject(id, moveFocus) {
     }
     setProject(result.project);
     ui.savedRecord = recordFingerprint(result.project);
-    ui.storedModified = result.project.modified;
+    ui.storedModified = memory ? memory.modified : result.project.modified;
+    ui.replaceStored = Boolean(memory && memory.replace);
     projectPayloads(result.project).forEach(function (payload) { savedBytes.set(result.project.id + "/" + payload.key, payload.bytes); });
     if (result.notices.length > 0) {
         announce("A few saved settings had to be changed to open this project. " + result.notices.join(" "));
@@ -10027,11 +10055,20 @@ async function renameProject(id, name) {
     announce("Renamed the project to " + clean + ".");
 }
 
-async function copyStoredProject(summary) {
+/**
+ * The project a Workspace card names. The open project comes from this tab's
+ * copy, which holds edits a tab that stopped saving could not store.
+ */
+async function projectForCard(summary) {
     if (ui.project && ui.project.id === summary.id) {
         await saveNow();
+        return { project: ui.project };
     }
-    const result = await loadStoredProject(summary.id);
+    return loadStoredProject(summary.id);
+}
+
+async function copyStoredProject(summary) {
+    const result = await projectForCard(summary);
     if (!result) {
         return;
     }
@@ -10042,10 +10079,7 @@ async function copyStoredProject(summary) {
 }
 
 async function backupStoredProject(summary) {
-    if (ui.project && ui.project.id === summary.id) {
-        await saveNow();
-    }
-    const result = await loadStoredProject(summary.id);
+    const result = await projectForCard(summary);
     if (!result) {
         return;
     }

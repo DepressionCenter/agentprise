@@ -67,10 +67,13 @@ Known limits.
   delete through a `BroadcastChannel` named `agentprise-projects`, so an older
   tab can stop sooner. The older tab stops saving, and its status message
   says the project was changed or deleted in another tab. It tells the person
-  to download a backup to keep the changes made there, then reload the page. Choosing **Replace mine** when opening a file is the
-  one save that replaces a stored copy the tab never loaded. Evidence:
-  `saveStoredProject`, `listenToOtherTabs`, and `markTabStale` in
-  `index.html`.
+  to download a backup to keep the changes made there, then reload the page.
+  **Download backup**, in the editor or on the project's Workspace card,
+  saves the tab's own copy. A tab saves one change at a time, and a save that
+  fails leaves the tab expecting the copy that storage still holds. Choosing
+  **Replace mine** when opening a file is the one save that replaces a stored
+  copy the tab never loaded. Evidence: `saveStoredProject`, `saveNow`,
+  `projectForCard`, `listenToOtherTabs`, and `markTabStale` in `index.html`.
 - On every load the app deletes the version 1 draft, the `localStorage` key
   `agentprise-draft-v1` and the IndexedDB database `agentprise-draft-files`,
   without reading either. Evidence: `removeLegacyStorage` in `index.html`.

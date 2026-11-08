@@ -101,7 +101,7 @@ function tab(database, project, storedModified = "") {
   const posted = [];
   const status = { textContent: "" };
   const sandbox = {
-    ui: { project, savedRecord: "", saveTimer: 0, storedModified, replaceStored: false, staleTab: false, memoryProjects: new Map(), channel: { postMessage: (data) => posted.push(data) } },
+    ui: { project, savedRecord: "", saveTimer: 0, storedModified, replaceStored: false, staleTab: false, saving: null, memoryStored: new Map(), memoryProjects: new Map(), channel: { postMessage: (data) => posted.push(data) } },
     withStores: database.withStores,
     projectFileRange: (id) => ({ prefix: id + "/" }),
     projectRecord: engine.project.record,
@@ -229,10 +229,37 @@ describe("the same project open in two tabs", () => {
     database.failNext = true;
     await one.saveNow();
     assert.equal(database.stores.projects.get(first.id).items[0].instructions, "Original instructions.");
+    // The tab remembers what storage still holds, for when the project opens again from memory.
+    assert.deepEqual({ ...one.ui.memoryStored.get(first.id) }, { modified: one.ui.storedModified, replace: false });
     first.items[0].instructions = "Saved once storage works.";
     await one.saveNow();
     assert.equal(database.stores.projects.get(first.id).items[0].instructions, "Saved once storage works.");
+    assert.equal(one.ui.memoryStored.has(first.id), false);
     assert.deepEqual(one.messages, []);
+  });
+
+  test("when the first of two overlapping saves fails, the second still saves", async () => {
+    const { database, first, one } = await twoTabs();
+    first.items[0].instructions = "Step one.";
+    database.failNext = true;
+    const firstSave = one.saveNow();
+    first.items[0].instructions = "Step two.";
+    await Promise.all([firstSave, one.saveNow()]);
+    assert.equal(database.stores.projects.get(first.id).items[0].instructions, "Step two.");
+    assert.deepEqual(one.messages, []);
+  });
+
+  test("a refused save of a project that is no longer open leaves the new project saving", async () => {
+    const { first, second, one, two } = await twoTabs();
+    first.items[0].instructions = "Newer instructions.";
+    await one.saveNow();
+    second.items[0].description = "Helps the team!";
+    const pending = two.saveNow();
+    two.ui.project = helper();
+    await pending;
+    assert.equal(two.ui.staleTab, false);
+    assert.equal(two.messages.length, 1);
+    assert.match(two.messages[0], /^The last changes to Team Helper weren't saved, because it was changed or deleted in another tab\./);
   });
 
   test("Replace mine replaces the stored copy this tab never loaded", async () => {
