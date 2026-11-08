@@ -2913,9 +2913,12 @@ const SERVER_ARG_PLACEHOLDER = "replace-with-your-value";
 // when it follows "=", and otherwise in the next argument.
 const CREDENTIAL_OPTION_PATTERN = new RegExp("^--?(?!no[_-])(" + CREDENTIAL_QUERY_NAME_SOURCE + ")(?:=([^]*))?$", "i");
 // A setting given as one argument, such as "SUBSCRIPTION_KEY=abc123" after
-// "-e", or a header of any scheme, such as "Authorization: token abc123".
+// "-e", or a header of any scheme, such as "Authorization: token abc123" or
+// "--header=Authorization: token abc123". The header's value is the group.
 const CREDENTIAL_ASSIGNMENT_PATTERN = new RegExp("^(?:" + CREDENTIAL_QUERY_NAME_SOURCE + ")=([^]*)$", "i");
-const AUTHORIZATION_ARG_PATTERN = /^\s*(?:proxy-)?authorization\s*[:=]\s*\S/i;
+const AUTHORIZATION_ARG_PATTERN = /(?:^|=)\s*(?:proxy-)?authorization\s*[:=]\s*(\S[^]*)$/i;
+// A short flag such as "-v" after a credential option is a flag, not its value.
+const SHORT_FLAG_PATTERN = /^-[A-Za-z]$/;
 
 /**
  * A local tool server's arguments with each one that holds a password, key, or
@@ -2924,7 +2927,8 @@ const AUTHORIZATION_ARG_PATTERN = /^\s*(?:proxy-)?authorization\s*[:=]\s*\S/i;
  * or "Authorization: Bearer abc123", or when it is the value of an option that
  * names one, such as "--token abc123" or "--api-key=abc123", or sets one, such
  * as "SUBSCRIPTION_KEY=abc123". A value that names a key kept elsewhere, such
- * as "${API_KEY}", and a value already replaced, are kept.
+ * as "${API_KEY}" or "Authorization: Bearer ${API_KEY}", and a value already
+ * replaced, are kept.
  * @param {string[]} args
  * @returns {{args: string[], replaced: number}}
  */
@@ -2941,10 +2945,13 @@ function serverArgsWithoutCredentials(args) {
             return arg;
         }
         const previous = index > 0 ? CREDENTIAL_OPTION_PATTERN.exec(args[index - 1]) : null;
-        let holdsCredential = textHoldsCredential(arg) || AUTHORIZATION_ARG_PATTERN.test(arg);
+        const header = AUTHORIZATION_ARG_PATTERN.exec(arg);
+        // The credential is the header's last word, after any scheme such as "Bearer".
+        let holdsCredential = textHoldsCredential(arg) || Boolean(header && credentialValueIsLiteral(header[1].trim().split(/\s+/).pop()));
         if (value !== undefined) {
             holdsCredential = holdsCredential || credentialValueIsLiteral(value);
-        } else if (previous && previous[2] === undefined && arg.charAt(0) !== "-") {
+        } else if (previous && previous[2] === undefined && arg.indexOf("--") !== 0 && !SHORT_FLAG_PATTERN.test(arg)) {
+            // A value may itself start with "-", such as "-abc123".
             holdsCredential = holdsCredential || credentialValueIsLiteral(arg);
         }
         if (!holdsCredential) {

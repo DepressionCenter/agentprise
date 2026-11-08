@@ -714,6 +714,7 @@ describe("imports of plugins and skills made elsewhere", () => {
         pg: { command: "npx", args: ["-y", "@modelcontextprotocol/server-postgres", "postgresql://admin:" + PASSWORD + "@db.example.org/prod"] },
         remote: { command: "npx", args: ["mcp-remote", "https://mcp.example.org/sse", "--header", "Authorization: Bearer " + TOKEN] },
         options: { command: "example-tool", args: ["--token", TOKEN, "--api-key=" + TOKEN, "--client-secret", "${CLIENT_SECRET}", "--verbose"] },
+        headers: { command: "example-tool", args: ["--header=Authorization: token " + TOKEN, "-H", "Authorization: Bearer ${API_KEY}", "--token", "-" + TOKEN, "--api-key", "-v"] },
         settings: { command: "docker", args: ["run", "-e", "SUBSCRIPTION_KEY=" + TOKEN, "--header", "Authorization: token " + TOKEN, "--no-auth", "serve"] },
         plain: { command: "npx", args: ["-y", "example-tool"] },
       } })) },
@@ -724,6 +725,8 @@ describe("imports of plugins and skills made elsewhere", () => {
     assert.deepEqual(project.servers.remote.args, ["mcp-remote", "https://mcp.example.org/sse", "--header", "replace-with-your-value"]);
     assert.deepEqual(project.servers.options.args, ["--token", "replace-with-your-value", "--api-key=replace-with-your-value", "--client-secret", "${CLIENT_SECRET}", "--verbose"]);
     assert.deepEqual(project.servers.settings.args, ["run", "-e", "SUBSCRIPTION_KEY=replace-with-your-value", "--header", "replace-with-your-value", "--no-auth", "serve"]);
+    // A header that names a key kept elsewhere is kept, a value may start with "-", and a short flag is not a value.
+    assert.deepEqual(project.servers.headers.args, ["replace-with-your-value", "-H", "Authorization: Bearer ${API_KEY}", "--token", "replace-with-your-value", "--api-key", "-v"]);
     assert.deepEqual(project.servers.plain.args, ["-y", "example-tool"]);
     assert.ok(notices.includes("The tool server \"pg\" had a password, key, or token in its arguments, so Agentprise replaced 1 argument with replace-with-your-value. Put the real value back where you install it."));
     assert.ok(notices.includes("The tool server \"options\" had a password, key, or token in its arguments, so Agentprise replaced 2 arguments with replace-with-your-value. Put the real value back where you install it."));
@@ -734,7 +737,7 @@ describe("imports of plugins and skills made elsewhere", () => {
     assert.equal(again.notices.some((n) => n.includes("had a password, key, or token")), false);
 
     // A skill that uses every server puts them in each plugin's mcp.json and the skill's agentprise.json.
-    project.items[0].capabilities = ["pg", "remote", "options", "settings"].map((server) => ({ id: server, providers: { "*": [{ kind: "mcp", server }] } }));
+    project.items[0].capabilities = ["pg", "remote", "options", "headers", "settings"].map((server) => ({ id: server, providers: { "*": [{ kind: "mcp", server }] } }));
     const downloads = [await engine.exports.portablePlugin(project), await engine.exports.claudePlugin(project), await engine.exports.backup(project)];
     for (const written of downloads) {
       const text = written.entries.map((entry) => decode(entry.bytes)).join("\n");
