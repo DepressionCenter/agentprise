@@ -2901,7 +2901,7 @@ function normalizeServers(value, notices, limit = LIMITS.servers) {
 
 // A query name that holds a credential, with or without words in front, such as
 // "key", "client_secret", "auth_token", "x-api-key", or "subscription-key".
-const CREDENTIAL_QUERY_NAME_SOURCE = "(?:[a-z0-9]+[_-])*(?:api[_-]?key|apikey|key|token|secret|password|passwd|pwd|auth|sig|signature)";
+const CREDENTIAL_QUERY_NAME_SOURCE = "(?:[a-z0-9]+[_-])*(?:api[_-]?key|apikey|access[_-]?token|key|token|secret|password|passwd|pwd|auth|sig|signature)";
 const CREDENTIAL_QUERY_NAME = new RegExp("^" + CREDENTIAL_QUERY_NAME_SOURCE + "$", "i");
 
 // Written in place of a local tool server argument that holds a credential,

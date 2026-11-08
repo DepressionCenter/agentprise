@@ -687,7 +687,7 @@ describe("imports of plugins and skills made elsewhere", () => {
 
   test("a tool server address whose key name has words in front is removed, and ordinary queries are kept", async () => {
     const SECRET = "EXAMPLE_TOKEN_123";
-    for (const name of ["client_secret", "subscription-key", "auth_token", "refresh_token", "private_token", "x-api-key"]) {
+    for (const name of ["client_secret", "subscription-key", "auth_token", "refresh_token", "private_token", "x-api-key", "accessToken", "accesstoken"]) {
       const bytes = makeDeflatedZip([
         { name: "my-plugin/.claude-plugin/plugin.json", bytes: encode(JSON.stringify({ name: "my-plugin", version: "1.0.0" })) },
         { name: "my-plugin/.mcp.json", bytes: encode(JSON.stringify({ mcpServers: { docs: { type: "http", url: "https://mcp.example.org/mcp?" + name + "=" + SECRET } } })) },
