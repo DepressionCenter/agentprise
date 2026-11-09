@@ -3,7 +3,7 @@ This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-05
+Last Modified: 2026-11-09
 Summary: The whole Agentprise web app in one file. Lets a person describe an AI
          assistant once, then download it as a skill for Gemini and Claude, a
          Copilot app package, a Teams Chat file, a plugin, copy-ready text for
@@ -9630,8 +9630,6 @@ async function saveStoredProject(project, expected) {
                 }
             };
         });
-        ui.memoryProjects.delete(project.id);
-        ui.memoryStored.delete(project.id);
     } catch (error) {
         storageBlocked();
         ui.memoryProjects.set(project.id, project);
@@ -9641,10 +9639,28 @@ async function saveStoredProject(project, expected) {
         }
         return null;
     }
+    // A refused save leaves a project kept in memory there, so its changes are not lost.
     if (matched) {
+        ui.memoryProjects.delete(project.id);
+        ui.memoryStored.delete(project.id);
         tellOtherTabs(project.id, record.modified);
     }
     return matched;
+}
+
+/**
+ * The expected value to pass to saveStoredProject for a project just loaded.
+ * A project kept in memory after a failed save is newer than what storage
+ * holds, so it expects the copy that storage still holds.
+ * @param {object} project
+ * @returns {string|undefined} undefined when the save may replace any stored copy
+ */
+function storedRevision(project) {
+    const memory = ui.memoryProjects.has(project.id) ? ui.memoryStored.get(project.id) : null;
+    if (!memory) {
+        return project.modified;
+    }
+    return memory.replace ? undefined : memory.modified;
 }
 
 /** Tells the app's other tabs that a project was saved, or deleted when modified is "". */
@@ -9679,6 +9695,7 @@ function markTabStale() {
 
 async function deleteStoredProject(id) {
     ui.memoryProjects.delete(id);
+    ui.memoryStored.delete(id);
     try {
         await withStores(["projects", "files"], "readwrite", function (transaction) {
             transaction.objectStore("projects").delete(id);
@@ -9804,8 +9821,6 @@ function setProject(project, itemId) {
 }
 
 async function openProject(id, moveFocus) {
-    // A project kept in memory after a failed save is newer than what storage holds.
-    const memory = ui.memoryProjects.has(id) ? ui.memoryStored.get(id) : null;
     let result = null;
     try {
         result = await loadStoredProject(id);
@@ -9819,8 +9834,9 @@ async function openProject(id, moveFocus) {
     }
     setProject(result.project);
     ui.savedRecord = recordFingerprint(result.project);
-    ui.storedModified = memory ? memory.modified : result.project.modified;
-    ui.replaceStored = Boolean(memory && memory.replace);
+    const expected = storedRevision(result.project);
+    ui.replaceStored = expected === undefined;
+    ui.storedModified = ui.replaceStored ? "" : expected;
     projectPayloads(result.project).forEach(function (payload) { savedBytes.set(result.project.id + "/" + payload.key, payload.bytes); });
     if (result.notices.length > 0) {
         announce("A few saved settings had to be changed to open this project. " + result.notices.join(" "));
@@ -10042,11 +10058,16 @@ async function renameProject(id, name) {
         if (!result) {
             return;
         }
-        const loaded = result.project.modified;
+        const inMemory = ui.memoryProjects.has(id);
+        const expected = storedRevision(result.project);
         result.project.name = clean;
         result.project.modified = new Date().toISOString();
-        const saved = await saveStoredProject(result.project, ui.memoryProjects.has(id) ? undefined : loaded);
+        const saved = await saveStoredProject(result.project, expected);
         await refreshProjectList();
+        if (saved === false && inMemory) {
+            announce("The name didn't change, because the project was changed in another tab. To keep the changes this tab couldn't save, open the project and download a backup.", true);
+            return;
+        }
         if (saved === false) {
             announce("The project changed in another tab while you renamed it, so the name didn't change. Rename it again.", true);
             return;

@@ -2,7 +2,7 @@
 // tests/saving.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-11-05
-// Last Modified: 2026-11-05
+// Last Modified: 2026-11-09
 // Summary: Tests when the editor saves a project to browser storage, and that
 //          a tab with an older copy of a project never overwrites a newer
 //          one. Uses the real save code taken from index.html, with a small
@@ -43,8 +43,9 @@ function slice(startMarker, endMarker) {
 }
 
 // The save code is not exposed on the engine namespace. The first part runs
-// from savedBytes to deleteStoredProject, the second from recordFingerprint to scheduleSave.
-const SAVE_CODE = slice("// Bytes last written per key", "async function deleteStoredProject") + slice("/** The record minus its modified time", "function scheduleSave()");
+// from savedBytes to deleteStoredProject, the second from recordFingerprint to
+// scheduleSave, and the third is renameProject.
+const SAVE_CODE = slice("// Bytes last written per key", "async function deleteStoredProject") + slice("/** The record minus its modified time", "function scheduleSave()") + slice("/** Renames a stored project, or the open one. */", "async function projectForCard");
 const STALE = JSON.parse(page.match(/const STALE_TAB_MESSAGE = (".*?");/)[1]);
 
 /**
@@ -116,6 +117,12 @@ function tab(database, project, storedModified = "") {
     clearTimeout() {},
     rememberOpened() {},
     refreshProjectList: async () => {},
+    renderBreadcrumb() {},
+    renderProjectNav() {},
+    asText: (value) => String(value).trim(),
+    LIMITS: { name: 100 },
+    // Stands in for the page's loader: the copy kept in memory, or else the stored copy.
+    loadStoredProject: async (id) => sandbox.ui.memoryProjects.has(id) ? engine.project.normalize(sandbox.ui.memoryProjects.get(id)) : { project: loadCopy(database, id), notices: [] },
     Blob,
     // Each save gets a time one second after the last, so two saves never share one.
     Date: function SaveClock() { clock += 1000; return new Date(clock); },
@@ -125,7 +132,7 @@ function tab(database, project, storedModified = "") {
     sandbox.ui.savedRecord = sandbox.recordFingerprint(project);
     engine.project.payloads(project).forEach((payload) => sandbox.savedBytes.set(project.id + "/" + payload.key, payload.bytes));
   }
-  return { ui: sandbox.ui, saveNow: sandbox.result, messages, posted };
+  return { ui: sandbox.ui, saveNow: sandbox.result, renameProject: sandbox.renameProject, messages, posted };
 }
 
 /** A copy of the stored project, as another tab would load it. */
@@ -260,6 +267,37 @@ describe("the same project open in two tabs", () => {
     assert.equal(two.ui.staleTab, false);
     assert.equal(two.messages.length, 1);
     assert.match(two.messages[0], /^The last changes to Team Helper weren't saved, because it was changed or deleted in another tab\./);
+  });
+
+  test("renaming a project kept in memory never replaces newer changes from another tab", async () => {
+    const { database, first, second, one, two } = await twoTabs();
+    first.items[0].instructions = "Kept for this visit.";
+    database.failNext = true;
+    await one.saveNow();
+    // Tab one opens another project, then tab two saves newer changes to the first one.
+    one.ui.project = helper();
+    second.items[0].instructions = "Newer instructions.";
+    await two.saveNow();
+    await one.renameProject(first.id, "Renamed Helper");
+    const stored = database.stores.projects.get(first.id);
+    assert.equal(stored.items[0].instructions, "Newer instructions.");
+    assert.equal(stored.name, "Team Helper");
+    assert.equal(one.ui.memoryProjects.get(first.id).items[0].instructions, "Kept for this visit.", "this tab still has the changes it couldn't save");
+    assert.match(one.messages.at(-1), /^The name didn't change, because the project was changed in another tab\./);
+  });
+
+  test("renaming a project kept in memory saves its changes when no other tab changed it", async () => {
+    const { database, first, one } = await twoTabs();
+    first.items[0].instructions = "Kept for this visit.";
+    database.failNext = true;
+    await one.saveNow();
+    one.ui.project = helper();
+    await one.renameProject(first.id, "Renamed Helper");
+    const stored = database.stores.projects.get(first.id);
+    assert.equal(stored.name, "Renamed Helper");
+    assert.equal(stored.items[0].instructions, "Kept for this visit.");
+    assert.equal(one.ui.memoryProjects.has(first.id), false);
+    assert.equal(one.messages.at(-1), "Renamed the project to Renamed Helper.");
   });
 
   test("Replace mine replaces the stored copy this tab never loaded", async () => {
