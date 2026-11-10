@@ -2,7 +2,7 @@
 // tests/project.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-11-05
+// Last Modified: 2026-11-10
 // Summary: Tests for the version 2 project model inside index.html: the backup
 //          round trip, normalization of hostile input, the Agent Plugins
 //          manifests, duplicate and merge, the stored record and payloads, and
@@ -700,10 +700,21 @@ describe("imports of plugins and skills made elsewhere", () => {
       const backup = await engine.exports.backup(project);
       assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false, name);
     }
-    for (const query of ["page=2", "keyword=help", "monkey=1", "sort=key"]) {
+    for (const query of ["page=2", "keyword=help", "monkey=1", "sort=key", "tokenizer=words"]) {
       const project = engine.project.normalize({ name: "Example", servers: { docs: { transport: "http", url: "https://mcp.example.org/mcp?" + query } }, items: [] }).project;
       assert.equal(project.servers.docs.url, "https://mcp.example.org/mcp?" + query, query);
     }
+  });
+
+  test("key names in camelCase are found in tool server addresses and arguments", () => {
+    const SECRET = "EXAMPLE_TOKEN_123";
+    for (const name of ["userToken", "githubAccessToken", "clientSecret", "openaiApiKey", "AWSSecretKey", "OAUTH2_TOKEN", "AZURE_OPENAI2_API_KEY"]) {
+      const project = engine.project.normalize({ name: "Example", servers: { docs: { transport: "http", url: "https://mcp.example.org/mcp?" + name + "=" + SECRET } }, items: [] }).project;
+      assert.equal(project.servers.docs.url, "", name);
+    }
+    const args = ["--apiKey", SECRET, "--authToken=" + SECRET, "GITHUB_TOKEN=" + SECRET, "OAUTH2_TOKEN=" + SECRET, "--noAuth", "--no-auth", "--tokenizer", "words"];
+    const project = engine.project.normalize({ name: "Example", servers: { tool: { transport: "stdio", command: "example-tool", args } }, items: [] }).project;
+    assert.deepEqual(project.servers.tool.args, ["--apiKey", "replace-with-your-value", "--authToken=replace-with-your-value", "GITHUB_TOKEN=replace-with-your-value", "OAUTH2_TOKEN=replace-with-your-value", "--noAuth", "--no-auth", "--tokenizer", "words"]);
   });
 
   test("a local tool server argument that holds a credential is replaced, and no download keeps it", async () => {
@@ -773,6 +784,67 @@ describe("imports of plugins and skills made elsewhere", () => {
     // The kept hook goes back into the backup under its own path.
     const backup = await engine.exports.backup(project);
     assert.ok(backup.entries.some((e) => e.name === "my-plugin/hooks/hooks.json"));
+  });
+
+  test("tool server files that a plugin names are read as settings, and backup-only files that hold a key are left out", async () => {
+    const TOKEN = "EXAMPLE_TOKEN_123";
+    // Bytes that are not text, as in a data file, can't be checked, so the file is kept.
+    const data = new Uint8Array([0x24, 0x46, 0x4c, 0x32, 0xff, 0xfe, 0x00, 0x01]);
+    const bytes = makeDeflatedZip([
+      { name: "demo-plugin/.claude-plugin/plugin.json", bytes: encode(JSON.stringify({ name: "demo", license: "MIT", mcpServers: "./servers.json" })) },
+      { name: "demo-plugin/servers.json", bytes: encode(JSON.stringify({ mcpServers: { notes: { command: "npx", args: ["-y", "example-server"], env: { NOTES_TOKEN: TOKEN } } } })) },
+      { name: "demo-plugin/skills/lookup/SKILL.md", bytes: encode(skillMd) },
+      { name: "demo-plugin/skills/lookup/data/settings.toml", bytes: encode("githubToken = \"" + TOKEN + "\"\n") },
+      { name: "demo-plugin/skills/lookup/data/table.sav", bytes: data },
+      { name: "demo-plugin/config/app.yaml", bytes: encode("auth:\n  api_key: " + TOKEN + "\n") },
+      { name: "demo-plugin/config/reference.yaml", bytes: encode("api_key: ${API_KEY}\n") },
+      { name: "demo-plugin/hooks/hooks.json", bytes: encode("{\"hooks\":{}}") },
+    ]);
+    const { project, notices } = await engine.imports.any("demo-plugin.zip", bytes);
+    assert.deepEqual(Object.keys(project.servers), ["notes"]);
+    assert.deepEqual([project.servers.notes.command, project.servers.notes.args], ["npx", ["-y", "example-server"]]);
+    assert.ok(notices.some((n) => n.startsWith("The tool server \"notes\" had settings that can hold passwords or keys (env)")));
+    assert.deepEqual(project.unrecognized.map((u) => u.path).sort(), ["config/reference.yaml", "hooks/hooks.json", "skills/lookup/data/table.sav"]);
+    assert.ok(notices.includes("Left out 2 files that look like they hold a password, key, or token: skills/lookup/data/settings.toml, config/app.yaml. Remove the keys from those files and open the .zip again."));
+    assert.ok(notices.includes("Kept 1 file in the backup only, because Agentprise doesn't accept it as a skill file: skills/lookup/data/table.sav. Other downloads leave it out."));
+    const backup = await engine.exports.backup(project);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(TOKEN)), false);
+    // The backup opens again with the same files and no new notice about keys.
+    const again = await engine.imports.any(backup.fileName, backup.bytes);
+    assert.deepEqual(again.project.unrecognized.map((u) => u.path).sort(), ["config/reference.yaml", "hooks/hooks.json", "skills/lookup/data/table.sav"]);
+    assert.equal(again.notices.some((n) => n.includes("look like they hold") || n.includes("looks like it holds")), false);
+    // A stored project is loaded without the check, so a file kept earlier stays.
+    const stored = engine.project.normalize({ name: "Example", items: [], unrecognized: [{ path: "config/app.yaml", bytes: encode("api_key: " + TOKEN + "\n") }] });
+    assert.deepEqual(stored.project.unrecognized.map((u) => u.path), ["config/app.yaml"]);
+  });
+
+  test("tool server files that a plugin names but that are missing or can't be read are left out with a notice", async () => {
+    const TOKEN = "EXAMPLE_TOKEN_123";
+    const bytes = makeDeflatedZip([
+      { name: ".claude-plugin/plugin.json", bytes: encode(JSON.stringify({ name: "demo", license: "MIT", mcpServers: ["./servers.json", "./missing.json", 7] })) },
+      // A comment and a trailing comma, which JSON doesn't allow.
+      { name: ".mcp.json", bytes: encode("{\n  // a local server\n  \"mcpServers\": {\"notes\": {\"command\": \"npx\", \"env\": {\"NOTES_TOKEN\": \"" + TOKEN + "\"}}},\n}\n") },
+      { name: "servers.json", bytes: encode("{\"mcpServers\": {\"docs\": {\"type\": \"http\", \"url\": \"https://mcp.example.org/mcp\"}},}") },
+      { name: "skills/lookup/SKILL.md", bytes: encode(skillMd) },
+    ]);
+    const { project, notices } = await engine.imports.any("demo.zip", bytes);
+    assert.deepEqual(project.servers, {});
+    assert.deepEqual(project.unrecognized, []);
+    assert.ok(notices.includes("The plugin names tool server settings in missing.json, which isn't in the plugin, so those tool servers were left out. Ask the plugin's author to include the file."));
+    assert.ok(notices.includes("Agentprise couldn't read the tool server settings in .mcp.json, servers.json, so it left those files out. Fix the files and open the plugin again, or add the tool servers under Tool connections."));
+    const backup = await engine.exports.backup(project);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(TOKEN)), false);
+
+    // A Codex manifest that names .mcp.json reads it once.
+    const codex = makeDeflatedZip([
+      { name: ".codex-plugin/plugin.json", bytes: encode(JSON.stringify({ name: "codex-kit", license: "MIT", mcpServers: "./.mcp.json" })) },
+      { name: ".mcp.json", bytes: encode(JSON.stringify({ mcpServers: { local: { command: "uvx", args: ["example-tool"] } } })) },
+      { name: "skills/lookup/SKILL.md", bytes: encode(skillMd) },
+    ]);
+    const opened = await engine.imports.any("codex-kit.zip", codex);
+    assert.deepEqual(Object.keys(opened.project.servers), ["local"]);
+    assert.equal(opened.notices.filter((n) => n.includes("runs a program")).length, 1);
+    assert.deepEqual(opened.project.unrecognized, []);
   });
 
   test("a Codex plugin finds its skills through the skills path in its manifest", async () => {

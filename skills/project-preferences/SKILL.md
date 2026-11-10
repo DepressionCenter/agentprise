@@ -8,7 +8,7 @@ This file is part of Agentprise
 skills/project-preferences/SKILL.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-05
+Last Modified: 2026-11-10
 Summary: Project-specific preferences for Agentprise: the single-file build, the
          project backup format, workspace storage, the download cards, and how
          to test.
@@ -128,7 +128,11 @@ Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   `SKILL.md`, Copilot app packages, and `.agent` files. Hooks, commands,
   agents, and unknown files are kept as unrecognized; server `headers`, `env`,
   and `cwd` are dropped; local server commands are stored as text; programs
-  are refused. A version 1 bundle opens as a plain skill.
+  are refused. Tool server files that `plugin.json` names in `mcpServers` are
+  read like `.mcp.json` and never kept, and one that isn't valid JSON is left
+  out. Plugin and skill imports pass `checkKeptFiles` to `normalizeProject`,
+  so a backup-only file that `holdsCredential` matches is left out; a file
+  that isn't text is kept unchecked. A version 1 bundle opens as a plain skill.
 - A Microsoft 365 app package opens through `readTeamsArchive` as a whole
   project: every declarative agent is an assistant, actions become tools,
   `agent_skills` and root `agentSkills` become skills, and root

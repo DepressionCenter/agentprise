@@ -2899,23 +2899,54 @@ function normalizeServers(value, notices, limit = LIMITS.servers) {
     return servers;
 }
 
+// Words in front of a credential name. Any letters and digits followed by "_"
+// or "-" count as a word, as in "client_secret", "OAUTH2_TOKEN", or
+// "x-api-key". After those, a word can also end where a capital letter starts
+// the next one, as in "openaiApiKey" or "AWSSecretKey". Words run together
+// with no such change, such as "monkey" or "tokenizer", don't count. A
+// camelCase word ends at a lower-case letter or digit before a capital, or at
+// the last capital of a run before a capital and a lower-case letter, so a
+// name splits into words in only one way and a long name is read once.
+// Patterns built on it can't use the "i" flag, because the flag hides the
+// change to a capital.
+const CREDENTIAL_NAME_PREFIX = "(?:[A-Za-z0-9]+[_-])*(?:(?:[A-Z]?[a-z]|[0-9])[a-z0-9]*(?=[A-Z])|[A-Z][A-Z0-9]*(?=[A-Z][a-z]))*";
+
+/**
+ * A regular expression source for a name that ends in one of the given
+ * credential words, with words in front as CREDENTIAL_NAME_PREFIX allows. Each
+ * letter matches either case, and the words of one ending may be joined by
+ * "_", "-", or nothing, so "api key" matches "API_KEY", "apiKey", and "apikey".
+ * @param {string[]} endings lower-case words, separated by spaces
+ * @param {boolean} capture whether the ending is a capture group
+ * @returns {string}
+ */
+function credentialNameSource(endings, capture) {
+    const alternatives = endings.map(function (ending) {
+        return ending.split(" ").map(function (word) {
+            return word.replace(/[a-z]/g, function (letter) { return "[" + letter + letter.toUpperCase() + "]"; });
+        }).join("[_-]?");
+    });
+    return CREDENTIAL_NAME_PREFIX + (capture ? "(" : "(?:") + alternatives.join("|") + ")";
+}
+
 // A query name that holds a credential, with or without words in front, such as
-// "key", "client_secret", "auth_token", "x-api-key", or "subscription-key".
-const CREDENTIAL_QUERY_NAME_SOURCE = "(?:[a-z0-9]+[_-])*(?:api[_-]?key|apikey|access[_-]?token|key|token|secret|password|passwd|pwd|auth|sig|signature)";
-const CREDENTIAL_QUERY_NAME = new RegExp("^" + CREDENTIAL_QUERY_NAME_SOURCE + "$", "i");
+// "key", "client_secret", "auth_token", "x-api-key", "subscription-key", or "userToken".
+const CREDENTIAL_QUERY_NAME_SOURCE = credentialNameSource(["api key", "access token", "key", "token", "secret", "password", "passwd", "pwd", "auth", "sig", "signature"], false);
+const CREDENTIAL_QUERY_NAME = new RegExp("^" + CREDENTIAL_QUERY_NAME_SOURCE + "$");
 
 // Written in place of a local tool server argument that holds a credential,
 // since every person who installs a download receives the arguments.
 const SERVER_ARG_PLACEHOLDER = "replace-with-your-value";
 
 // A command-line option that names a credential, such as "--token",
-// "--api-key", or "--client-secret=abc123". The value is in the second group
-// when it follows "=", and otherwise in the next argument.
-const CREDENTIAL_OPTION_PATTERN = new RegExp("^--?(?!no[_-])(" + CREDENTIAL_QUERY_NAME_SOURCE + ")(?:=([^]*))?$", "i");
+// "--api-key", or "--client-secret=abc123", but not "--no-auth" or "--noAuth".
+// The value is in the second group when it follows "=", and otherwise in the
+// next argument.
+const CREDENTIAL_OPTION_PATTERN = new RegExp("^--?(?![Nn][Oo](?:[_-]|[A-Z]))(" + CREDENTIAL_QUERY_NAME_SOURCE + ")(?:=([^]*))?$");
 // A setting given as one argument, such as "SUBSCRIPTION_KEY=abc123" after
 // "-e", or a header of any scheme, such as "Authorization: token abc123" or
 // "--header=Authorization: token abc123". The header's value is the group.
-const CREDENTIAL_ASSIGNMENT_PATTERN = new RegExp("^(?:" + CREDENTIAL_QUERY_NAME_SOURCE + ")=([^]*)$", "i");
+const CREDENTIAL_ASSIGNMENT_PATTERN = new RegExp("^(?:" + CREDENTIAL_QUERY_NAME_SOURCE + ")=([^]*)$");
 const AUTHORIZATION_ARG_PATTERN = /(?:^|=)\s*(?:proxy-)?authorization\s*[:=]\s*(\S[^]*)$/i;
 // A short flag such as "-v" after a credential option is a flag, not its value.
 const SHORT_FLAG_PATTERN = /^-[A-Za-z]$/;
@@ -3117,9 +3148,15 @@ function itemPaths(item) {
  * Copies an untrusted project: caps and cleans items, makes skill names unique,
  * checks links, and keeps unreadable files for the backup.
  * @param {*} input from storage, a file, or the library
+ * @param {{checkKeptFiles?: boolean}} [options] checkKeptFiles leaves out each
+ *   file kept for the backup only that looks like it holds a password, key, or
+ *   token. A file that isn't text, such as a data file, can't be checked and is
+ *   kept. Importers of plugin and skill files set it. Loading a stored project
+ *   leaves it off, because the check is slow and runs when a file is opened.
  * @returns {{project: object, notices: string[], unrecognizedOverflow: number, unrecognizedConflicts: number}} counts of backup-only files omitted by capacity or name conflicts
  */
-function normalizeProject(input) {
+function normalizeProject(input, options) {
+    const checkKeptFiles = isPlainObject(options) && options.checkKeptFiles === true;
     const notices = [];
     const source = isPlainObject(input) ? input : {};
     const project = createProject();
@@ -3153,6 +3190,7 @@ function normalizeProject(input) {
     const seenNames = Object.create(null);
     const leftovers = [];
     const mentioned = [];
+    const withKeys = [];
     rawItems.forEach(function (raw) {
         const result = normalizeItem(raw, notices);
         const item = result.item;
@@ -3170,6 +3208,10 @@ function normalizeProject(input) {
         item.skillName = skillName;
         project.items.push(item);
         result.leftovers.forEach(function (entry) {
+            if (checkKeptFiles && holdsCredential(entry.path, entry.bytes, true)) {
+                withKeys.push("skills/" + skillName + "/" + entry.path);
+                return;
+            }
             leftovers.push({ path: "skills/" + skillName + "/" + entry.path, note: UNRECOGNIZED_NOTE, bytes: entry.bytes });
             if ((item.kind === "skill" ? item.body : item.instructions).indexOf(entry.path) >= 0) {
                 mentioned.push(entry.path);
@@ -3210,10 +3252,11 @@ function normalizeProject(input) {
         });
     });
 
-    const unrecognized = (Array.isArray(source.unrecognized) ? source.unrecognized : []).concat(leftovers);
+    const given = Array.isArray(source.unrecognized) ? source.unrecognized : [];
+    const unrecognized = given.concat(leftovers);
     const seenPaths = Object.create(null);
     const dropped = { programs: 0, unusable: 0, repeated: 0, over: 0 };
-    unrecognized.forEach(function (entry) {
+    unrecognized.forEach(function (entry, index) {
         if (!isPlainObject(entry) || !(entry.bytes instanceof Uint8Array) || entry.bytes.length > LIMITS.zipEntryBytes) {
             dropped.unusable += 1;
             return;
@@ -3236,6 +3279,11 @@ function normalizeProject(input) {
             dropped.programs += 1;
             return;
         }
+        // Leftovers were checked above, before the notice that lists them.
+        if (checkKeptFiles && index < given.length && holdsCredential(path, entry.bytes, true)) {
+            withKeys.push(path);
+            return;
+        }
         if (project.unrecognized.length >= LIMITS.unrecognized) {
             dropped.over += 1;
             return;
@@ -3254,6 +3302,9 @@ function normalizeProject(input) {
     }
     if (dropped.over > 0) {
         notices.push("This app keeps at most " + LIMITS.unrecognized + " files it doesn't use, so it left out " + dropped.over + " more.");
+    }
+    if (withKeys.length > 0) {
+        notices.push(keyFilesNotice(withKeys, "open the .zip again"));
     }
 
     if (!project.name && project.items.length > 0) {
@@ -6166,7 +6217,7 @@ function readSkillArchive(entries) {
     if (read.license === UNKNOWN_LICENSE) {
         notices.push("The file doesn't say which license it uses. Check with its author before you share it.");
     }
-    const result = normalizeProject(raw);
+    const result = normalizeProject(raw, { checkKeptFiles: true });
     return { project: result.project, notices: notices.concat(result.notices) };
 }
 
@@ -6286,8 +6337,46 @@ function readPluginArchive(entries) {
     const mcpPath = root + (layout.flavor === "agent-plugins" ? "mcp.json" : ".mcp.json");
     const mcp = archiveJson(entries, mcpPath);
     let servers = ours ? extension.servers : serversFromMcp(mcp, notices);
-    if (!ours && isPlainObject(manifest.mcpServers)) {
-        servers = Object.assign(serversFromMcp({ mcpServers: manifest.mcpServers }, notices), servers);
+    // Tool server files are read as settings and never kept as they are, because
+    // their env values can hold keys. A Claude or Codex manifest can name more
+    // of them, as in "mcpServers": "./servers.json" or a list of such paths.
+    const serverFiles = [];
+    const unreadServerFiles = [];
+    if (!ours) {
+        if (entries.has(mcpPath) && !mcp) {
+            unreadServerFiles.push(mcpPath);
+        }
+        if (isPlainObject(manifest.mcpServers)) {
+            servers = Object.assign(serversFromMcp({ mcpServers: manifest.mcpServers }, notices), servers);
+        }
+        const named = typeof manifest.mcpServers === "string" ? [manifest.mcpServers] : (Array.isArray(manifest.mcpServers) ? manifest.mcpServers : []);
+        const missing = [];
+        named.filter(function (value) { return typeof value === "string"; }).forEach(function (value) {
+            const cleaned = cleanArchivePath(value.replace(/^\.\//, ""), { depth: LIMITS.itemPathDepth + 3, hidden: true });
+            const path = root + cleaned;
+            if (!cleaned || !entries.has(path)) {
+                missing.push(cleaned || oneLine(value).slice(0, 80));
+                return;
+            }
+            if (path === mcpPath || serverFiles.indexOf(path) >= 0) {
+                return;
+            }
+            serverFiles.push(path);
+            const settings = archiveJson(entries, path);
+            if (settings) {
+                servers = Object.assign(serversFromMcp(settings, notices), servers);
+            } else {
+                unreadServerFiles.push(path);
+            }
+        });
+        if (missing.length > 0) {
+            const one = missing.length === 1;
+            notices.push("The plugin names tool server settings in " + listNames(missing) + ", which " + (one ? "isn't" : "aren't") + " in the plugin, so those tool servers were left out. Ask the plugin's author to include " + (one ? "the file" : "the files") + ".");
+        }
+        if (unreadServerFiles.length > 0) {
+            const one = unreadServerFiles.length === 1;
+            notices.push("Agentprise couldn't read the tool server settings in " + listNames(unreadServerFiles.map(function (path) { return path.slice(root.length); })) + ", so it left " + (one ? "that file" : "those files") + " out. Fix " + (one ? "the file" : "the files") + " and open the plugin again, or add the tool servers under Tool connections.");
+        }
     }
 
     const folders = skillFolders(entries, root + skillsDir).filter(function (folder) {
@@ -6306,7 +6395,7 @@ function readPluginArchive(entries) {
 
     // The manifest, an understood MCP file, and a backup's README, LICENSE.txt,
     // and SETUP.md are app output; other root files stay.
-    const generated = [layout.manifestPath];
+    const generated = [layout.manifestPath].concat(serverFiles, unreadServerFiles);
     if (ours || mcp) {
         generated.push(mcpPath);
     }
@@ -6397,7 +6486,7 @@ function readPluginArchive(entries) {
             notices.push("The plugin has no skills, so the project starts empty. Add an assistant or a skill to it.");
         }
     }
-    const result = normalizeProject(raw);
+    const result = normalizeProject(raw, { checkKeptFiles: true });
     return { project: result.project, notices: notices.concat(result.notices) };
 }
 
@@ -7309,23 +7398,34 @@ function teamsAgentRaw(entries, manifest, declarative, notices) {
 const COPILOT_AUTH_KINDS = Object.freeze({ None: "none", OAuthPluginVault: "oauth", ApiKeyPluginVault: "apikey", DynamicClientRegistration: "oauth" });
 
 // Text that looks like a key, token, or password in a file the import would
-// otherwise keep for the backup.
+// otherwise keep for the backup. A key in a query is checked on its own,
+// because its name pattern can't use the "i" flag.
 const PRIVATE_KEY_MARKER = /-----BEGIN [A-Z ]*PRIVATE KEY-----/i;
-const CREDENTIAL_TEXT_PATTERN = new RegExp("[?&]" + CREDENTIAL_QUERY_NAME_SOURCE + String.raw`=[^&\s"']+|"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]+"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|` + PRIVATE_KEY_MARKER.source, "i");
+const CREDENTIAL_QUERY_TEXT_PATTERN = new RegExp("[?&]" + CREDENTIAL_QUERY_NAME_SOURCE + String.raw`=[^&\s"']+`);
+const CREDENTIAL_TEXT_PATTERN = new RegExp(String.raw`"(api[_-]?key|apikey|client[_-]?secret|password|access[_-]?token|bearer[_-]?token|secret|token)"\s*:\s*"[^"]+"|\bBearer\s+[A-Za-z0-9._~+\/=-]{16,}|` + PRIVATE_KEY_MARKER.source, "i");
 
 const CREDENTIAL_HEADER_PATTERN = /\b(?:proxy-)?authorization["']?[ \t]*[:=][ \t]*["']?(?:basic|bearer)[ \t]+[A-Za-z0-9._~+\/=-]+/i;
 
-// A YAML or settings line that sets a key, such as "client_secret: abc123" or
-// "export OPENAI_API_KEY=abc123". The value is the second group.
-const CREDENTIAL_FIELD_NAME = "(?:[a-z0-9]+[_-])*(api[_-]?key|apikey|client[_-]?secret|password|passwd|access[_-]?token|refresh[_-]?token|bearer[_-]?token|private[_-]?key|secret|token)";
-const CREDENTIAL_FIELD_PATTERN = new RegExp("^" + CREDENTIAL_FIELD_NAME + "$", "i");
-const CREDENTIAL_LINE_PATTERN = new RegExp("^[ \\t]*(?:-[ \\t]+|export[ \\t]+)?[\"']?" + CREDENTIAL_FIELD_NAME + "[\"']?[ \\t]*[:=][ \\t]*([^\\r\\n]+)", "gim");
-const CREDENTIAL_FLOW_PATTERN = new RegExp(String.raw`[{,]\s*["']?` + CREDENTIAL_FIELD_NAME + String.raw`["']?\s*:\s*("(?:\\.|[^"\\])*"|'(?:''|[^'])*'|[^,}\]]*)`, "gi");
+// A YAML or settings line that sets a key, such as "client_secret: abc123",
+// "githubToken: abc123", or "export OPENAI_API_KEY=abc123". The value is the
+// second group.
+const CREDENTIAL_FIELD_NAME = credentialNameSource(["api key", "secret key", "private key", "account key", "secret access key", "shared access key", "client secret", "access token", "refresh token", "bearer token", "password", "passwd", "secret", "token"], true);
+const CREDENTIAL_FIELD_PATTERN = new RegExp("^" + CREDENTIAL_FIELD_NAME + "$");
+const CREDENTIAL_LINE_PATTERN = new RegExp("^[ \\t]*(?:-[ \\t]+|export[ \\t]+)?[\"']?" + CREDENTIAL_FIELD_NAME + "[\"']?[ \\t]*[:=][ \\t]*([^\\r\\n]+)", "gm");
+const CREDENTIAL_FLOW_PATTERN = new RegExp(String.raw`[{,]\s*["']?` + CREDENTIAL_FIELD_NAME + String.raw`["']?\s*:\s*("(?:\\.|[^"\\])*"|'(?:''|[^'])*'|[^,}\]]*)`, "g");
 // A YAML key with nothing after it on its line, such as "client_secret:", whose
 // value is on the next more-indented line or list item, after any blank or
 // comment lines. Named groups: indent and dash of the key line, lead of the
 // value line, and the value itself.
-const CREDENTIAL_BLOCK_PATTERN = new RegExp(String.raw`^(?<indent>[ \t]*)(?<dash>-[ \t]+)?["']?` + CREDENTIAL_FIELD_NAME + String.raw`["']?[ \t]*:[ \t]*(?:#[^\r\n]*)?\r?\n(?:[ \t]*(?:#[^\r\n]*)?\r?\n)*\k<indent>(?<lead>[ \t]+(?:-[ \t]+)?|-[ \t]+)(?<value>[^\r\n]+)`, "gim");
+const CREDENTIAL_BLOCK_PATTERN = new RegExp(String.raw`^(?<indent>[ \t]*)(?<dash>-[ \t]+)?["']?` + CREDENTIAL_FIELD_NAME + String.raw`["']?[ \t]*:[ \t]*(?:#[^\r\n]*)?\r?\n(?:[ \t]*(?:#[^\r\n]*)?\r?\n)*\k<indent>(?<lead>[ \t]+(?:-[ \t]+)?|-[ \t]+)(?<value>[^\r\n]+)`, "gm");
+
+// A password or key inside a connection string, such as
+// "Server=db.example.org;Password=abc123;" or "AccountKey=abc123==;". The part
+// starts after ";" or a quote, so a shell line such as "PWD=/tmp" is not one.
+// The value is the group.
+const CONNECTION_STRING_CREDENTIAL_PATTERN = /[;"']\s*(?:password|pwd|accountkey|sharedaccesskey)\s*=\s*([^;"'<>\r\n]*)/gi;
+// A value that code fills in, such as "{0}" or "{password}", is not a password.
+const CONNECTION_STRING_PLACEHOLDER = /^\{[^{}]*\}$/;
 
 // Values on such a line that name a key kept somewhere else, such as
 // "${API_KEY}" or "{{ secrets.token }}", or that say nothing, such as "true".
@@ -7428,11 +7528,18 @@ function packageScanText(name, bytes) {
     }
 }
 
-/** Rejects unreadable text or credential matches, including readable content in binary files. */
-function holdsCredential(name, bytes) {
+/**
+ * Rejects unreadable text or credential matches, including readable content in binary files.
+ * @param {string} name the file name, which decides how its bytes are read
+ * @param {Uint8Array} bytes
+ * @param {boolean} [keepUnreadable] true when a file that is not text, such as
+ *   a data file kept from a plugin or skill, counts as holding no credential
+ * @returns {boolean}
+ */
+function holdsCredential(name, bytes, keepUnreadable) {
     const text = packageScanText(name, bytes);
     if (typeof text !== "string") {
-        return text === undefined;
+        return text === undefined && !keepUnreadable;
     }
     const split = text.replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f\ufffd]/g, "\n");
     // In a binary file, join only readable runs of 4 or more characters, as the
@@ -7448,8 +7555,8 @@ function holdsCredential(name, bytes) {
     // A name split by single bytes, such as "api" 0xFF "_key: abc123" or
     // "<pass" 0xFF "wo" 0xFF "rd>", needs every readable byte. Only the checks
     // that need a name to match (a header, a key marker, an XML element or
-    // attribute, a web address, or a settings field) run on that text, because
-    // random bytes rarely spell one.
+    // attribute, a web address, a settings field, or a connection string) run
+    // on that text, because random bytes rarely spell one.
     return binary && whole !== joined && namedTextHoldsCredential(whole);
 }
 
@@ -7809,6 +7916,15 @@ function credentialFieldsHoldLiteral(text) {
             }
             continue;
         }
+        if (value.charAt(0) === "[") {
+            // The pattern stops at the first "]" or comma, so the whole list is
+            // read, and an empty list, as in "security: [{apiKey: []}]", is no value.
+            const start = match.index + match[0].length - match[2].length + match[2].indexOf("[");
+            if (yamlValueIsLiteral(yamlFlowMapping(text, start))) {
+                return true;
+            }
+            continue;
+        }
         if (value.charAt(0) === '"') {
             try {
                 value = JSON.parse(value);
@@ -7830,6 +7946,11 @@ function credentialFieldsHoldLiteral(text) {
         // "{phrase: abc123}", so the quotes are checked before they are removed.
         if (NESTED_FLOW_MAPPING.test(value)) {
             return yamlMappingWrapsLiteral(value, "", 0);
+        }
+        // A whole list on the line is checked item by item, so an empty list,
+        // as in "- apiKey: []" under "security:" in an API description, is no value.
+        if (/^\[.*\]$/.test(value)) {
+            return yamlValueIsLiteral(value);
         }
         return credentialValueIsLiteral(value.replace(/^(["'])(.*)\1$/, "$2"));
     });
@@ -7861,19 +7982,37 @@ function credentialFieldsHoldLiteral(text) {
 
 /**
  * The credential checks that need a name to match: a header, a key marker, an
- * XML element or attribute, a web address, or a settings field. Short patterns
- * such as "?key=xy" are left out, so these checks are also safe on the readable
- * bytes of a binary file joined together.
+ * XML element or attribute, a web address, a settings field, or a connection
+ * string. Short patterns such as "?key=xy" are left out, so these checks are
+ * also safe on the readable bytes of a binary file joined together.
  * @param {string} text Decoded text.
  * @returns {boolean}
  */
 function namedTextHoldsCredential(text) {
-    return CREDENTIAL_HEADER_PATTERN.test(text) || PRIVATE_KEY_MARKER.test(text) || xmlHoldsCredential(text) || urlsHoldCredential(text) || credentialFieldsHoldLiteral(text);
+    return CREDENTIAL_HEADER_PATTERN.test(text) || PRIVATE_KEY_MARKER.test(text) || xmlHoldsCredential(text) || urlsHoldCredential(text) || credentialFieldsHoldLiteral(text) || connectionStringHoldsCredential(text);
+}
+
+/**
+ * Whether a connection string in the text holds a password or key, such as
+ * "Server=db.example.org;Password=abc123;" in appsettings.json or web.config.
+ * A value that names a key kept elsewhere, such as "${DB_PASSWORD}", an empty
+ * value, and a value code fills in, such as "{0}", don't count.
+ * @param {string} text Decoded text.
+ * @returns {boolean}
+ */
+function connectionStringHoldsCredential(text) {
+    for (const match of text.matchAll(CONNECTION_STRING_CREDENTIAL_PATTERN)) {
+        const value = match[1].trim();
+        if (credentialValueIsLiteral(value) && !CONNECTION_STRING_PLACEHOLDER.test(value)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /** True when text matches a credential pattern rather than a reference to a key. */
 function textHoldsCredential(text) {
-    return CREDENTIAL_TEXT_PATTERN.test(text) || namedTextHoldsCredential(text);
+    return CREDENTIAL_QUERY_TEXT_PATTERN.test(text) || CREDENTIAL_TEXT_PATTERN.test(text) || namedTextHoldsCredential(text);
 }
 
 /**
@@ -7909,6 +8048,17 @@ function withoutRegistrationIds(name, bytes) {
         view.setUint16((hasBom ? 2 : 0) + index * 2, cleaned.charCodeAt(index), littleEndian);
     }
     return rewritten;
+}
+
+/**
+ * The notice for files left out because they look like they hold a key.
+ * @param {string[]} names the files' paths
+ * @param {string} openAgain the last step, such as "open the package again"
+ * @returns {string}
+ */
+function keyFilesNotice(names, openAgain) {
+    const one = names.length === 1;
+    return "Left out " + countOf(names.length, "file", "files") + (one ? " that looks like it holds" : " that look like they hold") + " a password, key, or token: " + listNames(names) + ". Remove the " + (one ? "key from that file" : "keys from those files") + " and " + openAgain + ".";
 }
 
 /** Records a file left out for holding a key, once. */
@@ -8702,7 +8852,7 @@ function readTeamsArchive(entries) {
         kept.push({ path: PACKAGE_KEPT_FOLDER + name, note: PACKAGE_KEPT_NOTE, bytes: withoutRegistrationIds(name, bytes), name: name });
     });
     if (state.withKeys.length > 0) {
-        notices.push("Left out " + countOf(state.withKeys.length, "file", "files") + (state.withKeys.length === 1 ? " that looks like it holds" : " that look like they hold") + " a password, key, or token: " + listNames(state.withKeys) + ". Remove the " + (state.withKeys.length === 1 ? "key from that file" : "keys from those files") + " and open the package again.");
+        notices.push(keyFilesNotice(state.withKeys, "open the package again"));
     }
     const unlistedSkills = allSkillFolders.filter(function (folder) {
         return skillFolderList.indexOf(folder) < 0;

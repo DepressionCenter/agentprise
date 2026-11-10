@@ -129,7 +129,8 @@ Known limits.
   address only when it is https and has no user name, password, or `#`
   fragment, and no query parameter named like a key, token, secret, password,
   auth value, or signature. Names with words in front count too, such as
-  `client_secret`, `auth_token`, `x-api-key`, or `subscription-key`. The
+  `client_secret`, `auth_token`, `x-api-key`, `subscription-key`, or
+  `userToken`, but not words run together, such as `tokenizer`. The
   credential check on files in a Microsoft 365 app package looks for the same
   names in web addresses. The editor's **Address of the** box and every
   import use the same check, and an address that fails it is removed with a
@@ -170,16 +171,26 @@ Known limits.
   server files, skill files, hooks, commands, and agents are read as data. A
   local tool server's command is stored as text and never run. Server
   `headers`, `env`, and `cwd` settings are dropped on import with a notice,
-  because they can hold secrets. Hooks, commands, agents folders, and every
+  because they can hold secrets. A Claude or Codex `plugin.json` can name
+  more tool server files, such as `"mcpServers": "./servers.json"`. Each one
+  is read the same way and is not kept as a file. A tool server file that
+  isn't valid JSON, such as one with a comment, is left out with a notice, so
+  its `env` values never reach the backup. Hooks, commands, agents folders, and every
   other file the app does not understand are kept as unrecognized files, which
-  are written back only into the backup and appear in no other download. A
-  notice names each such file inside a skill folder, and each download's
+  are written back only into the backup and appear in no other download. When
+  a plugin, a skill `.zip`, or a backup opens, each of those files first gets
+  the same credential check as a Microsoft package (see
+  [Credential checks](#credential-checks)). A file that looks like it holds a
+  password, key, or token is left out, and a notice names it. A file that
+  isn't text, such as a data file, can't be checked and is kept. A
+  notice names each kept file inside a skill folder, and each download's
   conversion report lists the ones it leaves out. Removing an assistant or a
   skill removes the files kept for it in the backup, and renaming one moves
   them to its new folder. A plain UTF-8 text file in a skill's `scripts/`
   folder is kept as a skill file whatever its type, after the same program
   checks as every other file. Files outside the plugin folder are left out.
-  Evidence: `readPluginArchive`, `serversFromMcp`, `cleanSkillFiles`,
+  Evidence: `readPluginArchive`, `serversFromMcp`, `normalizeProject` (its
+  `checkKeptFiles` option), `holdsCredential`, `cleanSkillFiles`,
   `isTextScript`, `backupOnlyFiles`, and `moveBackupOnlyFiles` in
   `index.html`.
 #### Microsoft package imports
@@ -227,8 +238,16 @@ and files kept only in backups. Technical details are in
   and action descriptions, even when their extensions suggest binary files.
   Server addresses containing credentials are also excluded.
 - Checks cover passwords, keys, and tokens in URLs, JSON, YAML, settings lines,
-  XML, and Basic or Bearer authorization headers, including proxy headers.
-  Private key headers also count as matches. JSON escapes, XML character
+  XML, connection strings, and Basic or Bearer authorization headers,
+  including proxy headers. Private key headers also count as matches. A key
+  name can have words in front, joined by `_`, `-`, or a change to a capital
+  letter, such as `client_secret`, `OPENAI_API_KEY`, `githubToken`, or
+  `openaiApiKey`. Words run together with no such change, such as
+  `tokenizer` or `secretary`, are not key names. A connection string's
+  `Password`, `Pwd`, `AccountKey`, or `SharedAccessKey` counts when it follows
+  `;` or a quote, as in `Server=db.example.org;Password=abc123;`, unless its
+  value is empty, names a key kept elsewhere, or is a placeholder that code
+  fills in, such as `{0}`. JSON escapes, XML character
   references, namespaces, and nested or multiline YAML values do not bypass
   these checks. A YAML value on the line below its key, such as `password:`
   followed by an indented value or a list, is checked too. Every item of the
@@ -242,7 +261,8 @@ and files kept only in backups. Technical details are in
   value, as in `{"admin_password": {"value": "abc123"}}`. YAML follows
   the same rule, as in `admin_password: {value: abc123}` or a `value:` line
   indented below `admin_password:`. A list under that `value` key, such as
-  `value: [abc123]`, counts in both YAML and JSON.
+  `value: [abc123]`, counts in both YAML and JSON. An empty list, such as
+  `- apiKey: []` in an API description's `security` list, is not a value.
 - Credential values have no minimum length. Numeric values, including zero,
   and quoted spaces are checked. Empty values and complete references to
   secrets stored elsewhere are allowed, such as `${API_KEY}`, `%API_KEY%`,
@@ -272,7 +292,8 @@ and files kept only in backups. Technical details are in
   review files from unknown sources before sharing.
 - The attribute, web address, and tag checks take time in proportion to the
   file's length, so a file built from long runs of name characters or
-  repeated tags does not stall the browser.
+  repeated tags does not stall the browser. A key name splits into words in
+  only one way, so a long name in camelCase or capitals is also read once.
 - Microsoft sign-in registration identifiers are removed from imported tools
   and servers. Saved JSON and YAML files use a replacement value, while keeping
   their UTF-8 or UTF-16 encoding and byte-order marks. Ask your admin to
