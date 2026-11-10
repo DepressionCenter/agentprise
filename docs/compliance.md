@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/compliance.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-09
+Last Modified: 2026-11-10
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
          the controls in place, where they are in the code, and their known
          limits.
@@ -69,15 +69,18 @@ Known limits.
   says the project was changed or deleted in another tab. It tells the person
   to download a backup to keep the changes made there, then reload the page.
   **Download backup**, in the editor or on the project's Workspace card,
-  saves the tab's own copy. A tab saves one change at a time. When a save
-  fails, the tab keeps the project for the visit and still expects the copy
-  that storage holds, so neither a later save nor **Rename** on the project's
-  Workspace card can replace newer changes from another tab. When that check
-  refuses a save, the tab keeps its own copy, and the message says to open the
-  project and download a backup. Choosing **Replace mine** when opening a file
-  is the one save that replaces a stored copy the tab never loaded. Evidence:
-  `saveStoredProject`, `storedRevision`, `saveNow`, `renameProject`,
-  `projectForCard`, `listenToOtherTabs`, and `markTabStale` in `index.html`.
+  saves the tab's own copy. Changes the older tab could not save stay in that
+  tab until it is reloaded, even after another project opens there. The
+  project stays on that tab's Workspace, even if another tab deleted it, and
+  opening it again shows those changes and the same message. A tab saves one
+  change at a time. When a save fails, the tab keeps the project for the visit
+  and still expects the copy that storage holds, so neither a later save nor
+  **Rename** on the project's Workspace card can replace newer changes from
+  another tab. Choosing **Replace mine** when opening a file is the one save
+  that replaces a stored copy the tab never loaded. Evidence:
+  `saveStoredProject`, `storedRevision`, `keepRefusedProject`, `saveNow`,
+  `renameProject`, `openProject`, `listStoredProjects`, `projectForCard`,
+  `listenToOtherTabs`, and `markTabStale` in `index.html`.
 - On every load the app deletes the version 1 draft, the `localStorage` key
   `agentprise-draft-v1` and the IndexedDB database `agentprise-draft-files`,
   without reading either. Evidence: `removeLegacyStorage` in `index.html`.

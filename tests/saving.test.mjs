@@ -2,7 +2,7 @@
 // tests/saving.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-11-05
-// Last Modified: 2026-11-09
+// Last Modified: 2026-11-10
 // Summary: Tests when the editor saves a project to browser storage, and that
 //          a tab with an older copy of a project never overwrites a newer
 //          one. Uses the real save code taken from index.html, with a small
@@ -132,7 +132,7 @@ function tab(database, project, storedModified = "") {
     sandbox.ui.savedRecord = sandbox.recordFingerprint(project);
     engine.project.payloads(project).forEach((payload) => sandbox.savedBytes.set(project.id + "/" + payload.key, payload.bytes));
   }
-  return { ui: sandbox.ui, saveNow: sandbox.result, renameProject: sandbox.renameProject, messages, posted };
+  return { ui: sandbox.ui, saveNow: sandbox.result, renameProject: sandbox.renameProject, markTabStale: sandbox.markTabStale, messages, posted };
 }
 
 /** A copy of the stored project, as another tab would load it. */
@@ -266,7 +266,41 @@ describe("the same project open in two tabs", () => {
     await pending;
     assert.equal(two.ui.staleTab, false);
     assert.equal(two.messages.length, 1);
-    assert.match(two.messages[0], /^The last changes to Team Helper weren't saved, because it was changed or deleted in another tab\./);
+    assert.match(two.messages[0], /^The last changes to Team Helper weren't saved, because it was changed or deleted in another tab\. To keep them, open it again in this tab and download a backup\.$/);
+    assert.equal(two.ui.memoryProjects.get(first.id).items[0].description, "Helps the team!", "the tab keeps the changes it couldn't save");
+  });
+
+  test("a tab that stopped saving keeps its changes after another project opens, and they never replace the newer copy", async () => {
+    const { database, first, second, one, two } = await twoTabs();
+    const loaded = two.ui.storedModified;
+    first.items[0].instructions = "Newer instructions.";
+    await one.saveNow();
+    second.items[0].description = "Helps the team!";
+    await two.saveNow();
+    assert.equal(two.ui.staleTab, true);
+    assert.deepEqual({ ...two.ui.memoryStored.get(first.id) }, { modified: loaded, replace: false, refused: true });
+    two.ui.project = helper();
+    await two.renameProject(first.id, "Renamed Helper");
+    const stored = database.stores.projects.get(first.id);
+    assert.equal(stored.items[0].instructions, "Newer instructions.");
+    assert.equal(stored.name, "Team Helper");
+    assert.equal(two.ui.memoryProjects.get(first.id).items[0].description, "Helps the team!");
+    assert.match(two.messages.at(-1), /^The name didn't change, because the project was changed in another tab\./);
+  });
+
+  test("a tab told about a save in another tab keeps only the changes it hasn't saved", async () => {
+    const { first, second, two } = await twoTabs();
+    two.markTabStale();
+    assert.equal(two.ui.memoryProjects.has(first.id), false, "nothing is unsaved, so nothing is kept");
+    second.items[0].description = "Typed after the message.";
+    await two.saveNow();
+    assert.equal(two.ui.memoryProjects.get(first.id).items[0].description, "Typed after the message.");
+    assert.equal(two.ui.memoryStored.get(first.id).refused, true);
+
+    const other = await twoTabs();
+    other.second.items[0].description = "Typed just before the message.";
+    other.two.markTabStale();
+    assert.equal(other.two.ui.memoryProjects.get(other.first.id).items[0].description, "Typed just before the message.");
   });
 
   test("renaming a project kept in memory never replaces newer changes from another tab", async () => {

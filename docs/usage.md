@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/usage.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-05
+Last Modified: 2026-11-10
 Summary: How to use Agentprise, job by job: keep your projects, create an
          assistant, add skills, check its tools, open a file you have, start
          from the Library, download it for each product or as a plugin, read
@@ -110,7 +110,8 @@ Your work is saved in the browser as you type. If the same project is open in
 two tabs, each tab keeps working on its own copy. Once you save changes in one
 tab, the other tab stops saving and says so, so it can't erase them. To keep
 what you changed in that tab, download a backup from it. Then reload it to see
-the latest version. The buttons under **Download**
+the latest version. That tab keeps your changes until you reload it, even if
+you open another project in it first. The buttons under **Download**
 stay off until the name, the description, and the behavior are filled in. The
 card tells you what is still missing, and each item is a link that takes you
 to that blank.

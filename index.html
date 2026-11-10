@@ -3,7 +3,7 @@ This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-09
+Last Modified: 2026-11-10
 Summary: The whole Agentprise web app in one file. Lets a person describe an AI
          assistant once, then download it as a skill for Gemini and Claude, a
          Copilot app package, a Teams Chat file, a plugin, copy-ready text for
@@ -9531,6 +9531,12 @@ async function listStoredProjects() {
             return requestResult(transaction.objectStore("projects").getAll());
         });
         records = Array.isArray(holder.value) ? holder.value : [];
+        // A project kept in memory stays listed for this visit, even after another tab deletes its stored copy.
+        ui.memoryProjects.forEach(function (project, id) {
+            if (!records.some(function (record) { return isPlainObject(record) && record.id === id; })) {
+                records.push(projectRecord(project));
+            }
+        });
     } catch (error) {
         records = Array.from(ui.memoryProjects.values()).map(projectRecord);
     }
@@ -9663,6 +9669,19 @@ function storedRevision(project) {
     return memory.replace ? undefined : memory.modified;
 }
 
+/**
+ * Keeps changes this tab could not save, because another tab changed or
+ * deleted the project, for the rest of the visit. Leaving the project then
+ * does not lose them, and opening it again shows them with the reason they
+ * are not saved.
+ * @param {object} project
+ * @param {string} expected the stored copy's modified time this tab last saw
+ */
+function keepRefusedProject(project, expected) {
+    ui.memoryProjects.set(project.id, project);
+    ui.memoryStored.set(project.id, { modified: expected, replace: false, refused: true });
+}
+
 /** Tells the app's other tabs that a project was saved, or deleted when modified is "". */
 function tellOtherTabs(id, modified) {
     if (ui.channel) {
@@ -9684,9 +9703,12 @@ function listenToOtherTabs() {
     });
 }
 
-/** Stops saving the open project and says why, once. */
+/** Stops saving the open project and says why, once. Changes not yet saved are kept for the visit. */
 function markTabStale() {
     clearTimeout(ui.saveTimer);
+    if (projectHasContent(ui.project) && (recordFingerprint(ui.project) !== ui.savedRecord || payloadsChanged(ui.project))) {
+        keepRefusedProject(ui.project, ui.storedModified);
+    }
     if (!ui.staleTab) {
         ui.staleTab = true;
         announce(STALE_TAB_MESSAGE, true);
@@ -9750,6 +9772,7 @@ async function saveNow() {
         return;
     }
     if (ui.staleTab) {
+        keepRefusedProject(project, ui.storedModified);
         // Says it again if a later message replaced it.
         if ($("status").textContent !== STALE_TAB_MESSAGE) {
             announce(STALE_TAB_MESSAGE, true);
@@ -9769,7 +9792,8 @@ async function saveNow() {
     if (ui.project !== project) {
         // Another project opened during the save, so this result is not about it.
         if (saved === false) {
-            announce("The last changes to " + (project.name || "the project you left") + " weren't saved, because it was changed or deleted in another tab. Open it to see the latest version.", true);
+            keepRefusedProject(project, expected);
+            announce("The last changes to " + (project.name || "the project you left") + " weren't saved, because it was changed or deleted in another tab. To keep them, open it again in this tab and download a backup.", true);
         }
         await refreshProjectList();
         return;
@@ -9842,6 +9866,11 @@ async function openProject(id, moveFocus) {
         announce("A few saved settings had to be changed to open this project. " + result.notices.join(" "));
     }
     showView("project", moveFocus);
+    // Changes kept after another tab's save are still not saved, so the tab says so again.
+    const memory = ui.memoryProjects.has(id) ? ui.memoryStored.get(id) : null;
+    if (memory && memory.refused) {
+        markTabStale();
+    }
     return true;
 }
 
@@ -10065,6 +10094,7 @@ async function renameProject(id, name) {
         const saved = await saveStoredProject(result.project, expected);
         await refreshProjectList();
         if (saved === false && inMemory) {
+            keepRefusedProject(ui.memoryProjects.get(id), expected);
             announce("The name didn't change, because the project was changed in another tab. To keep the changes this tab couldn't save, open the project and download a backup.", true);
             return;
         }
