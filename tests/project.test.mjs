@@ -708,13 +708,13 @@ describe("imports of plugins and skills made elsewhere", () => {
 
   test("key names in camelCase are found in tool server addresses and arguments", () => {
     const SECRET = "EXAMPLE_TOKEN_123";
-    for (const name of ["userToken", "githubAccessToken", "clientSecret", "openaiApiKey", "AWSSecretKey"]) {
+    for (const name of ["userToken", "githubAccessToken", "clientSecret", "openaiApiKey", "AWSSecretKey", "OAUTH2_TOKEN", "AZURE_OPENAI2_API_KEY"]) {
       const project = engine.project.normalize({ name: "Example", servers: { docs: { transport: "http", url: "https://mcp.example.org/mcp?" + name + "=" + SECRET } }, items: [] }).project;
       assert.equal(project.servers.docs.url, "", name);
     }
-    const args = ["--apiKey", SECRET, "--authToken=" + SECRET, "GITHUB_TOKEN=" + SECRET, "--noAuth", "--no-auth", "--tokenizer", "words"];
+    const args = ["--apiKey", SECRET, "--authToken=" + SECRET, "GITHUB_TOKEN=" + SECRET, "OAUTH2_TOKEN=" + SECRET, "--noAuth", "--no-auth", "--tokenizer", "words"];
     const project = engine.project.normalize({ name: "Example", servers: { tool: { transport: "stdio", command: "example-tool", args } }, items: [] }).project;
-    assert.deepEqual(project.servers.tool.args, ["--apiKey", "replace-with-your-value", "--authToken=replace-with-your-value", "GITHUB_TOKEN=replace-with-your-value", "--noAuth", "--no-auth", "--tokenizer", "words"]);
+    assert.deepEqual(project.servers.tool.args, ["--apiKey", "replace-with-your-value", "--authToken=replace-with-your-value", "GITHUB_TOKEN=replace-with-your-value", "OAUTH2_TOKEN=replace-with-your-value", "--noAuth", "--no-auth", "--tokenizer", "words"]);
   });
 
   test("a local tool server argument that holds a credential is replaced, and no download keeps it", async () => {

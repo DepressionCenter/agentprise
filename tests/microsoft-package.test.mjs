@@ -1273,6 +1273,8 @@ describe("unsafe and broken packages", () => {
       { name: "config/unsafe7.xml", text: "<settings><AccountKey>" + SECRET + "</AccountKey></settings>\n" },
       { name: "config/unsafe8.yaml", text: "auth: {sessionToken: " + SECRET + "}\n" },
       { name: "config/unsafe9.yaml", text: "AWSSecretKey: " + SECRET + "\n" },
+      { name: "config/unsafe10.env", text: "AZURE_OPENAI2_API_KEY=" + SECRET + "\nOAUTH2_TOKEN=" + SECRET + "\n" },
+      { name: "config/unsafe11.json", text: '{"X9A0-api_key": "' + SECRET + '"}' },
       { name: "config/appsettings.json", text: '{"ConnectionStrings": {"Study": "Server=db.example.org;Database=study;User Id=svc_example;Password=' + SECRET + ';"}}' },
       { name: "config/web.config", text: '<configuration><connectionStrings><add name="Study" connectionString="Server=db.example.org;Password=' + SECRET + ';" /></connectionStrings></configuration>\n' },
       { name: "config/storage.txt", text: "DefaultEndpointsProtocol=https;AccountName=example;AccountKey=" + SECRET + "==;EndpointSuffix=core.windows.net\n" },
@@ -1306,7 +1308,7 @@ describe("unsafe and broken packages", () => {
 
   test("a long name in camelCase or capitals is checked quickly", async () => {
     // A name pattern that could split these runs into words in more than one way takes minutes to give up on them.
-    const texts = ["aB".repeat(200000) + ": x\n", "ABc".repeat(150000) + ": x\n", "{" + "aB".repeat(200000) + ": x}", "?" + "aB".repeat(200000) + "=x"];
+    const texts = ["aB".repeat(200000) + ": x\n", "ABc".repeat(150000) + ": x\n", "{" + "aB".repeat(200000) + ": x}", "?" + "aB".repeat(200000) + "=x", "A2_".repeat(130000) + "x: y\n", "aB_".repeat(130000) + "aB: y\n", "a2B3c".repeat(80000) + ": y\n"];
     const entries = skillOnlyEntries();
     texts.forEach((text, index) => entries.push({ name: "config/name" + index + ".txt", bytes: encode(text) }));
     const started = Date.now();

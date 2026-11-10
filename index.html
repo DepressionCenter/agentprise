@@ -2899,15 +2899,17 @@ function normalizeServers(value, notices, limit = LIMITS.servers) {
     return servers;
 }
 
-// Words in front of a credential name, each joined to the next by "_", "-", or
-// a change to a capital letter, as in "client_secret", "x-api-key",
-// "openaiApiKey", or "AWSSecretKey". Words run together with no such change,
-// such as "monkey" or "tokenizer", don't count. A word ends either at "_" or
-// "-", or at a lower-case letter or digit before a capital, or at the last
-// capital of a run before a capital and a lower-case letter. So a name splits
-// into words in only one way, and a long name is read once. Patterns built on
-// it can't use the "i" flag, because the flag hides the change to a capital.
-const CREDENTIAL_NAME_PREFIX = "(?:[A-Z]?[a-z0-9]+(?:[_-]|(?=[A-Z]))|[A-Z]+(?:[_-]|(?=[A-Z][a-z])))*";
+// Words in front of a credential name. Any letters and digits followed by "_"
+// or "-" count as a word, as in "client_secret", "OAUTH2_TOKEN", or
+// "x-api-key". After those, a word can also end where a capital letter starts
+// the next one, as in "openaiApiKey" or "AWSSecretKey". Words run together
+// with no such change, such as "monkey" or "tokenizer", don't count. A
+// camelCase word ends at a lower-case letter or digit before a capital, or at
+// the last capital of a run before a capital and a lower-case letter, so a
+// name splits into words in only one way and a long name is read once.
+// Patterns built on it can't use the "i" flag, because the flag hides the
+// change to a capital.
+const CREDENTIAL_NAME_PREFIX = "(?:[A-Za-z0-9]+[_-])*(?:(?:[A-Z]?[a-z]|[0-9])[a-z0-9]*(?=[A-Z])|[A-Z][A-Z0-9]*(?=[A-Z][a-z]))*";
 
 /**
  * A regular expression source for a name that ends in one of the given
