@@ -2,7 +2,7 @@
 // tests/tools.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-11-05
+// Last Modified: 2026-11-10
 // Summary: Tests for the tools stage: exports checked against the pinned vendor
 //          schemas, golden export files for every provider kind on every
 //          target, composed instructions, the conversion report, the setup
@@ -311,6 +311,16 @@ describe("composeInstructions", () => {
     });
     const text = composeInstructions(project, project.items[0], "claude");
     assert.ok(text.includes("Use the first of these that is available in this conversation:\n1. The script scripts/run.py. Script second? No, first.\n   Run it from the skill folder:\n   ```bash\n   python3 scripts/run.py\n   ```\n2. The Example connector. Connector second.\nIf none of them is available: No lookup."));
+  });
+
+  test("a script whose name holds a character a shell could run gets no run command", () => {
+    const project = skillProject({
+      files: [{ path: "scripts/run$(id).py", bytes: encode("print(1)\n") }, { path: "scripts/an\u00e1lisis.py", bytes: encode("print(2)\n") }],
+      capabilities: [{ id: "a", label: "Lookup", fallback: "No lookup.", providers: { claude: [{ kind: "script", path: "scripts/run$(id).py", runtime: "python3" }, { kind: "script", path: "scripts/an\u00e1lisis.py", runtime: "python3" }] } }],
+    });
+    const text = composeInstructions(project, project.items[0], "claude");
+    assert.ok(text.includes("1. The script scripts/run$(id).py.\n2. The script scripts/an\u00e1lisis.py.\n   Run it from the skill folder:\n   ```bash\n   python3 scripts/an\u00e1lisis.py\n   ```\n"), text);
+    assert.equal(text.includes("python3 scripts/run$"), false);
   });
 
   test("a script tool gets a run command unless its instructions give one, and every script is listed once", () => {

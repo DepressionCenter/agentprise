@@ -381,7 +381,7 @@ describe("normalizeProject with hostile input", () => {
   });
 
   test("an archive with an unsafe entry name is refused before anything is read", async () => {
-    for (const name of ["../evil/SKILL.md", "/abs/SKILL.md", "dir\\SKILL.md", "C:/x/SKILL.md"]) {
+    for (const name of ["../evil/SKILL.md", "/abs/SKILL.md", "C:/x/SKILL.md", "..\\evil\\SKILL.md", "C:\\x\\SKILL.md"]) {
       const bytes = makeDeflatedZip([{ name: name, bytes: encode("---\nname: x\ndescription: d\n---\nbody") }]);
       const result = await engine.imports.any("evil.zip", bytes);
       assert.ok(result.error, name + " must be refused");
@@ -1081,6 +1081,18 @@ describe("project helpers", () => {
     assert.ok(copy.markdown.startsWith("# Data Tools\n"));
     assert.equal(copy.instructions, engine.tools.composeInstructions(project, skill, "chatgpt"));
     assert.ok(Array.isArray(copy.report));
+  });
+
+  test("a skill .zip made by Windows PowerShell's Compress-Archive opens as a skill", async () => {
+    const bytes = makeDeflatedZip([
+      { name: "report\\SKILL.md", bytes: encode("---\nname: report\ndescription: Writes a report.\n---\n\nRead references/notes.md.\n") },
+      { name: "report\\references\\notes.md", bytes: encode("Notes.") },
+    ]);
+    assert.equal(engine.detectFormat("report.zip", bytes), "skillZip");
+    const opened = await engine.imports.any("report.zip", bytes);
+    assert.equal(opened.error, undefined);
+    assert.equal(opened.project.items[0].skillName, "report");
+    assert.deepEqual(opened.project.items[0].files.map((file) => file.path), ["references/notes.md"]);
   });
 
   test("a new project and new items start from documented defaults", () => {

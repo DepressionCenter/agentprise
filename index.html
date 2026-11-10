@@ -1440,7 +1440,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <h2>Why is a download button grayed out?</h2>
                     <p>Either a required question is still empty, the product can't accept the project as it is, for example more than four web search sites for Copilot, or the author marked the assistant or skill as not for that product under More settings, then Products it works in. The Inspect page says what to change.</p>
                     <h2>Which files can I attach?</h2>
-                    <p>Word, PowerPoint, Excel, PDF, OneNote (.one and .onepart), and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, .onepart, and .txt, so a script is added as a .txt file with the same name, and a .one file is left out of the app package. The skill .zip keeps every file under its real name.</p>
+                    <p>Word, PowerPoint, Excel, PDF, OneNote (.one and .onepart), and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, .onepart, and .txt, so a script is added as a .txt file with the same name, and a .one file is left out of the app package. The skill .zip and the backup keep each file's name. If a name has a character that some computers can't use, such as : or ?, the app changes it and tells you.</p>
                     <h2>Where do links go?</h2>
                     <p>Each Copilot source has its own box under Copilot settings. Web sites go under Web search, up to 4. SharePoint and OneDrive links go under SharePoint and OneDrive, up to 20. Links to teams, channels, group chats, or meeting chats go under Teams messages, up to 5. Shared or group mailbox addresses go under Email. A box only matters while its source is on, and leaving it empty means Copilot may use everything the person can see.</p>
                     <h2>Who can use my assistant?</h2>
@@ -2055,9 +2055,16 @@ function isCopilotFileName(name) {
     return COPILOT_FILE_EXTENSIONS.some(function (extension) { return lower.endsWith(extension); });
 }
 
+// Both program checks below read a name as other programs may save it, with
+// full-width and other compatibility letters made plain, so
+// "setup.\uff4d\uff53\uff49" reads as "setup.msi".
 function hidesExecutableExtension(name) {
-    const parts = String(name || "").toLowerCase().split(".");
+    const parts = String(name || "").normalize("NFKC").toLowerCase().split(".");
     return parts.slice(1, -1).some(function (part) { return EXECUTABLE_EXTENSIONS.indexOf(part) >= 0; });
+}
+
+function hasExecutableExtension(path) {
+    return EXECUTABLE_EXTENSIONS.indexOf(fileTypeOf(String(path || "").normalize("NFKC"))) >= 0;
 }
 
 function bytesAt(bytes, offset, values) {
@@ -2300,10 +2307,125 @@ function cleanMeetingItem(value) {
     return { id: id, is_series: value.is_series === true };
 }
 
-/** A plain name from an untrusted one: no folders, safe characters. */
+// Windows can't save a file under a device name, such as CON or aux.txt, so
+// such a name gets "_" after the device part.
+const WINDOWS_DEVICE_NAME = /^(con|prn|aux|nul|com[0-9\u00b9\u00b2\u00b3]|lpt[0-9\u00b9\u00b2\u00b3])(\.|$)/i;
+// The most characters, and UTF-8 bytes, kept in one part of a file name.
+// Linux and Mac file systems allow 255 bytes, and a Chinese character takes
+// 3, so the byte limit matters for names that aren't in English. The margin
+// leaves room for the "_" or ".txt" that a download can add.
+const NAME_PART_LIMIT = 120;
+const NAME_PART_BYTES = 240;
+
+/**
+ * One character of a file name, or a space in its place. Control characters
+ * and invisible formatting characters go, because they can hide a name's real
+ * type, except the two joiners that some languages and emoji need. So do the
+ * characters Windows reserves, and any character another program may turn
+ * into a folder slash, such as the full-width slash.
+ * @param {string} character one code point
+ * @returns {string}
+ */
+function nameCharacter(character) {
+    if (character === "\u200c" || character === "\u200d") {
+        return character;
+    }
+    return /[\p{C}<>:"|?*\/\\]/u.test(character) || /[\/\\]/.test(character.normalize("NFKC")) ? " " : character;
+}
+
+/**
+ * One part of a file name, safe to use on any computer. Letters, digits, and
+ * punctuation from any language stay, in composed Unicode form, so two names
+ * that look the same are the same. Trailing dots and spaces go, because
+ * Windows removes them when it saves the file, and a Windows device name gets
+ * "_" after it.
+ * @param {string} part a name without folders
+ * @param {boolean} dropLeadingDots true for attached files, which are never hidden
+ * @returns {string} "" when nothing usable remains
+ */
+function cleanNamePart(part, dropLeadingDots) {
+    let safe = part.normalize("NFC").replace(/[^]/gu, nameCharacter).replace(/\s+/g, " ").trim();
+    if (dropLeadingDots) {
+        safe = safe.replace(/^[. ]+/, "");
+    }
+    safe = fitNameLength(safe.replace(/[. ]+$/, ""));
+    // Another program may read a dot leader, such as "\u2025", as "..", which would leave the folder.
+    if (!safe.normalize("NFKC").replace(/[. ]+$/, "")) {
+        return "";
+    }
+    return safe.replace(WINDOWS_DEVICE_NAME, "$1_$2");
+}
+
+/**
+ * A name cut to NAME_PART_LIMIT characters and NAME_PART_BYTES bytes of
+ * UTF-8. A short extension, such as ".txt", stays, so the file keeps its type.
+ * @param {string} name one part of a file name
+ * @returns {string} with no trailing dots or spaces
+ */
+function fitNameLength(name) {
+    if (Array.from(name).length <= NAME_PART_LIMIT && toBytes(name).length <= NAME_PART_BYTES) {
+        return name;
+    }
+    const dot = name.lastIndexOf(".");
+    const extension = dot > 0 && name.length - dot <= 16 ? name.slice(dot) : "";
+    let characters = NAME_PART_LIMIT - Array.from(extension).length;
+    let bytes = NAME_PART_BYTES - toBytes(extension).length;
+    const kept = [];
+    for (const character of Array.from(extension ? name.slice(0, dot) : name)) {
+        const size = toBytes(character).length;
+        if (characters < 1 || size > bytes) {
+            break;
+        }
+        kept.push(character);
+        characters -= 1;
+        bytes -= size;
+    }
+    return (kept.join("").replace(/[. ]+$/, "") + extension).replace(/[. ]+$/, "");
+}
+
+/** The last part of an untrusted name, after any slash or backslash. */
+function nameLeaf(name) {
+    return (typeof name === "string" ? name : "").split(/[\\/]/).pop();
+}
+
+/** A plain name from an untrusted one: no folders, and safe to use on any computer. */
 function attachedFileName(name) {
-    const leaf = String(name || "").split(/[\\/]/).pop();
-    return leaf.replace(/[^A-Za-z0-9 ._()-]+/g, " ").replace(/\s+/g, " ").trim().replace(/^[. ]+/, "").slice(0, 120);
+    return cleanNamePart(nameLeaf(name), true);
+}
+
+/**
+ * The path as given, when cleaning changed more than its slashes or its
+ * Unicode form, so a notice can name both; else "".
+ * @param {*} given the untrusted path or name
+ * @param {string} cleaned what cleanArchivePath or attachedFileName made of it
+ * @returns {string}
+ */
+function renamedFrom(given, cleaned) {
+    const plain = typeof given === "string" ? given.normalize("NFC").replace(/\\/g, "/").split("/").filter(Boolean).join("/") : "";
+    return plain && cleaned && plain !== cleaned ? plain : "";
+}
+
+/**
+ * Names each kept file whose name changed, so the person can update the
+ * steps or instructions that name it.
+ * @param {Array<{from: string, to: string}>} renamed
+ * @returns {string} "" when nothing was renamed
+ */
+function renamedFilesNotice(renamed) {
+    if (renamed.length === 0) {
+        return "";
+    }
+    // Hidden characters in the old name show as a visible mark.
+    const pairs = renamed.slice(0, 5).map(function (entry) {
+        return Array.from(entry.from.replace(/\p{C}/gu, "\ufffd")).slice(0, 90).join("") + " to " + entry.to;
+    });
+    if (renamed.length > 5) {
+        pairs.push(countOf(renamed.length - 5, "more file", "more files"));
+    }
+    if (renamed.length === 1) {
+        return "Renamed " + pairs[0] + ", so the name is safe to use on any computer. If the steps or instructions name this file, update them.";
+    }
+    return "Renamed " + countOf(renamed.length, "file", "files") + " so their names are safe to use on any computer: " + namesInSentence(pairs) + ". If the steps or instructions name these files, update them.";
 }
 
 /**
@@ -2411,6 +2533,7 @@ function normalizeAgent(input) {
     const files = Array.isArray(source.files) ? source.files : [];
     const seenNames = Object.create(null);
     const refused = [];
+    const renamed = [];
     agent.files = [];
     files.forEach(function (file) {
         if (agent.files.length >= LIMITS.files) {
@@ -2420,6 +2543,10 @@ function normalizeAgent(input) {
         const result = cleanAttachedFile(file, seenNames);
         if (result.file) {
             agent.files.push(result.file);
+            const from = renamedFrom(nameLeaf(file.name), result.file.name);
+            if (from) {
+                renamed.push({ from: from, to: result.file.name });
+            }
         } else {
             refused.push(result);
         }
@@ -2427,6 +2554,9 @@ function normalizeAgent(input) {
     if (refused.length > 0) {
         const reasons = refused.map(function (entry) { return (entry.name || "a file").slice(0, 40) + " (" + entry.problem + ")"; });
         notices.push("Left out " + countOf(refused.length, "attached file", "attached files") + ": " + listNames(reasons) + ". This app takes up to " + LIMITS.files + " files of these types, each under " + Math.round(LIMITS.fileBytes / 1024 / 1024) + " MB: " + FILE_EXTENSIONS.join(", ") + ".");
+    }
+    if (renamed.length > 0) {
+        notices.push(renamedFilesNotice(renamed));
     }
 
     if (isPlainObject(source.icon) && source.icon.bytes instanceof Uint8Array && source.icon.bytes.length > 0) {
@@ -2647,11 +2777,11 @@ function cleanArchivePath(value, options) {
     const cleaned = [];
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
-        if (part === "." || part === ".." || (part.charAt(0) === "." && !options.hidden)) {
+        if (part === "." || part === "..") {
             return "";
         }
-        const safe = part.replace(/[^A-Za-z0-9 ._()-]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
-        if (!safe || safe === "." || safe === "..") {
+        const safe = cleanNamePart(part, false);
+        if (!safe || (safe.charAt(0) === "." && !options.hidden)) {
             return "";
         }
         cleaned.push(safe);
@@ -2688,6 +2818,7 @@ function cleanSkillFiles(list, notices) {
     const leftovers = [];
     const overflow = [];
     const refused = [];
+    const renamed = [];
     const seen = Object.create(null);
     (Array.isArray(list) ? list : []).forEach(function (entry) {
         const raw = isPlainObject(entry) ? (typeof entry.path === "string" ? entry.path : entry.name) : "";
@@ -2704,7 +2835,7 @@ function cleanSkillFiles(list, notices) {
             return;
         }
         const program = executableSignature(entry.bytes) || (hidesExecutableExtension(pathLeaf(path)) ? "a program" : "");
-        if (program || EXECUTABLE_EXTENSIONS.indexOf(fileTypeOf(path)) >= 0) {
+        if (program || hasExecutableExtension(path)) {
             refused.push({ name: path, problem: "it is " + (program || "a program") });
             return;
         }
@@ -2713,6 +2844,10 @@ function cleanSkillFiles(list, notices) {
             return;
         }
         seen[path.toLowerCase()] = true;
+        const from = renamedFrom(raw, path);
+        if (from) {
+            renamed.push({ from: from, to: path });
+        }
         // A top-level license or readme stays even when not UTF-8, so the notice survives.
         const ownNotice = path.indexOf("/") < 0 && (LICENSE_FILE_PATTERN.test(path) || /^README(\.(md|txt))?$/i.test(path));
         const problem = ownNotice || isTextScript(path, entry.bytes) ? "" : attachedFileProblem(pathLeaf(path), entry.bytes);
@@ -2730,6 +2865,9 @@ function cleanSkillFiles(list, notices) {
     if (refused.length > 0) {
         const reasons = refused.map(function (entry) { return entry.name.slice(0, 60) + " (" + entry.problem + ")"; });
         notices.push("Left out " + countOf(refused.length, "file", "files") + " from a skill: " + listNames(reasons) + ".");
+    }
+    if (renamed.length > 0) {
+        notices.push(renamedFilesNotice(renamed));
     }
     return { files: files, leftovers: leftovers, overflow: overflow };
 }
@@ -3086,9 +3224,9 @@ function normalizeItem(input, notices) {
         const attachments = [];
         const others = [];
         (Array.isArray(source.files) ? source.files : []).filter(isPlainObject).forEach(function (file) {
-            const path = typeof file.path === "string" ? file.path.replace(/\\/g, "/") : BUNDLE_FILES_FOLDER + attachedFileName(file.name);
+            const path = typeof file.path === "string" ? file.path.replace(/\\/g, "/") : BUNDLE_FILES_FOLDER + nameLeaf(file.name);
             const parts = path.split("/");
-            if (parts.length === 2 && parts[0] + "/" === BUNDLE_FILES_FOLDER && fileKind(parts[1])) {
+            if (parts.length === 2 && parts[0] + "/" === BUNDLE_FILES_FOLDER && fileKind(attachedFileName(parts[1]))) {
                 attachments.push({ name: parts[1], bytes: file.bytes });
             } else {
                 others.push({ path: path, bytes: file.bytes });
@@ -3318,7 +3456,7 @@ function normalizeProject(input, options) {
 
 /** A program by its first bytes, its type, or a hidden program extension. */
 function isProgramFile(path, bytes) {
-    return Boolean(executableSignature(bytes)) || EXECUTABLE_EXTENSIONS.indexOf(fileTypeOf(path)) >= 0 || hidesExecutableExtension(pathLeaf(path));
+    return Boolean(executableSignature(bytes)) || hasExecutableExtension(path) || hidesExecutableExtension(pathLeaf(path));
 }
 
 /**
@@ -4166,12 +4304,21 @@ function zipWrite(entries) {
     return out;
 }
 
+/**
+ * A name from the .zip with each backslash read as a folder slash. Windows
+ * PowerShell's Compress-Archive writes folders that way, such as
+ * report\SKILL.md, so the name is checked after the change.
+ */
+function zipEntryName(bytes) {
+    return fromBytes(bytes).replace(/\\/g, "/");
+}
+
 /** Rejects names that could escape the folder or confuse a reader. */
 function checkZipEntryName(name) {
     if (!name || name.length > 512) {
         throw new ZipError("A file inside the .zip has an empty or very long name.");
     }
-    if (name.indexOf("\\") >= 0 || name.startsWith("/") || /^[A-Za-z]:/.test(name) || name.indexOf("\u0000") >= 0) {
+    if (name.startsWith("/") || /^[A-Za-z]:/.test(name) || name.indexOf("\u0000") >= 0) {
         throw new ZipError("The .zip wasn't opened because a file inside it has an unsafe name.");
     }
     const parts = name.split("/");
@@ -4263,7 +4410,7 @@ function zipEntryNames(bytes) {
             break;
         }
         const nameLength = view.getUint16(cursor + 28, true);
-        names.push(fromBytes(bytes.subarray(cursor + 46, cursor + 46 + nameLength)));
+        names.push(zipEntryName(bytes.subarray(cursor + 46, cursor + 46 + nameLength)));
         cursor += 46 + nameLength + view.getUint16(cursor + 30, true) + view.getUint16(cursor + 32, true);
     }
     return names;
@@ -4319,7 +4466,7 @@ async function zipRead(bytes) {
         const extraLength = view.getUint16(cursor + 30, true);
         const commentLength = view.getUint16(cursor + 32, true);
         const localOffset = view.getUint32(cursor + 42, true);
-        const name = fromBytes(bytes.subarray(cursor + 46, cursor + 46 + nameLength));
+        const name = zipEntryName(bytes.subarray(cursor + 46, cursor + 46 + nameLength));
         cursor += 46 + nameLength + extraLength + commentLength;
 
         if (compressedSize === 0xFFFFFFFF || uncompressedSize === 0xFFFFFFFF || localOffset === 0xFFFFFFFF) {
@@ -5291,12 +5438,14 @@ function itemRunsScript(item) {
 /**
  * The command that runs a script tool, such as "python3 scripts/report.py",
  * when the tool names a runtime and its instructions don't already give that
- * command. A path with a space or parenthesis is quoted.
+ * command. A path with a space or parenthesis is quoted. A path with any
+ * other punctuation gets no command, because a shell could read a character
+ * such as $ or ` as part of a command.
  * @param {object} provider a script provider
  * @returns {string} the command, or ""
  */
 function scriptCommand(provider) {
-    if (!provider.runtime) {
+    if (!provider.runtime || !/^[\p{L}\p{M}\p{N} ._()\/-]+$/u.test(provider.path)) {
         return "";
     }
     const path = /[ ()]/.test(provider.path) ? "\"" + provider.path + "\"" : provider.path;
@@ -5992,11 +6141,14 @@ function projectBundleEntries(project) {
  */
 async function writeProjectBundle(project) {
     const entries = projectBundleEntries(project);
-    const total = entries.reduce(function (sum, entry) { return sum + entry.bytes.length; }, 0);
-    if (total > LIMITS.zipTotalBytes) {
-        throw new Error("The project's files add up to more than " + Math.round(LIMITS.zipTotalBytes / 1024 / 1024) + " MB, which is more than this app can open again. Remove some large files first.");
+    // Files that are already too large together skip building the .zip.
+    const contents = entries.reduce(function (sum, entry) { return sum + entry.bytes.length; }, 0);
+    const bytes = contents > LIMITS.zipTotalBytes ? null : zipWrite(entries);
+    // The finished .zip is what opens again, and it adds a few bytes for each file name.
+    if (!bytes || bytes.length > LIMITS.zipTotalBytes) {
+        throw new Error("The backup would be larger than " + Math.round(LIMITS.zipTotalBytes / 1024 / 1024) + " MB, which is more than this app can open again. Remove some large files first.");
     }
-    return { fileName: projectSlug(project) + ".agentprise.zip", bytes: zipWrite(entries), entries: entries, report: [] };
+    return { fileName: projectSlug(project) + ".agentprise.zip", bytes: bytes, entries: entries, report: [] };
 }
 
 /**
@@ -6383,7 +6535,8 @@ function readPluginArchive(entries) {
         return folder.slice((root + skillsDir).length).split("/").filter(Boolean).length === 1;
     });
     if (ours && Array.isArray(extension.items)) {
-        const order = extension.items.filter(isPlainObject).map(function (entry) { return root + skillsDir + entry.skillName + "/"; });
+        // Only text counts; any other value, such as an object, reads as missing.
+        const order = extension.items.filter(isPlainObject).map(function (entry) { return typeof entry.skillName === "string" ? root + skillsDir + entry.skillName + "/" : ""; });
         folders.sort(function (a, b) {
             const ia = order.indexOf(a);
             const ib = order.indexOf(b);
@@ -6407,9 +6560,13 @@ function readPluginArchive(entries) {
             }
         });
     }
-    const notes = {};
+    const notes = new Map();
     if (ours && Array.isArray(extension.unrecognized)) {
-        extension.unrecognized.filter(isPlainObject).forEach(function (entry) { notes[entry.path] = entry.note; });
+        extension.unrecognized.filter(isPlainObject).forEach(function (entry) {
+            if (typeof entry.path === "string") {
+                notes.set(entry.path, entry.note);
+            }
+        });
     }
     const unrecognized = [];
     let outside = 0;
@@ -6422,7 +6579,7 @@ function readPluginArchive(entries) {
             return;
         }
         const path = name.slice(root.length);
-        unrecognized.push({ path: path, note: notes[path] || UNRECOGNIZED_NOTE, bytes: bytes });
+        unrecognized.push({ path: path, note: notes.get(path) || UNRECOGNIZED_NOTE, bytes: bytes });
     });
     if (outside > 0) {
         notices.push("Left out " + countOf(outside, "file", "files") + " from outside the plugin folder.");
@@ -6492,11 +6649,27 @@ function readPluginArchive(entries) {
 
 /**
  * Opens any accepted project file; detectFormat picks, importers validate.
+ * A file that stops a reader in an unexpected way, such as a damaged one,
+ * returns an error the person can act on.
  * @param {string} fileName
  * @param {Uint8Array} bytes
  * @returns {Promise<{project: object, notices: string[], format: string}|{error: string}>}
  */
 async function importProject(fileName, bytes) {
+    try {
+        return await readProjectFile(fileName, bytes);
+    } catch (error) {
+        return { error: unopenedFileMessage(fileName) };
+    }
+}
+
+/** The message for a file that failed to open in an unexpected way. */
+function unopenedFileMessage(fileName) {
+    return "Agentprise couldn't open " + fileName + ". The file may be damaged. Try another copy, or ask the person who made it to make it again.";
+}
+
+/** Reads a project file for importProject, which catches unexpected failures. */
+async function readProjectFile(fileName, bytes) {
     let format = detectFormat(fileName, bytes);
     let result;
     if (format === "msAgent") {
@@ -8112,7 +8285,7 @@ function packageServerAddress(value, subject, notices) {
 
 /** Adds a server under a unique name built from key, and returns the name. */
 function addPackageServer(servers, key, server) {
-    const cleaned = String(key || "").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^[-_]+/, "").replace(/-+$/, "").slice(0, 56);
+    const cleaned = (typeof key === "string" ? key : "").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^[-_]+/, "").replace(/-+$/, "").slice(0, 56);
     const base = SERVER_NAME_PATTERN.test(cleaned) ? cleaned : "server";
     let name = base;
     for (let n = 2; Object.prototype.hasOwnProperty.call(servers, name); n++) {
@@ -9121,6 +9294,7 @@ const STORAGE_WORKSPACE_KEY = "agentprise-workspace-v2";
 // with an older copy can warn before the person types in it.
 const STORAGE_CHANNEL = "agentprise-projects";
 const STALE_TAB_MESSAGE = "This project was changed or deleted in another tab, so this tab stopped saving it. To keep the changes made here, download a backup. Then reload this page to see the latest version.";
+const PROJECT_MISSING_MESSAGE = "That project could not be found in this browser.";
 // Version 1 storage, removed unread on first load.
 const LEGACY_DRAFT_KEY = "agentprise-draft-v1";
 const LEGACY_FILES_DB = "agentprise-draft-files";
@@ -9286,6 +9460,8 @@ const ui = {
     // For each project kept in memory after a failed save, what storage still
     // holds: {modified, replace}, read when the project opens again.
     memoryStored: new Map(),
+    // Projects whose failed save was announced, until a save of them works.
+    failedSaves: new Set(),
     view: "workspace",
     starterBlanks: [],
     previewOrder: [],
@@ -9572,6 +9748,30 @@ function storageBlocked() {
     $("storage-note").hidden = false;
 }
 
+/** Shows the usual note again once a save works. */
+function storageWorks() {
+    ui.storageOk = true;
+    $("storage-note-ok").hidden = false;
+    $("storage-note").hidden = true;
+}
+
+/**
+ * Says that a save failed, once for each project until a later save of it
+ * works, so the message doesn't repeat on every change.
+ * @param {object} project
+ */
+function announceFailedSave(project) {
+    if (ui.failedSaves.has(project.id)) {
+        return;
+    }
+    ui.failedSaves.add(project.id);
+    announce(failedSaveMessage(project), true);
+}
+
+function failedSaveMessage(project) {
+    return "Agentprise couldn't save " + (project.name || "this project") + ", because this browser's storage is full or blocked. This tab keeps the project until you close the tab. To keep the project after that, download a backup.";
+}
+
 /** Deletes the version 1 draft and files database unread. */
 function removeLegacyStorage() {
     try {
@@ -9728,6 +9928,15 @@ async function loadStoredProject(id) {
 // Bytes last written per key, so saves rewrite only changed files.
 const savedBytes = new Map();
 
+/** Forgets which of a project's files are stored, so the next save writes them all. */
+function forgetSavedFiles(id) {
+    Array.from(savedBytes.keys()).forEach(function (key) {
+        if (key.indexOf(id + "/") === 0) {
+            savedBytes.delete(key);
+        }
+    });
+}
+
 /**
  * Saves the record and changed files, dropping files no longer held. An empty
  * project is not saved, so an untouched new one leaves no trace.
@@ -9743,6 +9952,9 @@ async function saveStoredProject(project, expected) {
     // Taken now, because a later save can change the project before this transaction writes.
     const record = projectRecord(project);
     const payloads = projectPayloads(project);
+    // Recorded in savedBytes only once the save completes, because a failed
+    // save stores nothing.
+    const written = [];
     let matched = true;
     try {
         await withStores(["projects", "files"], "readwrite", function (transaction) {
@@ -9767,7 +9979,7 @@ async function saveStoredProject(project, expected) {
                         const payload = wanted[key];
                         if (!stored[key] || savedBytes.get(key) !== payload.bytes) {
                             files.put({ blob: new Blob([payload.bytes]), type: fileTypeOf(payload.key) }, key);
-                            savedBytes.set(key, payload.bytes);
+                            written.push({ key: key, bytes: payload.bytes });
                         }
                     });
                 };
@@ -9788,6 +10000,7 @@ async function saveStoredProject(project, expected) {
         });
     } catch (error) {
         storageBlocked();
+        forgetSavedFiles(project.id);
         ui.memoryProjects.set(project.id, project);
         // The first failure records what storage still holds; later ones expect the same.
         if (!ui.memoryStored.has(project.id)) {
@@ -9795,6 +10008,9 @@ async function saveStoredProject(project, expected) {
         }
         return null;
     }
+    written.forEach(function (file) { savedBytes.set(file.key, file.bytes); });
+    storageWorks();
+    ui.failedSaves.delete(project.id);
     // A refused save leaves a project kept in memory there, so its changes are not lost.
     if (matched) {
         ui.memoryProjects.delete(project.id);
@@ -9906,7 +10122,11 @@ function payloadsChanged(project) {
     return projectPayloads(project).some(function (payload) { return savedBytes.get(project.id + "/" + payload.key) !== payload.bytes; });
 }
 
-/** Stamps the time when something changed. */
+/**
+ * Stamps the time when something changed, and saves.
+ * @returns {Promise<boolean|null|undefined>} what saveStoredProject returned,
+ *   or undefined when there was nothing to save or the tab stopped saving
+ */
 async function saveNow() {
     clearTimeout(ui.saveTimer);
     // One save at a time, so each one expects what the one before it stored.
@@ -9939,6 +10159,9 @@ async function saveNow() {
     } finally {
         ui.saving = null;
     }
+    if (saved === null) {
+        announceFailedSave(project);
+    }
     if (ui.project !== project) {
         // Another project opened during the save, so this result is not about it.
         if (saved === false) {
@@ -9946,20 +10169,24 @@ async function saveNow() {
             announce("The last changes to " + (project.name || "the project you left") + " weren't saved, because it was changed or deleted in another tab. To keep them, open it again in this tab and download a backup.", true);
         }
         await refreshProjectList();
-        return;
+        return saved;
     }
     if (saved === false) {
         ui.savedRecord = "";
         markTabStale();
-        return;
+        return saved;
     }
-    // After a failed save, nothing reached storage, so the next save expects the same copy.
     if (saved === true) {
         ui.storedModified = project.modified;
         ui.replaceStored = false;
+    } else {
+        // Nothing reached storage, so the next save expects the same copy and
+        // runs even when nothing else changes.
+        ui.savedRecord = "";
     }
     rememberOpened(project.id);
     await refreshProjectList();
+    return saved;
 }
 
 function scheduleSave() {
@@ -10002,7 +10229,7 @@ async function openProject(id, moveFocus) {
         result = null;
     }
     if (!result) {
-        announce("That project could not be found in this browser.", true);
+        announce(PROJECT_MISSING_MESSAGE, true);
         await refreshProjectList();
         return false;
     }
@@ -10047,9 +10274,10 @@ async function addProjectToWorkspace(project, message) {
     const finish = async function (chosen, replace) {
         setProject(chosen);
         ui.replaceStored = replace === true;
-        await saveNow();
+        const saved = await saveNow();
         showView("project", true);
-        announce(message);
+        // The message about opening replaces the one about the failed save, so it says both.
+        announce(saved === null ? message + " " + failedSaveMessage(chosen) : message, saved === null);
     };
     if (!existing) {
         await finish(project);
@@ -10269,24 +10497,51 @@ async function projectForCard(summary) {
 }
 
 async function copyStoredProject(summary) {
-    const result = await projectForCard(summary);
-    if (!result) {
-        return;
+    try {
+        const result = await projectForCard(summary);
+        if (!result) {
+            announce(PROJECT_MISSING_MESSAGE, true);
+            return;
+        }
+        const copy = duplicateProject(result.project, summary.name + " (copy)");
+        const saved = await saveStoredProject(copy);
+        await refreshProjectList();
+        if (saved === null) {
+            ui.failedSaves.add(copy.id);
+            announce("Made a copy named " + copy.name + ". " + failedSaveMessage(copy), true);
+            return;
+        }
+        announce("Made a copy named " + copy.name + ".");
+    } catch (error) {
+        announce("The copy of " + summary.name + " didn't work. " + failureReason(error), true);
     }
-    const copy = duplicateProject(result.project, summary.name + " (copy)");
-    await saveStoredProject(copy);
-    await refreshProjectList();
-    announce("Made a copy named " + copy.name + ".");
 }
 
 async function backupStoredProject(summary) {
-    const result = await projectForCard(summary);
-    if (!result) {
-        return;
+    try {
+        const result = await projectForCard(summary);
+        if (!result) {
+            announce(PROJECT_MISSING_MESSAGE, true);
+            return;
+        }
+        const backup = await writeProjectBundle(result.project);
+        downloadBytes(backup.fileName, backup.bytes, "application/zip");
+        announce("Downloaded " + backup.fileName + ".");
+    } catch (error) {
+        announce("The backup of " + summary.name + " didn't work. " + failureReason(error), true);
     }
-    const backup = await writeProjectBundle(result.project);
-    downloadBytes(backup.fileName, backup.bytes, "application/zip");
-    announce("Downloaded " + backup.fileName + ".");
+}
+
+/**
+ * The reason to show after an action fails: the error's message when
+ * Agentprise wrote it for people, such as a backup that is too large, or a
+ * next step when the browser stopped the action.
+ * @param {*} error
+ * @returns {string}
+ */
+function failureReason(error) {
+    const ours = error instanceof Error && (error.constructor === Error || error instanceof ZipError);
+    return ours && error.message ? error.message : "Try again in a moment.";
 }
 
 function confirmDelete(summary) {
@@ -10414,23 +10669,27 @@ function iconPreviewUri(agent) {
 /** Opens a file as a new project. */
 async function openFile(file) {
     announce("Opening " + file.name + "...");
-    let bytes;
     try {
-        bytes = await readFileBytes(file);
+        let bytes;
+        try {
+            bytes = await readFileBytes(file);
+        } catch (error) {
+            announce(error.message, true);
+            return;
+        }
+        const result = await importProject(file.name, bytes);
+        if (result.error) {
+            announce(result.error, true);
+            return;
+        }
+        await saveNow();
+        const findings = scanProject(result.project, []).length;
+        const notes = result.notices.length ? " " + result.notices.join(" ") : "";
+        const review = findings ? " Please check the yellow box under Download before you share it." : "";
+        await addProjectToWorkspace(result.project, "Opened " + file.name + " as a project." + notes + review);
     } catch (error) {
-        announce(error.message, true);
-        return;
+        announce(unopenedFileMessage(file.name), true);
     }
-    const result = await importProject(file.name, bytes);
-    if (result.error) {
-        announce(result.error, true);
-        return;
-    }
-    await saveNow();
-    const findings = scanProject(result.project, []).length;
-    const notes = result.notices.length ? " " + result.notices.join(" ") : "";
-    const review = findings ? " Please check the yellow box under Download before you share it." : "";
-    await addProjectToWorkspace(result.project, "Opened " + file.name + " as a project." + notes + review);
 }
 
 /** Adds a file's items to the open project. */
@@ -10438,19 +10697,23 @@ async function addFromFile(file) {
     if (!ui.project) {
         return;
     }
-    let bytes;
     try {
-        bytes = await readFileBytes(file);
+        let bytes;
+        try {
+            bytes = await readFileBytes(file);
+        } catch (error) {
+            announce(error.message, true);
+            return;
+        }
+        const result = await importProject(file.name, bytes);
+        if (result.error) {
+            announce(result.error, true);
+            return;
+        }
+        mergeIntoOpenProject(result.project, file.name, result.notices);
     } catch (error) {
-        announce(error.message, true);
-        return;
+        announce(unopenedFileMessage(file.name), true);
     }
-    const result = await importProject(file.name, bytes);
-    if (result.error) {
-        announce(result.error, true);
-        return;
-    }
-    mergeIntoOpenProject(result.project, file.name, result.notices);
 }
 
 /** Selects the first added item. */
@@ -10489,7 +10752,8 @@ function setupFileOpening() {
     $("add-from-file").addEventListener("change", function (event) {
         const picker = event.target;
         if (picker.files && picker.files[0]) {
-            addFromFile(picker.files[0]).then(function () { picker.value = ""; });
+            // Cleared even after a failure, so choosing the same file again works.
+            addFromFile(picker.files[0]).finally(function () { picker.value = ""; });
         }
     });
     ["dragenter", "dragover"].forEach(function (name) {
@@ -11213,11 +11477,12 @@ async function addFiles(fileList) {
         } catch (error) {
             bytes = new Uint8Array(0);
         }
-        candidates.push({ path: BUNDLE_FILES_FOLDER + attachedFileName(file.name), name: file.name, bytes: bytes });
+        // The name as picked, so a notice can say when cleaning changes it.
+        candidates.push({ path: BUNDLE_FILES_FOLDER + nameLeaf(file.name), name: file.name, bytes: bytes });
     }
     const notices = [];
     if (item.kind === "agent") {
-        const result = normalizeAgent({ files: candidates.map(function (file) { return { name: pathLeaf(file.path), bytes: file.bytes }; }) });
+        const result = normalizeAgent({ files: candidates.map(function (file) { return { name: file.name || pathLeaf(file.path), bytes: file.bytes }; }) });
         item.files = result.agent.files.map(function (file) { return { path: BUNDLE_FILES_FOLDER + file.name, bytes: file.bytes }; });
         notices.push.apply(notices, result.notices);
     } else {

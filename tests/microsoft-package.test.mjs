@@ -1141,6 +1141,19 @@ describe("Microsoft 365 app packages made elsewhere", () => {
     assert.deepEqual(Object.keys(project.servers), ["example-legal", "example-open"]);
   });
 
+  test("an action whose namespace isn't text still opens, under a plain server name", async () => {
+    const plugin = serverPlugin("remote", "https://other.example.org/mcp");
+    // An object whose toString isn't a function can't be turned into text.
+    plugin.namespace = { toString: 1 };
+    const { project } = await openPackage([
+      { name: "manifest.json", bytes: encode(JSON.stringify(appManifest({ copilotAgents: { declarativeAgents: [{ id: "a", file: "declarativeAgent_0.json" }] } }))) },
+      { name: "declarativeAgent_0.json", bytes: encode(JSON.stringify(declarativeAgent("Server Helper", { actions: [{ id: "remote", file: "plugin-remote.json" }] }))) },
+      { name: "plugin-remote.json", bytes: encode(JSON.stringify(plugin)) },
+    ]);
+    assert.deepEqual(Object.keys(project.servers), ["server"]);
+    assert.equal(project.servers.server.url, "https://other.example.org/mcp");
+  });
+
   test("a skill's own server and an action server with the same name both keep their addresses", async () => {
     const golden = engine.project.normalize(goldenRaw()).project;
     const skill = await engine.exports.skillZip(golden, golden.items[1], "claude");

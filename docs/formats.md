@@ -118,7 +118,9 @@ renamed to `.pdf` never gets in. Copilot accepts only the document types,
 `.onepart`, and `.txt` as uploads, so the app package includes a script as
 plain text under its own name plus `.txt`, for example `deploy.ps1.txt`, and
 leaves out a `.one` file with a warning. The skill `.zip` and the backup keep
-every file under its real name.
+each file's name, including letters with accents and most punctuation. If a
+name has a character that some computers can't use in file names, such as `:`
+or `?`, the app puts a space in its place and a message names the file.
 
 ### Assistants, skills, and products that have only one of them
 
@@ -285,6 +287,12 @@ in your workspace, the app asks whether to keep both or replace yours. To add a
 file's skills to the project you have open instead, choose Add from a file in
 the project.
 
+A `.zip` made with `Compress-Archive` in Windows PowerShell opens like any
+other, although it writes folder names with backslashes, such as
+`report\SKILL.md`. If a file is damaged in a way the app can't read, a message
+says that Agentprise couldn't open it. Try another copy, or ask the person who
+made the file to make it again.
+
 When you open a skill `.zip` or a plugin that Agentprise made, the app takes
 out the **Tools available in this setup** section and the "Persona:" start of
 the description, because it writes those again for each download. The plain
@@ -434,6 +442,11 @@ app writes its own only where the author had none. The project `id` is a UUID
 made once and kept through every backup, which is how the app notices that a
 project being opened is already in the workspace.
 
+A backup can be at most 50 MB, the largest file the app opens.
+`writeProjectBundle` checks the size of the finished `.zip`, which adds a few
+bytes for each file name, and refuses the download with a message when it is
+larger.
+
 ### Item folders
 
 Each assistant or skill is one Agent Skill folder named after its skill name.
@@ -447,8 +460,21 @@ caveman/
   LICENSE.txt      The full GPL v3 text for the default license, or a short notice.
   README.md        Skill .zip and plain skill only: name, description, creator, how to use the file, and the conversion report.
   SETUP.md         Skill .zip and plain skill only, when a tool needs setup.
-  references/      Attached files, when there are any, under their real names.
+  references/      Attached files, when there are any, under their own names.
 ```
+
+File and folder names keep letters, digits, and punctuation from any
+language, stored in composed Unicode form (NFC). `cleanNamePart` puts a space
+in place of control characters, invisible formatting characters, the
+characters Windows reserves (`< > : " | ? *`), and any character another
+program could turn into a folder slash. It removes trailing dots and spaces, as
+Windows does, and adds `_` after a Windows device name, so `aux.md` becomes
+`aux_.md`. `fitNameLength` cuts each part to 120 characters and 240 bytes of
+UTF-8 and keeps a short extension, because Linux and Mac file systems allow
+255 bytes for a name. Each kept file whose name changed is named in a
+notice, such as
+"Renamed references/notes: draft.md to references/notes draft.md, so the name
+is safe to use on any computer."
 
 A skill brought in from elsewhere keeps its own `LICENSE.txt` and `README.md`,
 and keeps its other files in their own folders, such as `scripts/`, when they
