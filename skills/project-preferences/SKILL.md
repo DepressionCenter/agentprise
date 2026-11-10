@@ -170,10 +170,11 @@ Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   NFC form, puts a space in place of control and formatting characters, the
   characters Windows reserves, and anything that could read as a folder slash,
   removes trailing dots and spaces, and adds `_` after a Windows device name.
-  `renamedFilesNotice` names each kept file whose name changed. Program checks
-  read names in NFKC form. In a skill folder from elsewhere, a UTF-8 text
-  file under `scripts/` is
-  kept whatever its type (`isTextScript`), and any other file of a type the app
+  `fitNameLength` cuts each part to 120 characters and 240 UTF-8 bytes and
+  keeps a short extension. `renamedFilesNotice` names each kept file whose
+  name changed. Program checks read names in NFKC form. In a skill folder from
+  elsewhere, a UTF-8 text file under `scripts/` is kept whatever its type
+  (`isTextScript`), and any other file of a type the app
   doesn't accept stays in the backup only, with a notice on opening and a line
   in each download's conversion report (`backupOnlyFiles`).
 - Every Copilot source is a switch in `copilot` with an optional list that

@@ -2310,8 +2310,12 @@ function cleanMeetingItem(value) {
 // Windows can't save a file under a device name, such as CON or aux.txt, so
 // such a name gets "_" after the device part.
 const WINDOWS_DEVICE_NAME = /^(con|prn|aux|nul|com[0-9\u00b9\u00b2\u00b3]|lpt[0-9\u00b9\u00b2\u00b3])(\.|$)/i;
-// The most characters kept in one part of a file name.
+// The most characters, and UTF-8 bytes, kept in one part of a file name.
+// Linux and Mac file systems allow 255 bytes, and a Chinese character takes
+// 3, so the byte limit matters for names that aren't in English. The margin
+// leaves room for the "_" or ".txt" that a download can add.
 const NAME_PART_LIMIT = 120;
+const NAME_PART_BYTES = 240;
 
 /**
  * One character of a file name, or a space in its place. Control characters
@@ -2344,12 +2348,39 @@ function cleanNamePart(part, dropLeadingDots) {
     if (dropLeadingDots) {
         safe = safe.replace(/^[. ]+/, "");
     }
-    safe = Array.from(safe).slice(0, NAME_PART_LIMIT).join("").replace(/[. ]+$/, "");
+    safe = fitNameLength(safe.replace(/[. ]+$/, ""));
     // Another program may read a dot leader, such as "\u2025", as "..", which would leave the folder.
     if (!safe.normalize("NFKC").replace(/[. ]+$/, "")) {
         return "";
     }
     return safe.replace(WINDOWS_DEVICE_NAME, "$1_$2");
+}
+
+/**
+ * A name cut to NAME_PART_LIMIT characters and NAME_PART_BYTES bytes of
+ * UTF-8. A short extension, such as ".txt", stays, so the file keeps its type.
+ * @param {string} name one part of a file name
+ * @returns {string} with no trailing dots or spaces
+ */
+function fitNameLength(name) {
+    if (Array.from(name).length <= NAME_PART_LIMIT && toBytes(name).length <= NAME_PART_BYTES) {
+        return name;
+    }
+    const dot = name.lastIndexOf(".");
+    const extension = dot > 0 && name.length - dot <= 16 ? name.slice(dot) : "";
+    let characters = NAME_PART_LIMIT - Array.from(extension).length;
+    let bytes = NAME_PART_BYTES - toBytes(extension).length;
+    const kept = [];
+    for (const character of Array.from(extension ? name.slice(0, dot) : name)) {
+        const size = toBytes(character).length;
+        if (characters < 1 || size > bytes) {
+            break;
+        }
+        kept.push(character);
+        characters -= 1;
+        bytes -= size;
+    }
+    return (kept.join("").replace(/[. ]+$/, "") + extension).replace(/[. ]+$/, "");
 }
 
 /** The last part of an untrusted name, after any slash or backslash. */

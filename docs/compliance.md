@@ -370,8 +370,11 @@ Evidence: `readTeamsArchive`, `packagePath`, `packageRelativePath`,
   spaces. Trailing dots and spaces are removed, as Windows removes them, so
   `setup.msi .` is checked as `setup.msi`. A Windows device name, such as
   `CON` or `aux.txt`, gets `_` after its device part, and a folder name that
-  could read as `..` is refused. Each kept file whose name changed is named in
-  a notice with its new name. Evidence: `nameCharacter`, `cleanNamePart`, and
+  could read as `..` is refused. Each part of a name is cut to 120 characters
+  and 240 bytes of UTF-8, keeping a short extension such as `.txt`, because
+  Linux and Mac file systems allow 255 bytes and a Chinese character takes 3.
+  Each kept file whose name changed is named in a notice with its new name.
+  Evidence: `nameCharacter`, `cleanNamePart`, `fitNameLength`, and
   `renamedFilesNotice` in `index.html`, and `tests/file-names.test.mjs`.
 - A script tool gets a run command only when its path holds letters, digits,
   spaces, and `._()-/`. A character a shell could run, such as `$` or a

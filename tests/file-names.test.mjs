@@ -76,6 +76,19 @@ describe("file names", () => {
     assert.ok(many.notices.includes("Renamed 6 files so their names are safe to use on any computer: references/a:1.md to references/a 1.md, references/a:2.md to references/a 2.md, references/a:3.md to references/a 3.md, references/a:4.md to references/a 4.md, references/a:5.md to references/a 5.md, and 1 more file. If the steps or instructions name these files, update them."));
   });
 
+  test("a long name is cut to fit the byte limit of Linux and Mac file systems, keeps its type, and gets a notice", async () => {
+    const chinese = "\u6587".repeat(90);
+    const opened = await openSkill(["references/" + chinese + ".txt", "references/" + "a".repeat(130) + ".md"]);
+    const paths = opened.project.items[0].files.map((file) => file.path);
+    assert.deepEqual(paths, ["references/" + "\u6587".repeat(78) + ".txt", "references/" + "a".repeat(117) + ".md"]);
+    assert.ok(opened.notices.some((notice) => notice.includes("references/" + "\u6587".repeat(79) + " to references/" + "\u6587".repeat(78) + ".txt")), opened.notices.join("\n"));
+    // Each part of every name in the download fits in 255 bytes, the most a Linux or Mac file system allows.
+    const skillZip = await engine.exports.skillZip(opened.project, opened.project.items[0], "claude");
+    for (const entry of skillZip.entries) {
+      assert.ok(entry.name.split("/").every((part) => encode(part).length <= 255), entry.name);
+    }
+  });
+
   test("an attached file whose name ends in a dot keeps its type and gets a notice", () => {
     const result = engine.project.normalize({ items: [{ kind: "agent", name: "Helper", files: [{ name: "notes.txt.", bytes: encode("Notes.") }, { name: "plan:v2.txt", bytes: encode("Plan.") }] }] });
     assert.deepEqual(result.project.items[0].files.map((file) => file.path), ["references/notes.txt", "references/plan v2.txt"]);

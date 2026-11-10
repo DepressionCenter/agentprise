@@ -314,7 +314,8 @@ Files made elsewhere may need changes before you can use them:
 - File names stay as they are, including letters with accents and most
   punctuation. If a name has a character that some computers can't use in file
   names, such as `:` or `?`, the app puts a space in its place. A name that
-  ends in a dot or a space loses them. A message names each file that changed,
+  ends in a dot or a space loses them, and a very long name is shortened but
+  keeps its type, such as `.txt`. A message names each file that changed,
   so you can update the steps or instructions that name it.
 - Programs are never kept, whatever the file calls them. Neither is a file or
   server address that looks like it holds a password, key, or token.

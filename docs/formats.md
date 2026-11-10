@@ -469,7 +469,10 @@ in place of control characters, invisible formatting characters, the
 characters Windows reserves (`< > : " | ? *`), and any character another
 program could turn into a folder slash. It removes trailing dots and spaces, as
 Windows does, and adds `_` after a Windows device name, so `aux.md` becomes
-`aux_.md`. Each kept file whose name changed is named in a notice, such as
+`aux_.md`. `fitNameLength` cuts each part to 120 characters and 240 bytes of
+UTF-8 and keeps a short extension, because Linux and Mac file systems allow
+255 bytes for a name. Each kept file whose name changed is named in a
+notice, such as
 "Renamed references/notes: draft.md to references/notes draft.md, so the name
 is safe to use on any computer."
 
