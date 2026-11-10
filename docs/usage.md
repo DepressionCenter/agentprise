@@ -287,7 +287,14 @@ Files made elsewhere may need changes before you can use them:
 
 - Some plugins carry parts Agentprise does not understand, such as hooks,
   commands, or agents folders. The app keeps them with the project and puts
-  them back only in the backup. It never reads or runs them.
+  them back only in the backup. It never reads or runs them. If one of these
+  files looks like it holds a password, key, or token, the app leaves it out,
+  and a message names the file.
+- A plugin's tool server settings, such as `.mcp.json` or a file its
+  `plugin.json` names, are read into **Tool connections**. Settings that can
+  hold passwords, such as `env`, are not kept. If the app can't read the
+  file, for example because it has a comment in it, a message says so. Fix
+  the file and open the plugin again, or add the tool servers yourself.
 - A Microsoft 365 app package can hold parts Agentprise can't use, such as a
   local plugin. A message names each one, and the backup keeps its file in a
   folder called `microsoft-package`. The

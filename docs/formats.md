@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/formats.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-05
+Last Modified: 2026-11-10
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
          need: field mappings, tools, conversion reports, and vendor facts
@@ -325,9 +325,20 @@ A Microsoft 365 app package opens like this:
 Plugins sometimes include hooks, commands, agents folders, or other files
 Agentprise does not understand. The app keeps them with the project and writes
 them back only into the backup. It never reads or runs them, and it never
-keeps a program. A skill or plugin that names no license opens with the
+keeps a program. It also leaves out any of these files that looks like it
+holds a password, key, or token, with the same check as a Microsoft 365 app
+package. A file that isn't text, such as a data file, can't be checked, so
+the app keeps it. A skill or plugin that names no license opens with the
 license "Not stated" and a note, so you can check with its author before you
 share it.
+
+A plugin's tool servers come from its `.mcp.json` (`mcp.json` in the Agent
+Plugins format). A Claude or Codex `plugin.json` can also list them in
+`mcpServers`, either written out or as the path of another file, such as
+`"mcpServers": "./servers.json"`, or a list of such paths. The app reads
+every one of these files as tool server settings and doesn't keep the file
+itself, so `env` values never reach the backup. A file that isn't valid JSON,
+such as one with a comment or a trailing comma, is left out with a message.
 
 A skill keeps its own tool server settings when a plugin has a server with
 the same name. If the settings differ, the plugin's server gets a numbered
@@ -1066,10 +1077,14 @@ unrecognized files under `microsoft-package/` with the note "From a Microsoft
 part of the backup structure when it opens again. Every text file the
 importer would keep, whether as a skill file, an API description, an attached
 file, or a kept file, first goes through `holdsCredential`, which looks for a
-key, token, or password in a query string, a JSON value, or a bearer header
-(`CREDENTIAL_TEXT_PATTERN`), and on a YAML or settings line such as
-`client_secret: abc123` or `export EXAMPLE_API_KEY=abc123`
-(`CREDENTIAL_LINE_PATTERN`). A line whose value names a key kept elsewhere,
+key, token, or password in a query string (`CREDENTIAL_QUERY_TEXT_PATTERN`),
+a JSON value, or a bearer header (`CREDENTIAL_TEXT_PATTERN`), on a YAML or
+settings line such as `client_secret: abc123`, `githubToken: abc123`, or
+`export EXAMPLE_API_KEY=abc123` (`CREDENTIAL_LINE_PATTERN`), and in a
+connection string such as `Server=db.example.org;Password=abc123;`
+(`connectionStringHoldsCredential`). Key names can have words in front,
+joined by `_`, `-`, or a change to a capital letter (`credentialNameSource`).
+A line whose value names a key kept elsewhere,
 such as `${CLIENT_SECRET}`, `%CLIENT_SECRET%`, `{{ secrets.token }}`,
 `<EXAMPLE_API_KEY>`, the YAML alias `*secret`, or the YAML anchor `&secret`,
 is not a match. Neither is a line whose value is only `true`, `false`, `yes`,

@@ -2,7 +2,7 @@
 // tests/microsoft-package.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-21
-// Last Modified: 2026-11-05
+// Last Modified: 2026-11-10
 // Summary: Opens Microsoft 365 app packages through the importer the app uses
 //          for dropped files: this app's own package with three actions, and
 //          synthetic packages with an assistant, skills only, connectors only,
@@ -1259,6 +1259,61 @@ describe("unsafe and broken packages", () => {
     }
     assert.equal(everythingShown(project, notices).includes(SECRET), false);
     assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+  });
+
+  test("camelCase key names, longer key names, and passwords in connection strings are caught, while references and similar words stay", async () => {
+    const unsafe = [
+      { name: "config/unsafe0.json", text: '{"authToken": "' + SECRET + '"}' },
+      { name: "config/unsafe1.yaml", text: "githubToken: " + SECRET + "\n" },
+      { name: "config/unsafe2.json", text: '{"settings": {"openaiApiKey": "' + SECRET + '"}}' },
+      { name: "config/unsafe3.env", text: "export dbPassword=" + SECRET + "\n" },
+      { name: "config/unsafe4.txt", text: "See https://api.example.org/v1?userToken=" + SECRET + "\n" },
+      { name: "config/unsafe5.ini", text: "aws_secret_access_key = " + SECRET + "\n" },
+      { name: "config/unsafe6.py", text: "SECRET_KEY = '" + SECRET + "'\n" },
+      { name: "config/unsafe7.xml", text: "<settings><AccountKey>" + SECRET + "</AccountKey></settings>\n" },
+      { name: "config/unsafe8.yaml", text: "auth: {sessionToken: " + SECRET + "}\n" },
+      { name: "config/unsafe9.yaml", text: "AWSSecretKey: " + SECRET + "\n" },
+      { name: "config/appsettings.json", text: '{"ConnectionStrings": {"Study": "Server=db.example.org;Database=study;User Id=svc_example;Password=' + SECRET + ';"}}' },
+      { name: "config/web.config", text: '<configuration><connectionStrings><add name="Study" connectionString="Server=db.example.org;Password=' + SECRET + ';" /></connectionStrings></configuration>\n' },
+      { name: "config/storage.txt", text: "DefaultEndpointsProtocol=https;AccountName=example;AccountKey=" + SECRET + "==;EndpointSuffix=core.windows.net\n" },
+      { name: "config/bus.txt", text: "Endpoint=sb://example.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=" + SECRET + "\n" },
+      { name: "config/jdbc.txt", text: "jdbc:sqlserver://db.example.org;user=svc_example;password=" + SECRET + "\n" },
+    ];
+    const safe = [
+      { name: "config/safe0.json", text: '{"authToken": "${AUTH_TOKEN}", "tokenizer": "words", "secretary": "Example Person", "monkey": "banana"}' },
+      { name: "config/safe1.json", text: '{"ConnectionStrings": {"Study": "Server=db.example.org;Database=study;Password=${DB_PASSWORD};"}}' },
+      { name: "config/safe2.config", text: '<add name="Study" connectionString="Server=db.example.org;Integrated Security=true;Password=;" />\n' },
+      { name: "config/safe3.cs", text: 'var text = string.Format("Server={0};Password={1};", host, password);\n' },
+      { name: "config/safe4.yaml", text: "paths:\n  /items:\n    get:\n      security:\n        - apiKey: []\n        - api_key: []\n" },
+      { name: "config/safe5.yaml", text: "security: [{apiKey: []}, {oauthToken: []}]\n" },
+      { name: "config/safe6.html", text: '<button accesskey="s">Save</button> <button accessKey="c">Cancel</button>\n' },
+      { name: "config/safe7.sh", text: "PWD=/tmp\nexport PWD\n" },
+    ];
+    const entries = skillOnlyEntries();
+    [...unsafe, ...safe].forEach((file) => entries.push({ name: file.name, bytes: encode(file.text) }));
+    const { project, notices } = await openPackage(entries);
+    const { project: again, backup } = await backupRoundTrip(project);
+    for (const result of [project, again]) {
+      assert.deepEqual(result.unrecognized.filter((entry) => unsafe.some((file) => "microsoft-package/" + file.name === entry.path)).map((entry) => entry.path), []);
+      for (const source of safe) {
+        assert.ok(result.unrecognized.some((entry) => entry.path === "microsoft-package/" + source.name), source.name);
+      }
+    }
+    assert.ok(notices.some((n) => n.startsWith("Left out " + unsafe.length + " files that look like they hold a password, key, or token:")));
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false);
+  });
+
+  test("a long name in camelCase or capitals is checked quickly", async () => {
+    // A name pattern that could split these runs into words in more than one way takes minutes to give up on them.
+    const texts = ["aB".repeat(200000) + ": x\n", "ABc".repeat(150000) + ": x\n", "{" + "aB".repeat(200000) + ": x}", "?" + "aB".repeat(200000) + "=x"];
+    const entries = skillOnlyEntries();
+    texts.forEach((text, index) => entries.push({ name: "config/name" + index + ".txt", bytes: encode(text) }));
+    const started = Date.now();
+    const { project } = await openPackage(entries);
+    // Generous limit, as in the test of long runs of tag characters.
+    assert.ok(Date.now() - started < 5000, "Opening took " + (Date.now() - started) + " ms");
+    assert.equal(project.unrecognized.filter((entry) => entry.path.startsWith("microsoft-package/config/name")).length, texts.length);
   });
 
   test("a large binary file is kept when only unrelated bytes would spell a credential", async () => {
