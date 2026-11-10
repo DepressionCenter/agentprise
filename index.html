@@ -133,6 +133,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         a:hover { text-decoration-thickness: 2px; }
         code { font-family: var(--mono); font-size: 0.9em; }
         :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+        /* A file picker is a hidden file control after a label styled as a
+           button, so the label shows the outline while the control has focus. */
+        .button:has(+ input[type=file]:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
         .visually-hidden {
             position: absolute !important;
             width: 1px; height: 1px;
@@ -882,7 +885,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         <main id="main" tabindex="-1">
             <div class="status-bar" id="status" role="status" aria-live="polite"></div>
             <label for="file-input" class="visually-hidden">File to open: a backup, plugin, or skill .zip, a .agent file, or a SKILL.md file</label>
-            <input type="file" id="file-input" class="visually-hidden" accept=".agent,.zip,.md,application/zip,application/json,text/markdown">
+            <input type="file" id="file-input" class="visually-hidden" tabindex="-1" accept=".agent,.zip,.md,application/zip,application/json,text/markdown">
 
             <!-- ### Workspace ### -->
             <section id="view-workspace" class="view" aria-labelledby="workspace-heading">
@@ -1010,7 +1013,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                                 <img class="icon-preview" id="icon-preview" alt="Current picture" src="">
                                                 <div class="button-row">
                                                     <label class="button" for="icon-input"><span class="bi bi-image" aria-hidden="true"></span>Choose an image</label>
-                                                    <input type="file" id="icon-input" class="visually-hidden" accept="image/png,image/jpeg" aria-describedby="icon-hint">
+                                                    <input type="file" id="icon-input" class="visually-hidden" accept="image/png,image/jpeg" aria-describedby="icon-hint icon-error">
                                                     <button type="button" id="icon-remove"><span class="bi bi-arrow-counterclockwise" aria-hidden="true"></span>Use the default</button>
                                                 </div>
                                             </div>
@@ -1038,7 +1041,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                             <ul class="item-list" id="file-items" aria-label="Attached files"></ul>
                                             <div class="button-row">
                                                 <label class="button" for="file-add"><span class="bi bi-paperclip" aria-hidden="true"></span>Add files</label>
-                                                <input type="file" id="file-add" class="visually-hidden" multiple aria-describedby="file-add-hint">
+                                                <input type="file" id="file-add" class="visually-hidden" multiple aria-describedby="file-add-hint file-add-error">
                                             </div>
                                             <p class="error-text" id="file-add-error" hidden></p>
                                         </fieldset>
@@ -9638,7 +9641,16 @@ function viewFromHash(hash) {
     return LEGACY_HASHES[name] || "workspace";
 }
 
-function showView(name, moveFocus) {
+/**
+ * Shows one page of the app and puts its name in the address.
+ * @param {string} name one of VIEW_NAMES; the editor and Inspect show the
+ *     Workspace when no project is open
+ * @param {boolean} moveFocus moves keyboard focus to the page's heading, so
+ *     screen readers read it
+ * @param {boolean} [replaceAddress] changes the address without adding a page
+ *     to the browser history, for the first load and for Back and Forward
+ */
+function showView(name, moveFocus, replaceAddress) {
     if (VIEW_NAMES.indexOf(name) < 0) {
         name = "workspace";
     }
@@ -9661,7 +9673,13 @@ function showView(name, moveFocus) {
     });
     $("details-back").hidden = name !== "details";
     if (location.hash !== "#" + name) {
-        history.pushState(null, "", "#" + name);
+        // Adding a page here on Back would undo the Back, so the person
+        // could never leave the app with Back.
+        if (replaceAddress) {
+            history.replaceState(null, "", "#" + name);
+        } else {
+            history.pushState(null, "", "#" + name);
+        }
     }
     if (name === "workspace") {
         renderWorkspace();
@@ -9722,10 +9740,19 @@ function renderBreadcrumb() {
     });
 }
 
+/** True for an address part that names a page, such as "help" or "home". */
+function namesView(name) {
+    return VIEW_NAMES.indexOf(name) >= 0 || Object.prototype.hasOwnProperty.call(LEGACY_HASHES, name);
+}
+
 function setupNavigation() {
+    // Back and Forward move focus to the heading, as the menu links do, so
+    // screen readers say which page is now showing. An address that names no
+    // page, such as #main, keeps the page that is open.
     window.addEventListener("popstate", function () {
+        const name = location.hash.replace("#", "");
         announce("");
-        showView(viewFromHash(location.hash), false);
+        showView(!name || namesView(name) ? viewFromHash(name) : ui.view, true, true);
     });
     document.addEventListener("click", function (event) {
         const link = event.target.closest("a[href^='#']");
@@ -9733,7 +9760,14 @@ function setupNavigation() {
             return;
         }
         const target = link.getAttribute("href").slice(1);
-        if (VIEW_NAMES.indexOf(target) >= 0 || LEGACY_HASHES[target]) {
+        // The skip link moves focus into the page that is open; the address
+        // and the page stay the same.
+        if (target === "main") {
+            event.preventDefault();
+            $("main").focus();
+            return;
+        }
+        if (namesView(target)) {
             event.preventDefault();
             announce("");
             showView(viewFromHash(target), true);
@@ -11005,9 +11039,15 @@ const CHECKBOX_KEYS = ["webSearch", "sharepoint", "teamsMessages", "email", "mee
 const SCOPE_BOXES = { webSearch: "f-websites", sharepoint: "f-sharepoint", teamsMessages: "f-teams", email: "f-mailboxes" };
 const LINK_FIELDS = ["a-website", "a-privacy", "a-terms"];
 
-function showFieldError(id, message) {
+/**
+ * Shows or clears the error under a field and marks its control invalid.
+ * @param {string} id the error's element is id plus "-error"
+ * @param {string} message "" clears the error
+ * @param {string} [controlId] the control to mark, when its id isn't id
+ */
+function showFieldError(id, message, controlId) {
     const error = $(id + "-error");
-    const input = $(id);
+    const input = $(controlId || id);
     if (!error) {
         return;
     }
@@ -11318,9 +11358,10 @@ function renderForm() {
     select.value = known ? project.license : "other";
     $("a-license-other-wrap").hidden = known;
     $("a-license-other").value = known ? "" : project.license;
-    ["d-name", "d-description", "d-instructions", "d-starters", "f-sharepoint", "f-websites", "f-teams", "f-mailboxes", "file-add", "a-website", "a-privacy", "a-terms", "a-version", "icon"].forEach(function (id) {
+    ["d-name", "d-description", "d-instructions", "d-starters", "f-sharepoint", "f-websites", "f-teams", "f-mailboxes", "file-add", "a-website", "a-privacy", "a-terms", "a-version"].forEach(function (id) {
         showFieldError(id, "");
     });
+    showFieldError("icon", "", "icon-input");
     updateDerived();
 }
 
@@ -11380,12 +11421,26 @@ function syncScopeBoxes() {
 }
 
 /**
+ * Moves focus after a Remove button rebuilds its list, so a keyboard user
+ * stays in the list: to the Remove button now in the same row, to the row
+ * before it when the last row went, or to fallback when the list is empty.
+ * @param {HTMLElement} list the rebuilt list
+ * @param {number} index the row that was removed
+ * @param {HTMLElement} fallback a control near the list
+ */
+function focusAfterRemove(list, index, fallback) {
+    const buttons = list.querySelectorAll("button");
+    (buttons[Math.min(index, buttons.length - 1)] || fallback).focus();
+}
+
+/**
  * A read-only list of file-only entries with Remove; hidden when empty.
  * @param {string} listId the wrapper is listId plus "-wrap"
  * @param {Array<{text: string, kind: string, label: string}>} rows label names the Remove button
  * @param {function(number): void} remove drops the row at an index
+ * @param {string} emptyFocusId the switch for this source, focused when the last row is removed
  */
-function renderFileItems(listId, rows, remove) {
+function renderFileItems(listId, rows, remove, emptyFocusId) {
     const list = $(listId);
     clearChildren(list);
     $(listId + "-wrap").hidden = rows.length === 0;
@@ -11395,6 +11450,7 @@ function renderFileItems(listId, rows, remove) {
             remove(index);
             renderForm();
             scheduleSave();
+            focusAfterRemove(list, index, $(emptyFocusId));
             announce("Removed " + row.label + ".");
         });
         list.appendChild(el("li", {}, [el("span", { className: "item-text", text: row.text }), el("span", { className: "item-kind", text: row.kind }), button]));
@@ -11417,7 +11473,7 @@ function renderEmailItems() {
         } else {
             copilot.emailFolders.splice(row.index, 1);
         }
-    });
+    }, "c-email");
 }
 
 /** Meeting ids are opaque, so Remove buttons count them. */
@@ -11426,7 +11482,7 @@ function renderMeetingItems() {
     const rows = items.map(function (item, index) {
         return { text: "Meeting " + (index + 1) + (item.is_series ? " (series)" : ""), kind: "ID " + item.id.slice(0, 12) + "...", label: "meeting " + (index + 1) + " of " + items.length };
     });
-    renderFileItems("meeting-items", rows, function (at) { items.splice(at, 1); });
+    renderFileItems("meeting-items", rows, function (at) { items.splice(at, 1); }, "c-meetings");
 }
 
 function renderSharepointItems() {
@@ -11435,7 +11491,7 @@ function renderSharepointItems() {
         const text = entry.name || entry.url || "SharePoint item stored by ID";
         return { text: text, kind: entry.type || (entry.by === "id" ? "File" : "Link"), label: text };
     });
-    renderFileItems("sharepoint-items", rows, function (at) { item.sharepointItems.splice(at, 1); });
+    renderFileItems("sharepoint-items", rows, function (at) { item.sharepointItems.splice(at, 1); }, "c-sharepoint");
 }
 
 /** Files and sizes with Remove; an assistant's are listed by name. */
@@ -11451,6 +11507,7 @@ function renderFiles() {
             renderFiles();
             updateDerived();
             scheduleSave();
+            focusAfterRemove(list, index, $("file-add"));
             announce("Removed " + label + ".");
         });
         list.appendChild(el("li", {}, [el("span", { className: "item-text", text: label }), el("span", { className: "item-kind", text: formatSize(file.bytes.length) }), remove]));
@@ -11502,7 +11559,10 @@ async function addFiles(fileList) {
     renderFiles();
     updateDerived();
     scheduleSave();
-    announce(added > 0 ? "Added " + countOf(added, "file", "files") + "." : "No files were added.", added === 0);
+    // The reasons are read aloud too, since the text under the button isn't.
+    // A message that nothing was added stays until the next one.
+    const outcome = added > 0 ? "Added " + countOf(added, "file", "files") + "." : "Didn't add any files.";
+    announce([outcome].concat(notices).join(" "), added === 0);
 }
 
 function readStartersField() {
@@ -11654,12 +11714,13 @@ function setupForm() {
         }
         try {
             currentItem().icon = await iconFromUpload(file);
-            showFieldError("icon", "");
+            showFieldError("icon", "", "icon-input");
             updateDerived();
             scheduleSave();
             announce("Picture updated.");
         } catch (error) {
-            showFieldError("icon", error.message);
+            showFieldError("icon", error.message, "icon-input");
+            announce(error.message, true);
         }
     });
     $("icon-remove").addEventListener("click", function () {
@@ -11668,7 +11729,7 @@ function setupForm() {
             return;
         }
         item.icon = null;
-        showFieldError("icon", "");
+        showFieldError("icon", "", "icon-input");
         updateDerived();
         scheduleSave();
         announce("The default picture will be used.");
@@ -12900,7 +12961,8 @@ async function initApp() {
     if ((view === "project" || view === "details") && prefs.lastOpenedProjectId) {
         await openProject(prefs.lastOpenedProjectId, false);
     }
-    showView(view, false);
+    // The first page replaces the address, so Back leaves the app.
+    showView(view, false, true);
     renderStrip();
 }
 
