@@ -133,6 +133,10 @@ Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   out. Plugin and skill imports pass `checkKeptFiles` to `normalizeProject`,
   so a backup-only file that `holdsCredential` matches is left out; a file
   that isn't text is kept unchecked. A version 1 bundle opens as a plain skill.
+  `zipRead` reads a backslash in a name as a folder slash, as
+  `Compress-Archive` writes it, before the name checks. `importProject`
+  returns an error for any unexpected failure, and readers use a value from a
+  file only when it has the expected type.
 - A Microsoft 365 app package opens through `readTeamsArchive` as a whole
   project: every declarative agent is an assistant, actions become tools,
   `agent_skills` and root `agentSkills` become skills, and root
@@ -161,8 +165,14 @@ Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   are allowed; the Copilot app package writes them as `name.ext.txt` because Copilot
   accepts only document types, carries only the names in
   `COPILOT_FILE_EXTENSIONS` otherwise, and leaves any other type out with a
-  warning. The skill download and the backup keep every file under its real
-  name. In a skill folder from elsewhere, a UTF-8 text file under `scripts/` is
+  warning. The skill download and the backup keep each file's name:
+  `cleanNamePart` keeps letters, digits, and punctuation from any language in
+  NFC form, puts a space in place of control and formatting characters, the
+  characters Windows reserves, and anything that could read as a folder slash,
+  removes trailing dots and spaces, and adds `_` after a Windows device name.
+  `renamedFilesNotice` names each kept file whose name changed. Program checks
+  read names in NFKC form. In a skill folder from elsewhere, a UTF-8 text
+  file under `scripts/` is
   kept whatever its type (`isTextScript`), and any other file of a type the app
   doesn't accept stays in the backup only, with a notice on opening and a line
   in each download's conversion report (`backupOnlyFiles`).
@@ -187,7 +197,12 @@ Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   preferences}`. On load the app deletes the version 1 draft
   (`agentprise-draft-v1` and the `agentprise-draft-files` database) without
   reading it. Stored records are normalized like any file. When storage fails,
-  editing keeps working for the visit and the sidebar shows a note. A save
+  editing keeps working for the visit and the sidebar shows a note. The first
+  failed save of each project also shows an error (`announceFailedSave`), a
+  failed save forgets which of the project's files are stored
+  (`forgetSavedFiles`), and a save that works shows the usual note again
+  (`storageWorks`). A backup is refused when the finished `.zip` would pass
+  `LIMITS.zipTotalBytes`. A save
   writes only when the stored record's `modified` still matches the one the
   tab last loaded or saved (`ui.storedModified`), checked in the same
   transaction, and tabs announce saves and deletes on the `BroadcastChannel`

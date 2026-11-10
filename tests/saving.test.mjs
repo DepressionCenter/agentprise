@@ -3,10 +3,11 @@
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-11-05
 // Last Modified: 2026-11-10
-// Summary: Tests when the editor saves a project to browser storage, and that
-//          a tab with an older copy of a project never overwrites a newer
-//          one. Uses the real save code taken from index.html, with a small
-//          in-memory stand-in for the browser database shared by the tabs.
+// Summary: Tests when the editor saves a project to browser storage, that a
+//          failed save is reported and written again, and that a tab with an
+//          older copy of a project never overwrites a newer one. Uses the real
+//          save code taken from index.html, with a small in-memory stand-in
+//          for the browser database shared by the tabs.
 // Notes: See README file for documentation and full license information.
 //
 // Copyright © 2026 The Regents of the University of Michigan
@@ -43,28 +44,44 @@ function slice(startMarker, endMarker) {
 }
 
 // The save code is not exposed on the engine namespace. The first part runs
-// from savedBytes to deleteStoredProject, the second from recordFingerprint to
-// scheduleSave, and the third is renameProject.
-const SAVE_CODE = slice("// Bytes last written per key", "async function deleteStoredProject") + slice("/** The record minus its modified time", "function scheduleSave()") + slice("/** Renames a stored project, or the open one. */", "async function projectForCard");
+// from storageBlocked to removeLegacyStorage, the second from savedBytes to
+// deleteStoredProject, the third from recordFingerprint to scheduleSave, and
+// the fourth is renameProject.
+const SAVE_CODE = slice("function storageBlocked()", "/** Deletes the version 1 draft") + slice("// Bytes last written per key", "async function deleteStoredProject") + slice("/** The record minus its modified time", "function scheduleSave()") + slice("/** Renames a stored project, or the open one. */", "async function projectForCard");
 const STALE = JSON.parse(page.match(/const STALE_TAB_MESSAGE = (".*?");/)[1]);
+const failedSave = (name) => "Agentprise couldn't save " + name + ", because this browser's storage is full or blocked. This tab keeps the project until you close the tab. To keep the project after that, download a backup.";
 
 /**
  * A stand-in for the two IndexedDB stores. Each request answers on a later
  * microtask, a transaction ends once its requests are done, and read-write
  * transactions run one at a time in the order they start, as in IndexedDB.
- * Setting failNext makes the next transaction fail, as when storage is full.
+ * Setting failNext makes the next transaction fail before it starts, as when
+ * storage is blocked. Setting abortNext makes it fail after its writes, which
+ * are then undone, as when storage fills up during a save.
  */
 function memoryDatabase() {
   const stores = { projects: new Map(), files: new Map() };
   const inRange = (key, range) => typeof range === "object" ? key.startsWith(range.prefix) : key === range;
   let queue = Promise.resolve();
-  const database = { stores, withStores, failNext: false };
+  const database = { stores, withStores, failNext: false, abortNext: false };
   function withStores(names, mode, work) {
     if (database.failNext) {
       database.failNext = false;
       return Promise.reject(new Error("The storage is full."));
     }
-    const run = () => new Promise((resolve) => {
+    const abort = database.abortNext;
+    database.abortNext = false;
+    const run = () => new Promise((resolve, reject) => {
+      const before = { projects: new Map(stores.projects), files: new Map(stores.files) };
+      const finish = () => setTimeout(() => {
+        if (!abort) {
+          resolve(result);
+          return;
+        }
+        stores.projects = before.projects;
+        stores.files = before.files;
+        reject(new Error("The storage is full."));
+      }, 0);
       let pending = 0;
       const request = (answer) => {
         const holder = { onsuccess: null, result: undefined };
@@ -73,7 +90,7 @@ function memoryDatabase() {
           holder.result = answer();
           if (holder.onsuccess) holder.onsuccess();
           pending -= 1;
-          if (pending === 0) setTimeout(() => resolve(result), 0);
+          if (pending === 0) finish();
         });
         return holder;
       };
@@ -86,10 +103,12 @@ function memoryDatabase() {
         }),
       };
       const result = work(transaction);
-      if (pending === 0) setTimeout(() => resolve(result), 0);
+      if (pending === 0) finish();
     });
-    queue = queue.then(run);
-    return queue;
+    // A failed transaction doesn't stop the ones queued after it.
+    const done = queue.then(run);
+    queue = done.catch(() => {});
+    return done;
   }
   return database;
 }
@@ -100,9 +119,9 @@ let clock = Date.UTC(2026, 0, 1);
 function tab(database, project, storedModified = "") {
   const messages = [];
   const posted = [];
-  const status = { textContent: "" };
+  const elements = { status: { textContent: "" }, "storage-note-ok": { hidden: false }, "storage-note": { hidden: true } };
   const sandbox = {
-    ui: { project, savedRecord: "", saveTimer: 0, storedModified, replaceStored: false, staleTab: false, saving: null, memoryStored: new Map(), memoryProjects: new Map(), channel: { postMessage: (data) => posted.push(data) } },
+    ui: { project, savedRecord: "", saveTimer: 0, storedModified, replaceStored: false, staleTab: false, saving: null, memoryStored: new Map(), memoryProjects: new Map(), failedSaves: new Set(), storageOk: true, channel: { postMessage: (data) => posted.push(data) } },
     withStores: database.withStores,
     projectFileRange: (id) => ({ prefix: id + "/" }),
     projectRecord: engine.project.record,
@@ -110,10 +129,9 @@ function tab(database, project, storedModified = "") {
     projectHasContent: (candidate) => candidate.items.length > 0,
     fileTypeOf: (path) => path.split(".").pop(),
     isPlainObject: (value) => value !== null && typeof value === "object" && !Array.isArray(value),
-    storageBlocked() {},
     STALE_TAB_MESSAGE: STALE,
-    announce: (message) => { messages.push(message); status.textContent = message; },
-    $: () => status,
+    announce: (message) => { messages.push(message); elements.status.textContent = message; },
+    $: (id) => elements[id],
     clearTimeout() {},
     rememberOpened() {},
     refreshProjectList: async () => {},
@@ -132,7 +150,9 @@ function tab(database, project, storedModified = "") {
     sandbox.ui.savedRecord = sandbox.recordFingerprint(project);
     engine.project.payloads(project).forEach((payload) => sandbox.savedBytes.set(project.id + "/" + payload.key, payload.bytes));
   }
-  return { ui: sandbox.ui, saveNow: sandbox.result, renameProject: sandbox.renameProject, markTabStale: sandbox.markTabStale, messages, posted };
+  // Which sidebar note shows: "ok" or "blocked".
+  const storageNote = () => elements["storage-note"].hidden ? "ok" : "blocked";
+  return { ui: sandbox.ui, saveNow: sandbox.result, renameProject: sandbox.renameProject, markTabStale: sandbox.markTabStale, messages, posted, storageNote };
 }
 
 /** A copy of the stored project, as another tab would load it. */
@@ -174,6 +194,35 @@ describe("saving a project", () => {
     project.items[0].files = [{ path: "references/notes.txt", bytes: encode("other") }];
     await one.saveNow();
     assert.equal(one.posted.length, 2);
+  });
+
+  test("a file replaced during a failed save is written by the next save, and the failure is reported once", async () => {
+    const database = memoryDatabase();
+    const project = helper([{ name: "notes.txt", bytes: encode("first") }]);
+    const one = tab(database, project);
+    await one.saveNow();
+    const key = project.id + "/" + project.items[0].id + "/references/notes.txt";
+    project.items[0].files = [{ path: "references/notes.txt", bytes: encode("other") }];
+    database.abortNext = true;
+    await one.saveNow();
+    assert.equal(await database.stores.files.get(key).blob.text(), "first", "the failed save stored nothing");
+    assert.deepEqual(one.messages, [failedSave("Team Helper")]);
+    assert.equal(one.storageNote(), "blocked");
+
+    // The next save runs although nothing else changed, as when the person leaves the project.
+    await one.saveNow();
+    assert.equal(await database.stores.files.get(key).blob.text(), "other");
+    assert.equal(one.storageNote(), "ok", "the usual note shows again once a save works");
+    assert.equal(one.ui.memoryProjects.has(project.id), false);
+
+    // Two failures in a row are reported once, and a failure after a save that worked is reported again.
+    project.items[0].instructions = "Changed once.";
+    database.abortNext = true;
+    await one.saveNow();
+    project.items[0].instructions = "Changed twice.";
+    database.failNext = true;
+    await one.saveNow();
+    assert.deepEqual(one.messages, [failedSave("Team Helper"), failedSave("Team Helper")]);
   });
 });
 
@@ -242,7 +291,7 @@ describe("the same project open in two tabs", () => {
     await one.saveNow();
     assert.equal(database.stores.projects.get(first.id).items[0].instructions, "Saved once storage works.");
     assert.equal(one.ui.memoryStored.has(first.id), false);
-    assert.deepEqual(one.messages, []);
+    assert.deepEqual(one.messages, [failedSave("Team Helper")]);
   });
 
   test("when the first of two overlapping saves fails, the second still saves", async () => {
@@ -253,7 +302,7 @@ describe("the same project open in two tabs", () => {
     first.items[0].instructions = "Step two.";
     await Promise.all([firstSave, one.saveNow()]);
     assert.equal(database.stores.projects.get(first.id).items[0].instructions, "Step two.");
-    assert.deepEqual(one.messages, []);
+    assert.deepEqual(one.messages, [failedSave("Team Helper")]);
   });
 
   test("a refused save of a project that is no longer open leaves the new project saving", async () => {

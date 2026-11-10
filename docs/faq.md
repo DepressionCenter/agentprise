@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/faq.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-23
+Last Modified: 2026-11-10
 Summary: The questions people ask about Agentprise, with the same answers the
          Help page inside the app gives, plus questions about tools, plugins,
          and what changes in each download.
@@ -115,7 +115,9 @@ Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the
 start of every file and refuses programs, including ones renamed to look like
 a document. Copilot accepts only document types, `.onepart`, and `.txt`, so a
 script is added as a `.txt` file with the same name, and a `.one` file is left
-out of the app package. The skill `.zip` keeps every file under its real name.
+out of the app package. The skill `.zip` and the backup keep each file's name.
+If a name has a character that some computers can't use, such as `:` or `?`,
+the app changes it and tells you.
 
 ### Where do links go?
 

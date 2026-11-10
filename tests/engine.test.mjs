@@ -2,7 +2,7 @@
 // tests/engine.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-09
-// Last Modified: 2026-10-11
+// Last Modified: 2026-11-10
 // Summary: Tests for the engine inside index.html: the agent model, validation,
 //          YAML frontmatter, ZIP reading and writing, and PNG header checks.
 // Notes: See README file for documentation and full license information.
@@ -444,10 +444,19 @@ describe("zip", () => {
   });
 
   test("rejects unsafe entry names", async () => {
-    for (const name of ["../evil.txt", "a/../../evil.txt", "/abs.txt", "dir\\file.txt", "C:/x.txt"]) {
+    for (const name of ["../evil.txt", "a/../../evil.txt", "/abs.txt", "C:/x.txt", "..\\evil.txt", "a\\..\\..\\evil.txt", "\\abs.txt", "C:\\x.txt"]) {
       const bytes = engine.zip.write([{ name, bytes: encode("x") }]);
       await assert.rejects(engine.zip.read(bytes), engine.zip.ZipError, name);
     }
+  });
+
+  test("reads a backslash in a name as a folder slash, as Windows PowerShell's Compress-Archive writes it", async () => {
+    const bytes = makeDeflatedZip([{ name: "report\\", bytes: new Uint8Array(0) }, { name: "report\\SKILL.md", bytes: encode("steps") }, { name: "report\\references\\notes.md", bytes: encode("notes") }]);
+    const entries = await engine.zip.read(bytes);
+    assert.deepEqual([...entries.keys()], ["report/SKILL.md", "report/references/notes.md"]);
+    // A name that differs only by the kind of slash is the same file.
+    const twice = makeDeflatedZip([{ name: "a/b.md", bytes: encode("one") }, { name: "a\\b.md", bytes: encode("two") }]);
+    await assert.rejects(engine.zip.read(twice), /two files with the same name/);
   });
 
   test("rejects a name listed twice", async () => {

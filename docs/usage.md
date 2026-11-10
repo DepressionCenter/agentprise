@@ -283,6 +283,10 @@ asks what to do:
   made to yours are lost.
 - **Cancel** leaves everything as it was.
 
+If a file is damaged in a way Agentprise can't read, a message says that the
+app couldn't open it. Try another copy, or ask the person who made the file to
+make it again.
+
 Files made elsewhere may need changes before you can use them:
 
 - Some plugins carry parts Agentprise does not understand, such as hooks,
@@ -307,6 +311,11 @@ Files made elsewhere may need changes before you can use them:
   A backup can keep at most 50 files that the app cannot use. If a Microsoft
   package needs more, Agentprise does not open it. Ask the package author to
   split it into smaller packages, then open each one.
+- File names stay as they are, including letters with accents and most
+  punctuation. If a name has a character that some computers can't use in file
+  names, such as `:` or `?`, the app puts a space in its place. A name that
+  ends in a dot or a space loses them. A message names each file that changed,
+  so you can update the steps or instructions that name it.
 - Programs are never kept, whatever the file calls them. Neither is a file or
   server address that looks like it holds a password, key, or token.
   Agentprise doesn't open a Microsoft package at all when its
@@ -499,6 +508,10 @@ Drop the backup on the Workspace page any time to keep working on the
 project, or to download it for another product. The backup is for Agentprise. To upload
 to Gemini or Claude, use their own **Download** buttons instead.
 
+A backup can be at most 50 MB, because that is the largest file Agentprise
+opens. If your project is larger, a message asks you to remove some large files
+first.
+
 ### Inspect each download
 
 Choose **Inspect** at the top of the project page or under **Workspace** on the
@@ -528,6 +541,12 @@ still make things and download them. A note on the left says that your
 projects will not be kept after you close the page, so download a backup
 before you leave. If you clear your browser data, your projects go with it, so
 keep a backup of anything you care about.
+
+If a save fails, for example because the browser's storage is full, a message
+names the project. The tab keeps your changes until you close it, so download
+a backup to keep them. Agentprise tries again each time you make a change.
+When a save works again, the note on the left goes back to "Your data never
+leaves this browser."
 
 ### Conclusion
 

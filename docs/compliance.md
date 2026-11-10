@@ -89,7 +89,22 @@ Known limits.
   recent list.
 - When storage is blocked or a save fails, editing and downloads keep working
   for the visit, and the sidebar says projects will not be kept after the page
-  closes and asks the person to download a backup.
+  closes and asks the person to download a backup. The first failed save of
+  each project also shows an error message that names the project. The
+  message shows again for that project only after one of its saves has
+  worked. A failed save marks none of the project's files as stored, so the
+  next save writes every file again, even when nothing else changed. Once a
+  save works, the sidebar shows its usual note again. Evidence:
+  `saveStoredProject`, `forgetSavedFiles`, `saveNow`, `announceFailedSave`,
+  and `storageWorks` in `index.html`, and `tests/saving.test.mjs`.
+- A backup is refused before it downloads when the finished `.zip` would be
+  larger than 50 MB, the most the app opens, because the `.zip` adds a few
+  bytes for each file name. **Download backup** and **Make a copy** on a
+  Workspace card show a message when they fail. The message repeats the
+  app's own reason, such as the size limit, but never the text of an
+  unexpected error. Evidence: `writeProjectBundle`, `backupStoredProject`,
+  `copyStoredProject`, and `failureReason` in `index.html`, and
+  `tests/opening.test.mjs`.
 - The app needs no deployment credentials or secret configuration files. The
   repository holds only made-up credentials, and its files hold no complete
   authorization header.
@@ -340,15 +355,43 @@ Evidence: `readTeamsArchive`, `packagePath`, `packageRelativePath`,
 - Programs are refused everywhere a file can arrive: attached files, files in
   a skill folder, and unrecognized files. A file with a program signature, a
   program extension, or a program extension hidden before its last extension
-  is left out with a notice. Paths with `..`, a leading slash, a backslash, or
-  a hidden folder are refused. Evidence: `cleanSkillFiles` and
-  `cleanArchivePath` in `index.html`.
-- The ZIP reader caps the entry count at 1,200, each entry at 10 MB, and the whole
-  archive at 50 MB. It rejects names containing `..`, a leading slash, a
-  backslash, or a drive letter; refuses encrypted and 64-bit archives; refuses
-  an archive that lists one name twice; verifies every checksum; and stops
-  inflating as soon as output passes the declared size. Evidence: `zipRead` in
+  is left out with a notice. The program checks also read each name with
+  full-width and other compatibility letters made plain (Unicode NFKC), so a
+  name that another program could save as `setup.msi` is refused too. Paths
+  with `..`, a leading slash, or a hidden folder are refused, after each
+  backslash is read as a folder slash. Evidence: `cleanSkillFiles`,
+  `cleanArchivePath`, `hidesExecutableExtension`, and `hasExecutableExtension`
+  in `index.html`.
+- File names keep letters, digits, and punctuation from any language, in
+  composed Unicode form (NFC), so two names that look the same compare as the
+  same. Control characters, invisible formatting characters such as
+  right-to-left marks, the characters Windows reserves (`< > : " | ? *`), and
+  any character that another program could turn into a folder slash become
+  spaces. Trailing dots and spaces are removed, as Windows removes them, so
+  `setup.msi .` is checked as `setup.msi`. A Windows device name, such as
+  `CON` or `aux.txt`, gets `_` after its device part, and a folder name that
+  could read as `..` is refused. Each kept file whose name changed is named in
+  a notice with its new name. Evidence: `nameCharacter`, `cleanNamePart`, and
+  `renamedFilesNotice` in `index.html`, and `tests/file-names.test.mjs`.
+- A script tool gets a run command only when its path holds letters, digits,
+  spaces, and `._()-/`. A character a shell could run, such as `$` or a
+  backtick, never reaches a command. Evidence: `scriptCommand` in
   `index.html`.
+- The ZIP reader caps the entry count at 1,200, each entry at 10 MB, and the whole
+  archive at 50 MB. It reads each backslash in a name as a folder slash, as
+  Windows PowerShell's `Compress-Archive` writes them, and then rejects names
+  containing `..`, a leading slash, or a drive letter. It refuses encrypted and
+  64-bit archives, refuses an archive that lists one name twice, verifies
+  every checksum, and stops inflating as soon as output passes the declared
+  size. Evidence: `zipEntryName` and `zipRead` in `index.html`.
+- Opening a file always ends with a message. A reader that stops in an
+  unexpected way, as a damaged file can make it, returns an error that names
+  the file and suggests another copy, without the error's own text. **Add from
+  a file** does the same and clears the file picker, so the same file can be
+  chosen again. Values in a backup's `plugin.json` and a Copilot action's
+  `namespace` count only when they are text. Evidence: `importProject`,
+  `openFile`, `addFromFile`, `setupFileOpening`, `readPluginArchive`, and
+  `addPackageServer` in `index.html`, and `tests/opening.test.mjs`.
 - Nothing from a file runs, and exports run nothing either. Tool
   declarations are data: a script a skill carries is stored and exported as
   bytes, an OpenAPI description is copied into the Copilot package as bytes,
@@ -392,9 +435,9 @@ Evidence: `readTeamsArchive`, `packagePath`, `packageRelativePath`,
   nothing can ride behind a real-looking header into a download. Evidence:
   `pngIsComplete` in `index.html`.
 - Attached files are carried as bytes and never opened, decoded, or run. The
-  name loses any folder part and any character outside letters, digits, spaces,
-  dots, hyphens, underscores, and parentheses, and may not hide a program type
-  before its last extension (`setup.exe.pdf`). The type must be a document
+  name loses any folder part and any leading dots, follows the file name rules
+  above, and may not hide a program type before its last extension
+  (`setup.exe.pdf`). The type must be a document
   type Microsoft lists for agent knowledge, a OneNote file (`.one` or
   `.onepart`), or a plain-text type such as a script. The contents must match
   the name: a PDF marker in the first kilobyte, the ZIP header plus the
