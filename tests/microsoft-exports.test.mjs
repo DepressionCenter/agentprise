@@ -2,7 +2,7 @@
 // tests/microsoft-exports.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-22
-// Last Modified: 2026-10-23
+// Last Modified: 2026-11-05
 // Summary: Checks native Microsoft skill packages, connectors, restrictions,
 //          resource bytes, schema versions, and preservation of the source.
 // Notes: See README file for documentation and full license information.
@@ -459,6 +459,27 @@ describe("Copilot Agent Builder skill uploads", () => {
     assert.match(result.setup, /does not create an assistant or set up tool connections/);
     assert.match(result.setup, /leaves out script files/);
     assert.match(text(entries.get("SKILL.md")), /If none of them is available/);
+  });
+
+  test("the report says when the steps still mention a script the download leaves out", () => {
+    const project = build();
+    const item = project.items.find((candidate) => candidate.files.some((file) => file.path === "scripts/lookup.py"));
+    const scriptNote = () => engine.tools.conversionReport(project, item, "copilotSkill").find((entry) => entry.component === item.name + ": scripts/lookup.py").note;
+    assert.equal(scriptNote().includes("The steps still mention"), false);
+    item.body += "\n\nRun scripts/lookup.py when you can.";
+    assert.match(scriptNote(), /The steps still mention scripts\/lookup\.py, so edit them, or tell the assistant what to do without it, before you share this download\.$/);
+  });
+
+  test("the report names the backup-only files of every skill the download includes, once each", () => {
+    const project = build();
+    const agent = project.items.find((candidate) => candidate.kind === "agent" && candidate.uses.length > 0);
+    const skill = project.items.find((candidate) => candidate.skillName === agent.uses[0]);
+    project.unrecognized.push({ path: "skills/" + skill.skillName + "/data/table.sav", note: "", bytes: new TextEncoder().encode("EXAMPLE_ROW_1\n") });
+    const named = (selected, profile) => engine.tools.conversionReport(project, selected, profile).filter((entry) => entry.component.endsWith("data/table.sav"));
+    for (const profile of ["copilotSkills", "microsoftPlugin"]) {
+      assert.deepEqual(named(agent, profile).map((entry) => entry.component), [skill.name + ": data/table.sav"], profile);
+    }
+    assert.equal(named(skill, "microsoftPlugin").length, 1, "the selected skill's file is listed once");
   });
 
   test("blocks empty instructions and bodies of 20,000 characters", async () => {

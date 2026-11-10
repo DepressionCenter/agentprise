@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/compliance.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-05
+Last Modified: 2026-11-10
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
          the controls in place, where they are in the code, and their known
          limits.
@@ -54,9 +54,33 @@ Known limits.
   holds pictures and attached files. The `localStorage` key
   `agentprise-workspace-v2` holds only the last opened project id, the recent
   project ids, and preferences. A new project is not stored until something is
-  typed in it. Delete on a project tile removes its record and files after
-  asking. Evidence: the storage constants and `saveStoredProject` and
-  `deleteStoredProject` in `index.html`.
+  typed in it. A save rewrites only the pictures and files whose contents
+  changed, and replacing one, such as choosing a new picture, always saves,
+  even when its name and size stay the same. Delete on a project tile removes
+  its record and files after asking. Evidence: the storage constants,
+  `payloadsChanged`, `saveNow`, `saveStoredProject`, and `deleteStoredProject`
+  in `index.html`.
+- A tab never overwrites a newer copy of a project saved in another tab. Each
+  save reads the stored copy in the same database transaction and writes
+  nothing, and deletes no file, when its modified time differs from the one
+  the tab last loaded or saved. Tabs also tell each other about each save and
+  delete through a `BroadcastChannel` named `agentprise-projects`, so an older
+  tab can stop sooner. The older tab stops saving, and its status message
+  says the project was changed or deleted in another tab. It tells the person
+  to download a backup to keep the changes made there, then reload the page.
+  **Download backup**, in the editor or on the project's Workspace card,
+  saves the tab's own copy. Changes the older tab could not save stay in that
+  tab until it is reloaded, even after another project opens there. The
+  project stays on that tab's Workspace, even if another tab deleted it, and
+  opening it again shows those changes and the same message. A tab saves one
+  change at a time. When a save fails, the tab keeps the project for the visit
+  and still expects the copy that storage holds, so neither a later save nor
+  **Rename** on the project's Workspace card can replace newer changes from
+  another tab. Choosing **Replace mine** when opening a file is the one save
+  that replaces a stored copy the tab never loaded. Evidence:
+  `saveStoredProject`, `storedRevision`, `keepRefusedProject`, `saveNow`,
+  `renameProject`, `openProject`, `listStoredProjects`, `projectForCard`,
+  `listenToOtherTabs`, and `markTabStale` in `index.html`.
 - On every load the app deletes the version 1 draft, the `localStorage` key
   `agentprise-draft-v1` and the IndexedDB database `agentprise-draft-files`,
   without reading either. Evidence: `removeLegacyStorage` in `index.html`.
@@ -101,19 +125,30 @@ Known limits.
   schemas are closed, so both plugins carry the license in `LICENSE.txt`, the
   manifest's `license` field, and a hidden comment at the top of `README.md`
   and `SETUP.md`.
-- Tool server addresses never keep credentials. `cleanServerUrl` keeps an
+- Tool server settings never keep credentials. `cleanServerUrl` keeps an
   address only when it is https and has no user name, password, or `#`
   fragment, and no query parameter named like a key, token, secret, password,
-  auth value, or signature. The editor's **Address of the** box and every
+  auth value, or signature. Names with words in front count too, such as
+  `client_secret`, `auth_token`, `x-api-key`, or `subscription-key`. The
+  credential check on files in a Microsoft 365 app package looks for the same
+  names in web addresses. The editor's **Address of the** box and every
   import use the same check, and an address that fails it is removed with a
-  notice. Exported `mcp.json` and `.mcp.json` files hold only a server's type
+  notice. A local tool server's arguments get the same text checks, plus a
+  check for an option that names a credential followed by its value, such as
+  `--token abc123` or `--api-key=abc123`, and for a setting such as
+  `SUBSCRIPTION_KEY=abc123`. Each argument that holds a
+  credential, such as a database address with a password in it, is replaced
+  with `replace-with-your-value`, and a notice names the tool server. A value
+  that names a key kept elsewhere, such as `${API_KEY}`, is kept. Exported
+  `mcp.json` and `.mcp.json` files hold only a server's type
   and address, or its command and arguments, never `headers` or `env`; a
   server without an address gets the reserved placeholder
   `https://example.com/replace-with-your-mcp-server-address`. Copilot actions
   that need a sign-in carry the placeholder id
   `replace-with-your-auth-registration-id`, so no credential is ever written
   into a package; an admin registers the sign-in in the tenant. Evidence:
-  `cleanServerUrl`, `normalizeServers`, `mcpManifest`, and `copilotAuth` in
+  `cleanServerUrl`, `normalizeServers`, `serverArgsWithoutCredentials`,
+  `mcpManifest`, and `copilotAuth` in
   `index.html`.
 - A license is never relabeled. A skill or plugin from elsewhere that names no
   license opens with the license "Not stated" and a notice, its `LICENSE.txt`
@@ -137,9 +172,16 @@ Known limits.
   `headers`, `env`, and `cwd` settings are dropped on import with a notice,
   because they can hold secrets. Hooks, commands, agents folders, and every
   other file the app does not understand are kept as unrecognized files, which
-  are written back only into the backup and appear in no other download. Files
-  outside the plugin folder are left out. Evidence: `readPluginArchive` and
-  `serversFromMcp` in `index.html`.
+  are written back only into the backup and appear in no other download. A
+  notice names each such file inside a skill folder, and each download's
+  conversion report lists the ones it leaves out. Removing an assistant or a
+  skill removes the files kept for it in the backup, and renaming one moves
+  them to its new folder. A plain UTF-8 text file in a skill's `scripts/`
+  folder is kept as a skill file whatever its type, after the same program
+  checks as every other file. Files outside the plugin folder are left out.
+  Evidence: `readPluginArchive`, `serversFromMcp`, `cleanSkillFiles`,
+  `isTextScript`, `backupOnlyFiles`, and `moveBackupOnlyFiles` in
+  `index.html`.
 #### Microsoft package imports
 
 Agentprise checks Microsoft 365 app packages before adding their contents to
@@ -452,9 +494,10 @@ borders.
 - Required fields that are still empty are listed as links beside the download
   buttons, and each link moves focus to the field. The download buttons are
   disabled until the list is empty.
-- Status messages go to one polite live region. Nothing moves, flashes, or
-  auto-advances. Smooth scrolling is applied only when the system does not ask
-  for reduced motion.
+- Status messages go to one polite live region. The region stays on the page
+  while it is empty, so screen readers read each message when it appears.
+  Nothing moves, flashes, or auto-advances. Smooth scrolling is applied only
+  when the system does not ask for reduced motion.
 - In the tools parts of the editor, the **Tools** list is a `fieldset` with a
   `legend` and a list of cards; each **Remove this tool** and **Remove this connection** button carries the tool
   or server name as hidden text and asks first in the same native `dialog`.

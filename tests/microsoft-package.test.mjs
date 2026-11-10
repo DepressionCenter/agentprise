@@ -1768,6 +1768,19 @@ describe("unsafe and broken packages", () => {
     assert.deepEqual(project.items[1].files, []);
   });
 
+  test("a web address whose key name has words in front leaves the file out", async () => {
+    const entries = skillOnlyEntries();
+    entries.push(
+      { name: "config/secret.txt", bytes: encode("See https://api.example.org/v1?client_secret=" + SECRET + "\n") },
+      { name: "config/azure.txt", bytes: encode("Call https://api.example.org/v1?subscription-key=" + SECRET + "\n") },
+      { name: "config/help.txt", bytes: encode("See https://example.org/help?keyword=help&page=2\n") },
+    );
+    const { project, notices } = await openPackage(entries);
+    assert.equal(everythingShown(project, notices).includes(SECRET), false);
+    assert.ok(notices.some((n) => n.startsWith("Left out 2 files that look like they hold a password, key, or token:")));
+    assert.ok(unrecognizedPaths(project).includes("microsoft-package/config/help.txt"));
+  });
+
   test("a manifest.json that is not valid JSON is refused, and one that isn't Microsoft's opens as skills", async () => {
     const broken = await engine.imports.any("broken.zip", engine.zip.write([{ name: "manifest.json", bytes: encode("{ nope") }, { name: "color.png", bytes: encode("x") }]));
     assert.ok(broken.error.includes("manifest.json"));

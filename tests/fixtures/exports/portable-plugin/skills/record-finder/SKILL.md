@@ -13,6 +13,9 @@ metadata:
 
 ## Tools available in this setup
 
+### Scripts in this skill
+- scripts/lookup.py: Record script.
+
 ### Record connector
 Looks up records through a connector.
 Use the first of these that is available in this conversation:

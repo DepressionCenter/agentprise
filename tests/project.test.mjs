@@ -2,7 +2,7 @@
 // tests/project.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-21
+// Last Modified: 2026-11-05
 // Summary: Tests for the version 2 project model inside index.html: the backup
 //          round trip, normalization of hostile input, the Agent Plugins
 //          manifests, duplicate and merge, the stored record and payloads, and
@@ -118,7 +118,8 @@ function richRaw() {
 
 function richProject() {
   const result = engine.project.normalize(richRaw());
-  assert.deepEqual(result.notices, []);
+  // The picture in the skill folder is not a type a skill file can be, so only the backup keeps it.
+  assert.deepEqual(result.notices, ["Kept 1 file in the backup only, because Agentprise doesn't accept it as a skill file: skills/data-tools/photo.png. Other downloads leave it out."]);
   return result.project;
 }
 
@@ -136,7 +137,7 @@ describe("backup round trip", () => {
     assert.equal(engine.detectFormat(backup.fileName, backup.bytes), "plugin");
     const back = await reopen(backup);
     assert.equal(back.format, "plugin");
-    assert.deepEqual(back.notices, ["The plugin has 1 hook, command, or agent file. Agentprise keeps it in the backup but never reads or runs it."]);
+    assert.deepEqual(back.notices, ["The plugin has 1 hook, command, or agent file. Agentprise keeps it in the backup but never reads or runs it.", "Kept 1 file in the backup only, because Agentprise doesn't accept it as a skill file: skills/data-tools/photo.png. Other downloads leave it out."]);
     assert.deepEqual(engine.project.record(back.project), record);
     assert.deepEqual(payloadBytes(back.project), payloadBytes(project));
     // A second trip changes nothing either.
@@ -338,7 +339,7 @@ describe("normalizeProject with hostile input", () => {
     // An address must be https and may not carry a user name, password, or # part, since everyone who installs the export receives it.
     for (const name of ["plain", "secret", "fragment"]) {
       assert.equal(project.servers[name].url, "", name);
-      assert.ok(notices.includes("The address of the tool server \"" + name + "\" was removed. It must start with https:// and hold no user name, password, or # part."), name);
+      assert.ok(notices.includes("The address of the tool server \"" + name + "\" was removed. It must start with https:// and hold no user name, password, key, or # part."), name);
     }
     // A command is one program name or a path inside the plugin, never one that climbs out of it.
     assert.equal(project.servers.bundled.command, "./bin/server");
@@ -567,6 +568,56 @@ describe("stored record and payloads", () => {
   });
 });
 
+describe("files kept only in the backup follow their skill", () => {
+  /** Two skills from elsewhere; survey-helper brings two files a skill file can't be. */
+  async function surveyProject() {
+    const bytes = makeDeflatedZip([
+      { name: "survey-helper/SKILL.md", bytes: encode("---\nname: survey-helper\ndescription: Helps with surveys.\n---\n\nSummarize the survey.\n") },
+      { name: "survey-helper/data/example-table.sav", bytes: encode("EXAMPLE_ROW_1\n") },
+      { name: "survey-helper/assets/logo.png", bytes: makePng(4, 4) },
+      { name: "other-skill/SKILL.md", bytes: encode("---\nname: other-skill\ndescription: Does other things.\n---\n\nDo other things.\n") },
+    ]);
+    const { project } = await engine.imports.any("surveys.zip", bytes);
+    assert.deepEqual(project.unrecognized.map((u) => u.path), ["skills/survey-helper/data/example-table.sav", "skills/survey-helper/assets/logo.png"]);
+    return project;
+  }
+  const backupNames = async (project) => (await engine.exports.backup(project)).entries.map((entry) => entry.name).filter((name) => name.includes("/skills/"));
+
+  test("removing a skill takes its files out, so a new skill with its name starts clean", async () => {
+    const project = await surveyProject();
+    const skill = project.items.find((item) => item.skillName === "survey-helper");
+    assert.equal(engine.project.moveBackupOnlyFiles(project, skill.skillName, ""), 2);
+    project.items = project.items.filter((item) => item !== skill);
+    assert.deepEqual(project.unrecognized, []);
+    assert.equal((await backupNames(project)).some((name) => name.includes("survey-helper")), false);
+    // Another skill or an assistant with nothing kept for the backup has nothing to take out.
+    assert.equal(engine.project.moveBackupOnlyFiles(project, "other-skill", ""), 0);
+  });
+
+  test("renaming a skill moves its files to the new folder, and files outside skill folders stay", async () => {
+    const project = await surveyProject();
+    project.unrecognized.push({ path: "LICENSE", note: "Not interpreted by Agentprise.", bytes: encode("Example terms\n") });
+    const skill = project.items.find((item) => item.skillName === "survey-helper");
+    assert.equal(engine.project.moveBackupOnlyFiles(project, "survey-helper", "survey-summary"), 2);
+    skill.skillName = "survey-summary";
+    assert.deepEqual(project.unrecognized.map((u) => u.path).sort(), ["LICENSE", "skills/survey-summary/assets/logo.png", "skills/survey-summary/data/example-table.sav"]);
+    const names = await backupNames(project);
+    assert.ok(names.some((name) => name.endsWith("skills/survey-summary/data/example-table.sav")));
+    assert.equal(names.some((name) => name.includes("skills/survey-helper/")), false);
+  });
+
+  test("a file already at the new folder is replaced, never written twice", () => {
+    const project = engine.project.normalize({ name: "Example", items: [{ kind: "skill", name: "Old", body: "Steps." }] }).project;
+    project.unrecognized = [
+      { path: "skills/old/data/a.sav", note: "", bytes: encode("new") },
+      // The stale copy differs only in case, which counts as the same path in a backup.
+      { path: "skills/new/data/A.sav", note: "", bytes: encode("stale") },
+    ];
+    engine.project.moveBackupOnlyFiles(project, "old", "new");
+    assert.deepEqual(project.unrecognized.map((u) => [u.path, decode(u.bytes)]), [["skills/new/data/a.sav", "new"]]);
+  });
+});
+
 describe("imports of plugins and skills made elsewhere", () => {
   for (const flavor of ["agent-plugins", "claude", "codex"]) {
     test(flavor + " plugin preserves skill servers and renames conflicting plugin servers", async () => {
@@ -602,6 +653,99 @@ describe("imports of plugins and skills made elsewhere", () => {
   }
 
   const skillMd = "---\nname: lookup\ndescription: Looks things up.\n---\n\nSearch first.\n";
+
+  test("plain-text scripts of any type are kept, and other skill files are named when only the backup keeps them", async () => {
+    const steps = "---\nname: report\ndescription: Makes a report.\n---\n\nRun scripts/report.rb, then scripts/run, then scripts/legacy.pl.\n";
+    const bytes = makeDeflatedZip([
+      { name: "report/SKILL.md", bytes: encode(steps) },
+      { name: "report/scripts/report.rb", bytes: encode("puts 'report'\n") },
+      { name: "report/scripts/run", bytes: encode("#!/bin/sh\necho run\n") },
+      { name: "report/scripts/helper.py", bytes: encode("print('help')\n") },
+      // Latin-1 text is not UTF-8, so it can't be a skill file.
+      { name: "report/scripts/legacy.pl", bytes: new Uint8Array([0x70, 0x72, 0x69, 0x6e, 0x74, 0x20, 0xe9, 0x0a]) },
+      { name: "report/data/table.sav", bytes: encode("EXAMPLE_ROW_1\n") },
+      // A Windows program saved under a script's name is still refused.
+      { name: "report/scripts/setup", bytes: new Uint8Array([0x4d, 0x5a, 0x90, 0x00]) },
+    ]);
+    const { project, notices } = await engine.imports.any("report.zip", bytes);
+    const item = project.items[0];
+    assert.deepEqual(item.files.map((f) => f.path).sort(), ["scripts/helper.py", "scripts/report.rb", "scripts/run"]);
+    assert.deepEqual(project.unrecognized.map((u) => u.path), ["skills/report/scripts/legacy.pl", "skills/report/data/table.sav"]);
+    assert.ok(notices.includes("Left out 1 file from a skill: scripts/setup (it is a Windows program)."));
+    assert.ok(notices.includes("Kept 2 files in the backup only, because Agentprise doesn't accept them as skill files: skills/report/scripts/legacy.pl, skills/report/data/table.sav. Other downloads leave them out. The steps still tell the assistant to use scripts/legacy.pl, so change the steps or replace that file before you share a download."));
+    for (const exportId of ["claude", "gemini", "skill"]) {
+      const written = exportId === "skill" ? await engine.exports.plainSkill(project, item) : await engine.exports.skillZip(project, item, exportId);
+      const names = written.entries.map((entry) => entry.name);
+      assert.ok(names.includes("report/scripts/report.rb") && names.includes("report/scripts/run"), exportId);
+      assert.equal(names.some((name) => name.endsWith("legacy.pl") || name.endsWith("table.sav")), false, exportId);
+      const report = written.report.filter((entry) => entry.status === "unsupported");
+      assert.deepEqual(report.map((entry) => [entry.component, entry.note]), [
+        ["scripts/legacy.pl", "Left out, because Agentprise doesn't accept it as a skill file. The backup keeps it. The steps still tell the assistant to use it, so change the steps or replace the file before you share this download."],
+        ["data/table.sav", "Left out, because Agentprise doesn't accept it as a skill file. The backup keeps it."],
+      ], exportId);
+    }
+  });
+
+  test("a tool server address whose key name has words in front is removed, and ordinary queries are kept", async () => {
+    const SECRET = "EXAMPLE_TOKEN_123";
+    for (const name of ["client_secret", "subscription-key", "auth_token", "refresh_token", "private_token", "x-api-key", "accessToken", "accesstoken"]) {
+      const bytes = makeDeflatedZip([
+        { name: "my-plugin/.claude-plugin/plugin.json", bytes: encode(JSON.stringify({ name: "my-plugin", version: "1.0.0" })) },
+        { name: "my-plugin/.mcp.json", bytes: encode(JSON.stringify({ mcpServers: { docs: { type: "http", url: "https://mcp.example.org/mcp?" + name + "=" + SECRET } } })) },
+        { name: "my-plugin/skills/lookup/SKILL.md", bytes: encode(skillMd) },
+      ]);
+      const { project, notices } = await engine.imports.any("my-plugin.zip", bytes);
+      assert.equal(project.servers.docs.url, "", name);
+      assert.ok(notices.includes("The address of the tool server \"docs\" was removed. It must start with https:// and hold no user name, password, key, or # part."), name);
+      const backup = await engine.exports.backup(project);
+      assert.equal(backup.entries.some((entry) => decode(entry.bytes).includes(SECRET)), false, name);
+    }
+    for (const query of ["page=2", "keyword=help", "monkey=1", "sort=key"]) {
+      const project = engine.project.normalize({ name: "Example", servers: { docs: { transport: "http", url: "https://mcp.example.org/mcp?" + query } }, items: [] }).project;
+      assert.equal(project.servers.docs.url, "https://mcp.example.org/mcp?" + query, query);
+    }
+  });
+
+  test("a local tool server argument that holds a credential is replaced, and no download keeps it", async () => {
+    const PASSWORD = "EXAMPLE_PASSWORD_123";
+    const TOKEN = "EXAMPLE_TOKEN_123";
+    const bytes = makeDeflatedZip([
+      { name: "example/.claude-plugin/plugin.json", bytes: encode(JSON.stringify({ name: "example" })) },
+      { name: "example/.mcp.json", bytes: encode(JSON.stringify({ mcpServers: {
+        pg: { command: "npx", args: ["-y", "@modelcontextprotocol/server-postgres", "postgresql://admin:" + PASSWORD + "@db.example.org/prod"] },
+        remote: { command: "npx", args: ["mcp-remote", "https://mcp.example.org/sse", "--header", "Authorization: Bearer " + TOKEN] },
+        options: { command: "example-tool", args: ["--token", TOKEN, "--api-key=" + TOKEN, "--client-secret", "${CLIENT_SECRET}", "--verbose"] },
+        headers: { command: "example-tool", args: ["--header=Authorization: token " + TOKEN, "-H", "Authorization: Bearer ${API_KEY}", "--token", "-" + TOKEN, "--api-key", "-v"] },
+        settings: { command: "docker", args: ["run", "-e", "SUBSCRIPTION_KEY=" + TOKEN, "--header", "Authorization: token " + TOKEN, "--no-auth", "serve"] },
+        plain: { command: "npx", args: ["-y", "example-tool"] },
+      } })) },
+      { name: "example/skills/lookup/SKILL.md", bytes: encode(skillMd) },
+    ]);
+    const { project, notices } = await engine.imports.any("example.zip", bytes);
+    assert.deepEqual(project.servers.pg.args, ["-y", "@modelcontextprotocol/server-postgres", "replace-with-your-value"]);
+    assert.deepEqual(project.servers.remote.args, ["mcp-remote", "https://mcp.example.org/sse", "--header", "replace-with-your-value"]);
+    assert.deepEqual(project.servers.options.args, ["--token", "replace-with-your-value", "--api-key=replace-with-your-value", "--client-secret", "${CLIENT_SECRET}", "--verbose"]);
+    assert.deepEqual(project.servers.settings.args, ["run", "-e", "SUBSCRIPTION_KEY=replace-with-your-value", "--header", "replace-with-your-value", "--no-auth", "serve"]);
+    // A header that names a key kept elsewhere is kept, a value may start with "-", and a short flag is not a value.
+    assert.deepEqual(project.servers.headers.args, ["replace-with-your-value", "-H", "Authorization: Bearer ${API_KEY}", "--token", "replace-with-your-value", "--api-key", "-v"]);
+    assert.deepEqual(project.servers.plain.args, ["-y", "example-tool"]);
+    assert.ok(notices.includes("The tool server \"pg\" had a password, key, or token in its arguments, so Agentprise replaced 1 argument with replace-with-your-value. Put the real value back where you install it."));
+    assert.ok(notices.includes("The tool server \"options\" had a password, key, or token in its arguments, so Agentprise replaced 2 arguments with replace-with-your-value. Put the real value back where you install it."));
+    assert.equal(notices.some((n) => n.includes("\"plain\" had a password")), false);
+    // A value already replaced is not reported again when the project opens later.
+    const again = engine.project.normalize(JSON.parse(JSON.stringify(engine.project.record(project))));
+    assert.deepEqual(again.project.servers, project.servers);
+    assert.equal(again.notices.some((n) => n.includes("had a password, key, or token")), false);
+
+    // A skill that uses every server puts them in each plugin's mcp.json and the skill's agentprise.json.
+    project.items[0].capabilities = ["pg", "remote", "options", "headers", "settings"].map((server) => ({ id: server, providers: { "*": [{ kind: "mcp", server }] } }));
+    const downloads = [await engine.exports.portablePlugin(project), await engine.exports.claudePlugin(project), await engine.exports.backup(project)];
+    for (const written of downloads) {
+      const text = written.entries.map((entry) => decode(entry.bytes)).join("\n");
+      assert.ok(text.includes("replace-with-your-value"), written.fileName);
+      assert.equal(text.includes(PASSWORD) || text.includes(TOKEN), false, written.fileName);
+    }
+  });
 
   test("a Claude plugin: servers from .mcp.json, skills as items, hooks kept with a notice", async () => {
     const bytes = makeDeflatedZip([
@@ -700,7 +844,7 @@ describe("imports of plugins and skills made elsewhere", () => {
     ]);
     assert.equal(engine.detectFormat("caveman.zip", bytes), "skillZip");
     const { project, notices } = await engine.imports.any("caveman.zip", bytes);
-    assert.deepEqual(notices, []);
+    assert.deepEqual(notices, ["Kept 1 file in the backup only, because Agentprise doesn't accept it as a skill file: skills/caveman/assets/icon.png. Other downloads leave it out."]);
     assert.equal(project.items.length, 1);
     const item = project.items[0];
     assert.equal(item.kind, "skill");
@@ -860,7 +1004,7 @@ describe("project helpers", () => {
     assert.equal(instructions, engine.tools.composeInstructions(project, skill, "msAgent"));
     assert.ok(instructions.startsWith(skill.body + "\n\n## " + engine.tools.TOOLS_HEADING + "\n"));
     assert.ok(instructions.endsWith(engine.tools.COMPLETION_RULE));
-    assert.deepEqual(ms.report.map((e) => [e.component, e.status]), [["Data Tools", "transformed"], ["Record lookup", "requires-setup"], ["Attached files", "unsupported"]]);
+    assert.deepEqual(ms.report.map((e) => [e.component, e.status]), [["Data Tools", "transformed"], ["Record lookup", "requires-setup"], ["Attached files", "unsupported"], ["photo.png", "unsupported"]]);
     const copy = engine.exports.copyText(project, skill, "chatgpt");
     assert.ok(copy.markdown.startsWith("# Data Tools\n"));
     assert.equal(copy.instructions, engine.tools.composeInstructions(project, skill, "chatgpt"));
