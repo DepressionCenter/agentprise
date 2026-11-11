@@ -85,6 +85,11 @@ tile for the other actions:
   because this cannot be undone. Download a backup first if you may want it
   later.
 
+If you use the keyboard, the app puts you back on the project's **...**
+button after **Rename**, **Download backup**, or **Keep it** when the app asks
+about deleting. After **Make a copy**, it puts you on the new copy's **...**
+button.
+
 ### Create a new assistant
 
 1. On the Workspace page, choose **Create new**. A new project opens with one
@@ -339,6 +344,12 @@ Files made elsewhere may need changes before you can use them:
   over before it retires, see
   [Move a Gem or a custom GPT into Agentprise](how-to/move-a-gem-or-gpt.md).
 
+A message about changes made while opening a file stays at the top of the page
+until a new message appears, you open another page or project, or you choose
+**Dismiss**.
+Warnings shown after a download stay the same way. Short confirmations, such
+as "Copied.", go away after 8 seconds.
+
 ### Start from the Library
 
 1. Choose **Library** on the left, or **Use a sample** on the start page.
@@ -377,7 +388,8 @@ can run in PubMed yourself.
 
 The start page also shows a strip of up to ten entries from the Library,
 in a random order, under the drop area. Choose one to try it. The arrows on
-each side scroll the strip when it does not fit.
+each side scroll the strip when it does not fit. At either end of the strip,
+the arrow on that side looks unavailable and does nothing.
 
 The copy is yours to change. The original in the Library stays as it was. The
 Library needs the app to run from a web address, so it is empty when you open
@@ -459,7 +471,9 @@ labels:
 - **left out**: that product has no way to use it.
 - **blocked**: the download would break, or would let the assistant use more
   than you asked for. The download button stays off until you fix it, and
-  the note says what to change.
+  the note says what to change. On the Download card, the button looks
+  unavailable, and choosing it shows the reason in a message. The note under
+  it gives the reason and a **See details in Inspect** link.
 
 Downloads with tools come with setup steps. When something needs setting up,
 the skill ZIPs and the two plugins hold a file called `SETUP.md`, and their `README.md` repeats the list

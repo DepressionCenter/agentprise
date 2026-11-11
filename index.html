@@ -261,6 +261,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             background: var(--panel);
             border-radius: 0 10px 10px 0;
         }
+        /* A message that stays has a Dismiss button beside it. The button sits outside the live region, so screen readers don't read it as part of the message. */
+        .status-area { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 8px; }
+        .status-area .status-bar { flex: 1 1 16rem; min-width: 0; }
+        .status-dismiss { flex: none; margin: 0 0 1.25rem; }
         .site-footer {
             margin-top: auto;
             border-top: 1px solid var(--border-soft);
@@ -368,6 +372,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
         }
         .link-button:hover, button.link-button:hover { background: transparent; text-decoration-thickness: 2px; }
         button:disabled { opacity: 0.55; cursor: not-allowed; }
+        /* A button marked aria-disabled stays in the Tab order so it can say why it is unavailable. Muted text color and a dashed border show that, instead of lower opacity, so its focus ring keeps full contrast. */
+        button[aria-disabled="true"], button[aria-disabled="true"]:hover { color: var(--muted); background: var(--panel); border-style: dashed; cursor: not-allowed; }
         .bi { display: inline-block; flex: none; width: 1em; height: 1em; vertical-align: -0.125em; background-color: currentColor; -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat; }
         a .bi { margin-right: 4px; }
         .bi-download { --icon: var(--bi-download); }
@@ -883,7 +889,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
             </div>
         </header>
         <main id="main" tabindex="-1">
-            <div class="status-bar" id="status" role="status" aria-live="polite"></div>
+            <div class="status-area">
+                <div class="status-bar" id="status" role="status" aria-live="polite"></div>
+                <button type="button" class="status-dismiss" id="status-dismiss" hidden><span class="bi bi-x-lg" aria-hidden="true"></span>Dismiss<span class="visually-hidden"> message</span></button>
+            </div>
             <label for="file-input" class="visually-hidden">File to open: a backup, plugin, or skill .zip, a .agent file, or a SKILL.md file</label>
             <input type="file" id="file-input" class="visually-hidden" tabindex="-1" accept=".agent,.zip,.md,application/zip,application/json,text/markdown">
 
@@ -913,7 +922,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4v16"/><path d="M9 4v16"/><path d="M14 4v16"/><path d="M17 5l3 15"/></svg>
                                     Use a sample
                                 </span>
-                                <span class="start-card-text">Pick one from the library and change what you like.</span>
+                                <span class="start-card-text">Pick one from the Library and change what you like.</span>
                             </button>
                         </div>
                     </div>
@@ -927,8 +936,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     </section>
                     <section class="strip" id="strip" aria-labelledby="strip-heading" hidden>
                         <div class="strip-head">
-                            <h2 id="strip-heading" class="strip-title">Or start from the library</h2>
-                            <a href="#library">See the whole library</a>
+                            <h2 id="strip-heading" class="strip-title">Or start from the Library</h2>
+                            <a href="#library">See the whole Library</a>
                         </div>
                         <div class="strip-body">
                             <button type="button" class="strip-arrow" id="strip-back" aria-label="Scroll back" hidden>
@@ -1300,7 +1309,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     </div>
                     <div class="store-search">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                        <label for="library-search" class="visually-hidden">Search the library by name, summary, tag, or author</label>
+                        <label for="library-search" class="visually-hidden">Search the Library by name, summary, tag, or author</label>
                         <input type="text" id="library-search" placeholder="Search" autocomplete="off">
                     </div>
                 </div>
@@ -1441,7 +1450,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <h2>What are tools, and what does "needs setup" mean?</h2>
                     <p>Some assistants and skills, such as PubMed Search, can use a tool to look things up. Each product connects tools its own way, so every download lists what changes for it under "What changes in this download" on the Inspect page. "Needs setup" means one more step after you install, such as turning on a connector or pasting a server address. The setup steps say how. Most downloads include them, and the Inspect page shows them for the Copilot app package and the More Microsoft downloads. If the tool isn't connected, the assistant does what it can and tells people it couldn't use the tool.</p>
                     <h2>Why is a download button grayed out?</h2>
-                    <p>Either a required question is still empty, the product can't accept the project as it is, for example more than four web search sites for Copilot, or the author marked the assistant or skill as not for that product under More settings, then Products it works in. The Inspect page says what to change.</p>
+                    <p>Either a required question is still empty, the product can't accept the project as it is, for example more than four web search sites for Copilot, or the author marked the assistant or skill as not for that product under More settings, then Products it works in. The Inspect page says what to change. The note under the button says why too, and choosing the button shows the reason.</p>
                     <h2>Which files can I attach?</h2>
                     <p>Word, PowerPoint, Excel, PDF, OneNote (.one and .onepart), and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, .onepart, and .txt, so a script is added as a .txt file with the same name, and a .one file is left out of the app package. The skill .zip and the backup keep each file's name. If a name has a character that some computers can't use, such as : or ?, the app changes it and tells you.</p>
                     <h2>Where do links go?</h2>
@@ -9317,8 +9326,12 @@ const PROJECTS_SHOWN = 9;
 const RECENT_MAX = 5;
 const STARTER_PLACEHOLDERS = ["What can you help me with?", "Turn these notes into a short summary."];
 const DEFAULT_ICON_COLOR = "#2B4C7E";
-// Confirmations clear after this long; errors stay.
+// Confirmations clear after this long; errors and notices stay until the next
+// message, a page change, a different project opening, or Dismiss.
 const STATUS_SECONDS = 8;
+// The pause between clearing a status line and writing it again, so screen
+// readers read a message that repeats.
+const STATUS_REPEAT_MS = 100;
 // Plain words for each part of an item, by kind.
 const KIND_WORDS = {
     agent: {
@@ -9483,6 +9496,9 @@ const ui = {
     built: null,
     pendingConfirm: null,
     pendingAlt: null,
+    // The project whose More actions menu opened the dialog that is open, so
+    // focus can go back to that menu's button when the dialog closes.
+    menuReturn: null,
     previewEntry: null,
     findings: [],
     fileScanKey: "",
@@ -9532,6 +9548,26 @@ function el(tag, attributes, children) {
     return node;
 }
 
+/**
+ * Marks a button as unavailable with aria-disabled instead of disabled, so it
+ * keeps keyboard focus and stays in the Tab order. Its click handler must
+ * check isUnavailable and do nothing else, or only say why.
+ * @param {Element} button
+ * @param {boolean} unavailable
+ */
+function setUnavailable(button, unavailable) {
+    if (unavailable) {
+        button.setAttribute("aria-disabled", "true");
+    } else {
+        button.removeAttribute("aria-disabled");
+    }
+}
+
+/** True while setUnavailable has marked the button. */
+function isUnavailable(button) {
+    return button.getAttribute("aria-disabled") === "true";
+}
+
 /** An icon, a visible label, and optional screen reader text. */
 function iconButton(iconClass, label, hiddenText, className) {
     const button = el("button", { type: "button" }, [el("span", { className: "bi " + iconClass, "aria-hidden": "true" }), label]);
@@ -9544,18 +9580,38 @@ function iconButton(iconClass, label, hiddenText, className) {
     return button;
 }
 
-/** Sets the polite live region ("" clears); confirmations clear soon, keep is for errors. */
+/**
+ * Sets the polite live region ("" clears). Confirmations clear after
+ * STATUS_SECONDS. A message with keep stays until the next message, a page
+ * change, a different project opening, or Dismiss; use it for errors, warnings, and notices about changes
+ * the app made.
+ * @param {string} message
+ * @param {boolean} [keep]
+ */
 function announce(message, keep) {
     const status = $("status");
+    const dismiss = $("status-dismiss");
+    const kept = Boolean(message && keep);
     clearTimeout(ui.statusTimer);
     clearChildren(status);
+    if (!kept && document.activeElement === dismiss) {
+        // A hidden button loses focus, so focus moves to the heading of the page that is open.
+        dismiss.hidden = true;
+        focusViewHeading(ui.view);
+    }
+    dismiss.hidden = !kept;
     if (!message) {
         return;
     }
     status.appendChild(el("p", { text: message }));
-    if (!keep) {
+    if (!kept) {
         ui.statusTimer = setTimeout(function () { clearChildren(status); }, STATUS_SECONDS * 1000);
     }
+}
+
+/** Dismiss clears a message that stays; focus moves to the page's heading. */
+function setupStatus() {
+    $("status-dismiss").addEventListener("click", function () { announce(""); });
 }
 
 function downloadBytes(fileName, bytes, mime) {
@@ -10274,7 +10330,7 @@ async function openProject(id, moveFocus) {
     ui.storedModified = ui.replaceStored ? "" : expected;
     projectPayloads(result.project).forEach(function (payload) { savedBytes.set(result.project.id + "/" + payload.key, payload.bytes); });
     if (result.notices.length > 0) {
-        announce("A few saved settings had to be changed to open this project. " + result.notices.join(" "));
+        announce("A few saved settings had to be changed to open this project. " + result.notices.join(" "), true);
     }
     showView("project", moveFocus);
     // Changes kept after another tab's save are still not saved, so the tab says so again.
@@ -10300,8 +10356,10 @@ function startNewProject() {
  * replace or keep both when its id is stored.
  * @param {object} project
  * @param {string} message announced once open
+ * @param {boolean} [keep] keeps the message until it is dismissed, for
+ *     notices about changes made while opening
  */
-async function addProjectToWorkspace(project, message) {
+async function addProjectToWorkspace(project, message, keep) {
     // Another tab may have stored this project since this tab last looked.
     await refreshProjectList();
     const existing = ui.projects.find(function (summary) { return summary.id === project.id; });
@@ -10311,7 +10369,7 @@ async function addProjectToWorkspace(project, message) {
         const saved = await saveNow();
         showView("project", true);
         // The message about opening replaces the one about the failed save, so it says both.
-        announce(saved === null ? message + " " + failedSaveMessage(chosen) : message, saved === null);
+        announce(saved === null ? message + " " + failedSaveMessage(chosen) : message, saved === null || keep === true);
     };
     if (!existing) {
         await finish(project);
@@ -10339,6 +10397,7 @@ function openConfirm(title, message, okLabel, cancelLabel, proceed, alt) {
     setText(altButton, alt ? alt.label : "");
     ui.pendingConfirm = proceed;
     ui.pendingAlt = alt ? alt.action : null;
+    ui.menuReturn = null;
     dialog.showModal();
 }
 
@@ -10365,8 +10424,14 @@ function renderProjects() {
 /** The name opens it; the menu holds the other actions. */
 function projectCard(summary) {
     const icon = el("img", { alt: "", src: drawDefaultIcon(summary.name, 96).toDataURL("image/png"), "data-project-icon": summary.id });
+    // The message clears before the project opens, so a message written
+    // while it opens, such as a failed save of the project left, stays.
+    const openThis = function () {
+        announce("");
+        openProject(summary.id, true);
+    };
     const open = el("button", { type: "button", className: "project-open" }, [el("span", { className: "project-name", text: summary.name })]);
-    open.addEventListener("click", function () { openProject(summary.id, true); });
+    open.addEventListener("click", openThis);
     const meta = el("p", { className: "project-meta" }, [projectContents(summary.items)]);
     if (summary.modified) {
         meta.appendChild(el("span", { className: "project-edited", title: formatDateTime(summary.modified) }, ["Last edited: ", el("time", { datetime: summary.modified, text: formatDate(summary.modified) })]));
@@ -10375,9 +10440,15 @@ function projectCard(summary) {
     const rename = iconButton("bi-pencil", "Rename", " " + summary.name);
     rename.addEventListener("click", function () { openRename(summary); });
     const copy = iconButton("bi-files", "Make a copy", " of " + summary.name);
-    copy.addEventListener("click", function () { copyStoredProject(summary); });
+    // The cards are drawn again after these actions, so focus moves to the
+    // More actions button of the new copy, or of this project.
+    copy.addEventListener("click", function () {
+        copyStoredProject(summary).then(function (copyId) { focusProjectMenu([copyId, summary.id]); });
+    });
     const backup = iconButton("bi-archive", "Download backup", " of " + summary.name);
-    backup.addEventListener("click", function () { backupStoredProject(summary); });
+    backup.addEventListener("click", function () {
+        backupStoredProject(summary).then(function () { focusProjectMenu([summary.id]); });
+    });
     const remove = iconButton("bi-trash", "Delete", " " + summary.name);
     remove.addEventListener("click", function () { confirmDelete(summary); });
     [rename, copy, backup, remove].forEach(function (button) { actions.appendChild(button); });
@@ -10392,8 +10463,8 @@ function projectCard(summary) {
         }
     });
     const edit = iconButton("bi-pencil", "Edit", " " + summary.name);
-    edit.addEventListener("click", function () { openProject(summary.id, true); });
-    return el("li", { className: "project-card" }, [icon, el("div", { className: "project-body" }, [open, meta]), el("div", { className: "project-actions" }, [edit, menu])]);
+    edit.addEventListener("click", openThis);
+    return el("li", { className: "project-card", "data-project-id": summary.id }, [icon, el("div", { className: "project-body" }, [open, meta]), el("div", { className: "project-actions" }, [edit, menu])]);
 }
 
 /** Closes every open project menu except keep. */
@@ -10405,13 +10476,25 @@ function closeProjectMenus(keep) {
     });
 }
 
-/** A click outside a project menu or the Escape key closes it. */
+/** True while a dialog, such as Rename, is open on top of the page. */
+function dialogIsOpen() {
+    return document.querySelector("dialog[open]") !== null;
+}
+
+/**
+ * A click outside a project menu or the Escape key closes it. While a dialog
+ * is open, the menus stay as they are and the dialog handles Escape, so focus
+ * can go back to the menu's button when the dialog closes.
+ */
 function setupProjectMenus() {
     document.addEventListener("click", function (event) {
+        if (dialogIsOpen() || event.target.closest("dialog")) {
+            return;
+        }
         closeProjectMenus(event.target.closest("details.project-menu"));
     });
     document.addEventListener("keydown", function (event) {
-        if (event.key !== "Escape") {
+        if (event.key !== "Escape" || dialogIsOpen()) {
             return;
         }
         const open = document.querySelector("details.project-menu[open]");
@@ -10420,6 +10503,34 @@ function setupProjectMenus() {
             open.querySelector("summary").focus();
         }
     });
+}
+
+/**
+ * Closes the project menus and moves focus to a project's More actions
+ * button, after its card may have been drawn again. Uses the first id that
+ * still has a card, or the Workspace heading when none has. Leaves focus
+ * alone when the person has already moved it out of the project list.
+ * @param {Array<string|null|undefined>} ids project ids, in order of preference
+ */
+function focusProjectMenu(ids) {
+    if (ui.view !== "workspace") {
+        return;
+    }
+    const list = $("project-list");
+    const active = document.activeElement;
+    if (active && active !== document.body && !list.contains(active)) {
+        return;
+    }
+    closeProjectMenus(null);
+    const cards = Array.prototype.slice.call(list.children);
+    for (const id of ids) {
+        const card = id ? cards.find(function (node) { return node.getAttribute("data-project-id") === id; }) : null;
+        if (card) {
+            card.querySelector("details.project-menu > summary").focus();
+            return;
+        }
+    }
+    focusViewHeading("workspace");
 }
 
 /** Swaps each tile's monogram for the project's picture, if any. */
@@ -10464,6 +10575,9 @@ function renderRecent() {
             if (ui.project && ui.project.id === summary.id) {
                 showView("project", true);
             } else {
+                // The message clears before the save, so a failed save of
+                // the project left stays after the other project opens.
+                announce("");
                 saveNow().then(function () { openProject(summary.id, true); });
             }
         });
@@ -10476,6 +10590,7 @@ function openRename(summary) {
     const input = $("rename-input");
     input.value = summary.name;
     dialog.setAttribute("data-project-id", summary.id);
+    ui.menuReturn = summary.id;
     dialog.showModal();
     input.select();
 }
@@ -10530,12 +10645,17 @@ async function projectForCard(summary) {
     return loadStoredProject(summary.id);
 }
 
+/**
+ * Copies a Workspace card's project and announces the result.
+ * @param {object} summary
+ * @returns {Promise<string|null>} the copy's id, or null when there is no copy
+ */
 async function copyStoredProject(summary) {
     try {
         const result = await projectForCard(summary);
         if (!result) {
             announce(PROJECT_MISSING_MESSAGE, true);
-            return;
+            return null;
         }
         const copy = duplicateProject(result.project, summary.name + " (copy)");
         const saved = await saveStoredProject(copy);
@@ -10543,11 +10663,13 @@ async function copyStoredProject(summary) {
         if (saved === null) {
             ui.failedSaves.add(copy.id);
             announce("Made a copy named " + copy.name + ". " + failedSaveMessage(copy), true);
-            return;
+            return copy.id;
         }
         announce("Made a copy named " + copy.name + ".");
+        return copy.id;
     } catch (error) {
         announce("The copy of " + summary.name + " didn't work. " + failureReason(error), true);
+        return null;
     }
 }
 
@@ -10590,6 +10712,8 @@ function confirmDelete(summary) {
         announce("Deleted " + summary.name + ".");
         $("start-new").focus();
     });
+    // Keep it, or Escape, moves focus back to this project's More actions button.
+    ui.menuReturn = summary.id;
 }
 
 // ### Interface: icons (canvas) ###
@@ -10720,7 +10844,8 @@ async function openFile(file) {
         const findings = scanProject(result.project, []).length;
         const notes = result.notices.length ? " " + result.notices.join(" ") : "";
         const review = findings ? " Please check the yellow box under Download before you share it." : "";
-        await addProjectToWorkspace(result.project, "Opened " + file.name + " as a project." + notes + review);
+        // Notices and the sharing check are the only record of what changed, so they stay until dismissed.
+        await addProjectToWorkspace(result.project, "Opened " + file.name + " as a project." + notes + review, Boolean(notes || review));
     } catch (error) {
         announce(unopenedFileMessage(file.name), true);
     }
@@ -10764,7 +10889,7 @@ function mergeIntoOpenProject(source, label, notices) {
     const extra = notices.concat(merged.notices);
     announce(names.length
         ? "Added " + listNames(names) + " from " + label + "." + (extra.length ? " " + extra.join(" ") : "")
-        : "Nothing could be added from " + label + "." + (extra.length ? " " + extra.join(" ") : ""), names.length === 0);
+        : "Nothing could be added from " + label + "." + (extra.length ? " " + extra.join(" ") : ""), names.length === 0 || extra.length > 0);
 }
 
 function setupFileOpening() {
@@ -11266,6 +11391,11 @@ function updateDerived() {
     ui.warnings = result.warnings;
     ui.findings = scanProject(project, fileTextsForScan());
     const blocked = ui.problems.length > 0;
+    // The blocked report lines, and the items still waiting on a required
+    // question, of each Download card button that stays focusable but
+    // unavailable, so its note can say why.
+    const reportBlocks = {};
+    const waitingItems = {};
     document.querySelectorAll(".download-button").forEach(function (button) {
         const format = button.getAttribute("data-format");
         if (button.hasAttribute("data-review")) {
@@ -11277,9 +11407,23 @@ function updateDerived() {
             return;
         }
         const whole = format === "claudePlugin" || format === "portablePlugin" || format === "microsoftPlugin";
-        button.disabled = (whole ? pluginItemsBlocked(project, format) : blocked) || downloadReport(format).some(function (entry) { return entry.status === "blocked"; });
+        // An empty required question in the open item is listed with links
+        // under "Before you download, add", so its button is disabled. One in
+        // another item that a plugin includes is named in the button's note.
+        const unanswered = whole ? pluginItemsBlocked(project, format) : blocked;
+        const waiting = whole && unanswered ? pluginWaitingItems(project, item, format) : [];
+        const lines = unanswered ? [] : blockedLines(downloadReport(format));
+        if (button.id === "product-download") {
+            // The Inspect page lists the report above this button.
+            button.disabled = unanswered || lines.length > 0;
+            return;
+        }
+        button.disabled = unanswered && waiting.length === 0;
+        setUnavailable(button, lines.length > 0 || waiting.length > 0);
+        reportBlocks[format] = lines;
+        waitingItems[format] = waiting;
     });
-    renderDestinationNotes(project, item);
+    renderDestinationNotes(project, item, reportBlocks, waitingItems);
     setText($("where-item"), item.name || ("this " + KIND_WORDS[item.kind].noun));
     renderPreview();
     renderReadiness();
@@ -11881,18 +12025,105 @@ function pluginItemsBlocked(project, format) {
     return project.items.some(function (other) { return !notForTarget(other, target) && validateItem(project, other).problems.length > 0; });
 }
 
-/** The line under each download the author turned off, read with its button. */
-function renderDestinationNotes(project, item) {
+/** The report lines that stop a download. */
+function blockedLines(report) {
+    return report.filter(function (entry) { return entry.status === "blocked"; });
+}
+
+/** Why a download can't be made yet, as one message, from its blocked report lines. */
+function blockedReason(lines) {
+    return "Agentprise can't make this download yet. " + lines.map(function (entry) { return entry.component + ": " + entry.note; }).join(" ");
+}
+
+/**
+ * The items a whole-project plugin includes that still have an empty required
+ * question, when at least one of them is not the open item. The "Before you
+ * download, add" box lists only the open item's questions, so the button's
+ * note names these. Empty when only the open item, or no item, is waiting.
+ * @param {object} project
+ * @param {object} item the open item
+ * @param {string} format a whole-project plugin format
+ * @returns {Array<object>}
+ */
+function pluginWaitingItems(project, item, format) {
+    const target = EXPORTS[format].target;
+    const waiting = project.items.filter(function (other) { return !notForTarget(other, target) && validateItem(project, other).problems.length > 0; });
+    return waiting.some(function (other) { return other.id !== item.id; }) ? waiting : [];
+}
+
+/** An item's name in a message about another item, or "the skill with no name". */
+function waitingName(other, item) {
+    if (other.id === item.id) {
+        return itemLabel(other);
+    }
+    return other.name.trim() || "the " + KIND_WORDS[other.kind].noun + " with no name";
+}
+
+/** Why a whole-project download waits on items with an empty required question, as one message. */
+function waitingReason(items, item) {
+    const names = items.map(function (other) { return waitingName(other, item); });
+    return "Agentprise can't make this download yet, because " + namesInSentence(names) + (items.length === 1 ? " still has an empty required question." : " still have empty required questions.");
+}
+
+/**
+ * The line under each download the author turned off, or that its report
+ * blocks, read with its button. A blocked download's line says why and links
+ * to its Inspect tab. A plugin that waits on another item's required question
+ * names that item and links to it.
+ * @param {object} project
+ * @param {object} item
+ * @param {Object<string, Array<object>>} [reportBlocks] blocked report lines by format
+ * @param {Object<string, Array<object>>} [waitingItems] items with an empty required question by format
+ */
+function renderDestinationNotes(project, item, reportBlocks, waitingItems) {
     Object.keys(DOWNLOAD_EXPORTS).forEach(function (format) {
-        const target = EXPORTS[DOWNLOAD_EXPORTS[format]].target;
+        const product = DOWNLOAD_EXPORTS[format];
+        const target = EXPORTS[product].target;
         const note = $("note-" + format);
         const button = format === "chatgpt" ? $("chatgpt-copy") : document.querySelector(".download-button[data-format='" + format + "']");
+        const whole = format === "claudePlugin" || format === "portablePlugin" || format === "microsoftPlugin";
+        const marked = notForTarget(item, target);
+        const lines = (reportBlocks && reportBlocks[format]) || [];
+        const waiting = (waitingItems && waitingItems[format]) || [];
+        clearChildren(note);
         let text = "";
-        if (notForTarget(item, target)) {
-            const whole = format === "claudePlugin" || format === "portablePlugin" || format === "microsoftPlugin";
+        if (marked) {
             text = whole ? "Leaves out " + (item.name || "this " + KIND_WORDS[item.kind].noun) + ", which is marked " + notForPhrase(item, target) : "Marked " + notForPhrase(item, target);
         }
-        setText(note, text);
+        // "Marked as not for ..." already says why an item's own download is turned off.
+        const why = lines.length > 0 && !(marked && !whole);
+        if (why) {
+            text = (text ? text + " " : "") + blockedReason(lines);
+        }
+        if (waiting.length > 0) {
+            text = (text ? text + " " : "") + waitingReason(waiting, item);
+        }
+        if (text) {
+            note.appendChild(document.createTextNode(text));
+        }
+        if (why) {
+            const link = el("a", { href: "#details", text: "See details in Inspect" });
+            link.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                announce("");
+                showView("details", true);
+                selectProduct(product);
+            });
+            note.appendChild(document.createTextNode(" "));
+            note.appendChild(link);
+        }
+        if (waiting.length > 0) {
+            const first = waiting.find(function (other) { return other.id !== item.id; });
+            const open = el("a", { href: "#project", text: "Open " + waitingName(first, item) });
+            open.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                selectItem(first.id, true);
+            });
+            note.appendChild(document.createTextNode(" "));
+            note.appendChild(open);
+        }
         note.hidden = !text;
         if (text) {
             button.setAttribute("aria-describedby", note.id);
@@ -11900,7 +12131,7 @@ function renderDestinationNotes(project, item) {
             button.removeAttribute("aria-describedby");
         }
     });
-    $("chatgpt-copy").disabled = notForTarget(item, "chatgpt");
+    setUnavailable($("chatgpt-copy"), notForTarget(item, "chatgpt"));
 }
 
 function renderReport(report) {
@@ -11976,7 +12207,8 @@ async function startDownload(format) {
         }
         const setup = (result.report || []).filter(function (entry) { return entry.status === "requires-setup"; }).length;
         const guide = ["teamsZip", "claudeSkill", "geminiSkill", "plainSkill", "claudePlugin", "portablePlugin"].indexOf(format) >= 0;
-        announce("Downloaded " + result.fileName + "." + (notes.length ? " " + notes.join(" ") : "") + (setup ? (guide ? " Some parts need to be set up. The setup steps in the download explain how." : " Some parts need to be set up. The Inspect page lists them.") : ""));
+        // Warnings and setup notes stay until dismissed; a plain confirmation clears.
+        announce("Downloaded " + result.fileName + "." + (notes.length ? " " + notes.join(" ") : "") + (setup ? (guide ? " Some parts need to be set up. The setup steps in the download explain how." : " Some parts need to be set up. The Inspect page lists them.") : ""), notes.length > 0 || setup > 0);
     } catch (error) {
         announce("The download didn't work. " + error.message, true);
     }
@@ -11993,11 +12225,44 @@ async function copyToClipboard(area) {
     }
 }
 
+/**
+ * Says why a download button, or the ChatGPT Copy button, that is marked
+ * unavailable can't be used.
+ * @param {string} format a DOWNLOAD_EXPORTS key
+ */
+function announceUnavailable(format) {
+    const item = currentItem();
+    if (format === "chatgpt") {
+        announce("Agentprise can't copy this text, because the author marked " + itemLabel(item) + " " + notForPhrase(item, "chatgpt") + " To copy it anyway, open More settings, then Products it works in, and check ChatGPT.", true);
+        return;
+    }
+    const whole = format === "claudePlugin" || format === "portablePlugin" || format === "microsoftPlugin";
+    const waiting = whole ? pluginWaitingItems(ui.project, item, format) : [];
+    if (waiting.length > 0) {
+        announce(waitingReason(waiting, item), true);
+        return;
+    }
+    const lines = blockedLines(downloadReport(format));
+    announce(lines.length > 0 ? blockedReason(lines) : "Agentprise can't make this download yet. The Inspect page says what to change.", true);
+}
+
 function setupDownloads() {
     document.querySelectorAll(".download-button").forEach(function (button) {
-        button.addEventListener("click", function () { runDownload(button.getAttribute("data-format")); });
+        button.addEventListener("click", function () {
+            const format = button.getAttribute("data-format");
+            // An unavailable button stays focusable, so pressing it only says why.
+            if (isUnavailable(button)) {
+                announceUnavailable(format);
+                return;
+            }
+            runDownload(format);
+        });
     });
     $("chatgpt-copy").addEventListener("click", function () {
+        if (isUnavailable($("chatgpt-copy"))) {
+            announceUnavailable("chatgpt");
+            return;
+        }
         ui.product = "chatgpt";
         showView("details", false);
         selectProduct("chatgpt");
@@ -12490,7 +12755,7 @@ async function loadLibraryEntry(entry) {
     }
     const response = await fetch(LIBRARY_PATH + entry.file, { cache: "no-cache" });
     if (!response.ok) {
-        throw new Error("The library file " + entry.file + " could not be loaded.");
+        throw new Error("The Library file " + entry.file + " couldn't be loaded.");
     }
     const result = await importProject(entry.file, new Uint8Array(await response.arrayBuffer()));
     if (result.error) {
@@ -12774,17 +13039,31 @@ async function renderLibrary() {
     const status = $("library-status");
     const retry = $("library-retry");
     if (!libraryLoading) {
-        setText(status, "Loading the library...");
+        setText(status, "Loading the Library...");
     }
     // A disabled button loses focus, so remember focus here and put it back after the request.
     const retryHadFocus = document.activeElement === retry;
-    retry.disabled = true;
+    // Only a request for the Library changes Try again, so a search leaves the hidden button alone.
+    const requesting = !ui.catalogOk;
+    if (requesting) {
+        retry.disabled = true;
+    }
     await ensureLibrary();
-    retry.disabled = false;
+    if (requesting) {
+        retry.disabled = false;
+    }
     if (!ui.catalogOk) {
-        setText(status, libraryAvailable()
-            ? "The library could not be loaded. Choose Try again to request it again."
-            : "The Library needs the app to run from a web address. Use the online version at " + APP_SITE_URL + " or start the included server.");
+        const failure = libraryAvailable()
+            ? "The Library couldn't be loaded. Choose Try again to request it again."
+            : "The Library needs the app to run from a web address. Use the online version at " + APP_SITE_URL + " or start the included server.";
+        // The line is cleared first and written again after a pause, so
+        // screen readers read a second failure with the same words.
+        setText(status, "");
+        setTimeout(function () {
+            if (!ui.catalogOk && status.textContent === "") {
+                setText(status, failure);
+            }
+        }, STATUS_REPEAT_MS);
         retry.hidden = !libraryAvailable();
         if (retryHadFocus) {
             retry.focus();
@@ -12822,14 +13101,18 @@ function stripTile(entry) {
     return el("li", {}, [button]);
 }
 
-/** Each arrow is enabled only while the track continues; both hide when it fits. */
+/**
+ * Each arrow is available only while the track continues; both hide when it
+ * fits. An arrow at the end is marked with aria-disabled instead of disabled,
+ * so it keeps focus.
+ */
 function updateStripArrows() {
     const track = $("strip-track");
     const overflow = track.scrollWidth > track.clientWidth + 1;
     $("strip-back").hidden = !overflow;
     $("strip-forward").hidden = !overflow;
-    $("strip-back").disabled = track.scrollLeft <= 0;
-    $("strip-forward").disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+    setUnavailable($("strip-back"), track.scrollLeft <= 0);
+    setUnavailable($("strip-forward"), track.scrollLeft + track.clientWidth >= track.scrollWidth - 1);
 }
 
 /** A random library sample; hidden when the library is empty or unreachable. */
@@ -12854,8 +13137,13 @@ function setupStrip() {
         const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         track.scrollBy({ left: direction * Math.max(track.clientWidth * 0.8, 132), behavior: reduced ? "auto" : "smooth" });
     }
-    $("strip-back").addEventListener("click", function () { scrollTrack(-1); });
-    $("strip-forward").addEventListener("click", function () { scrollTrack(1); });
+    // An arrow at the end of the track ignores clicks.
+    $("strip-back").addEventListener("click", function () {
+        if (!isUnavailable($("strip-back"))) { scrollTrack(-1); }
+    });
+    $("strip-forward").addEventListener("click", function () {
+        if (!isUnavailable($("strip-forward"))) { scrollTrack(1); }
+    });
     track.addEventListener("scroll", updateStripArrows);
     window.addEventListener("resize", function () {
         if (!$("strip").hidden) { updateStripArrows(); }
@@ -12879,22 +13167,34 @@ function loadAnalyticsIfProduction() {
 }
 
 // ### Interface: startup ###
+/** After a dialog from a project's More actions menu closes with no change, focus goes back to that menu's button. */
+function returnToProjectMenu() {
+    const id = ui.menuReturn;
+    ui.menuReturn = null;
+    if (id) {
+        focusProjectMenu([id]);
+    }
+}
+
 function setupDialogs() {
     const dialog = $("confirm-dialog");
     $("confirm-cancel").addEventListener("click", function () { dialog.close(); });
     $("confirm-ok").addEventListener("click", function () {
         const proceed = ui.pendingConfirm;
+        ui.menuReturn = null;
         dialog.close();
         if (proceed) { proceed(); }
     });
     $("confirm-alt").addEventListener("click", function () {
         const action = ui.pendingAlt;
+        ui.menuReturn = null;
         dialog.close();
         if (action) { action(); }
     });
     dialog.addEventListener("close", function () {
         ui.pendingConfirm = null;
         ui.pendingAlt = null;
+        returnToProjectMenu();
     });
     const rename = $("rename-dialog");
     $("rename-cancel").addEventListener("click", function () { rename.close(); });
@@ -12902,9 +13202,12 @@ function setupDialogs() {
         event.preventDefault();
         const id = rename.getAttribute("data-project-id");
         const name = $("rename-input").value;
+        ui.menuReturn = null;
         rename.close();
-        renameProject(id, name);
+        // The cards are drawn again with the new name, so focus moves to the new card's button.
+        renameProject(id, name).finally(function () { focusProjectMenu([id]); });
     });
+    rename.addEventListener("close", returnToProjectMenu);
     const preview = $("preview-dialog");
     $("preview-dialog-close").addEventListener("click", function () { preview.close(); });
     $("preview-dialog-try").addEventListener("click", function () {
@@ -12927,6 +13230,7 @@ async function initApp() {
         announce("Part of this page could not load, so downloads may fail. Try a current version of Chrome, Edge, Firefox, or Safari.", true);
     }
     setupNavigation();
+    setupStatus();
     setupFileOpening();
     setupForm();
     setupDownloads();

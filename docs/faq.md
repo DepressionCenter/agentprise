@@ -163,7 +163,10 @@ Inspect page.
 A required question is still empty, the download is blocked, or the author
 marked the assistant or skill as not for that product. The card lists empty
 questions as links. A blocked download shows why in the list **What changes in
-this download** on the Inspect page. Common reasons are a web search list over
+this download** on the Inspect page. The note under its button says why too,
+with a link to that list, and choosing the button shows the reason in a
+message. For a plugin, the note also names any other assistant or skill with
+an empty question. Common reasons are a web search list over
 Copilot's limit of four sites, or instructions longer than Copilot's limit of
 8,000 characters. Fix what the list names and the button turns back on.
 
