@@ -215,7 +215,9 @@ Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   under them, with an "In this project" bar for its items, and is the only
   place to edit. The Inspect page shows only the exact files each product
   receives. Its old details form is still in the page, hidden, because the
-  editor code keeps its fields in step.
+  editor code keeps its fields in step. Back and Forward move focus to the
+  page's heading, and they and the first load replace the address instead of
+  adding a page (`showView`). The skip link only moves focus to `main`.
 - Opening a file always creates a new project. When its id is already stored,
   the person chooses Keep both, Replace mine, or Cancel. "Add from a file"
   merges a file's items into the open project instead.

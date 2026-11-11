@@ -474,6 +474,23 @@ to Inspect under Workspace. It lists up to five recent projects.
 
 #### Keyboard and reflow
 
+- **Skip to main content** moves focus to the main part of the page that is
+  open. The page and the address stay the same (`setupNavigation`).
+- Browser Back and Forward show the page and move focus to its heading, as
+  the sidebar links do, so screen readers read the page's name. An address
+  that names no page, such as `#main`, keeps the page that is open. The first
+  page load and Back replace the address instead of adding a page to the
+  browser history, so Back can still leave the app (`showView`).
+- **Add from a file**, **Choose an image**, and **Add files** are labels
+  styled as buttons, each followed by a hidden file control. The label shows
+  the same 3 pixel focus ring while its control has keyboard focus. The
+  Workspace's hidden file control is not a Tab stop, because **Choose a
+  file** opens it.
+- After **Remove** next to an attached file, or next to a SharePoint, email,
+  or meeting source that came with an opened file, focus moves to the
+  **Remove** button now in the same row, or to the row before it when the
+  last row went. When the list is empty, focus moves to **Add files**, or to
+  the switch for that source (`focusAfterRemove`).
 - "Create new" opens the editor with focus on the name blank. Each blank sits
   under a visible question that is its label; the example question blanks are
   named "Example question 1", "Example question 2", and so on.
@@ -557,7 +574,11 @@ borders.
   under the page title.
 - Every input has a visible label. In the project editor the label is the
   question above the blank. Hints and errors are joined to their inputs with
-  `aria-describedby`, and invalid inputs carry `aria-invalid`.
+  `aria-describedby`, and invalid inputs carry `aria-invalid`. This includes
+  the picture control and **Add files**. When the app refuses a picture, or
+  **Add files** leaves a file out, the live region announces the reason, and
+  the reason stays under the button (`showFieldError` and `addFiles`). When
+  no file was added, the message stays until the next one.
 - Required fields that are still empty are listed as links beside the download
   buttons, and each link moves focus to the field. The download buttons are
   disabled until the list is empty.
