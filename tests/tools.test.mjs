@@ -729,8 +729,9 @@ describe("tool-enabled exports round trip", () => {
     const back = await engine.imports.any(written.fileName, written.bytes);
     assert.equal(back.error, undefined);
     assert.equal(back.format, "plugin");
-    // Skill folders carry the servers their tools name, so even the local server comes back.
-    assert.deepEqual(back.notices, []);
+    // Skill folders carry the servers their tools name, so even the local server
+    // comes back. The only notice names the README.md and SETUP.md the app writes again.
+    assert.deepEqual(back.notices, ["Agentprise left out README.md and SETUP.md from the plugin, because it writes new ones with each download. If you added your own text to them, put that text in a file with another name, such as NOTES.md, and open the plugin again."]);
     const [agent, skill] = back.project.items;
     assert.deepEqual([agent.kind, agent.id, agent.name, agent.description, agent.instructions, agent.uses], ["agent", IDS.agent, "Golden Scout", project.items[0].description, project.items[0].instructions, ["record-finder"]]);
     assert.deepEqual([skill.kind, skill.id, skill.body, skill.description], ["skill", IDS.skill, project.items[1].body, project.items[1].description]);
