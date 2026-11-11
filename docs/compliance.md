@@ -383,10 +383,16 @@ Evidence: `readTeamsArchive`, `packagePath`, `packageRelativePath`,
 - The ZIP reader caps the entry count at 1,200, each entry at 10 MB, and the whole
   archive at 50 MB. It reads each backslash in a name as a folder slash, as
   Windows PowerShell's `Compress-Archive` writes them, and then rejects names
-  containing `..`, a leading slash, or a drive letter. It refuses encrypted and
-  64-bit archives, refuses an archive that lists one name twice, verifies
+  containing `..`, a leading slash, or a drive letter. A name without the
+  UTF-8 flag that isn't valid UTF-8 is read in code page 437, the character
+  set that 7-Zip and the built-in Windows zip tool use on US English
+  computers, unless an Info-ZIP Unicode Path
+  field whose check value matches the name gives it in UTF-8. It refuses
+  encrypted and 64-bit archives, refuses an archive that lists one name twice
+  with a message that names the file, verifies
   every checksum, and stops inflating as soon as output passes the declared
-  size. Evidence: `zipEntryName` and `zipRead` in `index.html`.
+  size. Evidence: `zipEntryName`, `decodeZipName`, `zipUnicodePath`, and
+  `zipRead` in `index.html`, and `tests/unusual-text.test.mjs`.
 - Opening a file always ends with a message. A reader that stops in an
   unexpected way, as a damaged file can make it, returns an error that names
   the file and suggests another copy, without the error's own text. **Add from

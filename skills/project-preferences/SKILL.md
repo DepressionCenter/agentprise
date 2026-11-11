@@ -118,6 +118,17 @@ Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   list, an assistant leaves out a used skill marked for that target, and the
   two plugins leave marked items out instead of blocking, unless every item is
   marked. The sidecar writes both keys only when they are set.
+- `asText` turns line separators, the next-line character, vertical tabs, and
+  form feeds into line breaks and removes other characters that can't be
+  printed. `formatYamlEntry` writes a tab in a one-line setting, and any
+  character that can't be printed, as a quoted escape, because PyYAML refuses
+  the raw character. `sameNameKey` compares file names by the capital form of each letter's small form
+  in `normalizeItem`, `cleanSkillFiles`, `cleanAttachedFile`, and
+  `normalizeProject`, so two names that differ only by case never both stay.
+- `normalizeProject` keeps a stored numbered skill name, including one
+  shortened to fit as `uniqueSkillName` builds it (`isNumberedSkillName`), and
+  changes each assistant's `uses` to the new name when a skill's stored name
+  changes.
 - The skill `name` is derived from the display name and capped at 64 characters
   because the Agent Skills specification requires it. Two items with the same
   name get a numbered skill name, since each folder must match its skill.
@@ -134,7 +145,8 @@ Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
   so a backup-only file that `holdsCredential` matches is left out; a file
   that isn't text is kept unchecked. A version 1 bundle opens as a plain skill.
   `zipRead` reads a backslash in a name as a folder slash, as
-  `Compress-Archive` writes it, before the name checks. `importProject`
+  `Compress-Archive` writes it, before the name checks, and reads a name
+  without the UTF-8 flag that isn't valid UTF-8 in code page 437. `importProject`
   returns an error for any unexpected failure, and readers use a value from a
   file only when it has the expected type.
 - A Microsoft 365 app package opens through `readTeamsArchive` as a whole
