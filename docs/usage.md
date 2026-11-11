@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/usage.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-10
+Last Modified: 2026-11-11
 Summary: How to use Agentprise, job by job: keep your projects, create an
          assistant, add skills, check its tools, open a file you have, start
          from the Library, download it for each product or as a plugin, read
@@ -168,9 +168,9 @@ Renaming the skill moves them to the skill's new folder in the backup.
 
 Some assistants and skills use tools, such as a search of PubMed. A tool lets
 the assistant do something on its own, like run a search and read the
-results. You cannot write a new tool in Agentprise. Tools come with Library
-entries, such as the **PubMed Search** skill, and with skill or plugin files
-you open.
+results. Most tools come with Library entries, such as the **PubMed Search**
+skill, and with skill or plugin files you open. You can also give a skill a
+script tool yourself (see [Add a script tool](#add-a-script-tool)).
 
 When the assistant or skill you are editing has tools, a **Tools** list
 appears under the questions. Each card shows:
@@ -206,6 +206,32 @@ computer. The servers belong to the whole project and are listed under
 To finish connecting tools after you download, see
 [Connect the tools in a download](how-to/connect-tools.md).
 
+#### Add a script tool
+
+A script tool tells the assistant to run a small program that comes with the
+skill, such as a Python file that makes a report. Only a skill can have one.
+
+1. Open the skill in the editor.
+2. Open **More settings**, then **File attachments**. Set **Folder for new
+   files** to **scripts**, choose **Add files**, and pick the script, such as
+   `report.py`.
+3. Under **Tools**, open **Add a script tool**.
+4. Choose the **Script**, and fill in **What the tool does**, such as "Make the
+   monthly report."
+5. If you like, fill in the other boxes:
+   - **Program that runs it**, such as `python3`.
+   - **How to run it**, the command to type in the skill folder, such as
+     `python3 scripts/report.py --month 2026-01`.
+   - **What the script needs**, such as "Python 3 and network access to
+     example.org."
+6. Choose **Add this tool**. Its card appears in the **Tools** list.
+
+Claude, ChatGPT, Gemini, and coding tools can run the script. Copilot
+downloads leave scripts out, so the card says the tool is not available in
+Microsoft 365 Copilot. Agentprise never runs the script. Fill in **What it
+needs to work** under **More settings** too, so people know what the skill
+needs before they install it.
+
 ### Add more detail
 
 Choose **More settings** under the questions to open the extra settings. None
@@ -235,11 +261,16 @@ skill.
 - **File attachments.** Add up to 20 files from your computer: Word,
   PowerPoint, Excel, PDF, OneNote, or plain text, including scripts and data
   files. The app checks each file's contents and refuses programs, even ones
-  renamed to look like a document. The files travel in the skill and the
-  backup. The Copilot app package carries the types Copilot accepts: documents,
-  `.onepart`, and `.txt`. Scripts reach it as `.txt` files under the same name,
-  and a `.one` file is left out with a warning. The Teams Chat file cannot
-  carry files.
+  renamed to look like a document. For a skill, **Folder for new files**
+  chooses where new files go: **references** for documents the skill reads,
+  or **scripts** for scripts it runs. The Claude, Gemini, and plain skill
+  downloads and the backup include every file. The Copilot app package
+  includes only files in **references**, of the types Copilot accepts:
+  documents, `.onepart`, and `.txt`. It includes scripts and data files as
+  `.txt` files under the same name, and leaves out a `.one` file with a
+  warning. When two files would have the same name there, such as `notes.md`
+  and `notes.md.txt`, it includes the first one. The Inspect page lists every
+  file a download leaves out. The Teams Chat file can't include files.
 - **Microsoft Copilot settings** (assistants only). Here you choose what the
   assistant may use in Microsoft 365. Each source is a switch, and the box
   under it limits the source to a few places: up to four web sites, up to 20

@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/connect-tools.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-10
-Last Modified: 2026-10-23
+Last Modified: 2026-11-11
 Summary: Guide for people who install a download that uses tools: what "needs
          setup" means, and how to turn on connectors, fill in a server address,
          allow custom apps and sign-in ids in Copilot, and let scripts reach
@@ -49,9 +49,10 @@ tools. It does the parts it can and tells people it couldn't use the tool (see
 
 #### Where tools come from
 
-You cannot write a new tool inside Agentprise. Tools arrive with entries from
-the Library, such as the **PubMed Search** skill, and with skill or plugin
-files you open. In the project editor, a **Tools** list under the questions
+Most tools arrive with entries from the Library, such as the **PubMed Search**
+skill, and with skill or plugin files you open. You can also give a skill a
+script tool yourself, as [Add a script tool](../usage.md#add-a-script-tool)
+explains. In the project editor, a **Tools** list under the questions
 shows each tool, what it does, and how it connects in Microsoft 365 Copilot,
 Claude, ChatGPT, Gemini, and coding tools. A tool that came with a skill the
 assistant uses says "Part of the skill" and the skill's name.

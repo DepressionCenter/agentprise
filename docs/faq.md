@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/faq.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-10
+Last Modified: 2026-11-11
 Summary: The questions people ask about Agentprise, with the same answers the
          Help page inside the app gives, plus questions about tools, plugins,
          and what changes in each download.
@@ -115,7 +115,10 @@ Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the
 start of every file and refuses programs, including ones renamed to look like
 a document. Copilot accepts only document types, `.onepart`, and `.txt`, so a
 script is added as a `.txt` file with the same name, and a `.one` file is left
-out of the app package. The skill `.zip` and the backup keep each file's name.
+out of the app package. For a skill, **Folder for new files** puts new files
+in `references` or `scripts`. The app package includes only files in
+`references`, and the Inspect page lists any it leaves out. The skill `.zip`
+and the backup keep each file's name.
 If a name has a character that some computers can't use, such as `:` or `?`,
 the app changes it and tells you.
 
@@ -142,7 +145,9 @@ to upload plugins.
 
 A tool lets an assistant do something on its own, such as search PubMed and
 read the results. Tools come with Library entries and with files you open, and
-the **Tools** list in the editor shows how each product connects them. Some
+the **Tools** list in the editor shows how each product connects them. A skill
+can also run a script of its own: add the script with **Folder for new files**
+set to **scripts**, then use **Add a script tool** under **Tools**. Some
 tools need a step after you download, such as turning on a connector or
 pasting a server address. If a tool isn't connected, the assistant does what
 it can and tells people it couldn't use the tool. See

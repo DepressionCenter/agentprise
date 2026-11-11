@@ -40,6 +40,11 @@
     "note": "Its steps were added to the instructions under \"Skill: Record Finder\", because the Teams Chat file has no skills."
   },
   {
+    "component": "Attached files",
+    "status": "unsupported",
+    "note": "The Teams Chat file has no place for files."
+  },
+  {
     "component": "Web search",
     "status": "transformed",
     "note": "Turned on web search, limited to https://records.example.org, for the tools that need it."
