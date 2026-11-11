@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/formats.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-10
+Last Modified: 2026-11-11
 Summary: What each Agentprise download is for and what it keeps, written for
          people using the app, followed by the technical details maintainers
          need: field mappings, tools, conversion reports, and vendor facts
@@ -117,7 +117,12 @@ every file and refuses anything that does not match its name, so a program
 renamed to `.pdf` never gets in. Copilot accepts only the document types,
 `.onepart`, and `.txt` as uploads, so the app package includes a script as
 plain text under its own name plus `.txt`, for example `deploy.ps1.txt`, and
-leaves out a `.one` file with a warning. The skill `.zip` and the backup keep
+leaves out a `.one` file with a warning. The app package holds only files
+directly inside a skill's `references/` folder, so it leaves out a file such as
+`templates/letter.txt`. When two files would have the same name in the app
+package, such as `notes.md` and `notes.md.txt`, or `Guide.pdf` and
+`guide.pdf`, the package keeps the first one. The report and the message after
+the download name each file the package leaves out. The skill `.zip` and the backup keep
 each file's name, including letters with accents and most punctuation. If a
 name has a character that some computers can't use in file names, such as `:`
 or `?`, the app puts a space in its place and a message names the file.
@@ -168,6 +173,10 @@ mention the tool, and you connect it in the product yourself.
 | Script in the skill | Left out | Left out | Left out | Included in the skill | Included in the skill | Included in the skill |
 | Web search on a few sites | Written in as Copilot web search | Written in as Copilot web search | Named only | Named only | Named only | Named only |
 
+A skill's author can make a script tool in the editor with **Add a script
+tool**, under **Tools**. Every product in the table's script row uses it the
+same way as a script tool from the Library.
+
 Gemini skills cannot run a script that reaches the internet, so a script that
 does is included in the Gemini skill but works only elsewhere. Every download
 also writes a section into the instructions called **Tools available in this
@@ -197,6 +206,10 @@ reasons:
   allows.
 - The download would drop a list that limits a Copilot source, which would let
   the assistant use the whole source.
+- For the **Copilot / Teams Apps** and **Copilot app with skills** downloads,
+  the name, the description, or an example question has `[[` or `]]`, or the
+  instructions start with `[[` or end with `]]`. Microsoft 365 refuses such a
+  package, so write "Daily log" instead of "[[Daily log]]".
 - The author marked the assistant or skill as not for this product under
   **More settings**, then **Products it works in**. A whole-project plugin is
   blocked this way only when every item in the project is marked; otherwise it
@@ -474,6 +487,10 @@ caveman/
   references/      Attached files, when there are any, under their own names.
 ```
 
+In the editor, **Add files** puts an assistant's files in `references/`. For a
+skill, **Folder for new files** chooses `references/` or `scripts/`, and a
+plain-text file in `scripts/` may have any type, such as `scripts/report.rb`.
+
 File and folder names keep letters, digits, and punctuation from any
 language, stored in composed Unicode form (NFC). `cleanNamePart` puts a space
 in place of control characters, invisible formatting characters, the
@@ -610,11 +627,23 @@ once (see [Add your assistant to the Library](how-to/add-to-library.md)).
 
 ### Tools: capabilities, providers, and servers
 
-An item declares tools as capabilities. The app has no form for writing a new
-one; capabilities arrive with Library entries and imported files and pass
-through `normalizeCapability` and `normalizeProvider`. The editor shows them
-as **Tools** cards and lets a person remove the item's own tools, and the
-**Tool connections** section under More settings lists the project servers.
+An item declares tools as capabilities. Capabilities arrive with Library
+entries and imported files and pass through `normalizeCapability` and
+`normalizeProvider`. The editor shows them as **Tools** cards and lets a person
+remove the item's own tools, and the **Tool connections** section under More
+settings lists the project servers.
+
+The editor's **Add a script tool** form, shown for a skill, writes one more
+kind of capability (`scriptTool`). It takes a file in the skill's `scripts/`
+folder, what the tool does (`label`), the program that runs it (`runtime`,
+letters, digits, dots, dashes, and spaces only), the command to type, and what
+the script needs. The id is `<skill-name>.script.<file name without its
+extension>`, with `-2`, `-3`, and so on when another item in the project
+already uses it. The capability has one `script` route under `*`, so every
+product reads the same route, and an empty `copilot` list, since no Copilot
+download can run a script. The route's `instructions` are "Run it from the
+skill folder with" and the command as a code span, then "What it needs:" and
+the text the person typed. Agentprise never runs the script or the command.
 
 | Capability field | Holds |
 |---|---|
@@ -689,8 +718,9 @@ When a download includes a script that a tool runs, the tools section starts
 with `### Scripts in this skill`, which lists each script's path and the tools
 that use it. A script route that names a runtime also gets the command that
 runs it, in a fenced `bash` block, such as `python3 scripts/report.py`. The
-command is left out when the route's instructions already give it
-(`scriptCommand`).
+command is left out when the route's instructions already give it, or give
+another command after "Run it from the skill folder with", as a tool from the
+**Add a script tool** form does (`scriptCommand`).
 
 Tool labels are put on one line, and a `#` at the start of any line of tool
 text is escaped, so tool text cannot add headings of its own. For an export
@@ -920,7 +950,7 @@ package carries no extra keys and no license notice.
 
 | Field | Where it lives in the package |
 |---|---|
-| Name, description | `declarativeAgent_0.json` top level; `manifest.json` `name` and `description` |
+| Name, description | `declarativeAgent_0.json` top level; `manifest.json` `name` and `description`. The schema takes a description of one line with at most 1,000 characters, so line breaks become spaces (`copilotDescription`). When that is still too long, runs of spaces outside double quotes become one space, and then the description ends at the last whole word that fits. The report says so, and so does the message after the download when words were left out. A name, description, or starter with `[[` or `]]`, and instructions that start with `[[` or end with `]]`, block the download, because the schema reads `[[key]]` as a translation key (`copilotBracketReport`) |
 | Instructions | `declarativeAgent_0.json` `instructions`, the composed text for `teamsZip`, at most 8,000 characters |
 | Starters | `conversation_starters[].text`, at most 12 |
 | Welcome message | Nowhere. The export warns and leaves it out. |
@@ -933,7 +963,7 @@ package carries no extra keys and no license notice.
 | Web search sites | `capabilities[WebSearch].sites[].url`, at most four, including sites the tools add |
 | Teams chats, mailboxes and folders, meetings | `capabilities[TeamsMessages].urls[]`, `capabilities[Email].group_mailboxes[]`, `shared_mailbox`, `folders[]`, and `capabilities[Meetings].items_by_id[]`, each present only when the source is limited |
 | Actions | `declarativeAgent_0.json` `actions[]` as `{id, file}`, at most 10, written only when there is at least one |
-| Attached files | At the ZIP root, exactly as the Copilot app's own export places them, with no entry in either JSON file. Only the types Copilot accepts go in: documents, `.onepart`, and `.txt`, with other text types renamed `name.ext.txt`; a `.one` file is left out with a warning |
+| Attached files | At the ZIP root, exactly as the Copilot app's own export places them, with no entry in either JSON file. Only files directly inside `references/` of the item and its skills go in; the report lists each other file, except one a tool names, which the tool's own line covers. Only the types Copilot accepts go in: documents, `.onepart`, and `.txt`, with other text types renamed `name.ext.txt`; a `.one` file is left out with a warning. `copilotPackageFiles` works out each file's name in the package and compares names as `sameNameKey` does, including the package's own files, so a file whose name is taken, such as a second `notes.md.txt` or `guide.pdf` beside `Guide.pdf`, is left out with a report line |
 | Prefer my files | `behavior_overrides.special_instructions.discourage_model_knowledge`, written only when on |
 | Response mode | `behavior_overrides.default_response_mode`, written only when it is not `Auto` |
 | Creator | `manifest.json` `developer` (name at most 32 characters, three https links) |
@@ -1371,7 +1401,10 @@ skill, the download creates an assistant with instructions to use that skill.
 When a selected skill has a problem, the report and the error list it once.
 
 This download uses app manifest 1.28, declarative agent v1.9 with
-`agent_skills`, and API-plugin v2.4 for actions. The usual **Copilot / Teams
+`agent_skills`, and API-plugin v2.4 for actions. The assistant's description
+and the `[[` and `]]` checks follow the same rules as the Teams app package. A
+skill's own description may hold up to 1,024 characters, so a selected skill's
+description can be shortened here. The usual **Copilot / Teams
 Apps** download still uses v1.8 and adds skill steps to the assistant's
 instructions. Both downloads keep the assistant's app id so later uploads update
 the same assistant. Ask your admin to upload the **Copilot app with skills**

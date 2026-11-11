@@ -8,7 +8,7 @@ This file is part of Agentprise
 skills/project-preferences/SKILL.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-10
+Last Modified: 2026-11-11
 Summary: Project-specific preferences for Agentprise: the single-file build, the
          project backup format, workspace storage, the download cards, and how
          to test.
@@ -187,6 +187,15 @@ Git marks `run-linux.sh` and `run-mac.command` as runnable (mode 100755).
   which maps to `behavior_overrides.special_instructions.discourage_model_knowledge`,
   and the response mode, which maps to `behavior_overrides.default_response_mode`
   and is written only when it is not `Auto`.
+- The Copilot app package and the Copilot app with skills follow Microsoft's
+  declarative agent schema. The description becomes one line of at most 1,000
+  characters (`copilotDescription`), with a report line, and a message after
+  the download when words were left out. `[[` or `]]` in the name,
+  description, or example questions, or instructions that start with `[[` or
+  end with `]]`, block both downloads (`copilotBracketReport`). The app package
+  holds only files directly inside `references/`. `copilotPackageFiles` works
+  out each file's name in the package, compares names as `sameNameKey` does,
+  and reports each file it leaves out.
 - Attached files are accepted by content, never by name alone. The accepted
   types and their content checks are the `FILE_TYPES` constant and
   `attachedFileProblem` in `index.html`; OneNote files (`.one`, `.onepart`)
@@ -204,7 +213,10 @@ Git marks `run-linux.sh` and `run-mac.command` as runnable (mode 100755).
   keeps a short extension. `renamedFilesNotice` names each kept file whose
   name changed. Program checks read names in NFKC form. In a skill folder from
   elsewhere, a UTF-8 text file under `scripts/` is kept whatever its type
-  (`isTextScript`), and any other file of a type the app
+  (`isTextScript`). In the editor, **Folder for new files** puts a skill's new
+  files in `references/` or `scripts/`, and **Add a script tool** makes a
+  script tool with one route under `*` and an empty `copilot` list
+  (`scriptTool`). Any other file of a type the app
   doesn't accept stays in the backup only, with a notice on opening and a line
   in each download's conversion report (`backupOnlyFiles`).
 - Every Copilot source is a switch in `copilot` with an optional list that

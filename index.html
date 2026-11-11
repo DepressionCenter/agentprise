@@ -3,7 +3,7 @@ This file is part of Agentprise
 index.html
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-10
+Last Modified: 2026-11-11
 Summary: The whole Agentprise web app in one file. Lets a person describe an AI
          assistant once, then download it as a skill for Gemini and Claude, a
          Copilot app package, a Teams Chat file, a plugin, copy-ready text for
@@ -1005,6 +1005,42 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                 <legend>Tools</legend>
                                 <p class="hint">Tools let the assistant look things up or take actions. Each product connects them in its own way, as listed below. If a tool isn't connected, the assistant does what it can and tells people it couldn't use the tool.</p>
                                 <ul class="tool-list" id="tool-list"></ul>
+                                <details class="sub" id="script-tool" hidden>
+                                    <summary>Add a script tool</summary>
+                                    <p class="hint">Claude, ChatGPT, Gemini, and coding tools can run it. Copilot can't.</p>
+                                    <p class="hint" id="script-tool-empty">First add the script: open More settings, then File attachments, set Folder for new files to scripts, and choose Add files.</p>
+                                    <div id="script-tool-fields">
+                                        <div class="field">
+                                            <label for="t-script">Script</label>
+                                            <select id="t-script"></select>
+                                        </div>
+                                        <div class="field">
+                                            <label for="t-label">What the tool does</label>
+                                            <p class="hint" id="t-label-hint">Such as "Make the monthly report."</p>
+                                            <input type="text" id="t-label" maxlength="200" aria-describedby="t-label-hint t-label-error">
+                                            <p class="error-text" id="t-label-error" hidden></p>
+                                        </div>
+                                        <div class="field">
+                                            <label for="t-runtime">Program that runs it</label>
+                                            <p class="hint" id="t-runtime-hint">Optional. Such as python3, node, bash, or pwsh.</p>
+                                            <input type="text" id="t-runtime" maxlength="40" autocomplete="off" spellcheck="false" aria-describedby="t-runtime-hint t-runtime-error">
+                                            <p class="error-text" id="t-runtime-error" hidden></p>
+                                        </div>
+                                        <div class="field">
+                                            <label for="t-command">How to run it</label>
+                                            <p class="hint" id="t-command-hint">Optional. The command to type in the skill folder, such as python3 scripts/report.py --month 2026-01.</p>
+                                            <input type="text" id="t-command" maxlength="500" autocomplete="off" spellcheck="false" aria-describedby="t-command-hint">
+                                        </div>
+                                        <div class="field">
+                                            <label for="t-needs">What the script needs</label>
+                                            <p class="hint" id="t-needs-hint">Optional. Such as Python 3 and network access to example.org.</p>
+                                            <input type="text" id="t-needs" maxlength="500" aria-describedby="t-needs-hint">
+                                        </div>
+                                        <div class="button-row">
+                                            <button type="button" id="t-add"><span class="bi bi-plus-lg" aria-hidden="true"></span>Add this tool</button>
+                                        </div>
+                                    </div>
+                                </details>
                             </fieldset>
                             <details class="more" id="more">
                                 <summary>More settings</summary>
@@ -1048,6 +1084,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                                             <legend>File attachments</legend>
                                             <p class="hint" id="file-add-hint">Documents the assistant can read to answer questions, such as a handbook or a list of contacts. Some products can't use files.</p>
                                             <ul class="item-list" id="file-items" aria-label="Attached files"></ul>
+                                            <div class="field" id="file-folder-wrap" hidden>
+                                                <label for="file-folder">Folder for new files</label>
+                                                <select id="file-folder">
+                                                    <option value="references/">references: documents the skill reads</option>
+                                                    <option value="scripts/">scripts: scripts the skill runs</option>
+                                                </select>
+                                            </div>
                                             <div class="button-row">
                                                 <label class="button" for="file-add"><span class="bi bi-paperclip" aria-hidden="true"></span>Add files</label>
                                                 <input type="file" id="file-add" class="visually-hidden" multiple aria-describedby="file-add-hint file-add-error">
@@ -1448,11 +1491,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>.
                     <h2>What does "Download Backup" do?</h2>
                     <p>It saves the whole project, with every assistant, skill, and file, as one .zip file on your computer. Drop that file on the Workspace page later to open it again, change it, or download it for a different product. To upload to Gemini or Claude, use their own Download buttons instead.</p>
                     <h2>What are tools, and what does "needs setup" mean?</h2>
-                    <p>Some assistants and skills, such as PubMed Search, can use a tool to look things up. Each product connects tools its own way, so every download lists what changes for it under "What changes in this download" on the Inspect page. "Needs setup" means one more step after you install, such as turning on a connector or pasting a server address. The setup steps say how. Most downloads include them, and the Inspect page shows them for the Copilot app package and the More Microsoft downloads. If the tool isn't connected, the assistant does what it can and tells people it couldn't use the tool.</p>
+                    <p>Some assistants and skills, such as PubMed Search, can use a tool to look things up. A skill can also run a script of its own: add the script with Folder for new files set to scripts, then use Add a script tool under Tools. Each product connects tools its own way, so every download lists what changes for it under "What changes in this download" on the Inspect page. "Needs setup" means one more step after you install, such as turning on a connector or pasting a server address. The setup steps say how. Most downloads include them, and the Inspect page shows them for the Copilot app package and the More Microsoft downloads. If the tool isn't connected, the assistant does what it can and tells people it couldn't use the tool.</p>
                     <h2>Why is a download button grayed out?</h2>
                     <p>Either a required question is still empty, the product can't accept the project as it is, for example more than four web search sites for Copilot, or the author marked the assistant or skill as not for that product under More settings, then Products it works in. The Inspect page says what to change. The note under the button says why too, and choosing the button shows the reason.</p>
                     <h2>Which files can I attach?</h2>
-                    <p>Word, PowerPoint, Excel, PDF, OneNote (.one and .onepart), and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, .onepart, and .txt, so a script is added as a .txt file with the same name, and a .one file is left out of the app package. The skill .zip and the backup keep each file's name. If a name has a character that some computers can't use, such as : or ?, the app changes it and tells you.</p>
+                    <p>Word, PowerPoint, Excel, PDF, OneNote (.one and .onepart), and plain text files, including scripts and data files such as PowerShell, Python, SQL, Markdown, CSV, and JSON. Up to 20 files, each under 10 MB. The app reads the start of every file and refuses programs, including ones renamed to look like a document. Copilot accepts only document types, .onepart, and .txt, so a script is added as a .txt file with the same name, and a .one file is left out of the app package. For a skill, Folder for new files puts new files in references or scripts. The app package includes only files in references, and the Inspect page lists any it leaves out. The skill .zip and the backup keep each file's name. If a name has a character that some computers can't use, such as : or ?, the app changes it and tells you.</p>
                     <h2>Where do links go?</h2>
                     <p>Each Copilot source has its own box under Copilot settings. Web sites go under Web search, up to 4. SharePoint and OneDrive links go under SharePoint and OneDrive, up to 20. Links to teams, channels, group chats, or meeting chats go under Teams messages, up to 5. Shared or group mailbox addresses go under Email. A box only matters while its source is on, and leaving it empty means Copilot may use everything the person can see.</p>
                     <h2>Who can use my assistant?</h2>
@@ -5331,6 +5374,10 @@ const CLAUDE_RESERVED_NAME = /^(claude|anthropic|anthropics|cc-plugin)(-|$)|^cla
 const COPILOT_PLUGIN_SCHEMA = "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json";
 const COPILOT_PLUGIN_VERSION = "v2.4";
 const COPILOT_ACTION_LIMIT = 10;
+// Microsoft's declarative agent schema takes a description of one line and at most this many characters.
+const COPILOT_DESCRIPTION_LIMIT = 1000;
+// Files the Copilot app package writes itself, besides each action's file.
+const COPILOT_PACKAGE_NAMES = Object.freeze(["manifest.json", "declarativeAgent_0.json", "color.png", "outline.png"]);
 // Plugin manifest v2.4 function names.
 const COPILOT_FUNCTION_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
 // SETUP.md inside, or on the Inspect page for the Copilot package.
@@ -5427,7 +5474,8 @@ function providerName(project, provider) {
  * @param {object} item
  * @param {string} exportId a key of EXPORTS
  * @param {{skip?: string[]}} [options] used skill ids to leave out
- * @returns {{text: string, files: Array<{path: string, bytes: Uint8Array}>, report: Array<object>, actions: Array<object>, sites: string[], setup: Array<object>, named: string[], servers: string[], blocked: boolean, description: string}}
+ * @returns {{text: string, files: Array<{path: string, bytes: Uint8Array}>, report: Array<object>, actions: Array<object>, sites: string[], setup: Array<object>, named: string[], servers: string[], blocked: boolean, description: string, leftOutFiles: string[]}}
+ *   leftOutFiles lists the paths the Copilot app package leaves out because they are outside references/
  */
 function planExport(project, item, exportId, options) {
     const spec = EXPORTS[exportId];
@@ -5443,10 +5491,12 @@ function planExport(project, item, exportId, options) {
     const sites = [];
     const named = [];
     const servers = [];
+    // Paths of the files a package with one folder of attached files can't hold.
+    const leftOutFiles = [];
     let description = item.description;
     let text = itemBody(item);
     const result = function (blocked) {
-        return { text: text, files: files, report: report, actions: actions, sites: sites, setup: setup, named: named, servers: servers, blocked: blocked, description: description };
+        return { text: text, files: files, report: report, actions: actions, sites: sites, setup: setup, named: named, servers: servers, blocked: blocked, description: description, leftOutFiles: leftOutFiles };
     };
     if (!spec || exportId === "backup") {
         return result(false);
@@ -5496,12 +5546,17 @@ function planExport(project, item, exportId, options) {
     const summaries = [];
     // Each script a usable tool runs, with the labels of the tools that use it.
     const scripts = [];
+    // Files a route names, as owner id and path, whether the export keeps the route or not.
+    const toolFiles = [];
     capabilities.forEach(function (link) {
         const capability = link.capability;
         const usable = [];
         providersFor(capability, spec.target).forEach(function (provider) {
             if (provider.kind === "none") {
                 return;
+            }
+            if (provider.kind === "script" || provider.kind === "openapi") {
+                toolFiles.push(link.owner.id + ":" + (provider.kind === "script" ? provider.path : provider.spec));
             }
             const support = PROVIDER_SUPPORT[provider.kind][exportId];
             const name = providerName(project, provider);
@@ -5712,9 +5767,26 @@ function planExport(project, item, exportId, options) {
         return planExport(project, item, exportId, { skip: skip.concat(leftOut) });
     }
     if (!spec.skills && spec.files) {
-        used.forEach(function (skill) {
-            skill.files.filter(function (file) { return file.path.indexOf(BUNDLE_FILES_FOLDER) === 0 && file.path.split("/").length === 2; }).forEach(function (file) {
-                files.push({ path: file.path, bytes: file.bytes, from: skill.name });
+        // The package holds attached files in one folder, so a file elsewhere in
+        // the item or a used skill is left out. An API description goes in with
+        // its action, and a file a tool names is reported with that tool.
+        [item].concat(used).forEach(function (owner) {
+            const steps = itemBody(owner);
+            owner.files.forEach(function (file) {
+                if (actions.some(function (action) { return action.ownerId === owner.id && action.spec === file.path; })) {
+                    return;
+                }
+                if (isAttachedFilePath(file.path)) {
+                    if (owner !== item) {
+                        files.push({ path: file.path, bytes: file.bytes, from: owner.name });
+                    }
+                    return;
+                }
+                if (toolFiles.indexOf(owner.id + ":" + file.path) >= 0) {
+                    return;
+                }
+                leftOutFiles.push(file.path);
+                report.push(reportEntry(file.path, "unsupported", "Left out" + (owner === item ? "" : " from the skill " + owner.name) + ", because " + spec.label + " takes only files directly inside " + BUNDLE_FILES_FOLDER + ". The backup keeps it." + (steps.indexOf(file.path) >= 0 ? " The steps still tell the assistant to use it, so change the steps or add the file again in " + BUNDLE_FILES_FOLDER + " before you share this download." : "")));
             });
         });
     }
@@ -5757,12 +5829,18 @@ function itemRunsScript(item) {
     });
 }
 
+// The words before a command the author gave in the Add a script tool form,
+// such as "python3 -I scripts/report.py --dry-run".
+const SCRIPT_COMMAND_LEAD = "Run it from the skill folder with ";
+
 /**
  * The command that runs a script tool, such as "python3 scripts/report.py",
- * when the tool names a runtime and its instructions don't already give that
- * command. A path with a space or parenthesis is quoted. A path with any
- * other punctuation gets no command, because a shell could read a character
- * such as $ or ` as part of a command.
+ * when the tool names a runtime and its instructions don't already give a
+ * command: that same command, or any command after SCRIPT_COMMAND_LEAD, so
+ * the author's own options are never shown beside a second command without
+ * them. A path with a space or parenthesis is quoted. A path with any other
+ * punctuation gets no command, because a shell could read a character such
+ * as $ or ` as part of a command.
  * @param {object} provider a script provider
  * @returns {string} the command, or ""
  */
@@ -5772,7 +5850,61 @@ function scriptCommand(provider) {
     }
     const path = /[ ()]/.test(provider.path) ? "\"" + provider.path + "\"" : provider.path;
     const command = provider.runtime + " " + path;
-    return (provider.instructions || "").indexOf(command) >= 0 ? "" : command;
+    const given = provider.instructions || "";
+    return given.indexOf(command) >= 0 || given.indexOf(SCRIPT_COMMAND_LEAD) >= 0 ? "" : command;
+}
+
+/** Text as a Markdown code span, with a longer fence when the text holds backticks. */
+function codeSpan(text) {
+    const longest = (String(text).match(/`+/g) || []).reduce(function (most, run) { return Math.max(most, run.length); }, 0);
+    const fence = "`".repeat(longest + 1);
+    const pad = /^`|`$/.test(text) ? " " : "";
+    return fence + pad + text + pad + fence;
+}
+
+/**
+ * A script tool from the editor's Add a script tool form, for a file in a
+ * skill's scripts folder. Every product reads the same route, and each
+ * download decides whether it can run scripts, as PROVIDER_SUPPORT says.
+ * Copilot gets no route, so its tool card says the tool is not available
+ * there. Agentprise never runs the script or the command.
+ * @param {object} project
+ * @param {object} item the skill the tool is for
+ * @param {{path: string, label: string, runtime: string, command: string, needs: string}} input
+ *   what the person typed; runtime is a program name such as python3
+ * @returns {{capability: object}|{field: string, message: string}} the
+ *   capability to add, or the id of the form control to fix and why
+ */
+function scriptTool(project, item, input) {
+    const path = String(input.path || "");
+    if (item.kind !== "skill" || path.indexOf(SCRIPTS_FOLDER) !== 0 || !item.files.some(function (file) { return file.path === path; })) {
+        return { field: "t-script", message: "Choose a script in the skill's scripts folder." };
+    }
+    const label = oneLine(input.label || "");
+    if (!label) {
+        return { field: "t-label", message: "Say what the tool does, such as \"Make the monthly report.\"" };
+    }
+    const runtime = oneLine(input.runtime || "");
+    if (runtime && !/^[A-Za-z0-9._ -]{1,40}$/.test(runtime)) {
+        return { field: "t-runtime", message: "Use only letters, numbers, dots, dashes, and spaces, such as python3." };
+    }
+    if (item.capabilities.length >= LIMITS.capabilities) {
+        return { field: "t-add", message: "A skill can have at most " + LIMITS.capabilities + " tools. Remove one before you add another." };
+    }
+    // A command keeps its own spaces, such as two inside quotes; only line breaks become spaces.
+    const command = String(input.command || "").replace(/[\r\n]+/g, " ").trim();
+    const needs = oneLine(input.needs || "");
+    const instructions = (command ? SCRIPT_COMMAND_LEAD + codeSpan(command) + "." : "") + (command && needs ? " " : "") + (needs ? "What it needs: " + needs + (/[.!?]$/.test(needs) ? "" : ".") : "");
+    // Ids are compared across the project, since an assistant shows each id from its skills once.
+    const base = (item.skillName + ".script." + pathLeaf(path).replace(/\.[^.]*$/, "").replace(/[^A-Za-z0-9._-]+/g, "-")).slice(0, 90);
+    const taken = function (id) { return project.items.some(function (other) { return other.capabilities.some(function (capability) { return capability.id === id; }); }); };
+    let id = base;
+    for (let n = 2; taken(id); n++) {
+        id = base + "-" + n;
+    }
+    const provider = { kind: "script", path: path, runtime: runtime, instructions: instructions };
+    const capability = normalizeCapability({ id: id, label: label, description: "", required: false, fallback: "", providers: { "*": [provider], copilot: [] } }, []);
+    return { capability: capability };
 }
 
 /** Escapes a leading #, so tool text can't add headings. */
@@ -5783,6 +5915,78 @@ function quoteHeadings(text) {
 /** A document type as is; other text gets ".txt". */
 function copilotFileName(leaf) {
     return isCopilotFileName(leaf) || fileKind(leaf) !== "text" ? leaf : leaf + ".txt";
+}
+
+/** The name a file gets in the Copilot app package, or "" for a type Copilot refuses. */
+function copilotPackageName(leaf) {
+    return isCopilotFileName(leaf) || fileKind(leaf) === "text" ? copilotFileName(leaf) : "";
+}
+
+/** Whether a path is an attached file: one directly inside references/. */
+function isAttachedFilePath(path) {
+    return path.indexOf(BUNDLE_FILES_FOLDER) === 0 && path.split("/").length === 2;
+}
+
+/**
+ * An item's description as the Copilot app package takes it: one line of at
+ * most COPILOT_DESCRIPTION_LIMIT characters. Each line break becomes a space.
+ * When the text has line breaks or is too long, runs of spaces outside double
+ * quotes become one space. Text that is still too long ends at the last space
+ * that fits, or at the limit when there is no space.
+ * @param {string} text
+ * @returns {{text: string, changed: boolean, cut: boolean}} cut is true when words were left out
+ */
+function copilotDescription(text) {
+    const original = String(text || "");
+    let value = original.replace(/\r\n|\n\r|[\r\n\u0085\u2028\u2029]/g, " ");
+    if (value === original && value.length <= COPILOT_DESCRIPTION_LIMIT) {
+        return { text: original, changed: false, cut: false };
+    }
+    // Quoted parts, such as "Use  exactly  this", keep their spaces.
+    value = value.split(/("[^"]*"|\u201c[^\u201d]*\u201d)/).map(function (part, index) {
+        return index % 2 === 1 ? part : part.replace(/[ \t]{2,}/g, " ");
+    }).join("").trim();
+    let cut = false;
+    if (value.length > COPILOT_DESCRIPTION_LIMIT) {
+        let end = value.lastIndexOf(" ", COPILOT_DESCRIPTION_LIMIT);
+        if (end <= 0) {
+            end = /[\uD800-\uDBFF]/.test(value.charAt(COPILOT_DESCRIPTION_LIMIT - 1)) ? COPILOT_DESCRIPTION_LIMIT - 1 : COPILOT_DESCRIPTION_LIMIT;
+        }
+        value = value.slice(0, end).trim();
+        cut = true;
+    }
+    return { text: value, changed: value !== original, cut: cut };
+}
+
+// The localizable fields of Microsoft's declarative agent schema read text
+// between [[ and ]] as the key of a translation, so the schema refuses [[ or ]]
+// in them. Instructions may hold both, but may not start with [[ or end with ]].
+const COPILOT_BRACKET_FIX = " Remove the double brackets, such as writing Daily log instead of [[Daily log]].";
+
+/**
+ * Blocked report entries for the double square brackets that Microsoft's
+ * declarative agent schema refuses.
+ * @param {object} view the agent-shaped copy the package is written from
+ * @param {boolean} withInstructions whether the package uses view.instructions
+ * @returns {Array<{component: string, status: string, note: string}>}
+ */
+function copilotBracketReport(view, withInstructions) {
+    const report = [];
+    const brackets = /\[\[|\]\]/;
+    if (brackets.test(view.name)) {
+        report.push(reportEntry("Name", "blocked", "Microsoft 365 refuses the package when the name has [[ or ]]." + COPILOT_BRACKET_FIX));
+    }
+    if (brackets.test(view.description)) {
+        report.push(reportEntry("Description", "blocked", "Microsoft 365 refuses the package when the description has [[ or ]]." + COPILOT_BRACKET_FIX));
+    }
+    const starters = view.starters.filter(function (text) { return brackets.test(text); });
+    if (starters.length > 0) {
+        report.push(reportEntry("Example questions", "blocked", "Microsoft 365 refuses the package when an example question has [[ or ]]. " + (starters.length === 1 ? "1 question has them." : starters.length + " questions have them.") + COPILOT_BRACKET_FIX));
+    }
+    if (withInstructions && (/^\[\[/.test(view.instructions) || /\]\]$/.test(view.instructions))) {
+        report.push(reportEntry("Instructions", "blocked", "Microsoft 365 refuses the package when the instructions start with [[ or end with ]]." + COPILOT_BRACKET_FIX));
+    }
+    return report;
 }
 
 /**
@@ -5822,40 +6026,97 @@ function composeInstructions(project, item, exportId) {
 /**
  * The plan, the agent-shaped copy the Microsoft and copy-text formats read,
  * and the full report with format losses, files, and web search changes.
- * @returns {{plan: object, view: object, report: Array<object>}}
+ * warnings holds what the message after the download adds, such as a
+ * description that Copilot needs shorter.
+ * @returns {{plan: object, view: object, report: Array<object>, warnings: string[]}}
  */
 function prepareExport(project, item, exportId) {
     const plan = planExport(project, item, exportId);
     // An item marked as not for the product reports only why it is turned off.
     const marked = EXPORTS[exportId] && notForTarget(item, EXPORTS[exportId].target);
-    const report = marked ? plan.report : plan.report.concat(formatReport(project, item, exportId, plan.named));
+    const report = marked ? plan.report : plan.report.concat(formatReport(project, item, exportId));
     const view = agentView(project, item);
+    const warnings = [];
     view.instructions = plan.text;
     if (exportId === "teamsZip") {
-        // Files a tool names travel as its own files, never as knowledge.
-        view.files = item.files.filter(function (file) {
-            return file.path.indexOf(BUNDLE_FILES_FOLDER) === 0 && file.path.split("/").length === 2 && plan.named.indexOf(file.path) < 0;
-        }).map(function (file) { return { name: pathLeaf(file.path), bytes: file.bytes }; });
-        plan.files.forEach(function (file) {
-            const leaf = pathLeaf(file.path);
-            if (view.files.some(function (other) { return other.name === leaf; })) {
-                report.push(reportEntry(leaf, "unsupported", "Left out" + (file.from ? " from the skill " + file.from : "") + ", because another file has the same name."));
-                return;
-            }
-            if (view.files.length >= LIMITS.files) {
-                report.push(reportEntry(leaf, "unsupported", "Copilot takes at most " + LIMITS.files + " files, so this one was left out."));
-                return;
-            }
-            if (file.from && copilotFileName(leaf) !== leaf) {
-                report.push(reportEntry(leaf, "transformed", "From the skill " + file.from + ". Copilot accepts only document types, so it goes in as " + copilotFileName(leaf) + "."));
-            }
-            view.files.push({ name: leaf, bytes: file.bytes });
-        });
+        const leftOut = { refused: [], other: plan.leftOutFiles.slice() };
+        view.files = copilotPackageFiles(item, plan, marked ? [] : report, leftOut);
+        if (leftOut.refused.length > 0) {
+            warnings.push(copilotRefusedWarning(leftOut.refused));
+        }
+        if (leftOut.other.length > 0) {
+            warnings.push("The Copilot app package leaves out " + (leftOut.other.length === 1 ? leftOut.other[0] : leftOut.other.length + " files, such as " + leftOut.other[0]) + ". The Inspect page says why.");
+        }
+    }
+    if ((exportId === "teamsZip" || exportId === "copilotSkills") && !marked) {
+        const limit = COPILOT_DESCRIPTION_LIMIT.toLocaleString("en-US");
+        const description = copilotDescription(view.description);
+        if (description.cut) {
+            report.push(reportEntry("Description", "transformed", "Copilot allows at most " + limit + " characters, so this download puts spaces in place of line breaks, leaves out extra spaces, and ends the description at the last whole word that fits. Your project keeps the full text. To choose the words yourself, shorten the description to " + limit + " characters or fewer."));
+            warnings.push("Copilot allows at most " + limit + " characters in a description, so Agentprise shortened it in this download. Your project keeps the full text.");
+        } else if (description.changed) {
+            report.push(reportEntry("Description", "transformed", "Copilot takes a description of one line with at most " + limit + " characters, so this download puts spaces in place of line breaks and leaves out extra spaces. Your project keeps the description as you wrote it."));
+        }
+        view.description = description.text;
+        // The Copilot app with skills writes its own instructions for a skill.
+        copilotBracketReport(view, exportId === "teamsZip" || item.kind === "agent").forEach(function (entry) { report.push(entry); });
     }
     if (exportId === "teamsZip" || exportId === "copilotSkills" || exportId === "msAgent") {
         mergeWebSearchSites(view, plan.sites, report);
     }
-    return { plan: plan, view: view, report: report };
+    return { plan: plan, view: view, report: report, warnings: warnings };
+}
+
+/**
+ * The attached files of the Copilot app package, under the names they get in
+ * it: the item's own files directly inside references/, then the files the
+ * plan adds, such as a used skill's attached files. A file that an action
+ * includes as its API description is not attached. Adds a report entry for
+ * each file of a type Copilot refuses, each one whose name in the package
+ * another file already has, such as notes.md.txt for both notes.md and
+ * notes.md.txt, or Guide.pdf and guide.pdf, and each one past Copilot's limit
+ * on files.
+ * @param {object} item
+ * @param {object} plan the item's teamsZip plan
+ * @param {Array<object>} report receives the entries
+ * @param {{refused: string[], other: string[]}} leftOut receives the name of
+ *   each file left out: refused for a type Copilot refuses, other for the rest
+ * @returns {Array<{name: string, bytes: Uint8Array}>} names as they are in the package
+ */
+function copilotPackageFiles(item, plan, report, leftOut) {
+    const files = [];
+    // Compared as sameNameKey, since unzipping on Windows or a Mac keeps only one of two names that differ in case.
+    const taken = Object.create(null);
+    COPILOT_PACKAGE_NAMES.concat(plan.actions.map(function (action) { return action.file; })).forEach(function (name) { taken[sameNameKey(name)] = true; });
+    const own = item.files.filter(function (file) {
+        return isAttachedFilePath(file.path) && !plan.actions.some(function (action) { return action.ownerId === item.id && action.spec === file.path; });
+    });
+    own.concat(plan.files).forEach(function (file) {
+        const leaf = pathLeaf(file.path);
+        const name = copilotPackageName(leaf);
+        const from = file.from ? " from the skill " + file.from : "";
+        if (!name) {
+            report.push(reportEntry(leaf, "unsupported", "Left out" + from + ", because Copilot doesn't accept this type of file."));
+            leftOut.refused.push(leaf);
+            return;
+        }
+        if (taken[sameNameKey(name)]) {
+            report.push(reportEntry(leaf, "unsupported", "Left out" + from + ", because another file in the package is already named " + name + ". To include it, rename one of the two files."));
+            leftOut.other.push(leaf);
+            return;
+        }
+        if (files.length >= LIMITS.files) {
+            report.push(reportEntry(leaf, "unsupported", "Left out" + from + ", because Copilot takes at most " + LIMITS.files + " files."));
+            leftOut.other.push(leaf);
+            return;
+        }
+        if (name !== leaf) {
+            report.push(reportEntry(leaf, "transformed", (file.from ? "From the skill " + file.from + ". " : "") + "Copilot accepts only document types, so it goes in as " + name + "."));
+        }
+        taken[sameNameKey(name)] = true;
+        files.push({ name: name, bytes: file.bytes });
+    });
+    return files;
 }
 
 /**
@@ -5874,8 +6135,13 @@ function conversionReport(project, item, exportId) {
     return prepareExport(project, item, exportId).report;
 }
 
-/** Losses from the format, not tools. named lists files a tool carries. */
-function formatReport(project, item, exportId, named) {
+/** What the download message says about files of a type Copilot refuses, such as a .one file. */
+function copilotRefusedWarning(names) {
+    return "The Copilot app package can't include " + listNames(names) + ", because Copilot doesn't accept " + (names.length === 1 ? "that type" : "those types") + ". The skill and the backup keep " + (names.length === 1 ? "it" : "them") + ".";
+}
+
+/** Losses from the format, not tools. The Copilot app package's files are reported by copilotPackageFiles. */
+function formatReport(project, item, exportId) {
     const report = [];
     const view = agentView(project, item);
     if (exportId === "teamsZip" || exportId === "copilotSkills") {
@@ -5886,16 +6152,6 @@ function formatReport(project, item, exportId, named) {
         if (view.copyright || view.license !== DEFAULT_LICENSE) {
             report.push(reportEntry("Copyright and license", "unsupported", packageName + " has no place for them."));
         }
-        (exportId === "copilotSkills" ? [] : view.files).forEach(function (file) {
-            if (isCopilotFileName(file.name) || (named || []).indexOf(BUNDLE_FILES_FOLDER + file.name) >= 0) {
-                return;
-            }
-            if (fileKind(file.name) === "text") {
-                report.push(reportEntry(file.name, "transformed", "Copilot accepts only document types, so it goes in as " + file.name + ".txt."));
-            } else {
-                report.push(reportEntry(file.name, "unsupported", "Copilot doesn't accept this type of file."));
-            }
-        });
     }
     if (exportId === "teamsZip" || exportId === "copilotSkills" || exportId === "microsoftPlugin") {
         // Words for each Publisher details field, as they read after "the" in a sentence.
@@ -5905,7 +6161,7 @@ function formatReport(project, item, exportId, named) {
             report.push(reportEntry("Publisher details", "transformed", "Agentprise filled in sample text for the " + namesInSentence(missing) + ". Fill in Publisher details to use your own."));
         }
     }
-    if (exportId === "msAgent" && view.files.length > 0) {
+    if (exportId === "msAgent" && (item.files.length > 0 || usedSkills(project, item).some(function (skill) { return skill.files.length > 0; }))) {
         report.push(reportEntry("Attached files", "unsupported", "The Teams Chat file has no place for files."));
     }
     if (exportId === "msAgent" || exportId === "teamsZip" || exportId === "copilotSkills") {
@@ -7364,6 +7620,7 @@ async function writeTeamsPackage(project, item, icons) {
         item.appId = result.appId;
     }
     result.report = prepared.report;
+    result.warnings = prepared.warnings.concat(result.warnings);
     result.setup = writeSetupGuide(project, [item], "teamsZip");
     return result;
 }
@@ -7590,7 +7847,7 @@ function planMicrosoftPackage(project, item, exportId) {
  * @param {object} item Selected item, also supplies the plugin picture.
  * @param {{color: Uint8Array, outline: Uint8Array}} icons Prepared PNGs.
  * @param {"copilotSkills"|"microsoftPlugin"} exportId Destination profile.
- * @returns {Promise<{fileName: string, bytes: Uint8Array, entries: Array<object>, report: Array<object>, setup: string}>}
+ * @returns {Promise<{fileName: string, bytes: Uint8Array, entries: Array<object>, report: Array<object>, setup: string, warnings: string[]}>}
  */
 async function writeMicrosoftPackage(project, item, icons, exportId) {
     if (exportId !== "copilotSkills" && exportId !== "microsoftPlugin") {
@@ -7644,7 +7901,7 @@ async function writeMicrosoftPackage(project, item, icons, exportId) {
         if (item.kind === "agent") { item.copilot.appId = base.appId; } else { item.appId = base.appId; }
     }
     const setup = writeSetupGuide(project, plugin ? built.included : [item], exportId);
-    return { fileName: plugin ? projectSlug(project) + ".microsoft-plugin.zip" : safeFileName(item.name + " Copilot app with skills", ".zip"), bytes: bytes, entries: entries, report: built.report, setup: setup };
+    return { fileName: plugin ? projectSlug(project) + ".microsoft-plugin.zip" : safeFileName(item.name + " Copilot app with skills", ".zip"), bytes: bytes, entries: entries, report: built.report, setup: setup, warnings: built.prepared.warnings };
 }
 
 /**
@@ -7904,16 +8161,15 @@ async function teamsZipExport(agent, icons, extras) {
     // plus ".txt"; other types stay in the skill and backup.
     const leftOut = [];
     agent.files.forEach(function (file) {
-        if (isCopilotFileName(file.name)) {
-            entries.push({ name: file.name, bytes: file.bytes });
-        } else if (fileKind(file.name) === "text") {
-            entries.push({ name: file.name + ".txt", bytes: file.bytes });
+        const name = copilotPackageName(file.name);
+        if (name) {
+            entries.push({ name: name, bytes: file.bytes });
         } else {
             leftOut.push(file.name);
         }
     });
     if (leftOut.length > 0) {
-        warnings.push("The Copilot app package can't include " + listNames(leftOut) + ", because Copilot doesn't accept that type. The skill and the backup keep it.");
+        warnings.push(copilotRefusedWarning(leftOut));
     }
     return { fileName: safeFileName(agent.name + " Copilot app", ".zip"), bytes: zipWrite(entries), warnings: warnings, appId: appId };
 }
@@ -9802,6 +10058,7 @@ globalThis.Agentprise = {
         conversionReport: conversionReport,
         planExport: planExport,
         planMicrosoftPackage: planMicrosoftPackage,
+        scriptTool: scriptTool,
         writeSetupGuide: writeSetupGuide,
         writeCopilotActions: writeCopilotActions,
         COPILOT_INSTRUCTION_LIMIT: COPILOT_INSTRUCTION_LIMIT,
@@ -9883,7 +10140,6 @@ const KIND_WORDS = {
 // Where a finding sends focus. Attached files have no control.
 const REVIEW_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions", starters: "s-starters", welcome: "f-welcome", sharepointLinks: "f-sharepoint", webSites: "f-websites", teamsLinks: "f-teams", mailboxes: "f-mailboxes", creator: "a-name", copyright: "a-copyright" };
 const WORKSPACE_FIELDS = { name: "s-name", description: "s-description", instructions: "s-instructions" };
-const DETAILS_FIELDS = { name: "d-name", description: "d-description", instructions: "d-instructions" };
 const PRODUCT_HINTS = {
     copilotSkill: "Add the selected skill to an existing Copilot assistant in Agent Builder, once your admin turns on skills in Copilot.",
     copilotSkills: "Download this assistant with separate skills for organizations that have turned on the preview of skills in Copilot.",
@@ -10004,6 +10260,8 @@ const ui = {
     // Projects whose failed save was announced, until a save of them works.
     failedSaves: new Set(),
     view: "workspace",
+    // The item the editor form last showed, so a different item starts with a clear script tool form.
+    formItemId: "",
     starterBlanks: [],
     previewOrder: [],
     storageOk: true,
@@ -12020,6 +12278,16 @@ function renderForm() {
     renderFiles();
     renderUses();
     renderNotFor();
+    if (ui.formItemId !== item.id) {
+        // A new item starts with the folder set to references and an empty script tool form.
+        ui.formItemId = item.id;
+        $("file-folder").value = BUNDLE_FILES_FOLDER;
+        syncFileFolder();
+        ["t-label", "t-runtime", "t-command", "t-needs"].forEach(function (id) {
+            $(id).value = "";
+            showFieldError(id, "");
+        });
+    }
     renderTools();
     renderServers();
     const select = $("a-license");
@@ -12181,19 +12449,31 @@ function renderFiles() {
         });
         list.appendChild(el("li", {}, [el("span", { className: "item-text", text: label }), el("span", { className: "item-kind", text: formatSize(file.bytes.length) }), remove]));
     });
+    $("file-folder-wrap").hidden = item.kind !== "skill";
+    renderScriptToolForm(item);
+}
+
+/** Any type is offered for the scripts folder, since a script there may have any name. Programs are still refused. */
+function syncFileFolder() {
+    if (currentItem() && currentItem().kind === "skill" && $("file-folder").value === SCRIPTS_FOLDER) {
+        $("file-add").removeAttribute("accept");
+    } else {
+        $("file-add").setAttribute("accept", FILE_EXTENSIONS.join(","));
+    }
 }
 
 function formatSize(bytes) {
     return bytes < 1024 * 1024 ? Math.max(1, Math.round(bytes / 1024)) + " KB" : (bytes / 1024 / 1024).toFixed(1) + " MB";
 }
 
-/** Adds picked files to the references folder. */
+/** Adds picked files to the references folder, or for a skill to the folder chosen in Folder for new files. */
 async function addFiles(fileList) {
     const chosen = Array.from(fileList || []);
     const item = currentItem();
     if (chosen.length === 0 || !item) {
         return;
     }
+    const folder = item.kind === "skill" && $("file-folder").value === SCRIPTS_FOLDER ? SCRIPTS_FOLDER : BUNDLE_FILES_FOLDER;
     const before = item.files.length;
     const candidates = item.files.map(function (file) { return { path: file.path, bytes: file.bytes }; });
     for (const file of chosen) {
@@ -12204,7 +12484,7 @@ async function addFiles(fileList) {
             bytes = new Uint8Array(0);
         }
         // The name as picked, so a notice can say when cleaning changes it.
-        candidates.push({ path: BUNDLE_FILES_FOLDER + nameLeaf(file.name), name: file.name, bytes: bytes });
+        candidates.push({ path: folder + nameLeaf(file.name), name: file.name, bytes: bytes });
     }
     const notices = [];
     if (item.kind === "agent") {
@@ -12331,6 +12611,8 @@ function setupForm() {
         scheduleSave();
     });
     $("file-add").setAttribute("accept", FILE_EXTENSIONS.join(","));
+    $("file-folder").addEventListener("change", syncFileFolder);
+    $("t-add").addEventListener("click", addScriptTool);
     $("file-add").addEventListener("change", function (event) {
         const input = event.target;
         addFiles(input.files).then(function () { input.value = ""; });
@@ -12411,9 +12693,50 @@ function setupForm() {
 }
 
 // ### Interface: tools ###
-// Tools come from the Library or files. People can read, remove, and fill in
-// server addresses; new tools are built in files.
+// Tools come from the Library or files, and a skill's author can add a script
+// tool. People can read and remove tools and fill in server addresses.
 const TOOL_PRODUCTS = Object.keys(PRODUCT_LABELS).map(function (key) { return [key, PRODUCT_LABELS[key]]; });
+
+/** Shows the Add a script tool form for a skill, with its scripts to choose from. */
+function renderScriptToolForm(item) {
+    const wrap = $("script-tool");
+    wrap.hidden = item.kind !== "skill";
+    if (wrap.hidden) {
+        return;
+    }
+    const select = $("t-script");
+    const chosen = select.value;
+    const scripts = item.files.filter(function (file) { return file.path.indexOf(SCRIPTS_FOLDER) === 0; }).map(function (file) { return file.path; });
+    clearChildren(select);
+    scripts.forEach(function (path) { select.appendChild(el("option", { value: path, text: path })); });
+    if (scripts.indexOf(chosen) >= 0) {
+        select.value = chosen;
+    }
+    $("script-tool-empty").hidden = scripts.length > 0;
+    $("script-tool-fields").hidden = scripts.length === 0;
+}
+
+/** Adds the tool the Add a script tool form describes, or shows what to fix. */
+function addScriptTool() {
+    const item = currentItem();
+    const fields = ["t-script", "t-label", "t-runtime"];
+    const result = scriptTool(ui.project, item, { path: $("t-script").value, label: $("t-label").value, runtime: $("t-runtime").value, command: $("t-command").value, needs: $("t-needs").value });
+    fields.forEach(function (id) { showFieldError(id, result.field === id ? result.message : ""); });
+    if (!result.capability) {
+        if (fields.indexOf(result.field) >= 0 && result.field !== "t-script") {
+            $(result.field).focus();
+        } else {
+            announce(result.message, true);
+        }
+        return;
+    }
+    item.capabilities.push(result.capability);
+    ["t-label", "t-runtime", "t-command", "t-needs"].forEach(function (id) { $(id).value = ""; });
+    renderTools();
+    updateDerived();
+    scheduleSave();
+    announce("Added the tool " + result.capability.label + ". Its card is in the Tools list.");
+}
 
 /** How a tool works in one product, in plain words. */
 function toolRoute(project, capability, target) {
@@ -12431,7 +12754,8 @@ function renderTools() {
     const list = $("tool-list");
     clearChildren(list);
     const links = itemCapabilities(ui.project, item, item.kind === "agent");
-    group.hidden = links.length === 0;
+    // A skill always shows the group, for its Add a script tool form.
+    group.hidden = links.length === 0 && item.kind !== "skill";
     links.forEach(function (link) {
         const capability = link.capability;
         const routes = el("ul", { className: "tool-routes" });
@@ -12718,6 +13042,7 @@ async function startDownload(format) {
             result = await writeMicrosoftPackage(project, item, icons, format);
             scheduleSave();
             downloadBytes(result.fileName, result.bytes, "application/zip");
+            notes = result.warnings;
         } else if (format === "teamsZip") {
             const icons = await prepareTeamsIcons(agentView(project, item));
             result = await writeTeamsPackage(project, item, icons);
@@ -12824,28 +13149,46 @@ function labelButton(button, iconClass, text) {
     button.appendChild(document.createTextNode(text));
 }
 
-/** Wraps each needle in a mark element; text only, never markup. */
+// Inspect stops adding marks after this many, so a long file that repeats a
+// short value on every line still shows quickly. The rest shows as plain text.
+const INSPECT_MARK_LIMIT = 2000;
+
+/**
+ * Wraps each needle in a mark element; text only, never markup. Where two
+ * needles start at the same place, the one listed first wins, so callers list
+ * longer needles first. The next place of each needle is kept and searched
+ * for again only once the marks have passed it, so a needle that never
+ * appears again is never searched for again.
+ * @param {Element} container
+ * @param {string} text
+ * @param {string[]} needles
+ */
 function appendHighlighted(container, text, needles) {
+    const next = needles.map(function (needle) { return text.indexOf(needle); });
     let position = 0;
-    while (position < text.length) {
-        let bestIndex = -1;
-        let bestNeedle = "";
-        needles.forEach(function (needle) {
-            const index = text.indexOf(needle, position);
-            if (index >= 0 && (bestIndex < 0 || index < bestIndex)) {
-                bestIndex = index;
-                bestNeedle = needle;
+    let marks = 0;
+    while (position < text.length && marks < INSPECT_MARK_LIMIT) {
+        let best = -1;
+        needles.forEach(function (needle, index) {
+            if (next[index] >= 0 && next[index] < position) {
+                next[index] = text.indexOf(needle, position);
+            }
+            if (next[index] >= 0 && (best < 0 || next[index] < next[best])) {
+                best = index;
             }
         });
-        if (bestIndex < 0) {
-            container.appendChild(document.createTextNode(text.slice(position)));
-            return;
+        if (best < 0) {
+            break;
         }
-        if (bestIndex > position) {
-            container.appendChild(document.createTextNode(text.slice(position, bestIndex)));
+        if (next[best] > position) {
+            container.appendChild(document.createTextNode(text.slice(position, next[best])));
         }
-        container.appendChild(el("mark", { text: bestNeedle }));
-        position = bestIndex + bestNeedle.length;
+        container.appendChild(el("mark", { text: needles[best] }));
+        position = next[best] + needles[best].length;
+        marks += 1;
+    }
+    if (position < text.length) {
+        container.appendChild(document.createTextNode(text.slice(position)));
     }
 }
 

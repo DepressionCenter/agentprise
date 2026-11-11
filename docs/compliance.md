@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/compliance.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-10
+Last Modified: 2026-11-11
 Summary: Security, privacy, and accessibility posture of the Agentprise web app:
          the controls in place, where they are in the code, and their known
          limits.
@@ -404,6 +404,21 @@ Evidence: `readTeamsArchive`, `packagePath`, `packageRelativePath`,
   spaces, and `._()-/`. A character a shell could run, such as `$` or a
   backtick, never reaches a command. Evidence: `scriptCommand` in
   `index.html`.
+- The **Add a script tool** form accepts only a file already in the skill's
+  `scripts/` folder, and a program name of letters, digits, dots, dashes, and
+  spaces, such as `python3`; it refuses `python3; rm -rf ~`. The command the
+  person types is written into the tool's steps as text in a code span, and
+  Agentprise never runs it or the script. Evidence: `scriptTool` and `codeSpan`
+  in `index.html`, and `tests/inspect-and-script-tools.test.mjs`.
+- The Copilot app package and the Copilot app with skills match the rules in
+  Microsoft's declarative agent schema before they are written: one file per
+  name in the package, compared without regard to case; a description of one
+  line with at most 1,000 characters; and no `[[` or `]]` in the name,
+  description, or example questions, which the schema reads as a translation
+  key. A file the package can't hold, such as one outside `references/`, gets
+  a report line. Evidence: `copilotPackageFiles`, `copilotDescription`, and
+  `copilotBracketReport` in `index.html`, and
+  `tests/copilot-downloads.test.mjs`.
 - The ZIP reader caps the entry count at 1,200, each entry at 10 MB, and the whole
   archive at 50 MB. It reads each backslash in a name as a folder slash, as
   Windows PowerShell's `Compress-Archive` writes them, and then rejects names
@@ -461,7 +476,11 @@ Evidence: `readTeamsArchive`, `packagePath`, `packageRelativePath`,
   `innerHTML`. The Inspect code view, which highlights the person's own words
   inside the generated files, is built from text nodes and `mark` elements only.
   A description that contains a script tag appears as plain text in the code
-  view.
+  view. The code view searches again for each of the person's words only after
+  passing its last place, and it stops adding marks after 2,000, so a crafted
+  file that repeats a short name thousands of times still shows in a fraction
+  of a second. Evidence: `appendHighlighted` and `INSPECT_MARK_LIMIT` in
+  `index.html`, and `tests/inspect-and-script-tools.test.mjs`.
 - Icons are decoded through an `Image` element and redrawn on a canvas, which
   strips any embedded content. Only PNG and JPG uploads are accepted; SVG is not.
   Icons that arrive inside a file are walked chunk by chunk: the signature, an
@@ -639,6 +658,12 @@ borders.
 - In the tools parts of the editor, the **Tools** list is a `fieldset` with a
   `legend` and a list of cards; each **Remove this tool** and **Remove this connection** button carries the tool
   or server name as hidden text and asks first in the same native `dialog`.
+  For a skill, **Add a script tool** is a native `details` element in the same
+  `fieldset`. Each of its boxes has a visible label, with its hint and error
+  joined through `aria-describedby`. A box that needs a fix gets its error,
+  `aria-invalid`, and focus. When the tool is added, the live region says so.
+  **Folder for new files**, beside **Add files**, is a native `select` with a
+  visible label.
   Each server address box has a visible label, "Address of the" and the
   server name, with its hint and error joined through `aria-describedby`. On
   the Inspect page, each line of **What changes in this download** starts with

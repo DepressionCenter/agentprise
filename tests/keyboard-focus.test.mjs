@@ -2,7 +2,7 @@
 // tests/keyboard-focus.test.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-11-10
-// Last Modified: 2026-11-10
+// Last Modified: 2026-11-11
 // Summary: Tests where keyboard focus goes and what screen readers hear when
 //          a person uses the skip link, browser Back and Forward, a Remove
 //          button in a file list, the picture control, and Add files. The
@@ -52,7 +52,7 @@ const SETUP_NAV_CODE = slice("/** True for an address part that names a page", "
 const FIELD_ERROR_CODE = slice("/**\n * Shows or clears the error under a field", "/** Saved starters plus empty blanks");
 const LIST_CODE = slice("/**\n * Moves focus after a Remove button rebuilds its list", "function renderEmailItems()")
   + slice("function renderSharepointItems()", "function formatSize(bytes)");
-const ADD_FILES_CODE = slice("/** Adds picked files to the references folder. */", "function readStartersField()");
+const ADD_FILES_CODE = slice("/** Adds picked files to the references folder", "function readStartersField()");
 const PICTURE_CODE = slice("$(\"icon-input\").addEventListener(\"change\"", "$(\"add-skill\").addEventListener");
 
 /** A page element with the parts the code uses; handlers are kept by event name. */
@@ -200,7 +200,7 @@ describe("Remove buttons in file lists", () => {
       currentItem: () => item,
       pathLeaf: (path) => path.split("/").pop(),
       formatSize: () => "1 KB",
-      updateDerived() {}, scheduleSave() {},
+      updateDerived() {}, scheduleSave() {}, renderScriptToolForm() {},
       announce: (message) => messages.push(message),
     };
     vm.runInNewContext(LIST_CODE, sandbox);
