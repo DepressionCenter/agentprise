@@ -3,7 +3,7 @@ This file is part of Agentprise™
 README.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-11-05
+Last Modified: 2026-11-10
 Summary: Provides an overview of the project, in Markdown format.
 Notes: See README file for documentation and full license information.
 
@@ -38,10 +38,10 @@ Agentprise works in your browser, needs no account, and sends nothing you type a
 + **Use it online.** Open [code.depressioncenter.org/agentprise](https://code.depressioncenter.org/agentprise/), choose **Create new**, and answer the questions. There is nothing to install and no account to make.
 + **Run it on your own computer.** Download this repository (the green **Code** button, then **Download ZIP**) and unzip it. Then start the included ZippyServe web server:
   + Windows: right-click `run-windows.ps1` and choose **Run with PowerShell**.
-  + Mac: double-click `run-mac.command`.
-  + Linux: run `./run-linux.sh` in a terminal.
+  + Mac: open Terminal in the unzipped folder and run `bash run-mac.command`. You can also double-click `run-mac.command`.
+  + Linux: open a terminal in the unzipped folder and run `bash run-linux.sh`.
 
-  Your browser opens the app at `http://localhost:8010`. Close the server window when you are done.
+  Your browser opens the app at `http://localhost:8010`. Always use that address, because your browser keeps projects saved at another address, such as `http://127.0.0.1:8010`, separately. Close the server window when you are done.
 + **Open the page directly.** You can also open `index.html` from the unzipped folder, with no server at all. Everything works except the Library, which needs a web address to read its files.
 
 

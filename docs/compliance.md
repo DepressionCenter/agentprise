@@ -40,6 +40,20 @@ Known limits.
   is type-checked and capped, its file name must be a plain name ending in
   `.zip` so it cannot point outside the folder, and each backup goes through the
   same importer and `normalizeProject` path as an upload.
+- Library entries built from `library/sources/` are checked before they are
+  built. The build stops on a symbolic link or Windows junction (including
+  `library/sources/` itself), a hard link, a file that is not a regular file,
+  a file whose real location is outside `library/sources/` (outside
+  `library/sources/items/` for item files), an item name or `.zip` name that
+  points outside its folder, a text file that is not UTF-8 or holds a control
+  character other than tab, line feed, and a carriage return right before a
+  line feed, and a `.json` value with a control character written as an
+  escape, under the same carriage return rule. A file with a picture or
+  document extension whose contents are UTF-8 text, such as
+  `scripts/run.png`, is checked as text. The build checks each built `.zip`
+  for control characters again before it writes it. Evidence:
+  `tools/library-sources.mjs`, `tools/build-library.mjs`, and
+  `tests/library-build.test.mjs`.
 - The page loads no web font. Its font stacks name IBM Plex first, so the face is
   used where it is installed, and fall back to the system interface font. A font
   request would contact a third party from every visitor's browser.

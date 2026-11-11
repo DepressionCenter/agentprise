@@ -64,7 +64,10 @@ you are building. Most projects hold one assistant. A project can also hold
   read skills, such as Gemini and Claude, can also use a skill on its own.
 
 You can keep as many projects as you like. They stay in this browser on this
-computer.
+computer. The browser keeps them separately for each web address, so if you
+run the app on your own computer, always open `http://localhost:8010`.
+Projects saved at another address, such as `http://127.0.0.1:8010`, show only
+at that address.
 
 ### Your projects
 

@@ -2,7 +2,7 @@
 // tools/build-library.mjs
 // Author(s): Gabriel Mongefranco.
 // Created: 2026-10-10
-// Last Modified: 2026-10-10
+// Last Modified: 2026-11-10
 // Summary: Maintainer script that builds Library backups from the readable
 //          source folders under library/sources/ and updates their catalog
 //          lines, so Library content can be reviewed as plain files.
@@ -30,12 +30,20 @@
 // is built from the same files and cannot drift. Builds are deterministic:
 // ids and timestamps come from the sources and ZIP entries carry no dates,
 // so --check can compare bytes.
+//
+// Both commands first check every file under library/sources/ and stop, naming
+// each problem, when library/sources/ is reached through a link, or a source
+// is a symbolic link, a hard link, a file that is not a regular file, a text
+// file that is not UTF-8, or a text file or JSON value with control
+// characters. Each built ZIP is checked for control characters again before
+// it is written.
 
-import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, relative, sep } from "node:path";
+import { readFileSync, writeFileSync, readdirSync, existsSync, realpathSync } from "node:fs";
+import { join, relative, sep, dirname } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { loadEngine, repoRoot } from "../tests/load-engine.mjs";
 import { makeDeflatedZip } from "../tests/helpers.mjs";
+import { listSourceFiles, checkSourceFolder, linkedFolderProblems, builtFileProblems } from "./library-sources.mjs";
 
 // ### Load Configuration ###
 const engine = loadEngine();
@@ -48,23 +56,28 @@ const entriesDir = join(sourcesDir, "entries");
 const catalogPath = join(libraryDir, "catalog.json");
 // Catalog fields in the order the catalog writes them.
 const CATALOG_KEYS = ["file", "name", "summary", "kind", "capabilities", "requires", "tags", "author", "license"];
+// The rule the page applies to a catalog file name, so an entry cannot write outside library/.
+const ENTRY_FILE_NAME = /^[A-Za-z0-9][A-Za-z0-9 ._-]{0,99}\.zip$/;
 
 // ### Read Sources ###
 
-/** Lists every file under a folder, with paths relative to it and forward slashes. */
+/** The path of a file under the repository, with forward slashes, for messages. */
+function shownPath(full) {
+  return relative(repoRoot, full).split(sep).join("/");
+}
+
+/**
+ * Lists the files in one item folder, with paths relative to it and forward
+ * slashes. Stops the build when the folder holds a symbolic link, a hard
+ * link, a special file, or a file stored outside the items folder.
+ */
 function listFiles(folder) {
-  const found = [];
-  for (const name of readdirSync(folder)) {
-    const full = join(folder, name);
-    if (statSync(full).isDirectory()) {
-      for (const inner of listFiles(full)) {
-        found.push(name + "/" + inner);
-      }
-    } else {
-      found.push(name);
-    }
+  const problems = [];
+  const files = listSourceFiles(folder, shownPath(folder), problems, itemsDir);
+  if (problems.length > 0) {
+    throw new Error(problems.join("\n"));
   }
-  return found.sort();
+  return files;
 }
 
 /**
@@ -85,6 +98,10 @@ async function buildEntry(entry) {
     if (!existsSync(folder)) {
       throw new Error(entry.file + ": no item folder " + relative(repoRoot, folder));
     }
+    // An item name such as "../../.git" would read files from outside the items folder.
+    if (dirname(realpathSync(folder)) !== realpathSync(itemsDir)) {
+      throw new Error(entry.file + ": the item " + JSON.stringify(itemName) + " is not a folder directly inside " + shownPath(itemsDir) + ". Use the folder name, such as pubmed-search.");
+    }
     for (const path of listFiles(folder)) {
       archive.set("entry/skills/" + itemName + "/" + path, new Uint8Array(readFileSync(join(folder, ...path.split("/")))));
     }
@@ -100,6 +117,10 @@ async function buildEntry(entry) {
     throw new Error(entry.file + ": these files are not ones the app uses: " + read.project.unrecognized.map((file) => file.path).join(", "));
   }
   const backup = await engine.exports.backup(read.project);
+  const problems = builtFileProblems(entry.file, backup.entries);
+  if (problems.length > 0) {
+    throw new Error("The built file " + entry.file + " would hold control characters. Find this text in the entry file or its item folders, and remove the control characters:\n" + problems.join("\n"));
+  }
   return makeDeflatedZip(backup.entries);
 }
 
@@ -116,12 +137,26 @@ function catalogLine(entry) {
   return line;
 }
 
+// ### Check Sources ###
+const sourceProblems = linkedFolderProblems(repoRoot, "library/sources");
+if (sourceProblems.length === 0) {
+  sourceProblems.push(...checkSourceFolder(sourcesDir, shownPath(sourcesDir)).problems);
+}
+if (sourceProblems.length > 0) {
+  console.error("The Library build stopped because of these problems in the source folders. Fix each one, then run the build again.\n" + sourceProblems.join("\n"));
+  process.exit(1);
+}
+
 // ### Build Each Entry ###
 const catalog = JSON.parse(readFileSync(catalogPath, "utf8"));
 const problems = [];
 let built = 0;
 for (const fileName of readdirSync(entriesDir).filter((name) => name.endsWith(".json")).sort()) {
   const entry = JSON.parse(readFileSync(join(entriesDir, fileName), "utf8"));
+  if (typeof entry.file !== "string" || !ENTRY_FILE_NAME.test(entry.file)) {
+    console.error(fileName + ": the file name " + JSON.stringify(entry.file) + " must be a plain name ending in .zip, such as pubmed-search.zip. Fix it, then run the build again.");
+    process.exit(1);
+  }
   const bytes = await buildEntry(entry);
   const target = join(libraryDir, entry.file);
   const line = catalogLine(entry);

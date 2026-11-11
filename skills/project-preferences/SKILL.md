@@ -68,7 +68,15 @@ served by GitHub Pages from the root of the main branch.
   `items/`, one `.json` per entry in `entries/`) and are built with
   `node tools/build-library.mjs`. The build is deterministic, and the tests run
   `--check`, so never edit those `.zip` files by hand. A skill shared by two
-  entries has one source folder, which keeps the copies identical.
+  entries has one source folder, which keeps the copies identical. The build
+  first checks `library/sources/` with `tools/library-sources.mjs` and stops on
+  a symbolic or hard link, a linked `library/sources/` folder, a special file,
+  a file really stored outside `library/sources/` (outside `items/` for item
+  files), an item or `.zip` name that points outside its folder, a text file
+  that is not UTF-8, or a control character other than tab, line
+  feed, and a carriage return right before a line feed, including one written
+  as an escape in a `.json` file, naming each file and line or field. It checks
+  each built `.zip` for control characters again before it writes it.
 - `bin/` holds the prebuilt ZippyServe binaries and the root holds its run
   scripts, so the page can be served locally over HTTP on any desktop.
 - Follow the repository's existing file and folder naming conventions when adding
@@ -84,8 +92,16 @@ npm test
 
 That runs `tests/check-syntax.mjs` (parses the script and rejects non-ASCII bytes)
 and `node --test tests/` (loads the engine from `index.html` and tests it).
-Serve the page locally with `.\run-windows.ps1`, `./run-linux.sh`, or
-`run-mac.command`, which opens `http://localhost:8010`.
+Serve the page locally with `.\run-windows.ps1`, `bash run-linux.sh`, or
+`bash run-mac.command`. Each script starts the server, waits for it to answer,
+then opens `http://localhost:8010`, and stops the server on Ctrl+C. When the
+app already answers on the port, the script opens it in the browser and ends
+without starting a second server; when another program holds the port, the
+script names the problem and stops (on Windows it waits for Enter first,
+because "Run with PowerShell" closes the window when the script ends). The server
+reports `http://127.0.0.1:8010`, but saved projects belong to the address the
+browser opened, so the scripts and docs always name `http://localhost:8010`.
+Git marks `run-linux.sh` and `run-mac.command` as runnable (mode 100755).
 
 ### Project constraints
 
