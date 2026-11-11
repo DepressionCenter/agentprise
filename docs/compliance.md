@@ -421,8 +421,9 @@ Evidence: `readTeamsArchive`, `packagePath`, `packageRelativePath`,
 - A download whose conversion report has a blocked entry cannot be written.
   Blocked cases include a Copilot source list that the writer would drop,
   which would widen the assistant to the whole source, and more web search
-  sites than Copilot allows. `assertNotBlocked` refuses the write and the
-  download button is disabled. Evidence: `widenedSources`,
+  sites than Copilot allows. `assertNotBlocked` refuses the write, and the
+  Download card's button is marked unavailable with `aria-disabled`, so
+  pressing it only announces the reason. Evidence: `widenedSources`,
   `mergeWebSearchSites`, and `assertNotBlocked` in `index.html`.
 - JSON and YAML are parsed, never evaluated. The YAML reader handles only the
   subset the app's files use and skips anything else with a warning.
@@ -497,7 +498,21 @@ to Inspect under Workspace. It lists up to five recent projects.
 - "Add another question" adds a blank and moves focus to it.
 - Confirmations in the status bar, such as "Copied.", clear themselves
   after eight seconds. They are announced when they appear, so nothing is lost.
-  Errors, such as a file the app cannot open, stay until the person acts.
+  Errors, such as a file the app cannot open, warnings after a download, and
+  notices about changes made while opening a file stay until the next
+  message, a page change, opening a different project, or **Dismiss**. The **Dismiss** button sits outside
+  the live region, so screen readers don't read the message again when the
+  button appears. After **Dismiss**, focus moves to the page's heading
+  (`announce`).
+- After **Rename**, **Make a copy**, or **Download backup** in a project's
+  **More actions** menu, or **Keep it** when the app asks about deleting,
+  focus moves to that project's **More actions** button, or to the new copy's, once the cards are drawn again.
+  When the card is gone, focus moves to the Workspace heading
+  (`focusProjectMenu`). While a dialog is open, Escape and clicks leave the
+  menus alone.
+- At either end of the Library strip, **Scroll back** or **Scroll forward**
+  is marked `aria-disabled` instead of disabled, so it keeps focus, and it
+  ignores presses (`updateStripArrows`).
 - Links that leave the app open in a new tab and carry hidden text that says so.
 - The product tabs in Inspect move with Left, Right, Home, and End, with roving
   `tabindex`, and the file list is a set of buttons.
@@ -581,7 +596,12 @@ borders.
   no file was added, the message stays until the next one.
 - Required fields that are still empty are listed as links beside the download
   buttons, and each link moves focus to the field. The download buttons are
-  disabled until the list is empty.
+  disabled until the list is empty. A download its report blocks keeps its
+  button in the Tab order, marked with `aria-disabled`. The note under the
+  button, joined through `aria-describedby`, says why and links to the
+  product's Inspect tab (`renderDestinationNotes`). A plugin that waits on
+  another item's empty required question works the same way: its note names
+  that item and links to it (`pluginWaitingItems`).
 - Status messages go to one polite live region. The region stays on the page
   while it is empty, so screen readers read each message when it appears.
   Nothing moves, flashes, or auto-advances. Smooth scrolling is applied only

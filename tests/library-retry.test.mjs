@@ -2,7 +2,7 @@
 // tests/library-retry.test.mjs
 // Author(s): Jay.
 // Created: 2026-10-30
-// Last Modified: 2026-11-05
+// Last Modified: 2026-11-10
 // Summary: Tests that a failed Library catalog load can be retried. Uses the
 //          real ensureLibrary source taken from index.html, with a stubbed
 //          catalog fetch that fails once and then succeeds.
@@ -71,6 +71,8 @@ function renderLibrarySandbox(catalogOk) {
     libraryEntryMatchesQuery: () => true,
     clearChildren() {},
     storeCard: (entry) => entry,
+    setTimeout,
+    STATUS_REPEAT_MS: 0,
   };
   return { sandbox, elements, renderLibrary: loadRenderLibrary(sandbox) };
 }

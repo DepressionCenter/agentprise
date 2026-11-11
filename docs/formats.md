@@ -697,7 +697,9 @@ An export is blocked, and `assertNotBlocked` refuses to write it, when:
   web search sites, Teams chats, mailboxes, or SharePoint sources while the
   switch is on.
 
-The download button is disabled while its report has a blocked entry, and the
+On the Download card, the button for a download whose report has a blocked
+entry is marked unavailable with `aria-disabled`, and pressing it announces
+the reason. The Inspect page's download button is disabled, and the
 Inspect page shows a "Blocked" file in place of the output. The plugin
 reports combine every item's report, each line prefixed with the item name.
 `README.md` in skill ZIPs and plugins repeats the report under
