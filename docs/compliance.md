@@ -153,7 +153,14 @@ Known limits.
   plugin manifests and the plugin `plugin.json` and `mcp.json` files, whose
   schemas are closed, so both plugins carry the license in `LICENSE.txt`, the
   manifest's `license` field, and a hidden comment at the top of `README.md`
-  and `SETUP.md`.
+  and `SETUP.md`. No name, copyright line, or license text can end that
+  comment early, because each value stays on one line and a space goes after
+  a hyphen that another hyphen follows, so `-->` and `--!>` can't appear. The
+  rest of those files show names, file names, and report notes as plain text,
+  never as a link, picture, code, or HTML, and show each address as itself, so
+  a link never hides where it goes. Evidence:
+  `commentText`, `markdownText`, and `markdownUrl` in `index.html`, and
+  `tests/author-files.test.mjs`.
 - Tool server settings never keep credentials. `cleanServerUrl` keeps an
   address only when it is https and has no user name, password, or `#`
   fragment, and no query parameter named like a key, token, secret, password,
@@ -183,7 +190,10 @@ Known limits.
 - A license is never relabeled. A skill or plugin from elsewhere that names no
   license opens with the license "Not stated" and a notice, its `LICENSE.txt`
   says the license was not stated, and a license file the author brought is
-  kept. Evidence: `UNKNOWN_LICENSE` and `readItemFolders` in `index.html`.
+  kept. A `NOTICE` file holds attribution, so it is kept as `NOTICE` and never
+  used as the license: `LICENSE` or `LICENCE` comes first, then `COPYING`.
+  Evidence: `UNKNOWN_LICENSE`, `licenseTermsFile`, and `readItemFolders` in
+  `index.html`.
   Assistants imported from Microsoft packages also use "Not stated", because
   their format cannot declare a license. Evidence: `readTeamsArchive` in
   `index.html`.

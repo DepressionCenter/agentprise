@@ -438,7 +438,18 @@ importer reads back as empty. The app writes these files and never runs or
 contacts the servers.
 
 A plugin made elsewhere keeps its own root `LICENSE.txt` and `README.md`; the
-app writes its own only where the author had none. The project `id` is a UUID
+app writes its own only where the author had none. When a plugin has more than
+one license file, `licenseTermsFile` picks `LICENSE` or `LICENCE` first, then
+`COPYING`. A `NOTICE` file holds attribution, not license terms, so it stays as
+`NOTICE` and is never copied into a skill as `LICENSE.txt`. A Claude plugin made
+by Agentprise has no project record, so `isAppPluginFile` leaves out its
+`README.md` and `SETUP.md` only when each has the outline the app writes: the
+hidden comment, the headings, and the fixed lines. A `README.md` with an added
+heading or paragraph stays, and so does a `SETUP.md` with an added heading.
+Other edits, such as a changed item description, an added list item, or a
+changed setup step, don't change the outline, so a notice names each
+file left out and asks the person to move their own text to a file with another
+name, such as `NOTES.md`. The project `id` is a UUID
 made once and kept through every backup, which is how the app notices that a
 project being opened is already in the workspace.
 
@@ -528,6 +539,8 @@ writes.
 | `files` | The path and type of each of the item's own files |
 | `composed` | `true` in every export that writes this file except the backup, so a reader knows `SKILL.md` holds composed text and takes the tools section and the `Persona: ` prefix back out |
 | `servers` | Exports only: the project servers this item's tools name, so a folder copied out alone keeps them |
+| `ownSetup` | Only in exports with `composed`, when the item has its own `SETUP.md`: its `path` and its `length` in bytes as the author wrote it. A skill ZIP adds the setup steps after those bytes |
+| `setupSteps` | Only when the item's own `SETUP.md` is too close to the 10 MB limit for one file to hold the setup steps: the name of the file that holds them instead, such as `SETUP-STEPS.md`. Opening the download leaves that file out |
 
 | `copilot` key | Holds | Example |
 |---|---|---|
@@ -704,13 +717,39 @@ Inspect page shows a "Blocked" file in place of the output. The plugin
 reports combine every item's report, each line prefixed with the item name.
 `README.md` in skill ZIPs and plugins repeats the report under
 `## What changed in this export`.
+Every name, file name, and report note in `README.md` and `SETUP.md` shows as
+plain text: `markdownText` puts a backslash before each character that could
+start a link, picture, code, or HTML, and before the `:` of `://` and the `.`
+of `www.`, so GitHub doesn't make a link from a web address inside a name.
+`markdownUrl` shows each address as itself, such as `https://example.org`, so a
+link never hides where it goes. In the hidden license comment
+at the top, `commentText` keeps each value on one line and puts a space after a
+hyphen that another hyphen follows, so a name such as
+`Demo --> <a href="https://example.org">` can't end the comment.
 
 ### Setup guide
 
 `writeSetupGuide` writes `SETUP.md` from the setup steps the plans collected,
 one section per distinct step, worded for the export's product. Skill ZIPs and
-plugins carry it as a file. The app package has no place for it, so the
-Inspect page shows it as "Setup steps (not in the package)". Sections:
+plugins carry it as a file. When an assistant or skill has its own `SETUP.md`,
+the skill ZIPs keep that file's name and bytes and add the steps after it under
+`# Setup steps added by Agentprise` (`SETUP_HEADING`). The Claude and Gemini
+ZIPs record the length of the author's file in `ownSetup` in
+`agentprise.json`, and opening the ZIP keeps only that many bytes, so the
+author's file comes back byte for byte. When adding the steps would make the
+author's file larger than 10 MB, the most the app opens for one file, the skill
+ZIPs keep the author's file unchanged and write the whole guide to
+`SETUP-STEPS.md` (`SETUP_STEPS_FILE_NAME`), or `SETUP-STEPS-2.md` and so on when
+the item has a file by that name. The report says so, and the Claude and Gemini
+ZIPs name that file in `setupSteps` in `agentprise.json`, so opening the ZIP
+leaves it out. The plain skill ZIP has no
+`agentprise.json` and doesn't keep the tools, so opening it keeps `SETUP.md`
+whole, steps included, and keeps a `SETUP-STEPS.md` it holds. A Claude or Gemini ZIP whose `agentprise.json` has no
+`ownSetup` comes from an earlier version that wrote the guide in place of the
+author's file, so opening it leaves out a `SETUP.md` that starts with the
+app's hidden comment. The app package has no place for the guide, so the
+Inspect page shows it as "Setup steps (not in the package)", as plain text
+without Markdown backslashes. Sections:
 
 - **Turn on the connector**, with Claude, Copilot, and generic wording.
 - **Add the address of your server**, naming the file to edit (`.mcp.json`,

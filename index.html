@@ -1634,6 +1634,13 @@ const ITEM_GENERATED_NAMES = Object.freeze(["SKILL.md", ITEM_SIDECAR, "icon.png"
 // Setup steps for exports with tools; READMEs repeat the report under this heading.
 const SETUP_FILE_NAME = "SETUP.md";
 const REPORT_HEADING = "What changed in this export";
+// A skill download adds the setup steps after an author's own SETUP.md under
+// this top-level heading, and opening the download removes them again.
+const SETUP_HEADING = "Setup steps added by Agentprise";
+const SETUP_MARKER = "\n\n# " + SETUP_HEADING + "\n";
+// The steps go in this file instead when adding them would make the author's
+// SETUP.md larger than LIMITS.fileBytes, which the app can't open again.
+const SETUP_STEPS_FILE_NAME = "SETUP-STEPS.md";
 const UNRECOGNIZED_NOTE = "Not interpreted by Agentprise.";
 // Copilot manifest v1.8 caps instructions at 8,000 characters and web search
 // at four sites (checked 2026-10-10).
@@ -1658,6 +1665,9 @@ const DEFAULT_LICENSE = "GPL-3.0-or-later";
 const UNKNOWN_LICENSE = "Not stated";
 // Author license files, under the names people use.
 const LICENSE_FILE_PATTERN = /^(LICENSE|LICENCE|COPYING|NOTICE)(\.(txt|md))?$/i;
+// Files that hold license terms, in the order they are chosen. A NOTICE file
+// holds attribution, not terms, so it is never chosen.
+const LICENSE_TERMS_PATTERNS = Object.freeze([/^LICEN[CS]E(\.(txt|md))?$/i, /^COPYING(\.(txt|md))?$/i]);
 
 // Every license allows change and sharing, as the Library asks. LICENSE.txt
 // gets the URL, or the full GPL text for the default.
@@ -4533,12 +4543,113 @@ async function zipRead(bytes) {
 
 // ### Format helpers ###
 
-/** Notice for files that allow an extra key: creator copyright and license, then the app. */
 /** The license file a plugin made elsewhere brought at its root, kept as unrecognized, or null. */
 function rootLicenseFile(project) {
-    return project.unrecognized.find(function (entry) { return entry.path.indexOf("/") < 0 && LICENSE_FILE_PATTERN.test(entry.path); }) || null;
+    return licenseTermsFile(project.unrecognized);
 }
 
+/**
+ * The file that holds the license terms among files at the top of a folder:
+ * LICENSE or LICENCE first, then COPYING, never NOTICE.
+ * @param {Array<{path: string}>} files paths relative to the folder
+ * @returns {object|null} the chosen file, or null when none holds terms
+ */
+function licenseTermsFile(files) {
+    for (let i = 0; i < LICENSE_TERMS_PATTERNS.length; i++) {
+        const found = files.find(function (file) { return file.path.indexOf("/") < 0 && LICENSE_TERMS_PATTERNS[i].test(file.path); });
+        if (found) {
+            return found;
+        }
+    }
+    return null;
+}
+
+/**
+ * A value for the hidden comment at the top of a generated README.md or
+ * SETUP.md. It stays on one line, and a space goes after each hyphen that
+ * another hyphen follows, so no value can end the comment with "-->" or "--!>".
+ * @param {string} value a name, copyright line, or license notice
+ * @returns {string}
+ */
+function commentText(value) {
+    return String(value).replace(/[\r\n\u0085\u2028\u2029]/g, " ").replace(/-(?=-)/g, "- ");
+}
+
+/**
+ * The hidden comment that starts a generated README.md or SETUP.md: the name,
+ * then the license notice. Opening a download finds the app's files by the
+ * words "Made with Agentprise" inside it.
+ * @param {string} name project or item name
+ * @param {{copyright: string, license: string}} view
+ * @returns {string} four lines: "<!--", the name, the notice, and "-->"
+ */
+function hiddenNotice(name, view) {
+    return "<!--\n" + commentText(name) + "\n" + commentText(licenseNotice(view)) + "\n-->";
+}
+
+/** True when a file starts with the comment hiddenNotice writes, with "Made with Agentprise" inside that first comment. */
+function startsWithAppNotice(bytes) {
+    return /^<!--(?:(?!-->)[^])*?Made with Agentprise(?:(?!-->)[^])*?-->/.test(fromBytes(bytes.subarray(0, 4096)));
+}
+
+/**
+ * A value as plain text on a Markdown line, so a Markdown viewer shows it
+ * exactly as typed and never as a link, picture, code, or HTML. It stays on
+ * one line, and a backslash goes before each character that could start
+ * markup. With startsLine, a mark that starts a heading, quote, list, or table
+ * is escaped too, such as "# Notes" or "1. First".
+ * A backslash also goes before the ":" of "://" and the "." of "www.", so
+ * GitHub doesn't make a link from a bare web address in the value. That link
+ * would include the backslash before the next mark, which would then show as
+ * markup.
+ * Two marks stay bare where no viewer reads them as markup, so the file stays
+ * easy to read: "_" between letters or digits, as in my_server, and "&" that
+ * does not start a character reference such as &amp;.
+ * @param {string} value a name, path, or note
+ * @param {boolean} [startsLine] true when the value is the first text of a line or list item
+ * @returns {string}
+ */
+function markdownText(value, startsLine) {
+    const wordCharacter = /[\p{L}\p{N}]/u;
+    let text = String(value).replace(/[\r\n\u0085\u2028\u2029]/g, " ")
+        .replace(/[\\`*_[\]<>&~]/g, function (mark, at, all) {
+            if (mark === "_" && wordCharacter.test(all.charAt(at - 1)) && wordCharacter.test(all.charAt(at + 1))) {
+                return mark;
+            }
+            if (mark === "&" && !/^&(?:#[0-9]+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);/.test(all.slice(at, at + 40))) {
+                return mark;
+            }
+            return "\\" + mark;
+        })
+        .replace(/:(?=\/\/)/g, "\\:")
+        .replace(/(?<![\p{L}\p{N}])(www)\./giu, "$1\\.")
+        // Trailing "#" marks would close a heading line and disappear.
+        .replace(/#(?=#*[ \t]*$)/g, "\\#");
+    if (startsLine) {
+        text = text.replace(/^[ \t]+/, "").replace(/^([#>+=|-])/, "\\$1").replace(/^(\d+)([.)])/, "$1\\$2");
+    }
+    return text;
+}
+
+/**
+ * An https address for a Markdown line, so the visible text is the address
+ * itself and never a hidden link. An address of letters, digits, and the
+ * marks no viewer reads as markup, such as https://example.org/help, is
+ * written as it is. Any other address is written as an autolink, such as
+ * <https://example.org/a_b>, which shows every character as typed, with the
+ * characters an autolink cannot hold percent-encoded.
+ * @param {string} url an address that isHttpsUrl accepts
+ * @returns {string}
+ */
+function markdownUrl(url) {
+    const text = String(url);
+    if (/^https:\/\/[A-Za-z0-9\-.\/:%?=#+@!,;]+$/.test(text)) {
+        return text;
+    }
+    return "<" + text.replace(/[\x00-\x20\x7f-\x9f<>\u2028\u2029]/g, encodeURIComponent) + ">";
+}
+
+/** Notice for files that allow an extra key: creator copyright and license, then the app. */
 function licenseNotice(agent) {
     const parts = [];
     if (agent.copyright) {
@@ -5694,17 +5805,25 @@ function hostsInText(bytes) {
 
 /**
  * SETUP.md: one plain section per setup step the items' plans found, for the
- * export's product.
+ * export's product. In a SETUP.md file, every name, label, path, and address
+ * is written as plain text, so it cannot add a link, picture, or HTML. The
+ * Microsoft downloads have no place for the guide, so the Inspect page shows it
+ * as text, without Markdown escapes.
  * @param {object} project
  * @param {Array<object>} items
  * @param {string} exportId
+ * @param {boolean} [afterOwnFile] true for only the heading and steps that
+ *   follow an item's own SETUP.md (SETUP_MARKER first), without the comment and title
  * @returns {string} Markdown, or "" when nothing needs setting up
  */
-function writeSetupGuide(project, items, exportId) {
+function writeSetupGuide(project, items, exportId, afterOwnFile) {
     const steps = [];
     const seen = Object.create(null);
     let actions = 0;
     const claude = exportId === "claude" || exportId === "claudePlugin";
+    const shownAsText = EXPORTS[exportId].target === "copilot";
+    // Names and paths come from the person or an opened file, so they are written as plain text.
+    const text = shownAsText ? function (value) { return String(value).replace(/[\r\n\u0085\u2028\u2029]/g, " "); } : markdownText;
     items.forEach(function (item) {
         const plan = planExport(project, item, exportId);
         actions += plan.actions.length;
@@ -5714,26 +5833,29 @@ function writeSetupGuide(project, items, exportId) {
             }
             seen[step.key] = true;
             let lines;
+            const name = text(step.name || "");
+            const label = text(step.label || "");
+            const file = text(step.file || "");
             if (step.kind === "connector") {
-                lines = ["## Turn on the " + step.name + " connector", "", "This works best with the " + step.name + " connector turned on."];
+                lines = ["## Turn on the " + name + " connector", "", "This works best with the " + name + " connector turned on."];
                 if (claude) {
-                    lines.push("", "In Claude, open Customize, then Connectors, find " + step.name + ", and connect it. On a Team or Enterprise plan, an Owner may need to add it first under Organization settings, then Connectors.");
+                    lines.push("", "In Claude, open Customize, then Connectors, find " + name + ", and connect it. On a Team or Enterprise plan, an Owner may need to add it first under Organization settings, then Connectors.");
                 } else if (EXPORTS[exportId].target === "copilot") {
-                    lines.push("", "In Microsoft 365, ask your admin whether a " + step.name + " connector is available for Copilot.");
+                    lines.push("", "In Microsoft 365, ask your admin whether a " + name + " connector is available for Copilot.");
                 } else {
-                    lines.push("", "Look for " + step.name + " in the product's list of connectors or apps, and connect it.");
+                    lines.push("", "Look for " + name + " in the product's list of connectors or apps, and connect it.");
                 }
                 lines.push("", "Until you connect it, the assistant does what it can and tells people it couldn't use the tool.");
             } else if (step.kind === "address") {
-                lines = ["## Add the address of your " + step.label, "", "This download has no server address, because you supply your own " + step.label + ".", "", "1. Open " + step.file + " in a text editor.", "2. Replace " + MCP_URL_PLACEHOLDER + " with the https address of your server.", "3. Save the file and install the download.", "", "Until you do, the assistant tells people it can't use this tool."];
+                lines = ["## Add the address of your " + label, "", "This download has no server address, because you supply your own " + label + ".", "", "1. Open " + file + " in a text editor.", "2. Replace " + MCP_URL_PLACEHOLDER + " with the https address of your server.", "3. Save the file and install the download.", "", "Until you do, the assistant tells people it can't use this tool."];
             } else if (step.kind === "connect") {
-                lines = ["## Connect the " + step.label, "", "The instructions mention the " + step.label + ". Connect it in the product's settings for tools or connectors" + (step.url ? ", using the address " + step.url : "") + ". Until you do, the assistant tells people it can't use this tool."];
+                lines = ["## Connect the " + label, "", "The instructions mention the " + label + ". Connect it in the product's settings for tools or connectors" + (step.url ? ", using the address " + (!shownAsText && isHttpsUrl(step.url) ? markdownUrl(step.url) : text(step.url)) : "") + ". Until you do, the assistant tells people it can't use this tool."];
             } else if (step.kind === "auth") {
-                lines = ["## Register the sign-in for " + step.label, "", "This action needs a sign-in or key that your Microsoft 365 admin registers, for example in the Teams Developer Portal. Ask them to register it, then open " + step.file + " inside the app package and replace " + COPILOT_AUTH_PLACEHOLDER + " with the registration ID they give you."];
+                lines = ["## Register the sign-in for " + label, "", "This action needs a sign-in or key that your Microsoft 365 admin registers, for example in the Teams Developer Portal. Ask them to register it, then open " + file + " inside the app package and replace " + COPILOT_AUTH_PLACEHOLDER + " with the registration ID they give you."];
             } else if (step.kind === "script") {
-                const file = step.owner.files.find(function (entry) { return entry.path === step.path; });
-                const hosts = file ? hostsInText(file.bytes) : [];
-                lines = ["## Let the script connect to the internet", "", "The script " + step.path + " runs only where " + (step.runtime || "it") + " can run with network access" + (hosts.length ? " to " + hosts.join(", ") : "") + ".", ""];
+                const script = step.owner.files.find(function (entry) { return entry.path === step.path; });
+                const hosts = (script ? hostsInText(script.bytes) : []).map(function (host) { return text(host); });
+                lines = ["## Let the script connect to the internet", "", "The script " + text(step.path) + " runs only where " + (step.runtime ? text(step.runtime) : "it") + " can run with network access" + (hosts.length ? " to " + hosts.join(", ") : "") + ".", ""];
                 if (claude) {
                     lines.push("On claude.ai, code execution must be on. A workspace Owner can allow the address under Organization settings, then Capabilities, by choosing package managers and specific domains" + (hosts.length ? " and adding " + hosts.join(", ") : "") + ".");
                 } else if (exportId === "gemini") {
@@ -5763,7 +5885,10 @@ function writeSetupGuide(project, items, exportId) {
     const introduction = exportId === "copilotSkill" || exportId === "copilotSkills" || exportId === "microsoftPlugin"
         ? "Follow these steps before using the download."
         : "This download uses tools. Follow the steps that apply to you.";
-    return "<!--\n" + project.name + "\n" + licenseNotice({ copyright: project.copyright, license: project.license }) + "\n-->\n\n# Set up " + project.name + "\n\n" + introduction + "\n\n" + steps.join("\n");
+    if (afterOwnFile) {
+        return SETUP_MARKER + "\n" + introduction + "\n\n" + steps.join("\n");
+    }
+    return hiddenNotice(project.name, { copyright: project.copyright, license: project.license }) + "\n\n# Set up " + text(project.name) + "\n\n" + introduction + "\n\n" + steps.join("\n");
 }
 
 // ### Format: item folders and the project bundle (backup) ###
@@ -5844,9 +5969,14 @@ function itemFrontmatter(project, item, options) {
  * file list), as plain JSON values.
  * @param {object} project
  * @param {object} item
+ * @param {boolean} composed true when SKILL.md holds text composed for a product
+ * @param {object} [servers] the project servers the item's tools name
+ * @param {object} [ownSetup] the item's own SETUP.md in a composed download
+ * @param {string} [stepsPath] the file that holds the setup steps when they
+ *   don't fit after the item's own SETUP.md
  * @returns {string} JSON text
  */
-function itemSidecar(project, item, composed, servers) {
+function itemSidecar(project, item, composed, servers, ownSetup, stepsPath) {
     const doc = {
         _license: licenseNotice(agentView(project, item)),
         schemaVersion: PROJECT_SCHEMA_VERSION,
@@ -5886,6 +6016,15 @@ function itemSidecar(project, item, composed, servers) {
     if (servers && Object.keys(servers).length > 0) {
         doc.servers = servers;
     }
+    // A skill download adds the setup steps after the item's own SETUP.md, so
+    // a reader keeps only this many bytes, the file as the author wrote it.
+    if (composed && ownSetup) {
+        doc.ownSetup = { path: ownSetup.path, length: ownSetup.bytes.length };
+    }
+    // Names the generated steps file, so a reader leaves it out of the item's files.
+    if (stepsPath) {
+        doc.setupSteps = stepsPath;
+    }
     return JSON.stringify(doc, null, 2) + "\n";
 }
 
@@ -5893,16 +6032,36 @@ function itemSidecar(project, item, composed, servers) {
  * Files of one item folder, relative to it.
  * @param {object} project
  * @param {object} item
- * @param {{standardOnly?: boolean, body?: string, description?: string, readme?: function(string): string, setup?: string}} options
+ * @param {{standardOnly?: boolean, body?: string, description?: string, readme?: function(string): string, setup?: function(boolean): string, report?: Array<object>}} options
  *   body and description override SKILL.md text; readme builds README.md from
- *   the item's own ("" if none)
+ *   the item's own ("" if none); setup(true) gives the steps to add after the
+ *   item's own SETUP.md and setup(false) the whole guide, "" for none; report
+ *   gets an entry when the steps go in a file of their own
  * @returns {Array<{name: string, bytes: Uint8Array}>}
  */
 function itemFolderEntries(project, item, options) {
     const body = typeof options.body === "string" ? options.body : itemBody(item);
     const entries = [{ name: "SKILL.md", bytes: toBytes(stringifyFrontmatter(itemFrontmatter(project, item, options), "\n" + body + "\n")) }];
+    // An item's own SETUP.md keeps its name and exact bytes, and the setup steps follow it.
+    const ownSetup = item.files.find(function (file) { return file.path.toLowerCase() === SETUP_FILE_NAME.toLowerCase(); }) || null;
+    let setup = options.setup ? options.setup(Boolean(ownSetup)) : "";
+    // When the steps would make the author's SETUP.md larger than the app
+    // opens, the whole guide goes in a file of its own under a name no item file uses.
+    let stepsPath = "";
+    if (setup && ownSetup && ownSetup.bytes.length + toBytes(setup).length > LIMITS.fileBytes) {
+        const taken = item.files.map(function (file) { return file.path.toLowerCase(); });
+        stepsPath = SETUP_STEPS_FILE_NAME;
+        for (let n = 2; taken.indexOf(stepsPath.toLowerCase()) >= 0; n++) {
+            stepsPath = SETUP_STEPS_FILE_NAME.replace(/\.md$/, "-" + n + ".md");
+        }
+        setup = options.setup(false);
+        if (options.report) {
+            options.report.push(reportEntry(ownSetup.path, "transformed", "Agentprise put the setup steps in " + stepsPath + ", because adding them to the end of " + ownSetup.path + " would make it larger than the " + Math.round(LIMITS.fileBytes / 1024 / 1024) + " MB limit for one file. Read both files when you set up the skill."));
+        }
+    }
     if (!options.standardOnly) {
-        entries.push({ name: ITEM_SIDECAR, bytes: toBytes(itemSidecar(project, item, typeof options.body === "string" || Boolean(options.readme), options.servers)) });
+        const composed = typeof options.body === "string" || Boolean(options.readme);
+        entries.push({ name: ITEM_SIDECAR, bytes: toBytes(itemSidecar(project, item, composed, options.servers, composed ? ownSetup : null, stepsPath)) });
         if (item.kind === "agent" && item.icon) {
             entries.push({ name: "icon.png", bytes: item.icon.bytes });
         }
@@ -5914,15 +6073,20 @@ function itemFolderEntries(project, item, options) {
     if (options.readme) {
         entries.push({ name: "README.md", bytes: toBytes(options.readme(ownReadme ? fromBytes(ownReadme) : "")) });
     }
-    if (options.setup) {
-        entries.push({ name: SETUP_FILE_NAME, bytes: toBytes(options.setup) });
+    if (setup && (!ownSetup || stepsPath)) {
+        entries.push({ name: stepsPath || SETUP_FILE_NAME, bytes: toBytes(setup) });
     }
     item.files.forEach(function (file) {
         const lower = file.path.toLowerCase();
         if (lower === "readme.md" && options.readme) {
             return;
         }
-        if (lower === SETUP_FILE_NAME.toLowerCase() && options.setup) {
+        if (setup && file === ownSetup && !stepsPath) {
+            const added = toBytes(setup);
+            const bytes = new Uint8Array(file.bytes.length + added.length);
+            bytes.set(file.bytes, 0);
+            bytes.set(added, file.bytes.length);
+            entries.push({ name: file.path, bytes: bytes });
             return;
         }
         entries.push({ name: file.path, bytes: file.bytes });
@@ -5930,14 +6094,27 @@ function itemFolderEntries(project, item, options) {
     return entries;
 }
 
-/** Plain-language lines for a README. */
+/** Plain-language lines for a README; names and notes are written as plain text. */
 function reportMarkdown(report) {
     if (!report || report.length === 0) {
         return "Nothing was changed or left out.\n";
     }
     return report.map(function (entry) {
-        return "- " + entry.component + ": " + REPORT_STATUS_LABELS[entry.status] + ". " + entry.note;
+        return "- " + markdownText(entry.component, true) + ": " + REPORT_STATUS_LABELS[entry.status] + ". " + markdownText(entry.note);
     }).join("\n") + "\n";
+}
+
+/**
+ * "Made by" line of a generated README, with the creator's address shown as
+ * itself, or "" when no creator is named.
+ * @param {object} project
+ * @returns {string}
+ */
+function madeByLine(project) {
+    if (!project.creator.name) {
+        return "";
+    }
+    return "Made by " + markdownText(project.creator.name) + (project.creator.url ? " (" + (isHttpsUrl(project.creator.url) ? markdownUrl(project.creator.url) : markdownText(project.creator.url)) + ")" : "") + ".";
 }
 
 const REPORT_STATUS_LABELS = Object.freeze({
@@ -5962,12 +6139,12 @@ function itemReadme(project, item, report, ownText) {
         return stripReportSection(ownText).replace(/\s+$/, "") + "\n\n" + section;
     }
     const view = agentView(project, item);
-    const lines = ["<!--", item.name, licenseNotice(view), "-->", "", "# " + item.name, "", item.description || "", ""];
+    const lines = [hiddenNotice(item.name, view), "", "# " + markdownText(item.name, true), "", markdownText(item.description || "", true), ""];
     if (project.creator.name) {
-        lines.push("Made by " + project.creator.name + (project.creator.url ? " (" + project.creator.url + ")" : "") + ".", "");
+        lines.push(madeByLine(project), "");
     }
     if (item.files.length > 0) {
-        lines.push("Files: " + item.files.map(function (file) { return file.path; }).join(", ") + ".", "");
+        lines.push("Files: " + item.files.map(function (file) { return markdownText(file.path); }).join(", ") + ".", "");
     }
     lines.push(
         "## How to use",
@@ -5989,6 +6166,62 @@ function stripReportSection(text) {
     const marker = "\n## " + REPORT_HEADING + "\n";
     const at = String(text).lastIndexOf(marker);
     return at >= 0 ? String(text).slice(0, at) : String(text);
+}
+
+/**
+ * An item's own SETUP.md without the setup steps a skill download added after
+ * it, byte for byte as the author wrote it.
+ * @param {Uint8Array} bytes the SETUP.md from a download
+ * @param {*} length the author's length in bytes, from ownSetup in agentprise.json
+ * @returns {Uint8Array|null} the author's bytes, or null when the steps don't
+ *   start right after that length, such as when the download added none
+ */
+function stripSetupSection(bytes, length) {
+    const marker = toBytes(SETUP_MARKER);
+    if (!Number.isInteger(length) || length < 0 || length + marker.length > bytes.length) {
+        return null;
+    }
+    for (let i = 0; i < marker.length; i++) {
+        if (bytes[length + i] !== marker[i]) {
+            return null;
+        }
+    }
+    return bytes.subarray(0, length);
+}
+
+/**
+ * True when a plugin's root README.md or SETUP.md has the outline pluginReadme
+ * or writeSetupGuide writes. README.md must have the hidden comment, each
+ * heading, and each fixed line; SETUP.md must have the hidden comment, the
+ * title, the introduction, and only headings the guide writes. Text changed
+ * inside a line, an added list item, or an added paragraph in SETUP.md isn't
+ * seen, so readPluginArchive names each file it leaves out.
+ * @param {string} name "README.md" or "SETUP.md"
+ * @param {Uint8Array} bytes
+ * @returns {boolean}
+ */
+function isAppPluginFile(name, bytes) {
+    const text = fromBytes(bytes);
+    // The hidden comment is checked line by line, because a pattern for a
+    // long line that only mentions "Made with Agentprise" would be slow.
+    const head = text.split("\n", 5);
+    if (head.length < 5 || head[0] !== "<!--" || head[2].indexOf("Made with Agentprise") < 0 || head[3] !== "-->" || head[4] !== "") {
+        return false;
+    }
+    const body = text.slice(head.join("\n").length + 1);
+    if (name === "README.md") {
+        const site = APP_SITE_URL.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&");
+        return new RegExp("^# [^\n]*\n\n[^\n]*\n\n## What is inside\n\n(?:- [^\n]*\n)*\n## How to install\n\n(?:- [^\n]*\n)+\n"
+            + "To change it or download it for another product, open the backup of this project at " + site + "\n\n## " + REPORT_HEADING + "\n\n"
+            + "(?:(?:- [^\n]*\n)+|Nothing was changed or left out\\.\n)$").test(body);
+    }
+    if (!new RegExp("^# Set up [^\n]*\n\n(?:This download uses tools\\. Follow the steps that apply to you\\.|Follow these steps before using the download\\.)\n\n## ").test(body)) {
+        return false;
+    }
+    // Every heading after the title is one that writeSetupGuide writes.
+    return text.split("\n").slice(6).every(function (line) {
+        return line.charAt(0) !== "#" || /^## (?:Turn on the .+ connector|Add the address of your |Connect the |Register the sign-in for |Let the script connect to the internet$)/.test(line);
+    });
 }
 
 /**
@@ -6085,13 +6318,13 @@ function mcpManifest(servers, flavor) {
 
 function projectReadme(project, report) {
     const view = project.items[0] ? agentView(project, project.items[0]) : { copyright: project.copyright, license: project.license };
-    const lines = ["<!--", project.name, licenseNotice(view), "-->", "", "# " + project.name, "", project.description || "", ""];
+    const lines = [hiddenNotice(project.name, view), "", "# " + markdownText(project.name, true), "", markdownText(project.description || "", true), ""];
     if (project.creator.name) {
-        lines.push("Made by " + project.creator.name + (project.creator.url ? " (" + project.creator.url + ")" : "") + ".", "");
+        lines.push(madeByLine(project), "");
     }
     lines.push("## What is inside", "");
     project.items.forEach(function (item) {
-        lines.push("- " + item.name + " (" + (item.kind === "agent" ? "assistant" : "skill") + "): skills/" + item.skillName + "/");
+        lines.push("- " + markdownText(item.name, true) + " (" + (item.kind === "agent" ? "assistant" : "skill") + "): skills/" + markdownText(item.skillName) + "/");
     });
     lines.push(
         "",
@@ -6270,15 +6503,28 @@ function readItemFolder(entries, folder, nested) {
             raw.icon = iconFromBytes(bytes, notices);
             return;
         }
-        if (listed && listed.indexOf(path) < 0 && ["README.md", "LICENSE.txt", SETUP_FILE_NAME].indexOf(path) >= 0) {
+        if (listed && listed.indexOf(path) < 0 && (["README.md", "LICENSE.txt", SETUP_FILE_NAME].indexOf(path) >= 0 || path === side.setupSteps)) {
             return;
         }
         if (path === "README.md" && composed) {
             bytes = toBytes(stripReportSection(fromBytes(bytes)));
         }
         // Without a sidecar, the app's README is known by its notice at the top.
-        if (!sidecar && path === "README.md" && /^<!--[^]*?Made with Agentprise[^]*?-->/.test(fromBytes(bytes.subarray(0, 4096)))) {
+        if (!sidecar && path === "README.md" && startsWithAppNotice(bytes)) {
             return;
+        }
+        // A skill download adds setup steps after the item's own SETUP.md and
+        // records the author's length in ownSetup. Downloads without that
+        // record hold the generated guide in place of the item's own file.
+        // Without a sidecar, SETUP.md stays whole, because its steps name
+        // tools that only agentprise.json keeps.
+        if (composed && path.toLowerCase() === SETUP_FILE_NAME.toLowerCase()) {
+            const record = isPlainObject(side.ownSetup) ? side.ownSetup : null;
+            if (record && record.path === path) {
+                bytes = stripSetupSection(bytes, record.length) || bytes;
+            } else if (!record && startsWithAppNotice(bytes)) {
+                return;
+            }
         }
         // A foreign skill's picture is kept under a non-reserved name.
         files.push({ path: path === "icon.png" ? "assets/icon.png" : path, bytes: bytes, sourcePath: name });
@@ -6295,7 +6541,7 @@ function readItemFolder(entries, folder, nested) {
         privacy: meta[META.creatorPrivacy],
         terms: meta[META.creatorTerms]
     };
-    const licenseFile = files.some(function (file) { return LICENSE_FILE_PATTERN.test(file.path); });
+    const licenseFile = Boolean(licenseTermsFile(files));
     return { raw: raw, creator: creator, copyright: side.copyright, license: license, licenseFile: licenseFile, servers: isPlainObject(side.servers) ? side.servers : null, ours: Boolean(sidecar), notices: notices };
 }
 
@@ -6571,6 +6817,20 @@ function readPluginArchive(entries) {
                 generated.push(root + name);
             }
         });
+    } else {
+        // A Claude plugin from this app has no project record, so its README.md
+        // and SETUP.md are known by their outline (see isAppPluginFile). Some
+        // edits leave the outline as it was, so a notice names each file left out.
+        const outlined = ["README.md", SETUP_FILE_NAME].filter(function (name) {
+            return entries.has(root + name) && isAppPluginFile(name, entries.get(root + name));
+        });
+        outlined.forEach(function (name) {
+            generated.push(root + name);
+        });
+        if (outlined.length > 0) {
+            const one = outlined.length === 1;
+            notices.push("Agentprise left out " + namesInSentence(outlined) + " from the plugin, because it writes " + (one ? "a new one" : "new ones") + " with each download. If you added your own text to " + (one ? "it" : "them") + ", put that text in a file with another name, such as NOTES.md, and open the plugin again.");
+        }
     }
     const notes = new Map();
     if (ours && Array.isArray(extension.unrecognized)) {
@@ -6616,14 +6876,15 @@ function readPluginArchive(entries) {
             ? { name: author.name, url: author.url }
             : (typeof author === "string" ? { name: author } : (read.creator || {}));
         // The plugin license goes into each skill without one, so the terms travel.
-        const rootLicense = unrecognized.find(function (entry) { return entry.path.indexOf("/") < 0 && LICENSE_FILE_PATTERN.test(entry.path); });
+        // A NOTICE file is attribution, so it stays where it is and is never used as the terms.
+        const rootLicense = licenseTermsFile(unrecognized);
         if (rootLicense) {
             read.items.forEach(function (item, index) {
                 if (read.owned[index]) {
                     return;
                 }
                 const files = Array.isArray(item.files) ? item.files : [];
-                if (!files.some(function (file) { return LICENSE_FILE_PATTERN.test(file.path); })) {
+                if (!licenseTermsFile(files)) {
                     item.files = files.concat([{ path: "LICENSE.txt", bytes: rootLicense.bytes }]);
                 }
             });
@@ -6757,7 +7018,8 @@ async function writeItemSkillZip(project, item, exportId) {
         body: prepared.plan.text,
         description: prepared.plan.description,
         servers: itemServers(project, item),
-        setup: writeSetupGuide(project, [item], exportId),
+        setup: function (afterOwnFile) { return writeSetupGuide(project, [item], exportId, afterOwnFile); },
+        report: report,
         readme: function (own) { return itemReadme(project, item, report, own); }
     }).map(function (entry) { return { name: item.skillName + "/" + entry.name, bytes: entry.bytes }; });
     // Named apart from the skill ZIP, so both fit in one folder.
@@ -6953,8 +7215,7 @@ function microsoftSkillEntries(project, item, plan, plugin, report, root) {
     // Skill metadata refers to LICENSE.txt even when imported terms use another name.
     // Copy LICENSE or COPYING terms byte for byte. A NOTICE file is attribution, not
     // terms, so it stays beside the generated LICENSE.txt.
-    const terms = allowed.find(function (file) { return /^LICEN[CS]E\.(txt|md)$/i.test(file.path); })
-        || allowed.find(function (file) { return /^COPYING\.(txt|md)$/i.test(file.path); });
+    const terms = licenseTermsFile(allowed);
     if (terms && !itemFileBytes(copy, "LICENSE.txt")) {
         copy.files.push({ path: "LICENSE.txt", bytes: terms.bytes });
         report.push(reportEntry(item.name + ": License", "transformed", "The original text from " + terms.path + " is also included as LICENSE.txt so the skill's license link can be opened."));
@@ -7282,10 +7543,10 @@ function pluginEntries(project, exportId) {
 
 /** Contents, install steps, and the report. items: those in the plugin. */
 function pluginReadme(project, report, exportId, items) {
-    const lines = ["<!--", project.name, licenseNotice({ copyright: project.copyright, license: project.license }), "-->", "", "# " + project.name, "", project.description || "", ""];
+    const lines = [hiddenNotice(project.name, { copyright: project.copyright, license: project.license }), "", "# " + markdownText(project.name, true), "", markdownText(project.description || "", true), ""];
     lines.push("## What is inside", "");
     items.forEach(function (item) {
-        lines.push("- " + item.name + " (" + (item.kind === "agent" ? "assistant, written as a skill" : "skill") + "): " + (item.description || "").slice(0, 200));
+        lines.push("- " + markdownText(item.name, true) + " (" + (item.kind === "agent" ? "assistant, written as a skill" : "skill") + "): " + markdownText((item.description || "").slice(0, 200)));
     });
     lines.push("", "## How to install", "");
     if (exportId === "claudePlugin") {
@@ -12355,7 +12616,9 @@ async function buildProductFiles(project, item, product) {
         return { root: "", files: [{ name: "Blocked", text: "This download is turned off. The list above says why." }], fileName: "", format: "", notes: [], report: report };
     }
     const built = await buildProductFilesUnchecked(project, item, product);
-    built.report = report;
+    // A writer that adds entries while it builds, such as a skill ZIP that
+    // moves the setup steps to a file of their own, returns its own report.
+    built.report = built.report || report;
     return built;
 }
 
@@ -12397,7 +12660,7 @@ async function buildProductFilesUnchecked(project, item, product) {
     if (product === "gemini" || product === "claude" || product === "skill") {
         const result = await writeItemSkillZip(project, item, product);
         const shown = entriesToFiles(result.entries);
-        return { root: shown.root, files: shown.files, fileName: result.fileName, format: { gemini: "geminiSkill", claude: "claudeSkill", skill: "plainSkill" }[product], notes: [] };
+        return { root: shown.root, files: shown.files, fileName: result.fileName, format: { gemini: "geminiSkill", claude: "claudeSkill", skill: "plainSkill" }[product], notes: [], report: result.report };
     }
     if (product === "msAgent") {
         const result = writeMsAgent(project, item);

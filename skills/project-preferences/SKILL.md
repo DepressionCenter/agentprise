@@ -161,6 +161,8 @@ Git marks `run-linux.sh` and `run-mac.command` as runnable (mode 100755).
   for the backup only, and registration ids are never kept.
 - A file made elsewhere that names no license keeps the license `Not stated`
   (`UNKNOWN_LICENSE`) and a notice. Never relabel it with the default license.
+  A `NOTICE` file is attribution, never the license: `licenseTermsFile` picks
+  `LICENSE` or `LICENCE`, then `COPYING`.
 - The Microsoft `.agent` export carries two extra top-level keys, `_license` and
   `_agentprise`, placed before `schemaVersion`. Copilot app package files carry no extra
   keys because their schemas reject them. Microsoft retires `.agent` files
@@ -306,7 +308,14 @@ Git marks `run-linux.sh` and `run-mac.command` as runnable (mode 100755).
   `normalizeAgent` before it reaches the form, and all text reaches the page
   through `textContent`.
 - The exported agent belongs to its creator. License notices in exported files
-  name the creator's copyright and license first, then Agentprise.
+  name the creator's copyright and license first, then Agentprise. Generated
+  `README.md` and `SETUP.md` pass every value in the hidden comment through
+  `commentText`, so nothing can end the comment, and write every other name,
+  path, address, and note through `markdownText` or `markdownUrl`, so names
+  show as plain text and addresses show as themselves. An item's own
+  `SETUP.md` keeps its bytes in the skill ZIPs, with the setup steps added
+  after it under `SETUP_HEADING`. `ownSetup` in `agentprise.json` records the
+  author's length, and opening keeps only those bytes.
 
 ### Terms
 

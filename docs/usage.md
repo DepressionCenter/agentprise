@@ -483,6 +483,14 @@ the skill ZIPs and the two plugins hold a file called `SETUP.md`, and their `REA
 under **What changed in this export**. The Copilot app package has no place
 for extra files, so its steps show on the Inspect page as
 **Setup steps (not in the package)**.
+If an assistant or skill has its own `SETUP.md`, the skill ZIPs keep your
+file and add the steps at the end, under **Setup steps added by Agentprise**.
+When you open a Claude or Gemini ZIP again, Agentprise removes that part, so
+your file stays as you wrote it. If your `SETUP.md` is so close to the 10 MB
+limit for one file that the steps don't fit, the skill ZIPs keep your file
+unchanged and put the steps in `SETUP-STEPS.md`, and the list of changes says
+so. The plain skill ZIP doesn't keep tools, so
+when you open it, Agentprise keeps the steps in your file or in `SETUP-STEPS.md`.
 [Connect the tools in a download](how-to/connect-tools.md) walks through each
 kind of step.
 
