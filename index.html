@@ -1989,12 +1989,25 @@ function isPlainObject(value) {
     return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Trims an untrusted value to max characters, noting a cut; non-strings become "". */
+// Line breaks in any form, and characters that can't be printed. Tab and line
+// feed are kept. Standard YAML readers refuse a SKILL.md that holds the others.
+const TEXT_CLEAN_PATTERN = /\r\n?|[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u2028\u2029]/g;
+// Each of these becomes a line feed: carriage return, vertical tab (a Shift+Enter
+// line break copied from PowerPoint), form feed, next line, and the line and
+// paragraph separators that text pasted from Word for Mac or a PDF can hold.
+const LINE_BREAK_CHARACTER = /^(?:\r\n?|[\u000b\u000c\u0085\u2028\u2029])$/;
+
+/**
+ * Trims an untrusted value to max characters, noting a cut; non-strings become "".
+ * Line breaks become line feeds, and other characters that can't be printed are removed.
+ */
 function asText(value, max, field, notices) {
     if (typeof value !== "string") {
         return "";
     }
-    let text = value.replace(/\r\n?/g, "\n").trim();
+    let text = value.replace(TEXT_CLEAN_PATTERN, function (match) {
+        return LINE_BREAK_CHARACTER.test(match) ? "\n" : "";
+    }).trim();
     if (text.length > max) {
         text = text.slice(0, max).trim();
         if (notices) {
@@ -2451,9 +2464,29 @@ function renamedFilesNotice(renamed) {
 }
 
 /**
+ * The form of a file name or path used to find two names that Windows or macOS
+ * treat as the same file. Each letter becomes lower case and then upper case,
+ * so "notes.md" and "NOTES.md" match, and so do pairs such as the two Greek
+ * small sigmas, the dotless i and "i", the Greek letters U+1F80 and U+1F88, and
+ * the capital and small German sharp s. A step that would turn one letter into
+ * two, such as the upper case of the small sharp s, is skipped, so a name with
+ * the sharp s and the same name spelled with "ss" stay apart.
+ * @param {string} name
+ * @returns {string}
+ */
+function sameNameKey(name) {
+    return Array.from(name, function (character) {
+        const lower = character.toLowerCase();
+        const small = lower.length === character.length ? lower : character;
+        const upper = small.toUpperCase();
+        return upper.length === small.length ? upper : small;
+    }).join("");
+}
+
+/**
  * Copies one untrusted attached file, or explains the refusal.
  * @param {*} value {name, bytes}
- * @param {object} seen lower-case names taken, updated on success
+ * @param {object} seen names taken, as sameNameKey keys, updated on success
  * @returns {{file: {name: string, bytes: Uint8Array}}|{name: string, problem: string}}
  */
 function cleanAttachedFile(value, seen) {
@@ -2474,10 +2507,10 @@ function cleanAttachedFile(value, seen) {
     if (problem) {
         return { name: name, problem: problem };
     }
-    if (seen[name.toLowerCase()]) {
+    if (seen[sameNameKey(name)]) {
         return { name: name, problem: "another file has the same name" };
     }
-    seen[name.toLowerCase()] = true;
+    seen[sameNameKey(name)] = true;
     return { file: { name: name, bytes: copyBytes(value.bytes) } };
 }
 
@@ -2833,15 +2866,20 @@ function isTextScript(path, bytes) {
  * are leftovers for the backup only; programs are refused.
  * @param {*} list [{path, bytes}], untrusted
  * @param {string[]} notices one line per refusal
+ * @param {object} [taken] paths that other files already use, as sameNameKey
+ *   keys, such as an assistant's attached files; a file with one of these
+ *   paths is left out
+ * @param {string} [owner] what the files belong to, for the notice, such as
+ *   "an assistant"; "a skill" when left out
  * @returns {{files: Array<{path: string, bytes: Uint8Array}>, leftovers: Array<{path: string, bytes: Uint8Array}>, overflow: Array<object>}} overflow holds the original entries beyond the file-count limit
  */
-function cleanSkillFiles(list, notices) {
+function cleanSkillFiles(list, notices, taken, owner) {
     const files = [];
     const leftovers = [];
     const overflow = [];
     const refused = [];
     const renamed = [];
-    const seen = Object.create(null);
+    const seen = Object.assign(Object.create(null), isPlainObject(taken) ? taken : null);
     (Array.isArray(list) ? list : []).forEach(function (entry) {
         const raw = isPlainObject(entry) ? (typeof entry.path === "string" ? entry.path : entry.name) : "";
         const path = cleanArchivePath(raw, { depth: LIMITS.itemPathDepth, hidden: false });
@@ -2849,7 +2887,7 @@ function cleanSkillFiles(list, notices) {
             refused.push({ name: String(raw || "a file").slice(0, 60), problem: "it has no usable name" });
             return;
         }
-        if (ITEM_GENERATED_NAMES.some(function (name) { return name.toLowerCase() === path.toLowerCase(); })) {
+        if (ITEM_GENERATED_NAMES.some(function (name) { return sameNameKey(name) === sameNameKey(path); })) {
             return;
         }
         if (entry.bytes.length === 0 || entry.bytes.length > LIMITS.fileBytes) {
@@ -2861,11 +2899,11 @@ function cleanSkillFiles(list, notices) {
             refused.push({ name: path, problem: "it is " + (program || "a program") });
             return;
         }
-        if (seen[path.toLowerCase()]) {
+        if (seen[sameNameKey(path)]) {
             refused.push({ name: path, problem: "another file has the same name" });
             return;
         }
-        seen[path.toLowerCase()] = true;
+        seen[sameNameKey(path)] = true;
         const from = renamedFrom(raw, path);
         if (from) {
             renamed.push({ from: from, to: path });
@@ -2886,7 +2924,7 @@ function cleanSkillFiles(list, notices) {
     });
     if (refused.length > 0) {
         const reasons = refused.map(function (entry) { return entry.name.slice(0, 60) + " (" + entry.problem + ")"; });
-        notices.push("Left out " + countOf(refused.length, "file", "files") + " from a skill: " + listNames(reasons) + ".");
+        notices.push("Left out " + countOf(refused.length, "file", "files") + " from " + (owner || "a skill") + ": " + listNames(reasons) + ".");
     }
     if (renamed.length > 0) {
         notices.push(renamedFilesNotice(renamed));
@@ -3243,16 +3281,20 @@ function normalizeItem(input, notices) {
     if (kind === "agent") {
         // Accepted types directly under references/ are attachments; other
         // non-program files follow the skill file rules, so nothing is lost.
+        // Names are compared by the path each file ends up with, ignoring case,
+        // so "references//notes.md" and "References/Notes.md" clash with an
+        // attached "notes.md". The attached file stays and the other is left out.
         const attachments = [];
         const others = [];
         (Array.isArray(source.files) ? source.files : []).filter(isPlainObject).forEach(function (file) {
             const path = typeof file.path === "string" ? file.path.replace(/\\/g, "/") : BUNDLE_FILES_FOLDER + nameLeaf(file.name);
             const parts = path.split("/");
-            if (parts.length === 2 && parts[0] + "/" === BUNDLE_FILES_FOLDER && fileKind(attachedFileName(parts[1]))) {
+            const attachedName = parts.length === 2 && parts[0] + "/" === BUNDLE_FILES_FOLDER ? attachedFileName(parts[1]) : "";
+            if (attachedName && fileKind(attachedName)) {
                 attachments.push({ name: parts[1], bytes: file.bytes });
-            } else {
-                others.push({ path: path, bytes: file.bytes });
+                return;
             }
+            others.push({ path: path, bytes: file.bytes });
         });
         const result = normalizeAgent(Object.assign({}, source, { files: attachments }));
         notices.push.apply(notices, result.notices);
@@ -3260,7 +3302,11 @@ function normalizeItem(input, notices) {
         ["name", "description", "instructions", "starters", "welcome", "icon", "sharepointLinks", "sharepointItems", "copilot"].forEach(function (key) {
             item[key] = agent[key];
         });
-        const extra = others.length > 0 ? cleanSkillFiles(others, notices) : { files: [], leftovers: [] };
+        const attachedPaths = Object.create(null);
+        agent.files.forEach(function (file) {
+            attachedPaths[sameNameKey(BUNDLE_FILES_FOLDER + file.name)] = true;
+        });
+        const extra = others.length > 0 ? cleanSkillFiles(others, notices, attachedPaths, "an assistant") : { files: [], leftovers: [] };
         item.files = agent.files.map(function (file) { return { path: BUNDLE_FILES_FOLDER + file.name, bytes: file.bytes }; }).concat(extra.files);
         item.uses = asNameList(source.uses, /^[a-z0-9-]{1,64}$/, LIMITS.items);
         return { item: item, leftovers: extra.leftovers };
@@ -3288,10 +3334,32 @@ function normalizeItem(input, notices) {
 function uniqueSkillName(base, taken) {
     let name = base;
     for (let n = 2; taken[name]; n++) {
-        const suffix = "-" + n;
-        name = base.slice(0, LIMITS.skillName - suffix.length).replace(/-+$/, "") + suffix;
+        name = numberedSkillName(base, n);
     }
     return name;
+}
+
+/** The base name with "-" and a number at the end, shortened first to fit. */
+function numberedSkillName(base, number) {
+    const suffix = "-" + number;
+    return base.slice(0, LIMITS.skillName - suffix.length).replace(/-+$/, "") + suffix;
+}
+
+/**
+ * Whether a stored skill name is the base name plus a number, either whole or
+ * shortened to fit as uniqueSkillName shortens it, such as
+ * "summarize-the-weekly-status-report-for-the-steering-committee-2" for the
+ * base name "summarize-the-weekly-status-report-for-the-steering-committee-me".
+ * @param {string} stored the untrusted stored name
+ * @param {string} base a valid skill name
+ * @returns {boolean}
+ */
+function isNumberedSkillName(stored, base) {
+    const match = /^(.+)-(\d+)$/.exec(stored);
+    if (!match || stored.length > LIMITS.skillName) {
+        return false;
+    }
+    return match[1] === base || stored === numberedSkillName(base, match[2]);
 }
 
 /** Null when absent; inherited names never count. */
@@ -3348,6 +3416,8 @@ function normalizeProject(input, options) {
     }
     const seenIds = Object.create(null);
     const seenNames = Object.create(null);
+    // Stored skill name to the name it has now, for skills whose name changed.
+    const renamedSkills = Object.create(null);
     const leftovers = [];
     const mentioned = [];
     const withKeys = [];
@@ -3362,10 +3432,13 @@ function normalizeProject(input, options) {
         const base = toSkillName(item.name || (isPlainObject(raw) ? raw.skillName : "") || item.kind);
         const stored = isPlainObject(raw) && typeof raw.skillName === "string" ? raw.skillName : "";
         // A kept numbered name means folders never swap and agents' skills stay put.
-        const keep = stored && !seenNames[stored] && (stored === base || (stored.indexOf(base + "-") === 0 && /^\d+$/.test(stored.slice(base.length + 1))));
+        const keep = stored && !seenNames[stored] && (stored === base || isNumberedSkillName(stored, base));
         const skillName = keep ? stored : uniqueSkillName(base, seenNames);
         seenNames[skillName] = true;
         item.skillName = skillName;
+        if (item.kind === "skill" && stored && stored !== skillName && !(stored in renamedSkills)) {
+            renamedSkills[stored] = skillName;
+        }
         project.items.push(item);
         result.leftovers.forEach(function (entry) {
             if (checkKeptFiles && holdsCredential(entry.path, entry.bytes, true)) {
@@ -3386,9 +3459,14 @@ function normalizeProject(input, options) {
     const skillNames = project.items.filter(function (item) { return item.kind === "skill"; }).map(function (item) { return item.skillName; });
     project.items.forEach(function (item) {
         if (item.kind === "agent") {
-            const kept = item.uses.filter(function (name) { return skillNames.indexOf(name) >= 0; });
-            if (kept.length < item.uses.length) {
-                const missing = item.uses.length - kept.length;
+            // A renamed skill stays on the list under its new name, unless
+            // another skill now has the stored name.
+            const current = item.uses.map(function (name) {
+                return skillNames.indexOf(name) < 0 && name in renamedSkills ? renamedSkills[name] : name;
+            }).filter(function (name, index, names) { return names.indexOf(name) === index; });
+            const kept = current.filter(function (name) { return skillNames.indexOf(name) >= 0; });
+            if (kept.length < current.length) {
+                const missing = current.length - kept.length;
                 notices.push(item.name + " used " + countOf(missing, "skill", "skills") + (missing === 1 ? " that isn't in this project, so it was" : " that aren't in this project, so they were") + " taken off its list.");
             }
             item.uses = kept;
@@ -3431,7 +3509,7 @@ function normalizeProject(input, options) {
             dropped.unusable += 1;
             return;
         }
-        if (seenPaths[path.toLowerCase()]) {
+        if (seenPaths[sameNameKey(path)]) {
             dropped.repeated += 1;
             return;
         }
@@ -3448,7 +3526,7 @@ function normalizeProject(input, options) {
             dropped.over += 1;
             return;
         }
-        seenPaths[path.toLowerCase()] = true;
+        seenPaths[sameNameKey(path)] = true;
         project.unrecognized.push({ path: path, note: asText(entry.note, 200) || UNRECOGNIZED_NOTE, bytes: copyBytes(entry.bytes) });
     });
     if (dropped.programs > 0) {
@@ -3953,18 +4031,22 @@ function scanProject(project, fileTexts) {
 function parseYamlScalar(raw) {
     const text = raw.trim();
     if (text.startsWith("\"") && text.endsWith("\"") && text.length >= 2) {
-        return text.slice(1, -1).replace(/\\(["\\nrt])/g, function (match, code) {
+        return text.slice(1, -1).replace(/\\(["\\nrt]|u[0-9A-Fa-f]{4})/g, function (match, code) {
             if (code === "n") { return "\n"; }
             if (code === "r") { return "\r"; }
             if (code === "t") { return "\t"; }
+            if (code.length === 5) { return String.fromCharCode(parseInt(code.slice(1), 16)); }
             return code;
         });
     }
     if (text.startsWith("'") && text.endsWith("'") && text.length >= 2) {
         return text.slice(1, -1).replace(/''/g, "'");
     }
-    // A hash starts a comment only after whitespace.
-    return text.replace(/\s+#.*$/, "").trim();
+    // A hash starts a comment only after whitespace. The comment runs to the end
+    // of the line, including any line separator character, which "." would not match.
+    // One whitespace character is enough to match, and trim removes the rest, so
+    // a long run of spaces with no hash after it is read only once.
+    return text.replace(/\s#[^\n]*$/, "").trim();
 }
 
 function indentOf(line) {
@@ -4023,7 +4105,10 @@ function parseFrontmatter(text) {
     }
 
     function readEntry(line, indent, target) {
-        const match = line.slice(indent).match(/^([A-Za-z0-9_.-]+):(?:\s(.*))?$/);
+        // The value is the rest of the line, including any raw line or paragraph
+        // separator character (U+2028 or U+2029), which "." would not match.
+        // Files written by older versions of the app can hold one.
+        const match = line.slice(indent).match(/^([A-Za-z0-9_.-]+):(?:\s([^\n]*))?$/);
         if (!match) {
             warnings.push("Skipped a line in the settings at the top of the file that isn't a name and value: " + line.trim().slice(0, 60));
             i += 1;
@@ -4096,13 +4181,30 @@ function parseFrontmatter(text) {
     return { data: data, body: body, warnings: warnings };
 }
 
+// Characters that standard YAML readers refuse, or read as a line break, when
+// written as they are: control characters other than tab and line feed, the
+// line and paragraph separators, and two code points that are not characters.
+const YAML_UNPRINTABLE_PATTERN = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u2028\u2029\ufffe\uffff]/;
+const YAML_UNPRINTABLE_ALL = new RegExp(YAML_UNPRINTABLE_PATTERN.source, "g");
+
+/** A double-quoted YAML scalar; control characters are written as escapes such as \u000b. */
+function quoteYamlText(text) {
+    return "\"" + text.replace(/\\/g, "\\\\").replace(/"/g, "\\\"").replace(/\t/g, "\\t").replace(/\r/g, "\\r").replace(/\n/g, "\\n").replace(YAML_UNPRINTABLE_ALL, function (character) {
+        return "\\u" + ("000" + character.charCodeAt(0).toString(16)).slice(-4);
+    }) + "\"";
+}
+
 /** Quotes a scalar when YAML would otherwise misread it. */
 function formatYamlScalar(value) {
     const text = String(value);
     if (text === "") {
         return "\"\"";
     }
-    const looksSpecial = /^[-?:,\[\]{}#&*!|>'"%@`]/.test(text) ||
+    // A tab is quoted too, because some YAML readers, such as PyYAML, refuse a
+    // tab inside an unquoted value.
+    const looksSpecial = YAML_UNPRINTABLE_PATTERN.test(text) ||
+        /\t/.test(text) ||
+        /^[-?:,\[\]{}#&*!|>'"%@`]/.test(text) ||
         /: |\s#|#/.test(text) ||
         /^\s|\s$/.test(text) ||
         /^(true|false|yes|no|on|off|null|~)$/i.test(text) ||
@@ -4112,10 +4214,14 @@ function formatYamlScalar(value) {
     if (!looksSpecial) {
         return text;
     }
-    return "\"" + text.replace(/\\/g, "\\\\").replace(/"/g, "\\\"").replace(/\t/g, "\\t").replace(/\r/g, "\\r") + "\"";
+    return quoteYamlText(text);
 }
 
-/** Uses a block scalar for multi-line values. */
+/**
+ * Uses a block scalar for multi-line values. A value that holds a control
+ * character is written as one quoted line with escapes instead, because a
+ * block scalar can't hold one.
+ */
 function formatYamlEntry(key, value, indent) {
     const pad = " ".repeat(indent);
     if (isPlainObject(value)) {
@@ -4126,6 +4232,9 @@ function formatYamlEntry(key, value, indent) {
         return lines.join("\n");
     }
     const text = String(value === null || value === undefined ? "" : value);
+    if (YAML_UNPRINTABLE_PATTERN.test(text)) {
+        return pad + key + ": " + quoteYamlText(text);
+    }
     if (text.indexOf("\n") >= 0) {
         const keepTrailing = text.endsWith("\n");
         const content = keepTrailing ? text.slice(0, -1) : text;
@@ -4330,9 +4439,94 @@ function zipWrite(entries) {
  * A name from the .zip with each backslash read as a folder slash. Windows
  * PowerShell's Compress-Archive writes folders that way, such as
  * report\SKILL.md, so the name is checked after the change.
+ * @param {Uint8Array} bytes the name as stored
+ * @param {number} flags the entry's general purpose flags
+ * @param {Uint8Array} extra the entry's extra field
+ * @returns {string}
  */
-function zipEntryName(bytes) {
-    return fromBytes(bytes).replace(/\\/g, "/");
+function zipEntryName(bytes, flags, extra) {
+    return decodeZipName(bytes, flags, extra).replace(/\\/g, "/");
+}
+
+// The upper half (bytes 0x80 to 0xFF) of code page 437, the character set of
+// the original IBM PC. ZIP tools such as 7-Zip and the Windows "Compressed
+// (zipped) folder" store names without the UTF-8 flag in the computer's older
+// character set, which is code page 437 on US English systems.
+// Bytes below 0x80 are the same as ASCII.
+const CP437_UPPER_HALF =
+    "\u00c7\u00fc\u00e9\u00e2\u00e4\u00e0\u00e5\u00e7\u00ea\u00eb\u00e8\u00ef\u00ee\u00ec\u00c4\u00c5" +
+    "\u00c9\u00e6\u00c6\u00f4\u00f6\u00f2\u00fb\u00f9\u00ff\u00d6\u00dc\u00a2\u00a3\u00a5\u20a7\u0192" +
+    "\u00e1\u00ed\u00f3\u00fa\u00f1\u00d1\u00aa\u00ba\u00bf\u2310\u00ac\u00bd\u00bc\u00a1\u00ab\u00bb" +
+    "\u2591\u2592\u2593\u2502\u2524\u2561\u2562\u2556\u2555\u2563\u2551\u2557\u255d\u255c\u255b\u2510" +
+    "\u2514\u2534\u252c\u251c\u2500\u253c\u255e\u255f\u255a\u2554\u2569\u2566\u2560\u2550\u256c\u2567" +
+    "\u2568\u2564\u2565\u2559\u2558\u2552\u2553\u256b\u256a\u2518\u250c\u2588\u2584\u258c\u2590\u2580" +
+    "\u03b1\u00df\u0393\u03c0\u03a3\u03c3\u00b5\u03c4\u03a6\u0398\u03a9\u03b4\u221e\u03c6\u03b5\u2229" +
+    "\u2261\u00b1\u2265\u2264\u2320\u2321\u00f7\u2248\u00b0\u2219\u00b7\u221a\u207f\u00b2\u25a0\u00a0";
+// Refuses bytes that are not UTF-8, so a name in code page 437 is noticed.
+const strictTextDecoder = new TextDecoder("utf-8", { fatal: true });
+
+/**
+ * A ZIP entry name as text. A name flagged as UTF-8 is read as UTF-8. An
+ * unflagged name uses its Info-ZIP Unicode Path when the extra field holds
+ * one that matches the name, then UTF-8 when the bytes are valid UTF-8, as
+ * many tools write it without the flag, and code page 437 otherwise.
+ * @param {Uint8Array} bytes
+ * @param {number} flags
+ * @param {Uint8Array} extra
+ * @returns {string}
+ */
+function decodeZipName(bytes, flags, extra) {
+    if ((flags & 0x0800) !== 0) {
+        return fromBytes(bytes);
+    }
+    const unicodePath = zipUnicodePath(bytes, extra);
+    if (unicodePath) {
+        return unicodePath;
+    }
+    try {
+        return strictTextDecoder.decode(bytes);
+    } catch (error) {
+        // Not UTF-8, so each byte is one code page 437 character.
+        let name = "";
+        for (let i = 0; i < bytes.length; i++) {
+            name += bytes[i] < 0x80 ? String.fromCharCode(bytes[i]) : CP437_UPPER_HALF.charAt(bytes[i] - 0x80);
+        }
+        return name;
+    }
+}
+
+/**
+ * The UTF-8 name in an Info-ZIP Unicode Path extra field (header 0x7075), used
+ * only when its check value matches the stored name, so a name changed by
+ * another tool after the field was written is not replaced.
+ * @param {Uint8Array} nameBytes the name as stored
+ * @param {Uint8Array} extra the entry's extra field
+ * @returns {string} "" when there is no usable field
+ */
+function zipUnicodePath(nameBytes, extra) {
+    let at = 0;
+    while (extra instanceof Uint8Array && at + 4 <= extra.length) {
+        const id = extra[at] | (extra[at + 1] << 8);
+        const size = extra[at + 2] | (extra[at + 3] << 8);
+        const start = at + 4;
+        if (start + size > extra.length) {
+            return "";
+        }
+        // Version 1, then the CRC-32 of the stored name, then the UTF-8 name.
+        if (id === 0x7075 && size > 5 && extra[start] === 1) {
+            const check = (extra[start + 1] | (extra[start + 2] << 8) | (extra[start + 3] << 16) | (extra[start + 4] << 24)) >>> 0;
+            if (check !== crc32(nameBytes)) {
+                return "";
+            }
+            try {
+                return strictTextDecoder.decode(extra.subarray(start + 5, start + size));
+            } catch (error) {
+                return "";
+            }
+        }
+        at = start + size;
+    }
+    return "";
 }
 
 /** Rejects names that could escape the folder or confuse a reader. */
@@ -4432,8 +4626,10 @@ function zipEntryNames(bytes) {
             break;
         }
         const nameLength = view.getUint16(cursor + 28, true);
-        names.push(zipEntryName(bytes.subarray(cursor + 46, cursor + 46 + nameLength)));
-        cursor += 46 + nameLength + view.getUint16(cursor + 30, true) + view.getUint16(cursor + 32, true);
+        const extraLength = view.getUint16(cursor + 30, true);
+        const nameEnd = cursor + 46 + nameLength;
+        names.push(zipEntryName(bytes.subarray(cursor + 46, nameEnd), view.getUint16(cursor + 8, true), bytes.subarray(nameEnd, nameEnd + extraLength)));
+        cursor = nameEnd + extraLength + view.getUint16(cursor + 32, true);
     }
     return names;
 }
@@ -4488,7 +4684,8 @@ async function zipRead(bytes) {
         const extraLength = view.getUint16(cursor + 30, true);
         const commentLength = view.getUint16(cursor + 32, true);
         const localOffset = view.getUint32(cursor + 42, true);
-        const name = zipEntryName(bytes.subarray(cursor + 46, cursor + 46 + nameLength));
+        const nameEnd = cursor + 46 + nameLength;
+        const name = zipEntryName(bytes.subarray(cursor + 46, nameEnd), flags, bytes.subarray(nameEnd, nameEnd + extraLength));
         cursor += 46 + nameLength + extraLength + commentLength;
 
         if (compressedSize === 0xFFFFFFFF || uncompressedSize === 0xFFFFFFFF || localOffset === 0xFFFFFFFF) {
@@ -4532,9 +4729,11 @@ async function zipRead(bytes) {
         if (data.length !== uncompressedSize || crc32(data) !== crc) {
             throw new ZipError("A file inside the .zip is damaged.");
         }
-        // A repeated name would silently replace the first entry.
+        // A repeated name would silently replace the first entry. Hidden
+        // characters in the name show as a visible mark.
         if (entries.has(name)) {
-            throw new ZipError("The .zip holds two files with the same name.");
+            const shown = Array.from(name.replace(/\p{C}/gu, "\ufffd"));
+            throw new ZipError("The .zip holds two files with the same name: " + shown.slice(0, 120).join("") + (shown.length > 120 ? "..." : "") + ". Rename one of them and zip the folder again, or ask the person who made the file for a new copy.");
         }
         entries.set(name, data);
     }
@@ -8196,45 +8395,78 @@ function yamlValueIsLiteral(value) {
 }
 
 /**
+ * Where each line of a YAML text starts and which lines hold content, so the
+ * block checks below can pass over blank and comment lines at once. Each block
+ * check then reads only the lines nested under its own key, and a file stays
+ * quick to check even when every key sits deeper than the one before it.
+ * @param {string[]} lines The lines of the whole text.
+ * @returns {{next: Int32Array, indent: Int32Array}} next[i] is the first line
+ *   at or after i that is not blank or a comment, or lines.length when there is
+ *   none; indent[i] is the count of spaces and tabs that start line i.
+ */
+function yamlLineLayout(lines) {
+    const next = new Int32Array(lines.length + 1);
+    const indent = new Int32Array(lines.length);
+    next[lines.length] = lines.length;
+    for (let index = lines.length - 1; index >= 0; index -= 1) {
+        indent[index] = /^[ \t]*/.exec(lines[index])[0].length;
+        next[index] = /^[ \t]*(?:#.*)?$/.test(lines[index]) ? next[index + 1] : index;
+    }
+    return { next: next, indent: indent };
+}
+
+/**
  * Whether a YAML mapping under a credential key wraps a literal secret in a
  * "value" key, as in "admin_password: {value: abc123}" or the same mapping
  * written on the indented lines below the key. The wrapped value can also be a
  * list, such as "value: [abc123]" or list items on the lines below "value:".
  * Other mappings, such as "{type: string}" in an API description, are not values.
  * @param {string} first The mapping as it starts: the flow text, or the first indented line.
- * @param {string} rest The text after the first indented line, for a block mapping; empty for flow.
+ * @param {string[]} lines The lines of the whole text, for a block mapping; empty for flow.
+ * @param {number} start The index in lines of the line after the first indented line.
  * @param {number} childIndent The indent of the mapping's keys in a block mapping.
+ * @param {{next: Int32Array, indent: Int32Array}} [layout] yamlLineLayout of lines.
  * @returns {boolean}
  */
-function yamlMappingWrapsLiteral(first, rest, childIndent) {
+function yamlMappingWrapsLiteral(first, lines, start, childIndent, layout) {
     if (first.charAt(0) === "{") {
         const wrapped = /[{,]\s*["']?value["']?\s*:\s*(\[[^\]]*\]|"(?:\\.|[^"\\])*"|'(?:''|[^'])*'|[^,}\]]*)/i.exec(first);
         return Boolean(wrapped) && yamlValueIsLiteral(wrapped[1]);
     }
-    const lines = [" ".repeat(childIndent) + first].concat(rest.split(/\r?\n/).slice(1));
-    for (let index = 0; index < lines.length; index += 1) {
-        const line = lines[index];
-        if (/^[ \t]*(?:#.*)?$/.test(line)) {
-            continue;
-        }
-        const indent = /^[ \t]*/.exec(line)[0].length;
+    // Line 0 is the first indented line. The others are read from lines in
+    // place, only as far as the end of the mapping, and blank and comment
+    // lines are passed over without being read.
+    const shape = layout || yamlLineLayout(lines);
+    const count = 1 + Math.max(0, lines.length - start);
+    function lineAt(index) {
+        return index === 0 ? " ".repeat(childIndent) + first : lines[start + index - 1];
+    }
+    function indentAt(index) {
+        return index === 0 ? childIndent : shape.indent[start + index - 1];
+    }
+    function after(index) {
+        const at = start + index;
+        return at < lines.length ? shape.next[at] - start + 1 : count;
+    }
+    for (let index = 0; index < count; index = after(index)) {
+        const indent = indentAt(index);
         if (indent < childIndent) {
             return false;
         }
-        const pair = /^[ \t]*["']?([A-Za-z_][\w-]*)["']?[ \t]*:(?:[ \t]+(.*))?$/.exec(line);
-        if (!pair || indent !== childIndent || pair[1].toLowerCase() !== "value") {
+        if (indent !== childIndent) {
+            continue;
+        }
+        const pair = /^[ \t]*["']?([A-Za-z_][\w-]*)["']?[ \t]*:(?:[ \t]+(.*))?$/.exec(lineAt(index));
+        if (!pair || pair[1].toLowerCase() !== "value") {
             continue;
         }
         if (pair[2] !== undefined && yamlScalar(pair[2]) !== "") {
             return yamlValueIsLiteral(pair[2]);
         }
         // "value:" alone, with list items on the lines below it.
-        for (let next = index + 1; next < lines.length; next += 1) {
-            if (/^[ \t]*(?:#.*)?$/.test(lines[next])) {
-                continue;
-            }
-            const item = /^([ \t]*)-[ \t]+(.*)$/.exec(lines[next]);
-            if (!item || item[1].length < childIndent) {
+        for (let next = after(index); next < count; next = after(next)) {
+            const item = indentAt(next) < childIndent ? null : /^([ \t]*)-[ \t]+(.*)$/.exec(lineAt(next));
+            if (!item) {
                 return false;
             }
             if (!NESTED_BLOCK_MAPPING.test(item[2].trim()) && yamlValueIsLiteral(item[2])) {
@@ -8252,22 +8484,23 @@ function yamlMappingWrapsLiteral(first, rest, childIndent) {
  * "- abc123". Items that are nested mappings, such as "- type: string", are
  * not values.
  * @param {string} first The first item's text, after its dash.
- * @param {string} rest The text after the first item's line.
+ * @param {string[]} lines The lines of the whole text.
+ * @param {number} start The index in lines of the line after the first item's line.
  * @param {number} itemIndent The indent of the list's dashes.
+ * @param {{next: Int32Array, indent: Int32Array}} [layout] yamlLineLayout of lines.
  * @returns {boolean}
  */
-function yamlBlockListHoldsLiteral(first, rest, itemIndent) {
+function yamlBlockListHoldsLiteral(first, lines, start, itemIndent, layout) {
+    const shape = layout || yamlLineLayout(lines);
     const items = [first];
-    for (const line of rest.split(/\r?\n/).slice(1)) {
-        if (/^[ \t]*(?:#.*)?$/.test(line)) {
-            continue;
-        }
-        const indent = /^[ \t]*/.exec(line)[0].length;
+    // Blank and comment lines are passed over without being read.
+    for (let index = shape.next[Math.min(start, lines.length)]; index < lines.length; index = shape.next[index + 1]) {
+        const indent = shape.indent[index];
         // A deeper line belongs to the item above it, such as the second key of a mapping item.
         if (indent > itemIndent) {
             continue;
         }
-        const item = /^[ \t]*-[ \t]+(.*)$/.exec(line);
+        const item = /^[ \t]*-[ \t]+(.*)$/.exec(lines[index]);
         if (indent < itemIndent || !item) {
             break;
         }
@@ -8357,7 +8590,7 @@ function credentialFieldsHoldLiteral(text) {
             // The pattern stops at the first comma, so the whole mapping is read
             // from the text, as in "{type: secureString, value: abc123}".
             const start = match.index + match[0].length - match[2].length + match[2].indexOf("{");
-            if (yamlMappingWrapsLiteral(yamlFlowMapping(text, start), "", 0)) {
+            if (yamlMappingWrapsLiteral(yamlFlowMapping(text, start), [], 0, 0)) {
                 return true;
             }
             continue;
@@ -8391,7 +8624,7 @@ function credentialFieldsHoldLiteral(text) {
         // A quoted value is a scalar even when it looks like a mapping, as in
         // "{phrase: abc123}", so the quotes are checked before they are removed.
         if (NESTED_FLOW_MAPPING.test(value)) {
-            return yamlMappingWrapsLiteral(value, "", 0);
+            return yamlMappingWrapsLiteral(value, [], 0, 0);
         }
         // A whole list on the line is checked item by item, so an empty list,
         // as in "- apiKey: []" under "security:" in an API description, is no value.
@@ -8403,24 +8636,55 @@ function credentialFieldsHoldLiteral(text) {
     if (lineValue) {
         return true;
     }
+    // The text is split into lines once, and each block below a key is read
+    // from those lines only to its end, passing over blank and comment lines,
+    // so a file that repeats a short block thousands of times, or nests each
+    // key deeper than the one before it, is still checked quickly.
+    let lines = null;
+    let layout = null;
+    const lineFeeds = [];
+    function lineAfterValue(match) {
+        if (lines === null) {
+            lines = text.split(/\r?\n/);
+            layout = yamlLineLayout(lines);
+            for (let at = text.indexOf("\n"); at >= 0; at = text.indexOf("\n", at + 1)) {
+                lineFeeds.push(at);
+            }
+        }
+        // The number of line feeds before the end of the value is the index of
+        // the value's line.
+        const end = match.index + match[0].length;
+        let low = 0;
+        let high = lineFeeds.length;
+        while (low < high) {
+            const middle = (low + high) >> 1;
+            if (lineFeeds[middle] < end) {
+                low = middle + 1;
+            } else {
+                high = middle;
+            }
+        }
+        return low + 1;
+    }
     return Array.from(text.matchAll(CREDENTIAL_BLOCK_PATTERN)).some(function (match) {
         const groups = match.groups;
         // "- password:" followed by "- other" at the same indent is a sibling list item, not a value.
         if (groups.dash && groups.lead.charAt(0) === "-") {
             return false;
         }
-        const rest = text.slice(match.index + match[0].length);
         if (groups.lead.indexOf("-") >= 0) {
-            return yamlBlockListHoldsLiteral(groups.value, rest, groups.indent.length + /^[ \t]*/.exec(groups.lead)[0].length);
+            const start = lineAfterValue(match);
+            return yamlBlockListHoldsLiteral(groups.value, lines, start, groups.indent.length + /^[ \t]*/.exec(groups.lead)[0].length, layout);
         }
         const value = groups.value.replace(/[ \t]+#.*$/, "").trim();
         // A nested mapping, such as "type: string" in an API description, is not a
         // value, unless it wraps one in a "value" key.
         if (NESTED_FLOW_MAPPING.test(value)) {
-            return yamlMappingWrapsLiteral(value, "", 0);
+            return yamlMappingWrapsLiteral(value, [], 0, 0);
         }
         if (NESTED_BLOCK_MAPPING.test(value)) {
-            return yamlMappingWrapsLiteral(value, rest, groups.indent.length + groups.lead.length);
+            const start = lineAfterValue(match);
+            return yamlMappingWrapsLiteral(value, lines, start, groups.indent.length + groups.lead.length, layout);
         }
         return credentialValueIsLiteral(value.replace(/^(["'])(.*)\1$/, "$2"));
     });

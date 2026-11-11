@@ -486,6 +486,15 @@ UTF-8 and keeps a short extension, because Linux and Mac file systems allow
 notice, such as
 "Renamed references/notes: draft.md to references/notes draft.md, so the name
 is safe to use on any computer."
+When two files in one item end up with names that differ only by upper and
+lower case or an empty folder part, such as `references/Notes.md` and
+`references//notes.md`, the app keeps the first one and leaves out the other.
+It turns each letter into its small form and then its capital form
+(`sameNameKey`), so it also treats the two Greek small sigmas, or the capital
+and small German sharp s, as the same letter. The sharp s and "ss" stay apart. A notice names each file it
+left out, such as "Left out 1 file from an assistant: references/notes.md
+(another file has the same name)." For an assistant, the app checks its
+attached files and its other files together, and an attached file stays.
 
 A skill brought in from elsewhere keeps its own `LICENSE.txt` and `README.md`,
 and keeps its other files in their own folders, such as `scripts/`, when they
@@ -573,6 +582,25 @@ Two items with the same name get a number at the end, so their folders stay
 apart. `SKILL.md` has no HTML comment at the top because the standard requires
 the YAML frontmatter to be the very first bytes. The license lives in the
 `license` field and in `LICENSE.txt` instead.
+
+When the app adds a number to a long skill name, it shortens the name to make
+room, such as
+`summarize-the-weekly-status-report-for-the-steering-committee-2`. A numbered
+name stays the same when you open the project again. When the app does change
+a stored skill name, it also changes the name in each assistant that uses the
+skill.
+
+When the app opens a file, a backup, or a project saved in the browser, it
+turns line separators, vertical tabs, form feeds, and the Unicode next-line
+character (U+0085) into line breaks. It removes other characters that can't
+be printed (`asText`).
+
+When a one-line `SKILL.md` setting holds a tab, or any setting holds a
+character that can't be printed, such as a setting kept as written from an
+opened file, the app writes it as one quoted line with escapes such as `\t`
+or `\u000b`. YAML readers such as PyYAML refuse the raw character. The app
+also reads a raw line separator in a `SKILL.md` setting, so files saved by
+older versions open with their full description.
 
 Backups made by version 1 of the app were a single Agent Skill folder that
 kept every field in the frontmatter metadata. The app no longer reads those
@@ -1255,9 +1283,14 @@ XML-style credential elements and attributes are checked too, including
 namespace prefixes and `name` or `key` fields paired with a `value` attribute.
 Standard character references are decoded for that check; external entities
 are never loaded. Empty fields and complete external references remain allowed.
-The attribute, web address, and tag scans take time in proportion to the
-file's length, so a long run of name characters or repeated opening tags
-cannot stall the browser.
+The attribute, web address, tag, and YAML key scans take time in proportion to
+the file's length, so a long run of name characters, repeated opening tags, a
+short `token:` block repeated thousands of times, or keys that each sit deeper
+than the one before cannot stall the browser. The YAML key scan splits the
+file into lines once, passes over blank and comment lines, and reads each block
+below a key only to its end (`credentialFieldsHoldLiteral` and
+`yamlLineLayout`). The `SKILL.md` reader also takes time in proportion to each
+setting's length, so a long run of spaces in a setting can't stall it either.
 
 ##### Licenses and repeated downloads
 
