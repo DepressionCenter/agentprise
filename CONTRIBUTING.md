@@ -3,7 +3,7 @@ This file is part of Agentprise
 CONTRIBUTING.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-11-05
-Last Modified: 2026-11-05
+Last Modified: 2026-11-10
 Summary: A short guide for making a first contribution to Agentprise, from
          making a fork to opening a pull request.
 Notes: See README file for documentation and full license information.
@@ -103,8 +103,9 @@ Start the small web server that comes with the project:
   bash run-linux.sh
   ```
 
-Your browser opens the app at `http://localhost:8010`. Close the server window
-when you are done.
+Your browser opens the app at `http://localhost:8010`. Always use that
+address, because your browser keeps projects saved at another address, such as
+`http://127.0.0.1:8010`, separately. Close the server window when you are done.
 
 The Library needs this local server to read its files. For everything else,
 you can also open `index.html` directly from the folder.

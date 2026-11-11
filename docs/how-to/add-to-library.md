@@ -3,7 +3,7 @@ This file is part of Agentprise
 docs/how-to/add-to-library.md
 Author(s): Gabriel Mongefranco.
 Created: 2026-10-09
-Last Modified: 2026-10-11
+Last Modified: 2026-11-10
 Summary: How to get an assistant or skill listed in the Agentprise Library, and
          how a maintainer adds one to the repository.
 Notes: See README file for documentation and full license information.
@@ -151,6 +151,29 @@ It rebuilds each `.zip` and its catalog line. The build is repeatable: ids and
 dates come from the sources, and the `.zip` entries carry no dates. So
 `node tools/build-library.mjs --check`, which the tests run, fails whenever a
 committed `.zip` or catalog line no longer matches its sources.
+
+Before it builds anything, the build checks every file under
+`library/sources/` and stops with a list of problems to fix. It refuses:
+
+- A symbolic link, such as `references/config.md` that points to a file
+  somewhere else. Replace the link with a copy of the file. The build also
+  stops when `library/sources/` itself is a link.
+- A hard link, which shares its contents with another file. Replace it with a
+  copy of the file.
+- Anything that is not a plain file or folder, and any file that is really
+  stored outside `library/sources/`, such as one reached through a link.
+- A text file that is not UTF-8, or that holds a control character other than
+  tab and line feed, such as a backspace or a terminal escape code. These can
+  hide text from a reviewer. A carriage return is allowed only right before a
+  line feed, as in a Windows line ending. The message names the file and the
+  line.
+- A control character written as an escape in a `.json` file, such as
+  `\u001b`, or a `\r` that is not right before a `\n`. The message names the
+  file and the field, such as `project.description`.
+
+Pictures and documents, such as `.png` and `.pdf` files, are not checked for
+control characters, unless the file is really text, such as a script saved as
+`scripts/run.png`. Every other file is checked as text.
 
 ### For maintainers: the version 1 conversion
 
